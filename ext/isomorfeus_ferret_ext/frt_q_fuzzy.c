@@ -78,7 +78,7 @@ static INLINE float fuzq_score_mn(FuzzyQuery *fuzq,
      * the edit distance cannot be less than 5 which is 8-3 or more
      * precisesly Math.abs(3-8). If our maximum edit distance is 4,
      * then we can discard this word without looking at it. */
-    if (max_distance < ABS(m-n)) {
+    if (max_distance < FRT_ABS(m-n)) {
         return 0.0f;
     }
 

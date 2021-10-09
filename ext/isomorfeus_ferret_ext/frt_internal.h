@@ -2,7 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define ABS                                FRT_ABS
 #define ARG_ERROR                          FRT_ARG_ERROR
 #define ARY_INIT_CAPA                      FRT_ARY_INIT_CAPA
 #define ARY_META_CNT                       FRT_ARY_META_CNT
