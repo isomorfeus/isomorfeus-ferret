@@ -2039,7 +2039,7 @@ static int get_word(YYSTYPE *lvalp, QParser *qp)
     }
 
     qp->qstrp--; /* need to back up one character */
-    
+
     while (!strchr(not_word, (c = *qp->qstrp++))) {
         switch (c) {
             case '\\':
@@ -2104,11 +2104,11 @@ get_word_done:
 /**
  * +yylex+ is the lexing method called by the QueryParser. It breaks the
  * query up into special characters;
- * 
+ *
  *     ( "&:()[]{}!\"~^|<>=*?+-" )
  *
- * and tokens; 
- * 
+ * and tokens;
+ *
  *   - QWRD
  *   - WILD_STR
  *   - AND['AND', '&&']
@@ -2124,7 +2124,7 @@ get_word_done:
  * If any of the special chars are seen they will usually be returned straight
  * away. The exceptions are the wild chars '*' and '?', and '&' which will be
  * treated as a plain old word character unless followed by another '&'.
- * 
+ *
  * If no special characters or tokens are found then yylex delegates to
  * +get_word+ which will fetch the next query-word.
  */
@@ -2386,7 +2386,7 @@ static Query *get_term_q(QParser *qp, Symbol field, char *word)
     else {
         q = tq_new(field, token->text);
         if ((token = ts_next(stream)) != NULL) {
-            /* Less likely case, destroy the term query and create a 
+            /* Less likely case, destroy the term query and create a
              * phrase query instead */
             Query *phq = phq_new(field);
             phq_add_term(phq, ((TermQuery *)q)->term, 0);
@@ -2483,7 +2483,7 @@ static Query *get_wild_q(QParser *qp, Symbol field, char *pattern)
         && (!qp->tokenized_fields || hs_exists(qp->tokenized_fields, field))) {
         lower_str(pattern);
     }
-    
+
     /* simplify the wildcard query to a prefix query if possible. Basically a
      * prefix query is any wildcard query that has a '*' as the last character
      * and no other wildcard characters before it. "*" by itself will expand
@@ -2631,7 +2631,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * ignored. For example, if you have the phrase;
  *
  *      "email: dbalmain@gmail.com"
- * 
+ *
  * the Phrase object will contain to positions with the words 'email:' and
  * 'dbalmain@gmail.com'. Now, if you are using a LetterTokenizer then the
  * second word will be tokenized into the tokens ['dbalmain', 'gmail', 'com']
@@ -2712,7 +2712,7 @@ static Query *get_phrase_query(QParser *qp, Symbol field,
                 ((PhraseQuery *)q)->slop++;
             }
             pos_inc += phrase->positions[i].pos + 1; /* Actually holds pos_inc*/
-            
+
             if (word_count == 1) {
                 stream = get_cached_ts(qp, field, words[0]);
                 while ((token = ts_next(stream))) {
@@ -2814,7 +2814,7 @@ static Query *get_r_q(QParser *qp, Symbol field, char *from, char *to,
  */
 static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
 {
-    FieldStack *fs = FRT_ALLOC(FieldStack); 
+    FieldStack *fs = FRT_ALLOC(FieldStack);
 
     fs->next    = self->fields_top;
     fs->fields  = fields;
@@ -2831,7 +2831,7 @@ static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
  */
 static void qp_pop_fields(QParser *self)
 {
-    FieldStack *fs = self->fields_top; 
+    FieldStack *fs = self->fields_top;
 
     if (fs->destroy) {
         hs_destroy(fs->fields);
@@ -3026,7 +3026,7 @@ char *qp_clean_str(char *str)
       *nsp++ = ')';
     }
     *nsp = '\0';
-    return new_str;  
+    return new_str;
 }
 
 /**
