@@ -8,6 +8,10 @@
 #include "frt_global.h"
 #include "frt_internal.h"
 
+void micro_sleep(const int micro_seconds) {
+    rb_thread_wait_for(rb_time_interval(rb_float_new((double)micro_seconds/1000000.0)));
+}
+
 /* emalloc: malloc and report if error */
 void *emalloc(size_t size)
 {
