@@ -13,18 +13,12 @@
 #  -fprofile-arcs -ftest-coverage // for gcov
 ###
 
-STEMMER_DIR = lib/libstemmer_c
-STEMMER_INC = $(STEMMER_DIR)/include
-
-BZLIB_DIR = lib/bzlib
-BZLIB_INC = $(BZLIB_DIR)
-
 CC       = gcc
-CINCS    = -Iinclude -I$(STEMMER_INC) -I$(BZLIB_INC) -Itest
-DEFS     = -DBZ_NO_STDIO -D_FILE_OFFSET_BITS=64 -DDEBUG -D_POSIX_C_SOURCE=2
+CINCS    = -I../../ext/ferret_ext -Itest
+DEFS     = -D_FILE_OFFSET_BITS=64 -DDEBUG -D_POSIX_C_SOURCE=2
 DEFS    += -DHAVE_GDB
 CFLAGS   = -std=c99 -pedantic -Wall -Wextra $(CINCS) -g -fno-common $(DEFS)
-LDFLAGS  = -lm -lpthread -lz
+LDFLAGS  = -lm -lpthread
 DEP_DIR  = .deps
 GCOV_DIR = .gcov
 VPATH    = test:src:benchmark
@@ -34,65 +28,60 @@ VPATH    = test:src:benchmark
 ###
 
 OBJS = \
-analysis.o          array.o              bitvector.o        compound_io.o     \
-document.o          except.o             filter.o           fs_store.o        \
-global.o            hash.o               hashset.o          helper.o          \
-ind.o               index.o              mempool.o          multimapper.o     \
-posh.o              priorityqueue.o      q_boolean.o        q_const_score.o   \
-q_filtered_query.o  q_fuzzy.o            q_match_all.o      q_multi_term.o    \
-q_parser.o          q_phrase.o           q_prefix.o         q_range.o         \
-q_span.o            q_term.o             q_wildcard.o       ram_store.o       \
-search.o            similarity.o         sort.o             stopwords.o       \
-store.o             term_vectors.o       field_index.o      lang.o            \
-scanner.o           scanner_mb.o         symbol.o           scanner_utf8.o
+frt_analysis.o          frt_array.o              frt_bitvector.o        frt_compound_io.o     \
+frt_document.o          frt_except.o             frt_filter.o           frt_fs_store.o        \
+frt_global.o            frt_hash.o               frt_hashset.o          frt_helper.o          \
+frt_ind.o               frt_index.o              frt_mempool.o          frt_multimapper.o     \
+frt_posh.o              frt_priorityqueue.o      frt_q_boolean.o        frt_q_const_score.o   \
+frt_q_filtered_query.o  frt_q_fuzzy.o            frt_q_match_all.o      frt_q_multi_term.o    \
+frt_q_parser.o          frt_q_phrase.o           frt_q_prefix.o         frt_q_range.o         \
+frt_q_span.o            frt_q_term.o             frt_q_wildcard.o       frt_ram_store.o       \
+frt_search.o            frt_similarity.o         frt_sort.o             frt_stopwords.o       \
+frt_store.o             frt_term_vectors.o       frt_field_index.o      frt_lang.o            \
+frt_scanner.o           frt_scanner_mb.o         frt_symbol.o           frt_scanner_utf8.o
 
 TEST_OBJS = \
-test_multimapper.o       test_q_const_score.o     test_threading.o     \
-test_q_fuzzy.o           test_term.o              test_q_filtered.o    \
-testhelper.o             test_hash.o              test_fs_store.o      \
-test_segments.o          test_similarity.o        test_except.o        \
-test_store.o             test_highlighter.o       test_hashset.o       \
-test_global.o            test_bitvector.o         test_search.o        \
-test_fields.o            test_index.o             test_mempool.o       \
-test_compound_io.o       test_q_parser.o          test_term_vectors.o  \
-test_array.o             test_document.o          test_helper.o        \
-test_test.o              test.o                   test_q_span.o        \
-test_analysis.o          test_filter.o            test_priorityqueue.o \
-test_sort.o              test_ram_store.o         test_file_deleter.o  \
-test_lang.o              test_symbol.o            test_1710.o
+test_multimapper.o      test_q_const_score.o     test_threading.o       test_q_fuzzy.o        \
+test_term.o             test_q_filtered.o        testhelper.o           test_hash.o           \
+test_fs_store.o         test_segments.o          test_similarity.o      test_except.o         \
+test_store.o            test_highlighter.o       test_hashset.o         test_global.o         \
+test_bitvector.o        test_search.o            test_fields.o          test_index.o          \
+test_mempool.o          test_compound_io.o       test_q_parser.o        test_term_vectors.o   \
+test_array.o            test_document.o          test_helper.o          test_test.o           \
+test.o                  test_q_span.o            test_analysis.o        test_filter.o         \
+test_priorityqueue.o    test_sort.o              test_ram_store.o       test_file_deleter.o   \
+test_lang.o             test_symbol.o            test_1710.o
 
-BENCH_OBJS = benchmark.o bm_bitvector.o bm_hash.o \
-             bm_micro_string.o bm_store.o         \
-
-BZLIB_SRCS = \
-bzlib.c blocksort.c compress.c crctable.c decompress.c huffman.c randtable.c
-BZLIB_OBJS = $(BZLIB_SRCS:%.c=$(BZLIB_DIR)/%.o)
-
-include $(STEMMER_DIR)/mkinc.mak
-STEMMER_OBJS = $(snowball_sources:%.c=$(STEMMER_DIR)/%.o)
+STEMMER_OBJS = \
+libstemmer.o                 stem_api.o                    stem_utilities.o             \
+stem_ISO_8859_1_danish.o     stem_ISO_8859_1_dutch.o       stem_ISO_8859_1_english.o    \
+stem_ISO_8859_1_finnish.o    stem_ISO_8859_1_french.o      stem_ISO_8859_1_german.o     \
+stem_ISO_8859_1_hungarian.o  stem_ISO_8859_1_italian.o     stem_ISO_8859_1_norwegian.o  \
+stem_ISO_8859_1_porter.o     stem_ISO_8859_1_portuguese.o  stem_ISO_8859_1_spanish.o    \
+stem_ISO_8859_1_swedish.o    stem_ISO_8859_3_romanian.o    stem_KOI8_R_russian.o        \
+stem_UTF_8_danish.o          stem_UTF_8_dutch.o            stem_UTF_8_english.o         \
+stem_UTF_8_finnish.o         stem_UTF_8_french.o           stem_UTF_8_german.o          \
+stem_UTF_8_hungarian.o       stem_UTF_8_italian.o          stem_UTF_8_norwegian.o       \
+stem_UTF_8_porter.o          stem_UTF_8_portuguese.o       stem_UTF_8_romanian.o        \
+stem_UTF_8_russian.o         stem_UTF_8_spanish.o          stem_UTF_8_swedish.o         \
+stem_UTF_8_turkish.o
 
 FRT_OBJS = $(OBJS) $(TEST_OBJS) $(BENCH_OBJS)
-EXT_OBJS = $(BZLIB_OBJS) $(STEMMER_OBJS)
+EXT_OBJS = $(STEMMER_OBJS)
 
 ###
 # Common Targets
 ###
 
-all: libferret.a
-
-libferret.a: $(OBJS) $(BZLIB_OBJS) $(STEMMER_OBJS)
-	@echo Generating library: $@ ...
-	@$(AR) -cru $@ $^
-
 test: testall
 	@rm -f *.gcda
 	@./testall -q -v
 
-testall: $(TEST_OBJS) libferret.a
+testall: $(TEST_OBJS) $(OBJS) $(TEST_OBJS)
 	@echo Building task: $@ ...
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-benchall: $(BENCH_OBJS) libferret.a
+benchall: $(BENCH_OBJS) $(OBJS) $(TEST_OBJS)
 	@echo Building task: $@ ...
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
@@ -101,7 +90,7 @@ bench: benchall
 
 clean:
 	@rm -f  $(FRT_OBJS) $(FRT_OBJS:%.o=%.gcov) $(FRT_OBJS:%.o=%.gcno)
-	@rm -f  libferret.a testall gmon.out
+	@rm -f  testall gmon.out
 	@rm -rf $(DEP_DIR) $(GCOV_DIR)
 
 realclean: clean
