@@ -46,14 +46,14 @@ module StoreLockTest
     #make sure thread has started and lock been obtained
     while Switch.counter < 1
     end
-    
+
     assert(! can_obtain_lock?(lock2, lock_time_out),
            "lock 2 should not be obtainable")
 
     Switch.counter = 2
     while Switch.counter < 3
     end
-    
+
     assert(lock2.obtain(lock_time_out))
     lock2.release()
   end
