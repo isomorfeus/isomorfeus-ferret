@@ -61,7 +61,7 @@ static int ram_remove(Store *store, const char *filename)
 {
     RAMFile *rf = (RAMFile *)h_rem(store->dir.ht, filename, false);
     if (rf != NULL) {
-        DEREF(rf);
+        FRT_DEREF(rf);
         rf_close(rf);
         return true;
     }
@@ -87,7 +87,7 @@ static void ram_rename(Store *store, const char *from, const char *to)
     /* clean up the file we are overwriting */
     tmp = (RAMFile *)h_get(store->dir.ht, to);
     if (tmp != NULL) {
-        DEREF(tmp);
+        FRT_DEREF(tmp);
     }
 
     h_set(store->dir.ht, rf->name, rf);
@@ -121,7 +121,7 @@ static void ram_close_i(Store *store)
     for (i = 0; i <= ht->mask; i++) {
         RAMFile *rf = (RAMFile *)ht->table[i].value;
         if (rf) {
-            DEREF(rf);
+            FRT_DEREF(rf);
         }
     }
     h_destroy(store->dir.ht);
@@ -138,7 +138,7 @@ static void ram_clear(Store *store)
     for (i = 0; i <= ht->mask; i++) {
         RAMFile *rf = (RAMFile *)ht->table[i].value;
         if (rf && !file_is_lock(rf->name)) {
-            DEREF(rf);
+            FRT_DEREF(rf);
             h_del(ht, rf->name);
         }
     }
@@ -151,7 +151,7 @@ static void ram_clear_locks(Store *store)
     for (i = 0; i <= ht->mask; i++) {
         RAMFile *rf = (RAMFile *)ht->table[i].value;
         if (rf && file_is_lock(rf->name)) {
-            DEREF(rf);
+            FRT_DEREF(rf);
             h_del(ht, rf->name);
         }
     }
@@ -164,7 +164,7 @@ static void ram_clear_all(Store *store)
     for (i = 0; i <= ht->mask; i++) {
         RAMFile *rf = (RAMFile *)ht->table[i].value;
         if (rf) {
-            DEREF(rf);
+            FRT_DEREF(rf);
             h_del(ht, rf->name);
         }
     }
@@ -234,7 +234,7 @@ void ramo_reset(OutStream *os)
 static void ramo_close_i(OutStream *os)
 {
     RAMFile *rf = os->file.rf;
-    DEREF(rf);
+    FRT_DEREF(rf);
     rf_close(rf);
 }
 
@@ -265,7 +265,7 @@ OutStream *ram_new_buffer()
     RAMFile *rf = rf_new("");
     OutStream *os = os_new();
 
-    DEREF(rf);
+    FRT_DEREF(rf);
     os->file.rf = rf;
     os->pointer = 0;
     os->m = &RAM_OUT_STREAM_METHODS;
@@ -338,7 +338,7 @@ static void rami_seek_i(InStream *is, off_t pos)
 static void rami_close_i(InStream *is)
 {
     RAMFile *rf = is->file.rf;
-    DEREF(rf);
+    FRT_DEREF(rf);
     rf_close(rf);
 }
 

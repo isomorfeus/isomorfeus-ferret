@@ -259,10 +259,10 @@ Query *fuzq_new_conf(Symbol field, const char *term,
 
     FzQ(self)->field      = field;
     FzQ(self)->term       = estrdup(term);
-    FzQ(self)->pre_len    = pre_len ? pre_len : DEF_PRE_LEN;
-    FzQ(self)->min_sim    = min_sim ? min_sim : DEF_MIN_SIM;
+    FzQ(self)->pre_len    = pre_len ? pre_len : FRT_DEF_PRE_LEN;
+    FzQ(self)->min_sim    = min_sim ? min_sim : FRT_DEF_MIN_SIM;
     FzQ(self)->da         = NULL;
-    MTQMaxTerms(self)     = max_terms ? max_terms : DEF_MAX_TERMS;
+    MTQMaxTerms(self)     = max_terms ? max_terms : FRT_DEF_MAX_TERMS;
 
     self->type            = FUZZY_QUERY;
     self->to_s            = &fuzq_to_s;

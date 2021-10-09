@@ -1325,7 +1325,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
             StringValue(rval);
             frb_create_dir(rval);
             store = open_fs_store(rs2s(rval));
-            DEREF(store);
+            FRT_DEREF(store);
         }
 
         /* Let ruby's garbage collector handle the closing of the store
@@ -1358,7 +1358,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     }
     if (NULL == store) {
         store = open_ram_store();
-        DEREF(store);
+        FRT_DEREF(store);
     }
     if (!create && create_if_missing && !store->exists(store, "segments")) {
         create = true;
@@ -2104,7 +2104,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                 case T_STRING:
                     frb_create_dir(rdir);
                     store = open_fs_store(rs2s(rdir));
-                    DEREF(store);
+                    FRT_DEREF(store);
                     break;
                 default:
                     rb_raise(rb_eArgError, "%s isn't a valid directory "
@@ -2125,7 +2125,7 @@ frb_ir_init(VALUE self, VALUE rdir)
             case T_STRING:
                 frb_create_dir(rdir);
                 store = open_fs_store(rs2s(rdir));
-                DEREF(store);
+                FRT_DEREF(store);
                 break;
             default:
                 rb_raise(rb_eArgError, "%s isn't a valid directory argument. "

@@ -202,7 +202,7 @@ InStream *is_new()
  *
  * @param is the InStream to refill
  * @raise IO_ERROR if there is a error reading from the filesystem
- * @raise EOF_ERROR if there is an attempt to read past the end of the file
+ * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
 static void is_refill(InStream *is)
 {
@@ -239,7 +239,7 @@ static void is_refill(InStream *is)
  * @param is the Instream to read from
  * @return a single unsigned char read from the InStream +is+
  * @raise IO_ERROR if there is a error reading from the filesystem
- * @raise EOF_ERROR if there is an attempt to read past the end of the file
+ * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
 INLINE uchar is_read_byte(InStream *is)
 {

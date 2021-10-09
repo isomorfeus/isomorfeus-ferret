@@ -23,12 +23,12 @@
  *   FRT_XFINALLY
  *       // this code will always be run
  *       if (close_widget_one(arg) == 0) {
- *           FRT_RAISE(EXCEPTION_CODE, msg);
+ *           FRT_RAISE(FRT_EXCEPTION_CODE, msg);
  *       }
  *       // this code will also always run, even if the above exception is
  *       // raised
  *       if (close_widget_two(arg) == 0) {
- *           FRT_RAISE(EXCEPTION_CODE, msg);
+ *           FRT_RAISE(FRT_EXCEPTION_CODE, msg);
  *       }
  *   FRT_XENDTRY
  * </pre>
@@ -81,7 +81,6 @@
 /* TODO make this an enum */
 #define FRT_BODY 0
 #define FRT_FINALLY 1
-#define FRT_EXCEPTION 2
 #define FRT_FERRET_ERROR 2
 #define FRT_IO_ERROR 3
 #define FRT_FILE_NOT_FOUND_ERROR 4
@@ -120,17 +119,7 @@ typedef struct frt_xcontext_t
     frt_xpop_context();\
   } while (0);
 
-#define FRT_ENDTRY\
-    }\
-    if (!xcontext.in_finally) {\
-      frt_xpop_context();\
-      xcontext.in_finally = 1;\
-      longjmp(xcontext.jbuf, FRT_FINALLY);\
-    }\
-  } while (0);
-
 #define FRT_RETURN_EARLY() frt_xpop_context()
-
 
 #define FRT_XFINALLY default: xcontext.in_finally = 1;
 

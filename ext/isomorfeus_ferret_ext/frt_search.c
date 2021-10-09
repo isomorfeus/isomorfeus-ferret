@@ -21,7 +21,7 @@ Explanation *expl_new(float value, const char *description, ...)
 
     expl->value = value;
     expl->details = ary_new_type_capa(Explanation *,
-                                      EXPLANATION_DETAILS_START_SIZE);
+                                      FRT_EXPLANATION_DETAILS_START_SIZE);
     return expl;
 }
 

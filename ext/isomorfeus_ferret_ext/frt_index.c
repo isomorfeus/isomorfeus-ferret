@@ -929,7 +929,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             run(store, fsf);
             RETURN_EARLY();
             return;
-        case IO_ERROR: case FILE_NOT_FOUND_ERROR: case EOF_ERROR:
+        case IO_ERROR: case FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
             HANDLED();
             /*
             if (gen != sis_current_segment_generation(store)) {
@@ -980,7 +980,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         RETURN_EARLY();
                         RETURN_EARLY();
                         return;
-                    case IO_ERROR: case FILE_NOT_FOUND_ERROR: case EOF_ERROR:
+                    case IO_ERROR: case FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
                         HANDLED();
                         /* TODO:LOG "secondary Exception on '" +
                          * prev_seg_file_name + "': " + err2 + "'; will retry"*/
@@ -1645,7 +1645,7 @@ void fw_add_postings(FieldsWriter *fw,
                      int offset_count)
 {
     int i, delta_start, delta_length;
-    const char *last_term = EMPTY_STRING;
+    const char *last_term = FRT_EMPTY_STRING;
     OutStream *fdt_out = fw->fdt_out;
     off_t fdt_start_pos = os_pos(fdt_out);
     PostingList *plist;
@@ -2389,7 +2389,7 @@ static TermWriter *tw_new(Store *store, char *file_name)
 {
     TermWriter *tw = FRT_ALLOC_AND_ZERO(TermWriter);
     tw->os = store->new_output(store, file_name);
-    tw->last_term = EMPTY_STRING;
+    tw->last_term = FRT_EMPTY_STRING;
     return tw;
 }
 
@@ -2511,7 +2511,7 @@ void tiw_add(TermInfosWriter *tiw,
 static INLINE void tw_reset(TermWriter *tw)
 {
     tw->counter = 0;
-    tw->last_term = EMPTY_STRING;
+    tw->last_term = FRT_EMPTY_STRING;
     ZEROSET(&(tw->last_term_info), TermInfo);
 }
 

@@ -14,7 +14,7 @@
 #include <signal.h>
 #include "frt_internal.h"
 
-const char *EMPTY_STRING = "";
+const char *FRT_EMPTY_STRING = "";
 
 bool  x_do_logging = false;
 bool  x_abort_on_exception = true;
@@ -148,7 +148,7 @@ char *dbl_to_s(char *buf, double num)
     }
 #endif
 
-    sprintf(buf, DBL2S, num);
+    sprintf(buf, FRT_DBL2S, num);
     if (!(e = strchr(buf, 'e'))) {
         e = buf + strlen(buf);
     }

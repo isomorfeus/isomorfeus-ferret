@@ -2518,11 +2518,11 @@ Init_Analysis(void)
     rb_define_singleton_method(mFerret, "locale", frb_get_locale, 0);
 
     rb_define_const(mAnalysis, "ENGLISH_STOP_WORDS",
-                    get_rstopwords(ENGLISH_STOP_WORDS));
+                    get_rstopwords(FRT_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_ENGLISH_STOP_WORDS",
                     get_rstopwords(FULL_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "EXTENDED_ENGLISH_STOP_WORDS",
-                    get_rstopwords(EXTENDED_ENGLISH_STOP_WORDS));
+                    get_rstopwords(FRT_EXTENDED_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_FRENCH_STOP_WORDS",
                     get_rstopwords(FULL_FRENCH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_SPANISH_STOP_WORDS",

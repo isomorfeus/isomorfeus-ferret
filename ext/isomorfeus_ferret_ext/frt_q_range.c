@@ -99,7 +99,7 @@ static Range *range_new(Symbol field, const char *lower_term,
                  const char *upper_term, bool include_lower,
                  bool include_upper)
 {
-    Range *range; 
+    Range *range;
 
     if (!lower_term && !upper_term) {
         rb_raise(rb_eArgError, "Nil bounds for range. A range must include either "
@@ -134,7 +134,7 @@ static Range *trange_new(Symbol field, const char *lower_term,
                   const char *upper_term, bool include_lower,
                   bool include_upper)
 {
-    Range *range; 
+    Range *range;
     int len;
     double upper_num, lower_num;
 
@@ -221,7 +221,7 @@ static BitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
      * we just return an empty bit vector */
     if (fi) {
         const char *lower_term =
-            range->lower_term ? range->lower_term : EMPTY_STRING;
+            range->lower_term ? range->lower_term : FRT_EMPTY_STRING;
         const char *upper_term = range->upper_term;
         const bool include_upper = range->include_upper;
         const int field_num = fi->number;
@@ -236,7 +236,7 @@ static BitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
             return bv;
         }
 
-        check_lower = !(range->include_lower || (lower_term == EMPTY_STRING));
+        check_lower = !(range->include_lower || (lower_term == FRT_EMPTY_STRING));
 
         tde = ir->term_docs(ir);
         term = te->curr_term;
@@ -288,7 +288,7 @@ Filter *rfilt_new(Symbol field,
 {
     Filter *filt = filt_new(RangeFilter);
     RF(filt)->range =  range_new(field, lower_term, upper_term,
-                                 include_lower, include_upper); 
+                                 include_lower, include_upper);
 
     filt->get_bv_i  = &rfilt_get_bv_i;
     filt->hash      = &rfilt_hash;
@@ -337,7 +337,7 @@ do {\
         }\
     }\
 } while (te->next(te))
-  
+
 
 static BitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
@@ -425,7 +425,7 @@ Filter *trfilt_new(Symbol field,
 {
     Filter *filt = filt_new(RangeFilter);
     RF(filt)->range =  trange_new(field, lower_term, upper_term,
-                                  include_lower, include_upper); 
+                                  include_lower, include_upper);
 
     filt->get_bv_i  = &trfilt_get_bv_i;
     filt->hash      = &rfilt_hash;
@@ -482,7 +482,7 @@ static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
             const int tv_term_freq = tv_term->freq;
             if (upper_text && strcmp(text, upper_text) >= upper_limit) {
                 break;
-            } 
+            }
             for (j = 0; j < tv_term_freq; j++) {
                 int pos = tv_term->positions[j];
                 matchv_add(mv, pos, pos);
@@ -532,7 +532,7 @@ Query *rq_new(Symbol field, const char *lower_term,
 {
     Query *self;
     Range *range            = range_new(field, lower_term, upper_term,
-                                        include_lower, include_upper); 
+                                        include_lower, include_upper);
     self                    = q_new(RangeQuery);
     RQ(self)->range         = range;
 
@@ -664,7 +664,7 @@ Query *trq_new(Symbol field, const char *lower_term,
 {
     Query *self;
     Range *range            = trange_new(field, lower_term, upper_term,
-                                         include_lower, include_upper); 
+                                         include_lower, include_upper);
     self                    = q_new(RangeQuery);
     RQ(self)->range         = range;
 

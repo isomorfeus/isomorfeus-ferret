@@ -1388,10 +1388,10 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
                 self->ref_cnt = 1;
                 rewritten = true;
             }
-            DEREF(clause);
+            FRT_DEREF(clause);
             BQ(self)->clauses[i] = bc_new(rq, clause->occur);
         } else {
-            DEREF(rq);
+            FRT_DEREF(rq);
         }
     }
     if (clause_cnt > 0 && !has_non_prohibited_clause) {
@@ -1543,7 +1543,7 @@ Query *bq_new(bool coord_disabled)
     if (coord_disabled) {
         self->get_similarity = &bq_get_similarity;
     }
-    BQ(self)->max_clause_cnt = DEFAULT_MAX_CLAUSE_COUNT;
+    BQ(self)->max_clause_cnt = FRT_DEFAULT_MAX_CLAUSE_COUNT;
     BQ(self)->clause_cnt = 0;
     BQ(self)->clause_capa = FRT_BOOLEAN_CLAUSES_START_CAPA;
     BQ(self)->clauses = FRT_ALLOC_N(BooleanClause *, FRT_BOOLEAN_CLAUSES_START_CAPA);

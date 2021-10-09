@@ -2,24 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define DBL2S                              FRT_DBL2S
-#define DEFAULT_MAX_CLAUSE_COUNT           FRT_DEFAULT_MAX_CLAUSE_COUNT
-#define DEF_MAX_TERMS                      FRT_DEF_MAX_TERMS
-#define DEF_MIN_SIM                        FRT_DEF_MIN_SIM
-#define DEF_PRE_LEN                        FRT_DEF_PRE_LEN
-#define DEREF                              FRT_DEREF
-#define DF_INIT_CAPA                       FRT_DF_INIT_CAPA
-#define DOC_INIT_CAPA                      FRT_DOC_INIT_CAPA
-#define EMPTY_STRING                       FRT_EMPTY_STRING
-#define ENDTRY                             FRT_ENDTRY
-#define ENGLISH_STOP_WORDS                 FRT_ENGLISH_STOP_WORDS
-#define EOF_ERROR                          FRT_EOF_ERROR
-#define EOF_ERROR_MSG                      FRT_EOF_ERROR_MSG
-#define EXCEPTION                          FRT_EXCEPTION
-#define EXCEPT_H                           FRT_EXCEPT_H
-#define EXPLANATION_DETAILS_START_SIZE     FRT_EXPLANATION_DETAILS_START_SIZE
-#define EXTENDED_ENGLISH_STOP_WORDS        FRT_EXTENDED_ENGLISH_STOP_WORDS
-#define EXTERNC                            FRT_EXTERNC
 #define FERRET_ERROR                       FRT_FERRET_ERROR
 #define FILE_NOT_FOUND_ERROR               FRT_FILE_NOT_FOUND_ERROR
 #define FINALLY                            FRT_FINALLY

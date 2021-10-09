@@ -36,8 +36,6 @@
 #  define unlikely(x) (x)
 #endif
 
-#define FRT_EXTERNC
-
 typedef void (*frt_free_ft)(void *key);
 
 #define FRT_NELEMS(array) ((int)(sizeof(array)/sizeof(array[0])))

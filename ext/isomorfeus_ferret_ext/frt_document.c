@@ -14,7 +14,7 @@ DocField *df_new(Symbol name)
     DocField *df = FRT_ALLOC(DocField);
     df->name = name;
     df->size = 0;
-    df->capa = DF_INIT_CAPA;
+    df->capa = FRT_DF_INIT_CAPA;
     df->data = FRT_ALLOC_N(char *, df->capa);
     df->lengths = FRT_ALLOC_N(int, df->capa);
     df->destroy_data = false;
@@ -100,7 +100,7 @@ Document *doc_new()
     Document *doc = FRT_ALLOC(Document);
     doc->field_dict = h_new_str(NULL, (free_ft)&df_destroy);
     doc->size = 0;
-    doc->capa = DOC_INIT_CAPA;
+    doc->capa = FRT_DOC_INIT_CAPA;
     doc->fields = FRT_ALLOC_N(DocField *, doc->capa);
     doc->boost = 1.0f;
     return doc;

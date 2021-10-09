@@ -9,7 +9,7 @@
  * Many thanks to Martin Porter
  */
 
-const char *ENGLISH_STOP_WORDS[] = {
+const char *FRT_ENGLISH_STOP_WORDS[] = {
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in",
     "into", "is", "it", "no", "not", "of", "on", "or", "such", "that", "the",
     "their", "then", "there", "these", "they", "this", "to", "was", "with",
@@ -41,7 +41,7 @@ const char *FULL_ENGLISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *EXTENDED_ENGLISH_STOP_WORDS[] = {
+const char *FRT_EXTENDED_ENGLISH_STOP_WORDS[] = {
     "a", "about", "above", "after", "again", "against", "all", "am", "an",
     "and", "any", "are", "aren't", "as", "at", "be", "because", "been",
     "before", "being", "below", "between", "both", "but", "by", "cannot",

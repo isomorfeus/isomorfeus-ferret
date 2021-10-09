@@ -3052,7 +3052,7 @@ frb_sea_init(VALUE self, VALUE obj)
         frb_create_dir(obj);
         store = open_fs_store(rs2s(obj));
         ir = ir_open(store);
-        DEREF(store);
+        FRT_DEREF(store);
         FRT_GET_IR(obj, ir);
     } else {
         Check_Type(obj, T_DATA);

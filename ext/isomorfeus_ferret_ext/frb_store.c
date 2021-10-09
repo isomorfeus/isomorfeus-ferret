@@ -376,7 +376,7 @@ frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
     else {
         int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) + 1;
         rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
-        DEREF(store);
+        FRT_DEREF(store);
     }
     return self;
 }

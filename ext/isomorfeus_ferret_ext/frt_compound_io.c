@@ -127,7 +127,7 @@ static off_t cmpdi_length_i(InStream *is)
 }
 
 /*
- * raises: EOF_ERROR
+ * raises: FRT_EOF_ERROR
  */
 static void cmpdi_read_i(InStream *is, uchar *b, int len)
 {

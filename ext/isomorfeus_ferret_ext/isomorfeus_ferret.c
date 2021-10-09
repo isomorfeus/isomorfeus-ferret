@@ -167,7 +167,7 @@ void *frb_rb_data_ptr(VALUE val)
 char *
 rs2s(VALUE rstr)
 {
-    return (char *)(RSTRING_PTR(rstr) ? RSTRING_PTR(rstr) : EMPTY_STRING);
+    return (char *)(RSTRING_PTR(rstr) ? RSTRING_PTR(rstr) : FRT_EMPTY_STRING);
 }
 
 char *

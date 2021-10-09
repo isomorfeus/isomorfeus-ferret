@@ -21,7 +21,7 @@ static const char *const ERROR_TYPES[] = {
 };
 
 const char *const UNSUPPORTED_ERROR_MSG = "Unsupported operation";
-const char *const EOF_ERROR_MSG = "Read past end of file";
+const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
 char xmsg_buffer[XMSG_BUFFER_SIZE];
 char xmsg_buffer_final[XMSG_BUFFER_SIZE];
 
