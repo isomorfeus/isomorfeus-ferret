@@ -368,7 +368,7 @@ FieldInfo *fis_get_field(FieldInfos *fis, Symbol name)
 int fis_get_field_num(FieldInfos *fis, Symbol name)
 {
     FieldInfo *fi = (FieldInfo *)h_get(fis->field_dict, name);
-    if (fi) { return fi->number; } 
+    if (fi) { return fi->number; }
     else { return -1; }
 }
 
@@ -433,7 +433,7 @@ void fis_write(FieldInfos *fis, OutStream *os)
     union { u32 i; float f; } tmp;
     FieldInfo *fi;
     const int fis_size = fis->size;
-    
+
     os_write_vint(os, fis->store);
     os_write_vint(os, fis->index);
     os_write_vint(os, fis->term_vector);
@@ -1153,8 +1153,8 @@ static void sis_read_ver_i(Store *store, FindSegmentsFile *fsf)
     segfn_for_generation(seg_file_name, (u64)fsf->generation);
     is = store->open_input(store, seg_file_name);
     version = 0;
-    
-    TRY    
+
+    TRY
         is_read_u32(is); // format
         version = is_read_u64(is);
     XFINALLY
@@ -1261,7 +1261,7 @@ void lazy_doc_close(LazyDoc *self)
 static void lazy_doc_add_field(LazyDoc *self, LazyDocField *lazy_df, int i)
 {
     self->fields[i] = lazy_df;
-    
+
     h_set(self->field_dictionary, lazy_df->name, lazy_df);
     lazy_df->doc = self;
 }
@@ -1438,7 +1438,7 @@ static TermVector *fr_read_term_vector(FieldsReader *fr, int field_num)
             total_len = delta_start + delta_len;
             is_read_bytes(fdt_in, buffer + delta_start, delta_len);
             buffer[total_len++] = '\0';
-            term->text = (char *)memcpy(ALLOC_N(char, total_len),
+            term->text = (char *)memcpy(FRT_ALLOC_N(char, total_len),
                                         buffer, total_len);
 
             /* read freq */
@@ -1709,7 +1709,7 @@ void fw_add_postings(FieldsWriter *fw,
 
 char *te_get_term(TermEnum *te)
 {
-    return (char *)memcpy(ALLOC_N(char, te->curr_term_len + 1),
+    return (char *)memcpy(FRT_ALLOC_N(char, te->curr_term_len + 1),
                           te->curr_term, te->curr_term_len + 1);
 }
 
