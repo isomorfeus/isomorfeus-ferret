@@ -7,17 +7,17 @@
 #  -pg                        // use this option if you want to use gprof
 #  -DDEBUG                    // some error checking only occurs in DEBUG mode
 #  -DHAVE_GDB                 // defined on platforms that have gdb
-#  -DBZ_NO_STDIO              // There really is no need for bzlib to use stdio
-#  -DUSE_ZLIB                 // use zlib instead of bzlib
 #  -D_POSIX_C_SOURCE=2        // for popen which is used to print stacktraces
 #  -fprofile-arcs -ftest-coverage // for gcov
 ###
 
+srcdir = ../../ext/isomorfeus_ferret_ext
+
 CC       = gcc
-CINCS    = -I../../ext/ferret_ext -Itest
-DEFS     = -D_FILE_OFFSET_BITS=64 -DDEBUG -D_POSIX_C_SOURCE=2
+CINCS    = -I$(srcdir) -Iruby_include
+DEFS     = -D_FILE_OFFSET_BITS=64 -DDEBUG -D_POSIX_C_SOURCE=2 -DWITHOUT_RUBY
 DEFS    += -DHAVE_GDB
-CFLAGS   = -std=c99 -pedantic -Wall -Wextra $(CINCS) -g -fno-common $(DEFS)
+CFLAGS   = -O2 -std=c99 -pedantic -Wall -Wextra $(CINCS) -g -fno-common $(DEFS)
 LDFLAGS  = -lm -lpthread
 DEP_DIR  = .deps
 GCOV_DIR = .gcov
@@ -40,6 +40,8 @@ frt_search.o            frt_similarity.o         frt_sort.o             frt_stop
 frt_store.o             frt_term_vectors.o       frt_field_index.o      frt_lang.o            \
 frt_scanner.o           frt_scanner_mb.o         frt_symbol.o           frt_scanner_utf8.o
 
+BENCH_OBJS = benchmark.o bm_bitvector.o bm_hash.c bm_micro_string.c bm_store.c
+
 TEST_OBJS = \
 test_multimapper.o      test_q_const_score.o     test_threading.o       test_q_fuzzy.o        \
 test_term.o             test_q_filtered.o        testhelper.o           test_hash.o           \
@@ -58,16 +60,13 @@ stem_ISO_8859_1_danish.o     stem_ISO_8859_1_dutch.o       stem_ISO_8859_1_engli
 stem_ISO_8859_1_finnish.o    stem_ISO_8859_1_french.o      stem_ISO_8859_1_german.o     \
 stem_ISO_8859_1_hungarian.o  stem_ISO_8859_1_italian.o     stem_ISO_8859_1_norwegian.o  \
 stem_ISO_8859_1_porter.o     stem_ISO_8859_1_portuguese.o  stem_ISO_8859_1_spanish.o    \
-stem_ISO_8859_1_swedish.o    stem_ISO_8859_3_romanian.o    stem_KOI8_R_russian.o        \
+stem_ISO_8859_1_swedish.o    stem_ISO_8859_2_romanian.o    stem_KOI8_R_russian.o        \
 stem_UTF_8_danish.o          stem_UTF_8_dutch.o            stem_UTF_8_english.o         \
 stem_UTF_8_finnish.o         stem_UTF_8_french.o           stem_UTF_8_german.o          \
 stem_UTF_8_hungarian.o       stem_UTF_8_italian.o          stem_UTF_8_norwegian.o       \
 stem_UTF_8_porter.o          stem_UTF_8_portuguese.o       stem_UTF_8_romanian.o        \
 stem_UTF_8_russian.o         stem_UTF_8_spanish.o          stem_UTF_8_swedish.o         \
 stem_UTF_8_turkish.o
-
-FRT_OBJS = $(OBJS) $(TEST_OBJS) $(BENCH_OBJS)
-EXT_OBJS = $(STEMMER_OBJS)
 
 ###
 # Common Targets
@@ -77,11 +76,11 @@ test: testall
 	@rm -f *.gcda
 	@./testall -q -v
 
-testall: $(TEST_OBJS) $(OBJS) $(TEST_OBJS)
+testall: $(TEST_OBJS) $(OBJS) $(STEMMER_OBJS)
 	@echo Building task: $@ ...
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-benchall: $(BENCH_OBJS) $(OBJS) $(TEST_OBJS)
+benchall: $(BENCH_OBJS) $(OBJS) $(STEMMER_OBJS)
 	@echo Building task: $@ ...
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
@@ -89,12 +88,9 @@ bench: benchall
 	@./benchall
 
 clean:
-	@rm -f  $(FRT_OBJS) $(FRT_OBJS:%.o=%.gcov) $(FRT_OBJS:%.o=%.gcno)
+	@rm -f  $(BENCH_OBJS) $(OBJS) $(STEMMER_OBJS) $(TEST_OBJS)
 	@rm -f  testall gmon.out
 	@rm -rf $(DEP_DIR) $(GCOV_DIR)
-
-realclean: clean
-	@rm -f $(EXT_OBJS) $(EXT_OBJS:%.o=%.gcov) $(EXT_OBJS:%.o=%.gcno)
 
 ###
 # Profiling + coverage
@@ -128,6 +124,20 @@ gen_valsupp: testall
 # Ref: http://make.paulandlesley.org/autodep.html
 ###
 
+
+
+frt_%.o : $(srcdir)/frt_%.c
+	@echo Compiling: $< ...
+	@$(COMPILE.c) -MD -o $@ $<
+
+libstemmer.o : $(srcdir)/libstemmer.c
+	@echo Compiling: $< ...
+	@$(COMPILE.c) -MD -o $@ $<
+
+stem_%.o : $(srcdir)/stem_%.c
+	@echo Compiling: $< ...
+	@$(COMPILE.c) -MD -o $@ $<
+
 %.o : %.c
 	@mkdir -p `dirname $(DEP_DIR)/$*.P`
 	@echo Compiling: $< ...
@@ -137,15 +147,13 @@ gen_valsupp: testall
                 -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(DEP_DIR)/$*.P; \
             rm -f $*.d
 
--include $(FRT_OBJS:%.o=$(DEP_DIR)/%.P)
+# src/q_parser.c: src/q_parser.y
 
-src/q_parser.c: src/q_parser.y
+# %.c : %.rl
+#	ragel $< -o $@
 
-%.c : %.rl
-	ragel $< -o $@
-
-%.c : %.y
-	yacc -o $@ -p frt_ $<
+# %.c : %.y
+#	yacc -o $@ -p frt_ $<
 
 ###
 # Generate gcov stats
