@@ -1,4 +1,4 @@
-require 'ferret_ext'
+require 'isomorfeus_ferret_ext'
 require 'isomorfeus/ferret/version'
 require 'isomorfeus/ferret/field_symbol'
 require 'isomorfeus/ferret/stdlib_patches'

@@ -1,4 +1,4 @@
-lib/ferret_ext.so
+lib/isomorfeus_ferret_ext.so
 tmp
 Gemfile.lock
 test/threading/index

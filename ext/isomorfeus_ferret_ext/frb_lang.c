@@ -1,4 +1,4 @@
-#include "f_lang.h"
+#include "frb_lang.h"
 #include "frt_internal.h"
 
 struct timeval rb_time_interval _((VALUE));

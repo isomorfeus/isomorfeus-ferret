@@ -4,7 +4,7 @@
 #include "frt_except.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
-#include "f_threading.h"
+#include "frb_threading.h"
 #include "frt_symbol.h"
 #include "frt_internal.h"
 
@@ -334,7 +334,7 @@ void Init_Ferret(void)
     rb_require("fileutils");
 }
 
-void Init_ferret_ext(void)
+void Init_isomorfeus_ferret_ext(void)
 {
     const char *const progname[] = {"ruby"};
 
