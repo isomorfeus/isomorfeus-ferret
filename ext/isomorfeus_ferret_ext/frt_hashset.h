@@ -4,7 +4,6 @@
 #include "frt_hash.h"
 #include "frt_global.h"
 
-#define FRT_HS_MIN_SIZE 4
 typedef struct FrtHashSetEntry {
     void *elem;
     struct FrtHashSetEntry *next;
@@ -103,14 +102,14 @@ extern void frt_hs_destroy(FrtHashSet *self);
  * @param elem the element to add to the FrtHashSet
  * @return one of three values;
  *   <pre>
- *     HASH_KEY_DOES_NOT_EXIST  the element was not already in the FrtHashSet.
- *                              This value is equal to 0 or false
- *     HASH_KEY_SAME            the element was identical (same memory
- *                              pointer) to an existing element so no freeing
- *                              was done
- *     HASH_KEY_EQUAL           the element was equal to an element already in
- *                              the FrtHashSet so the new_elem was freed if
- *                              free_elem was set
+ *     FRT_HASH_KEY_DOES_NOT_EXIST  the element was not already in the FrtHashSet.
+ *                                  This value is equal to 0 or false
+ *     FRT_HASH_KEY_SAME            the element was identical (same memory
+ *                                  pointer) to an existing element so no freeing
+ *                                  was done
+ *     FRT_HASH_KEY_EQUAL           the element was equal to an element already in
+ *                                  the FrtHashSet so the new_elem was freed if
+ *                                  free_elem was set
  *   </pre>
  */
 extern FrtHashKeyStatus frt_hs_add(FrtHashSet *self, void *elem);
@@ -156,14 +155,14 @@ extern void *frt_hs_rem(FrtHashSet *self, const void *elem);
  * @param elem the element to check for
  * @return one of the following values
  * <pre>
- *     HASH_KEY_DOES_NOT_EXIST  the element was not already in the FrtHashSet.
- *                              This value is equal to 0 or false
- *     HASH_KEY_SAME            the element was identical (same memory
- *                              pointer) to an existing element so no freeing
- *                              was done
- *     HASH_KEY_EQUAL           the element was equal to an element already in
- *                              the FrtHashSet so the new_elem was freed if
- *                              free_elem was set
+ *     FRT_HASH_KEY_DOES_NOT_EXIST  the element was not already in the FrtHashSet.
+ *                                  This value is equal to 0 or false
+ *     FRT_HASH_KEY_SAME            the element was identical (same memory
+ *                                  pointer) to an existing element so no freeing
+ *                                  was done
+ *     FRT_HASH_KEY_EQUAL           the element was equal to an element already in
+ *                                  the FrtHashSet so the new_elem was freed if
+ *                                  free_elem was set
  *   </pre>
  */
 extern FrtHashKeyStatus frt_hs_exists(FrtHashSet *self, const void *elem);

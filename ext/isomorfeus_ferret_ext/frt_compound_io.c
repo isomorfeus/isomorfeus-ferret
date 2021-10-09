@@ -295,7 +295,7 @@ CompoundWriter *open_cw(Store *store, char *name)
 void cw_add_file(CompoundWriter *cw, char *id)
 {
     id = estrdup(id);
-    if (hs_add(cw->ids, id) != HASH_KEY_DOES_NOT_EXIST) {
+    if (hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
         rb_raise(rb_eIOError, "Tried to add file \"%s\" which has already been "
               "added to the compound store", id);
     }

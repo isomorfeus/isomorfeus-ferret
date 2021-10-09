@@ -49,7 +49,7 @@ typedef struct FrtHash
     int ref_cnt;
 
     /* table points to smalltable initially. If the table grows beyond 2/3 of
-     * HASH_MINSIZE it will point to newly malloced memory as it grows. */
+     * FRT_HASH_MINSIZE it will point to newly malloced memory as it grows. */
     FrtHashEntry *table;
 
     /* When a Hash is created it needs an initial table to start if off.
@@ -253,12 +253,12 @@ extern void *frt_h_rem(FrtHash *self, const void *key, bool del_key);
  * @param value the value to add to the Hash
  * @return one of three values;
  *   <pre>
- *     HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
- *     HASH_KEY_EQUAL           the key existed and was seperately allocated.
- *                              In this situation the old key will have been
- *                              destroyed if free_key was set
- *     HASH_KEY_SAME            the key was identical (same memory pointer) to
- *                              the existing key so no key was freed
+ *     FRT_HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
+ *     FRT_HASH_KEY_EQUAL           the key existed and was seperately allocated.
+ *                                  In this situation the old key will have been
+ *                                  destroyed if free_key was set
+ *     FRT_HASH_KEY_SAME            the key was identical (same memory pointer) to
+ *                                  the existing key so no key was freed
  *   </pre>
  */
 extern FrtHashKeyStatus frt_h_set(FrtHash *self,
@@ -300,12 +300,12 @@ extern FRT_INLINE bool frt_h_set_ext(FrtHash *self,
  * @param key the key to check for in the Hash
  * @return one of three values;
  *   <pre>
- *     0 - HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
- *     1 - HASH_KEY_EQUAL           the key existed and was seperately
- *                                  allocated.
- *     2 - HASH_KEY_SAME            the key was identical (same memory
- *                                  pointer) to the existing key so no key was
- *                                  freed
+ *     0 - FRT_HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
+ *     1 - FRT_HASH_KEY_EQUAL           the key existed and was seperately
+ *                                      allocated.
+ *     2 - FRT_HASH_KEY_SAME            the key was identical (same memory
+ *                                      pointer) to the existing key so no key was
+ *                                      freed
  *   </pre>
  *   Note: the return value can be treated as a true/false value, ie 0 if the
  *   key doesn't exist, non-zero if it does.
@@ -374,12 +374,12 @@ extern void *frt_h_rem_int(FrtHash *self, const unsigned long long key);
  * @param value the value to add to the Hash
  * @return one of three values;
  *   <pre>
- *     HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
- *     HASH_KEY_EQUAL           the key existed and was seperately allocated.
- *                              In this situation the old key will have been
- *                              destroyed if free_key was set
- *     HASH_KEY_SAME            the key was identical (same memory pointer) to
- *                              the existing key so no key was freed
+ *     FRT_HASH_KEY_DOES_NOT_EXIST  there was no value stored with that key
+ *     FRT_HASH_KEY_EQUAL           the key existed and was seperately allocated.
+ *                                  In this situation the old key will have been
+ *                                  destroyed if free_key was set
+ *     FRT_HASH_KEY_SAME            the key was identical (same memory pointer) to
+ *                                  the existing key so no key was freed
  *   </pre>
  */
 extern FrtHashKeyStatus frt_h_set_int(FrtHash *self,

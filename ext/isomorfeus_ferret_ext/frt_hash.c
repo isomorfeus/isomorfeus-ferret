@@ -173,7 +173,7 @@ Hash *h_new_str(free_ft free_key, free_ft free_value)
     }
     self->fill = 0;
     self->size = 0;
-    self->mask = HASH_MINSIZE - 1;
+    self->mask = FRT_HASH_MINSIZE - 1;
     self->table = self->smalltable;
     memset(self->smalltable, 0, sizeof(self->smalltable));
     self->lookup_i = (lookup_ft)&h_lookup;
@@ -296,17 +296,17 @@ void *h_rem(Hash *self, const void *key, bool destroy_key)
 
 static int h_resize(Hash *self, int min_newsize)
 {
-    HashEntry smallcopy[HASH_MINSIZE];
+    HashEntry smallcopy[FRT_HASH_MINSIZE];
     HashEntry *oldtable;
     HashEntry *he_old, *he_new;
     int newsize, num_active;
 
     /* newsize will be a power of two */
-    for (newsize = HASH_MINSIZE; newsize < min_newsize; newsize <<= 1) {
+    for (newsize = FRT_HASH_MINSIZE; newsize < min_newsize; newsize <<= 1) {
     }
 
     oldtable = self->table;
-    if (newsize == HASH_MINSIZE) {
+    if (newsize == FRT_HASH_MINSIZE) {
         if (self->table == self->smalltable) {
             /* need to copy the data out so we can rebuild the table into
              * the same space */
@@ -359,7 +359,7 @@ INLINE bool h_set_ext(Hash *self, const void *key, HashEntry **he)
 
 HashKeyStatus h_set(Hash *self, const void *key, void *value)
 {
-    HashKeyStatus ret_val = HASH_KEY_DOES_NOT_EXIST;
+    HashKeyStatus ret_val = FRT_HASH_KEY_DOES_NOT_EXIST;
     HashEntry *he;
     if (!h_set_ext(self, key, &he)) {
         if (he->key != key) {
@@ -367,14 +367,14 @@ HashKeyStatus h_set(Hash *self, const void *key, void *value)
             if (he->value != value) {
                 self->free_value_i(he->value);
             }
-            ret_val = HASH_KEY_EQUAL;
+            ret_val = FRT_HASH_KEY_EQUAL;
         }
         else {
             /* Only free old value if it isn't the new value */
             if (he->value != value) {
                 self->free_value_i(he->value);
             }
-            ret_val = HASH_KEY_SAME;
+            ret_val = FRT_HASH_KEY_SAME;
         }
     }
     he->key = (void *)key;
@@ -400,12 +400,12 @@ HashKeyStatus h_has_key(Hash *self, const void *key)
 {
     HashEntry *he = self->lookup_i(self, key);
     if (he->key == NULL || he->key == dummy_key) {
-        return HASH_KEY_DOES_NOT_EXIST;
+        return FRT_HASH_KEY_DOES_NOT_EXIST;
     }
     else if (he->key == key) {
-        return HASH_KEY_SAME;
+        return FRT_HASH_KEY_SAME;
     }
-    return HASH_KEY_EQUAL;
+    return FRT_HASH_KEY_EQUAL;
 }
 
 INLINE void *h_get_int(Hash *self, const unsigned long long key)
@@ -427,14 +427,14 @@ INLINE HashKeyStatus h_set_int(Hash *self,
                                const unsigned long long key,
                                void *value)
 {
-    HashKeyStatus ret_val = HASH_KEY_DOES_NOT_EXIST;
+    HashKeyStatus ret_val = FRT_HASH_KEY_DOES_NOT_EXIST;
     HashEntry *he;
     if (!h_set_ext(self, (const void *)key, &he)) {
         /* Only free old value if it isn't the new value */
         if (he->value != value) {
             self->free_value_i(he->value);
         }
-        ret_val = HASH_KEY_EQUAL;
+        ret_val = FRT_HASH_KEY_EQUAL;
     }
     he->key = dummy_int_key;
     he->value = value;

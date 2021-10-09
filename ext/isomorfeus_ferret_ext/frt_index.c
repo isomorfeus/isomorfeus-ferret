@@ -860,7 +860,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                 TRY
                     gen_is = store->open_input(store, SEGMENTS_GEN_FILE_NAME);
                 XCATCHALL
-                    HANDLED();
+                    FRT_HANDLED();
                     /* TODO:LOG "segments open: IO_ERROR"*/
                 XENDTRY
 
@@ -872,7 +872,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         gen1 = is_read_u64(gen_is);
                     XFINALLY
                         /* if there is an error well simply try again */
-                        HANDLED();
+                        FRT_HANDLED();
                         is_close(gen_is);
                     XENDTRY
                     /* TODO:LOG "fallback check: " + gen0 + "; " + gen1 */
@@ -930,7 +930,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             RETURN_EARLY();
             return;
         case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
-            HANDLED();
+            FRT_HANDLED();
             /*
             if (gen != sis_current_segment_generation(store)) {
                 fprintf(stderr, "%lld != %lld\n",
@@ -947,7 +947,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         sis_put(sis_read(store), stderr);
                         done = true;
                     XCATCHALL
-                        HANDLED();
+                        FRT_HANDLED();
                     XENDTRY
                 }
             }
@@ -981,7 +981,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         RETURN_EARLY();
                         return;
                     case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
-                        HANDLED();
+                        FRT_HANDLED();
                         /* TODO:LOG "secondary Exception on '" +
                          * prev_seg_file_name + "': " + err2 + "'; will retry"*/
                     XENDTRY
@@ -1136,7 +1136,7 @@ void sis_write(SegmentInfos *sis, Store *store, Deleter *deleter)
     XFINALLY
         /* It's OK if we fail to write this file since it's
          * used only as one of the retry fallbacks. */
-        HANDLED();
+        FRT_HANDLED();
         os_close(os);
     XENDTRY
     if (deleter && sis->generation > 0) {

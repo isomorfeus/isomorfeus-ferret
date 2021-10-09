@@ -258,7 +258,7 @@ frb_qp_parse(VALUE self, VALUE rstr)
         break;
     default:
         msg = xcontext.msg;
-        HANDLED();
+        FRT_HANDLED();
     XENDTRY
     if (msg) {
         rb_raise(cQueryParseException, "%s", msg);

@@ -2,15 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define HANDLED                            FRT_HANDLED
-#define HASH_KEY_DOES_NOT_EXIST            FRT_HASH_KEY_DOES_NOT_EXIST
-#define HASH_KEY_EQUAL                     FRT_HASH_KEY_EQUAL
-#define HASH_KEY_SAME                      FRT_HASH_KEY_SAME
-#define HASH_MINSIZE                       FRT_HASH_MINSIZE
-#define HAS_GNUC_VARARGS                   FRT_HAS_GNUC_VARARGS
-#define HAS_ISO_VARARGS                    FRT_HAS_ISO_VARARGS
-#define HAS_VARARGS                        FRT_HAS_VARARGS
-#define HS_MIN_SIZE                        FRT_HS_MIN_SIZE
 #define INDEX_ERROR                        FRT_INDEX_ERROR
 #define INDEX_INTERVAL                     FRT_INDEX_INTERVAL
 #define INDEX_NO                           FRT_INDEX_NO

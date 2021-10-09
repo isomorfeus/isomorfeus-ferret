@@ -94,16 +94,16 @@ HashKeyStatus hs_add(HashSet *hs, void *elem)
     switch (has_elem)
     {
         /* We don't want to keep two of the same elem so free if necessary */
-        case HASH_KEY_EQUAL:
+        case FRT_HASH_KEY_EQUAL:
             hs->free_elem_i(elem);
             return has_elem;
 
         /* No need to do anything */
-        case HASH_KEY_SAME:
+        case FRT_HASH_KEY_SAME:
             return has_elem;
 
         /* add the elem to the array, resizing if necessary */
-        case HASH_KEY_DOES_NOT_EXIST:
+        case FRT_HASH_KEY_DOES_NOT_EXIST:
             break;
 
     }
@@ -117,13 +117,13 @@ int hs_add_safe(HashSet *hs, void *elem)
     switch(h_has_key(hs->ht, elem))
     {
         /* element can't be added */
-        case HASH_KEY_EQUAL: return false;
+        case FRT_HASH_KEY_EQUAL: return false;
 
         /* the exact same element has already been added */
-        case HASH_KEY_SAME : return true;
+        case FRT_HASH_KEY_SAME : return true;
 
         /* add the elem to the array, resizing if necessary */
-        case HASH_KEY_DOES_NOT_EXIST : break;
+        case FRT_HASH_KEY_DOES_NOT_EXIST : break;
     }
     append(hs, elem);
     return true;

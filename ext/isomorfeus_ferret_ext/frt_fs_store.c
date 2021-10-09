@@ -221,7 +221,7 @@ static void fs_destroy(Store *store)
     TRY
         fs_clear_locks(store);
     XCATCHALL
-        HANDLED();
+        FRT_HANDLED();
     XENDTRY
     free(store->dir.path);
     store_destroy(store);

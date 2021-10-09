@@ -229,7 +229,7 @@ static void qp_pop_fields(QParser *self);
         }\
     } XCATCHALL\
         qp->destruct = true;\
-        HANDLED();\
+        FRT_HANDLED();\
     XENDTRY\
     if (qp->destruct && !qp->recovering && q) {q_deref(q); q = NULL;}\
 } while (0)
@@ -239,7 +239,7 @@ static void qp_pop_fields(QParser *self);
 #define E\
   XCATCHALL\
     qp->destruct = true;\
-    HANDLED();\
+    FRT_HANDLED();\
   XENDTRY\
   if (qp->destruct) Y;
 
