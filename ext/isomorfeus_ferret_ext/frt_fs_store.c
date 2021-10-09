@@ -399,7 +399,7 @@ static Lock *fs_open_lock_i(Store *store, const char *lockname)
     Lock *lock = FRT_ALLOC(Lock);
     char lname[100];
     char path[MAX_FILE_PATH];
-    snprintf(lname, 100, "%s%s.lck", LOCK_PREFIX, lockname);
+    snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
     lock->name = estrdup(join_path(path, store->dir.path, lname));
     lock->store = store;
     lock->obtain = &fs_lock_obtain;

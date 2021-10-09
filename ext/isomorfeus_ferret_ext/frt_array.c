@@ -19,7 +19,7 @@ void **ary_new_i(int type_size, int init_capa)
     return ary;
 }
 
-INLINE void ary_resize_i(void ***ary, int size)
+void ary_resize_i(void ***ary, int size)
 {
     size++;
     if (size > ary_sz(*ary)) {

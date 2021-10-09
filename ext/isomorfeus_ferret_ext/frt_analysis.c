@@ -14,7 +14,7 @@
  *
  ****************************************************************************/
 
-INLINE Token *tk_set(Token *tk,
+Token *tk_set(Token *tk,
                      char *text, int tlen, off_t start, off_t end, int pos_inc)
 {
     if (tlen >= MAX_WORD_SIZE) {
@@ -29,20 +29,20 @@ INLINE Token *tk_set(Token *tk,
     return tk;
 }
 
-static INLINE Token *tk_set_ts(Token *tk, char *start, char *end,
+static Token *tk_set_ts(Token *tk, char *start, char *end,
                                char *text, int pos_inc)
 {
     return tk_set(tk, start, (int)(end - start),
                   (off_t)(start - text), (off_t)(end - text), pos_inc);
 }
 
-INLINE Token *tk_set_no_len(Token *tk,
+Token *tk_set_no_len(Token *tk,
                             char *text, off_t start, off_t end, int pos_inc)
 {
     return tk_set(tk, text, (int)strlen(text), start, end, pos_inc);
 }
 
-static INLINE Token *w_tk_set(Token *tk, wchar_t *text, off_t start,
+static Token *w_tk_set(Token *tk, wchar_t *text, off_t start,
                               off_t end, int pos_inc)
 {
     int len = wcstombs(tk->text, text, MAX_WORD_SIZE - 1);
@@ -154,7 +154,7 @@ static TokenStream *cts_new()
 
 #define MBTS(token_stream) ((MultiByteTokenStream *)(token_stream))
 
-static INLINE int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
+static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
 {
     int num_bytes;
     if ((num_bytes = (int)mbrtowc(wchr, s, MB_CUR_MAX, state)) < 0) {

@@ -38,7 +38,7 @@ HashSet *hs_new_ptr(free_ft free_func)
     return hs;
 }
 
-static INLINE void clear(HashSet *hs, bool destroy)
+static void clear(HashSet *hs, bool destroy)
 {
     HashSetEntry *curr, *next = hs->first;
     free_ft do_free = destroy ? hs->free_elem_i : &dummy_free;
@@ -71,7 +71,7 @@ void hs_destroy(HashSet *hs)
     free(hs);
 }
 
-static INLINE void append(HashSet *hs, void *elem)
+static void append(HashSet *hs, void *elem)
 {
     HashSetEntry *entry = FRT_ALLOC(HashSetEntry);
     entry->elem = elem;

@@ -88,8 +88,6 @@
 #define FRT_STATE_ERROR 8
 #define FRT_PARSE_ERROR 9
 #define FRT_MEM_ERROR 10
-#define FRT_INDEX_ERROR 11
-#define FRT_LOCK_ERROR 12
 
 extern const char *const FRT_UNSUPPORTED_ERROR_MSG;
 extern const char *const FRT_EOF_ERROR_MSG;

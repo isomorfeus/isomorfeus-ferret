@@ -574,7 +574,7 @@ extern void frt_os_write_vll(FrtOutStream *os, register frt_u64 num);
  * @param len the length of the string to write
  * @raise FRT_IO_ERROR if there is an error writing to the file-system
  */
-extern FRT_INLINE void frt_os_write_string_len(FrtOutStream *os,
+extern void frt_os_write_string_len(FrtOutStream *os,
                                                const char *str,
                                                int len);
 
@@ -631,7 +631,7 @@ extern FrtInStream *frt_is_clone(FrtInStream *is);
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern FRT_INLINE frt_uchar frt_is_read_byte(FrtInStream *is);
+extern frt_uchar frt_is_read_byte(FrtInStream *is);
 
 /**
  * Read +len+ bytes from FrtInStream +is+ and write them to buffer +buf+
@@ -694,7 +694,7 @@ extern frt_u64 frt_is_read_u64(FrtInStream *is);
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern FRT_INLINE unsigned int frt_is_read_vint(FrtInStream *is);
+extern unsigned int frt_is_read_vint(FrtInStream *is);
 
 /**
  * Skip _cnt_ vints. This is a convenience method used for performance reasons
@@ -706,7 +706,7 @@ extern FRT_INLINE unsigned int frt_is_read_vint(FrtInStream *is);
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern FRT_INLINE void frt_is_skip_vints(FrtInStream *is, register int cnt);
+extern void frt_is_skip_vints(FrtInStream *is, register int cnt);
 
 /**
  * Read a compressed (VINT) unsigned off_t from the FrtInStream.
@@ -717,7 +717,7 @@ extern FRT_INLINE void frt_is_skip_vints(FrtInStream *is, register int cnt);
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern FRT_INLINE off_t frt_is_read_voff_t(FrtInStream *is);
+extern off_t frt_is_read_voff_t(FrtInStream *is);
 
 /**
  * Read a compressed (VINT) unsigned 64bit int from the FrtInStream.
@@ -728,7 +728,7 @@ extern FRT_INLINE off_t frt_is_read_voff_t(FrtInStream *is);
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern FRT_INLINE frt_u64 frt_is_read_vll(FrtInStream *is);
+extern frt_u64 frt_is_read_vll(FrtInStream *is);
 
 /**
  * Read a string from the FrtInStream. A string is an integer +length+ in vint

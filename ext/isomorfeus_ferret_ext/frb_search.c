@@ -235,7 +235,7 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
     return rstr;
 }
 
-static INLINE char *
+static char *
 frb_lzd_load_to_json(LazyDoc *lzd, char **str, char *s, int *slen)
 {
 	int i, j;

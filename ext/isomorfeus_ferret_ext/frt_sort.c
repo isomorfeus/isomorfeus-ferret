@@ -11,7 +11,7 @@
  *
  ***************************************************************************/
 
-static INLINE SortField *sort_field_alloc(Symbol field,
+static SortField *sort_field_alloc(Symbol field,
     SortType type,
     bool reverse,
     int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
@@ -240,7 +240,7 @@ SortField *sort_field_int_new(Symbol field, bool reverse)
 {
     return sort_field_alloc(field, SORT_TYPE_INTEGER, reverse,
                             &sf_int_compare, &sf_int_get_val,
-                            &INTEGER_FIELD_INDEX_CLASS);
+                            &FRT_INTEGER_FIELD_INDEX_CLASS);
 }
 
 /***************************************************************************
@@ -384,7 +384,7 @@ static void sort_field_auto_evaluate(SortField *sf, char *text)
     }
 }
 /*
-static INLINE void set_auto(SortField *sf,
+static void set_auto(SortField *sf,
     SortType type,
     const FieldIndexClass *field_index_class,
     int  (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
@@ -405,7 +405,7 @@ static void sort_field_auto_evaluate(SortField *sf, char *text)
     text_len = (int)strlen(text);
     sscanf(text, "%d%n", &int_val, &scan_len);
     if (scan_len == text_len) {
-        set_auto(sf, SORT_TYPE_INTEGER, &INTEGER_FIELD_INDEX_CLASS,
+        set_auto(sf, SORT_TYPE_INTEGER, &FRT_INTEGER_FIELD_INDEX_CLASS,
                  sf_int_compare, sf_int_get_val);
     } else {
         sscanf(text, "%f%n", &float_val, &scan_len);
@@ -480,7 +480,7 @@ static bool fshq_less_than(const void *hit1, const void *hit2)
     }
 }
 
-static INLINE bool fshq_lt(Sorter *sorter, Hit *hit1, Hit *hit2)
+static bool fshq_lt(Sorter *sorter, Hit *hit1, Hit *hit2)
 {
     Comparator *comp;
     int diff = 0, i;
@@ -539,7 +539,7 @@ Hit *fshq_pq_pop(PriorityQueue *pq)
     }
 }
 
-static INLINE void fshq_pq_up(PriorityQueue *pq)
+static void fshq_pq_up(PriorityQueue *pq)
 {
     Hit **heap = (Hit **)pq->heap;
     Hit *node;

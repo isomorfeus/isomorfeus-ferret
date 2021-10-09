@@ -106,15 +106,15 @@ frb_fi_get_params(VALUE roptions,
     v = rb_hash_aref(roptions, sym_index);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *index = INDEX_NO;
+        *index = FRT_INDEX_NO;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
-        *index = INDEX_YES;
+        *index = FRT_INDEX_YES;
     } else if (v == sym_untokenized) {
-        *index = INDEX_UNTOKENIZED;
+        *index = FRT_INDEX_UNTOKENIZED;
     } else if (v == sym_omit_norms) {
-        *index = INDEX_YES_OMIT_NORMS;
+        *index = FRT_INDEX_YES_OMIT_NORMS;
     } else if (v == sym_untokenized_omit_norms) {
-        *index = INDEX_UNTOKENIZED_OMIT_NORMS;
+        *index = FRT_INDEX_UNTOKENIZED_OMIT_NORMS;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
@@ -178,7 +178,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions, rname;
     FieldInfo *fi;
     StoreValue store = STORE_YES;
-    IndexValue index = INDEX_YES;
+    IndexValue index = FRT_INDEX_YES;
     TermVectorValue term_vector = TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
 
@@ -406,7 +406,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions;
     FieldInfos *fis;
     StoreValue store = STORE_YES;
-    IndexValue index = INDEX_YES;
+    IndexValue index = FRT_INDEX_YES;
     TermVectorValue term_vector = TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
 
@@ -1369,7 +1369,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
             Data_Get_Struct(rval, FieldInfos, fis);
             index_create(store, fis);
         } else {
-            fis = fis_new(STORE_YES, INDEX_YES,
+            fis = fis_new(STORE_YES, FRT_INDEX_YES,
                           TERM_VECTOR_WITH_POSITIONS_OFFSETS);
             index_create(store, fis);
             fis_deref(fis);

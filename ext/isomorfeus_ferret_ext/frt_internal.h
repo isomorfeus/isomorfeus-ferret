@@ -2,20 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define INDEX_ERROR                        FRT_INDEX_ERROR
-#define INDEX_INTERVAL                     FRT_INDEX_INTERVAL
-#define INDEX_NO                           FRT_INDEX_NO
-#define INDEX_UNTOKENIZED                  FRT_INDEX_UNTOKENIZED
-#define INDEX_UNTOKENIZED_OMIT_NORMS       FRT_INDEX_UNTOKENIZED_OMIT_NORMS
-#define INDEX_YES                          FRT_INDEX_YES
-#define INDEX_YES_OMIT_NORMS               FRT_INDEX_YES_OMIT_NORMS
-#define INLINE                             FRT_INLINE
-#define INTEGER_FIELD_INDEX_CLASS          FRT_INTEGER_FIELD_INDEX_CLASS
-#define IO_ERROR                           FRT_IO_ERROR
-#define IS_C99                             FRT_IS_C99
-#define LOCK_ERROR                         FRT_LOCK_ERROR
-#define LOCK_EXT                           FRT_LOCK_EXT
-#define LOCK_PREFIX                        FRT_LOCK_PREFIX
 #define MATCH_VECTOR_INIT_CAPA             FRT_MATCH_VECTOR_INIT_CAPA
 #define MAX                                FRT_MAX
 #define MAX3                               FRT_MAX3

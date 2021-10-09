@@ -44,7 +44,7 @@ void frt_xpush_context(xcontext_t *context)
     context->in_finally = false;
 }
 
-static INLINE void frt_xraise_context(xcontext_t *context,
+static void frt_xraise_context(xcontext_t *context,
                                     volatile int excode,
                                     const char *const msg)
 {

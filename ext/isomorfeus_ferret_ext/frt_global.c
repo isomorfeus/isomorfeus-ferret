@@ -21,22 +21,23 @@ bool  x_abort_on_exception = true;
 bool  x_has_aborted = false;
 FILE *x_exception_stream = NULL;
 
-INLINE int min3(int a, int b, int c)
+// todo: no need for these
+int min3(int a, int b, int c)
 {
     return MIN3(a, b, c);
 }
 
-INLINE int min2(int a, int b)
+int min2(int a, int b)
 {
     return MIN(a, b);
 }
 
-INLINE int max3(int a, int b, int c)
+int max3(int a, int b, int c)
 {
     return MAX3(a, b, c);
 }
 
-INLINE int max2(int a, int b)
+int max2(int a, int b)
 {
     return MAX(a, b);
 }

@@ -289,7 +289,7 @@ extern int frt_h_set_safe(FrtHash *self, const void *key, void *value);
  * value. Be sure to set both the *key* and the *value*
  * @return true if the key was empty, false otherwise
  */
-extern FRT_INLINE bool frt_h_set_ext(FrtHash *self,
+extern bool frt_h_set_ext(FrtHash *self,
                                      const void *key,
                                      FrtHashEntry **he);
 

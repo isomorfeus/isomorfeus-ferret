@@ -25,7 +25,7 @@
  * of the shorter string out of the query string and the index term being
  * compared.
  */
-static INLINE int fuzq_calculate_max_distance(FuzzyQuery *fuzq, int m)
+static int fuzq_calculate_max_distance(FuzzyQuery *fuzq, int m)
 {
     return (int)((1.0 - fuzq->min_sim) * (MIN(fuzq->text_len, m) + fuzq->pre_len));
 }
@@ -48,7 +48,7 @@ static void fuzq_initialize_max_distances(FuzzyQuery *fuzq)
  * Return the cached max-distance value if the word is within the
  * TYPICAL_LONGEST_WORD limit.
  */
-static INLINE int fuzq_get_max_distance(FuzzyQuery *fuzq, int m)
+static int fuzq_get_max_distance(FuzzyQuery *fuzq, int m)
 {
     if (m < TYPICAL_LONGEST_WORD)
         return fuzq->max_distances[m];
@@ -63,7 +63,7 @@ static INLINE int fuzq_get_max_distance(FuzzyQuery *fuzq, int m)
  * @params m the string length of +target+
  * @params n the string length of the query string minus length of the prefix
  */
-static INLINE float fuzq_score_mn(FuzzyQuery *fuzq,
+static float fuzq_score_mn(FuzzyQuery *fuzq,
                                   const char *target,
                                   const int m, const int n)
 {

@@ -16,7 +16,7 @@ typedef struct FrtMemoryPool {
 
 extern FrtMemoryPool *frt_mp_new();
 extern FrtMemoryPool *frt_mp_new_capa(int chunk_size, int init_capa);
-extern FRT_INLINE void *frt_mp_alloc(FrtMemoryPool *mp, int size);
+extern void *frt_mp_alloc(FrtMemoryPool *mp, int size);
 extern void frt_mp_reset(FrtMemoryPool *mp);
 extern void frt_mp_destroy(FrtMemoryPool *mp);
 extern char *frt_mp_strdup(FrtMemoryPool *mp, const char *str);

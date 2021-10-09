@@ -430,7 +430,7 @@ get_rb_token_stream(TokenStream *ts)
     return rts;
 }
 
-static INLINE VALUE
+static VALUE
 get_wrapped_ts(VALUE self, VALUE rstr, TokenStream *ts)
 {
     StringValue(rstr);
@@ -1028,7 +1028,7 @@ frb_stop_filter_init(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-static INLINE void frb_add_mapping_i(TokenStream *mf, VALUE from,
+static void frb_add_mapping_i(TokenStream *mf, VALUE from,
                                      const char *to)
 {
     switch (TYPE(from)) {
@@ -1236,7 +1236,7 @@ frb_get_analyzer(Analyzer *a)
     return self;
 }
 
-INLINE VALUE
+VALUE
 get_rb_ts_from_a(Analyzer *a, VALUE rfield, VALUE rstring)
 {
     TokenStream *ts = a_get_ts(a, frb_field(rfield), rs2s(rstring));

@@ -409,7 +409,7 @@ void
 Init_Directory(void)
 {
     cDirectory = rb_define_class_under(mStore, "Directory", rb_cObject);
-    rb_define_const(cDirectory, "LOCK_PREFIX", rb_str_new2(LOCK_PREFIX));
+    rb_define_const(cDirectory, "LOCK_PREFIX", rb_str_new2(FRT_LOCK_PREFIX));
     rb_define_method(cDirectory, "close", frb_dir_close, 0);
     rb_define_method(cDirectory, "exists?", frb_dir_exists, 1);
     rb_define_method(cDirectory, "touch", frb_dir_touch, 1);

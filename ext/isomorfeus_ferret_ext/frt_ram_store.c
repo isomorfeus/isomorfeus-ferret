@@ -106,7 +106,7 @@ static void ram_each(Store *store,
     for (i = 0; i <= ht->mask; i++) {
         RAMFile *rf = (RAMFile *)ht->table[i].value;
         if (rf) {
-            if (strncmp(rf->name, LOCK_PREFIX, strlen(LOCK_PREFIX)) == 0) {
+            if (strncmp(rf->name, FRT_LOCK_PREFIX, strlen(FRT_LOCK_PREFIX)) == 0) {
                 continue;
             }
             func(rf->name, arg);
@@ -403,7 +403,7 @@ static Lock *ram_open_lock_i(Store *store, const char *lockname)
 {
     Lock *lock = FRT_ALLOC(Lock);
     char lname[100];
-    snprintf(lname, 100, "%s%s.lck", LOCK_PREFIX, lockname);
+    snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
     lock->name = estrdup(lname);
     lock->store = store;
     lock->obtain = &ram_lock_obtain;

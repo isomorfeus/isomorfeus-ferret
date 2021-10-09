@@ -149,7 +149,7 @@ static void integer_handle_term(void *index_ptr,
     }
 }
 
-const FieldIndexClass INTEGER_FIELD_INDEX_CLASS = {
+const FieldIndexClass FRT_INTEGER_FIELD_INDEX_CLASS = {
     "integer",
     &integer_create_index,
     &free,
@@ -158,7 +158,7 @@ const FieldIndexClass INTEGER_FIELD_INDEX_CLASS = {
 
 long get_integer_value(FieldIndex *field_index, long doc_num)
 {
-    if (field_index->klass == &INTEGER_FIELD_INDEX_CLASS && doc_num >= 0) {
+    if (field_index->klass == &FRT_INTEGER_FIELD_INDEX_CLASS && doc_num >= 0) {
         return ((long *)field_index->index)[doc_num];
     }
     return 0l;

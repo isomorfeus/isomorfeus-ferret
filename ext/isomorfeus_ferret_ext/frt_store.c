@@ -108,7 +108,7 @@ OutStream *os_new()
  *
  * @param the OutStream to flush
  */
-INLINE void os_flush(OutStream *os)
+void os_flush(OutStream *os)
 {
     os->m->flush_i(os, os->buf.buf, os->buf.pos);
     os->buf.start += os->buf.pos;
@@ -145,9 +145,9 @@ void os_seek(OutStream *os, off_t new_pos)
  *
  * @param os the OutStream to write to
  * @param b  the byte to write
- * @raise IO_ERROR if there is an IO error writing to the filesystem
+ * @raise FRT_IO_ERROR if there is an IO error writing to the filesystem
  */
-INLINE void os_write_byte(OutStream *os, uchar b)
+void os_write_byte(OutStream *os, uchar b)
 {
     if (os->buf.pos >= FRT_BUFFER_SIZE) {
         os_flush(os);
@@ -201,7 +201,7 @@ InStream *is_new()
  * Refill the InStream's buffer from the store source (filesystem or memory).
  *
  * @param is the InStream to refill
- * @raise IO_ERROR if there is a error reading from the filesystem
+ * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
 static void is_refill(InStream *is)
@@ -238,10 +238,10 @@ static void is_refill(InStream *is)
  *
  * @param is the Instream to read from
  * @return a single unsigned char read from the InStream +is+
- * @raise IO_ERROR if there is a error reading from the filesystem
+ * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-INLINE uchar is_read_byte(InStream *is)
+uchar is_read_byte(InStream *is)
 {
     if (is->buf.pos >= is->buf.len) {
         is_refill(is);
@@ -348,7 +348,7 @@ u64 is_read_u64(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-INLINE unsigned int is_read_vint(InStream *is)
+unsigned int is_read_vint(InStream *is)
 {
     register unsigned int res, b;
     register int shift = 7;
@@ -378,7 +378,7 @@ INLINE unsigned int is_read_vint(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-INLINE off_t is_read_voff_t(InStream *is)
+off_t is_read_voff_t(InStream *is)
 {
     register off_t res, b;
     register int shift = 7;
@@ -408,7 +408,7 @@ INLINE off_t is_read_voff_t(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-INLINE u64 is_read_vll(InStream *is)
+u64 is_read_vll(InStream *is)
 {
     register u64 res, b;
     register int shift = 7;
@@ -437,7 +437,7 @@ INLINE u64 is_read_vll(InStream *is)
     return res;
 }
 
-INLINE void is_skip_vints(InStream *is, register int cnt)
+void is_skip_vints(InStream *is, register int cnt)
 {
     for (; cnt > 0; cnt--) {
         while ((is_read_byte(is) & 0x80) != 0) {
@@ -447,7 +447,7 @@ INLINE void is_skip_vints(InStream *is, register int cnt)
 
 /*
  * FIXME: Not used. Do we need/want this?
-static INLINE void is_read_chars(InStream *is, char *buffer,
+static void is_read_chars(InStream *is, char *buffer,
                           int off, int len)
 {
     int end, i;
@@ -545,7 +545,7 @@ void os_write_u64(OutStream *os, u64 num)
 }
 
 /* optimized to use an unchecked write if there is space */
-INLINE void os_write_vint(OutStream *os, register unsigned int num)
+void os_write_vint(OutStream *os, register unsigned int num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -564,7 +564,7 @@ INLINE void os_write_vint(OutStream *os, register unsigned int num)
 }
 
 /* optimized to use an unchecked write if there is space */
-INLINE void os_write_voff_t(OutStream *os, register off_t num)
+void os_write_voff_t(OutStream *os, register off_t num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -583,7 +583,7 @@ INLINE void os_write_voff_t(OutStream *os, register off_t num)
 }
 
 /* optimized to use an unchecked write if there is space */
-INLINE void os_write_vll(OutStream *os, register u64 num)
+void os_write_vll(OutStream *os, register u64 num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -601,7 +601,7 @@ INLINE void os_write_vll(OutStream *os, register u64 num)
     }
 }
 
-INLINE void os_write_string_len(OutStream *os, const char *str, int len)
+void os_write_string_len(OutStream *os, const char *str, int len)
 {
     os_write_vint(os, len);
     os_write_bytes(os, (uchar *)str, len);
@@ -621,7 +621,7 @@ void os_write_string(OutStream *os, const char *str)
 int file_is_lock(const char *filename)
 {
     int start = (int) strlen(filename) - 4;
-    return ((start > 0) && (strcmp(LOCK_EXT, &filename[start]) == 0));
+    return ((start > 0) && (strcmp(FRT_LOCK_EXT, &filename[start]) == 0));
 }
 
 void is2os_copy_bytes(InStream *is, OutStream *os, int cnt)

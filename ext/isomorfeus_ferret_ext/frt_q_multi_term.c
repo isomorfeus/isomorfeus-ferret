@@ -27,10 +27,10 @@ static bool boosted_term_less_than(const BoostedTerm *bt1, const BoostedTerm *bt
 {
     // if (bt1->boost == bt2->boost) { return (strcmp(bt1->term, bt2->term) < 0); }
     // return (bt1->boost < bt2->boost);
-    if (bt1->boost < bt2->boost) { 
-        return true; 
+    if (bt1->boost < bt2->boost) {
+        return true;
     }
-    if (bt1->boost > bt2->boost) { 
+    if (bt1->boost > bt2->boost) {
         return false;
     }
     return (strcmp(bt1->term, bt2->term) < 0);
@@ -241,7 +241,7 @@ static bool multi_tsc_advance_to(Scorer *self, int target_doc_num)
     return (pq_top(tdew_pq) == NULL) ? false : true;
 }
 
-static INLINE bool multi_tsc_skip_to(Scorer *self, int target_doc_num)
+static bool multi_tsc_skip_to(Scorer *self, int target_doc_num)
 {
     return multi_tsc_advance_to(self, target_doc_num) && multi_tsc_next(self);
 }

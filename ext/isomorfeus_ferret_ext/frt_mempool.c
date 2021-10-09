@@ -22,7 +22,7 @@ MemoryPool *mp_new()
     return mp_new_capa(MP_BUF_SIZE, MP_INIT_CAPA);
 }
 
-INLINE void *mp_alloc(MemoryPool *mp, int size)
+void *mp_alloc(MemoryPool *mp, int size)
 {
     char *p;
     p = mp->curr_buffer + mp->pointer;

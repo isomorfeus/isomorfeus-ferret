@@ -585,7 +585,7 @@ frb_mulmap_alloc(VALUE klass)
 }
 
 /* XXX: Duplication from frb_add_mapping_i in r_analysis.c */
-static INLINE void frb_mulmap_add_mapping_i(MultiMapper *mulmap, VALUE from,
+static void frb_mulmap_add_mapping_i(MultiMapper *mulmap, VALUE from,
                                             const char *to)
 {
     switch (TYPE(from)) {

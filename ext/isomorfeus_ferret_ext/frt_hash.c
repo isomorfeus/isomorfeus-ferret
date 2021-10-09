@@ -56,7 +56,7 @@ typedef HashEntry *(*lookup_ft)(struct Hash *self, register const void *key);
  * @param self the Hash to do the fast lookup in
  * @param the hashkey we are looking for
  */
-static INLINE HashEntry *h_resize_lookup(Hash *self,
+static HashEntry *h_resize_lookup(Hash *self,
                                          register const unsigned long long hash)
 {
     register unsigned long perturb;
@@ -339,7 +339,7 @@ static int h_resize(Hash *self, int min_newsize)
     return 0;
 }
 
-INLINE bool h_set_ext(Hash *self, const void *key, HashEntry **he)
+bool h_set_ext(Hash *self, const void *key, HashEntry **he)
 {
     *he = self->lookup_i(self, key);
     if ((*he)->key == NULL) {
@@ -408,22 +408,22 @@ HashKeyStatus h_has_key(Hash *self, const void *key)
     return FRT_HASH_KEY_EQUAL;
 }
 
-INLINE void *h_get_int(Hash *self, const unsigned long long key)
+void *h_get_int(Hash *self, const unsigned long long key)
 {
     return h_get(self, (const void *)key);
 }
 
-INLINE int h_del_int(Hash *self, const unsigned long long key)
+int h_del_int(Hash *self, const unsigned long long key)
 {
     return h_del(self, (const void *)key);
 }
 
-INLINE void *h_rem_int(Hash *self, const unsigned long long key)
+void *h_rem_int(Hash *self, const unsigned long long key)
 {
     return h_rem(self, (const void *)key, false);
 }
 
-INLINE HashKeyStatus h_set_int(Hash *self,
+HashKeyStatus h_set_int(Hash *self,
                                const unsigned long long key,
                                void *value)
 {
@@ -442,7 +442,7 @@ INLINE HashKeyStatus h_set_int(Hash *self,
     return ret_val;
 }
 
-INLINE int h_set_safe_int(Hash *self, const unsigned long long key, void *value)
+int h_set_safe_int(Hash *self, const unsigned long long key, void *value)
 {
     HashEntry *he;
     if (h_set_ext(self, (const void *)key, &he)) {
@@ -453,7 +453,7 @@ INLINE int h_set_safe_int(Hash *self, const unsigned long long key, void *value)
     return false;
 }
 
-INLINE int h_has_key_int(Hash *self, const unsigned long long key)
+int h_has_key_int(Hash *self, const unsigned long long key)
 {
     return h_has_key(self, (const void *)key);
 }

@@ -67,7 +67,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
     }
 
     if (create) {
-        FieldInfos *fis = fis_new(STORE_YES, INDEX_YES,
+        FieldInfos *fis = fis_new(STORE_YES, FRT_INDEX_YES,
                                   TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         index_create(self->store, fis);
         fis_deref(fis);
@@ -116,7 +116,7 @@ void index_flush(Index *self)
     self->has_writes = false;
 }
 
-INLINE void ensure_writer_open(Index *self)
+void ensure_writer_open(Index *self)
 {
     if (!self->iw) {
         INDEX_CLOSE_READER(self);
@@ -128,7 +128,7 @@ INLINE void ensure_writer_open(Index *self)
     }
 }
 
-INLINE void ensure_reader_open(Index *self)
+void ensure_reader_open(Index *self)
 {
     if (self->ir) {
         if (self->check_latest && !ir_is_latest(self->ir)) {
@@ -144,7 +144,7 @@ INLINE void ensure_reader_open(Index *self)
     self->ir = ir_open(self->store);
 }
 
-INLINE void ensure_searcher_open(Index *self)
+void ensure_searcher_open(Index *self)
 {
     ensure_reader_open(self);
     if (!self->sea) {
@@ -199,7 +199,7 @@ bool index_is_deleted(Index *self, int doc_num)
     return is_del;
 }
 
-static INLINE void index_del_doc_with_key_i(Index *self, Document *doc,
+static void index_del_doc_with_key_i(Index *self, Document *doc,
                                             HashSet *key)
 {
     Query *q;
@@ -237,7 +237,7 @@ static INLINE void index_del_doc_with_key_i(Index *self, Document *doc,
     td_destroy(td);
 }
 
-static INLINE void index_add_doc_i(Index *self, Document *doc)
+static void index_add_doc_i(Index *self, Document *doc)
 {
     if (self->key) {
         index_del_doc_with_key_i(self, doc, self->key);

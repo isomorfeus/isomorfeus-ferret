@@ -27,7 +27,7 @@ extern VALUE cStateError;
 const Config default_config = {
     0x100000,       /* chunk size is 1Mb */
     0x1000000,      /* Max memory used for buffer is 16 Mb */
-    INDEX_INTERVAL, /* index interval */
+    FRT_INDEX_INTERVAL, /* index interval */
     SKIP_INTERVAL,  /* skip interval */
     10,             /* default merge factor */
     10000,          /* max_buffered_docs */
@@ -215,7 +215,7 @@ Hash *co_hash_create()
  *
  ****************************************************************************/
 
-static INLINE void fi_set_store(FieldInfo *fi, int store)
+static void fi_set_store(FieldInfo *fi, int store)
 {
     switch (store) {
         case STORE_NO:
@@ -226,28 +226,28 @@ static INLINE void fi_set_store(FieldInfo *fi, int store)
     }
 }
 
-static INLINE void fi_set_index(FieldInfo *fi, int index)
+static void fi_set_index(FieldInfo *fi, int index)
 {
     switch (index) {
-        case INDEX_NO:
+        case FRT_INDEX_NO:
             break;
-        case INDEX_YES:
+        case FRT_INDEX_YES:
             fi->bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM;
             break;
-        case INDEX_UNTOKENIZED:
+        case FRT_INDEX_UNTOKENIZED:
             fi->bits |= FRT_FI_IS_INDEXED_BM;
             break;
-        case INDEX_YES_OMIT_NORMS:
+        case FRT_INDEX_YES_OMIT_NORMS:
             fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM |
                 FRT_FI_IS_TOKENIZED_BM;
             break;
-        case INDEX_UNTOKENIZED_OMIT_NORMS:
+        case FRT_INDEX_UNTOKENIZED_OMIT_NORMS:
             fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM;
             break;
     }
 }
 
-static INLINE void fi_set_term_vector(FieldInfo *fi, int term_vector)
+static void fi_set_term_vector(FieldInfo *fi, int term_vector)
 {
     switch (term_vector) {
         case TERM_VECTOR_NO:
@@ -271,7 +271,7 @@ static INLINE void fi_set_term_vector(FieldInfo *fi, int term_vector)
 static void fi_check_params(int store, int index, int term_vector)
 {
     (void)store;
-    if ((index == INDEX_NO) && (term_vector != TERM_VECTOR_NO)) {
+    if ((index == FRT_INDEX_NO) && (term_vector != TERM_VECTOR_NO)) {
         rb_raise(rb_eArgError,
               "You can't store the term vectors of an unindexed field");
     }
@@ -861,7 +861,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                     gen_is = store->open_input(store, SEGMENTS_GEN_FILE_NAME);
                 XCATCHALL
                     FRT_HANDLED();
-                    /* TODO:LOG "segments open: IO_ERROR"*/
+                    /* TODO:LOG "segments open: FRT_IO_ERROR"*/
                 XENDTRY
 
                 if (NULL != gen_is) {
@@ -929,7 +929,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             run(store, fsf);
             RETURN_EARLY();
             return;
-        case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
+        case FRT_IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
             FRT_HANDLED();
             /*
             if (gen != sis_current_segment_generation(store)) {
@@ -980,7 +980,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         RETURN_EARLY();
                         RETURN_EARLY();
                         return;
-                    case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
+                    case FRT_IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
                         FRT_HANDLED();
                         /* TODO:LOG "secondary Exception on '" +
                          * prev_seg_file_name + "': " + err2 + "'; will retry"*/
@@ -1869,7 +1869,7 @@ void sfi_close(SegmentFieldIndex *sfi)
  * SegmentTermEnum
  ****************************************************************************/
 
-static INLINE int term_read(char *buf, InStream *is)
+static int term_read(char *buf, InStream *is)
 {
     int start = (int)is_read_vint(is);
     int length = (int)is_read_vint(is);
@@ -2306,7 +2306,7 @@ TermInfosReader *tir_open(Store *store,
     return tir;
 }
 
-static INLINE TermEnum *tir_enum(TermInfosReader *tir)
+static TermEnum *tir_enum(TermInfosReader *tir)
 {
     TermEnum *te;
     if (NULL == (te = (TermEnum *)thread_getspecific(tir->thread_te))) {
@@ -2432,7 +2432,7 @@ TermInfosWriter *tiw_open(Store *store,
     return tiw;
 }
 
-static INLINE void tw_write_term(TermWriter *tw,
+static void tw_write_term(TermWriter *tw,
                                  OutStream *os,
                                  const char *term,
                                  int term_len)
@@ -2508,7 +2508,7 @@ void tiw_add(TermInfosWriter *tiw,
     tw_add(tiw->tis_writer, term, term_len, ti, tiw->skip_interval);
 }
 
-static INLINE void tw_reset(TermWriter *tw)
+static void tw_reset(TermWriter *tw)
 {
     tw->counter = 0;
     tw->last_term = FRT_EMPTY_STRING;
@@ -3941,7 +3941,7 @@ typedef struct SegmentReader {
 #define SR(ir) ((SegmentReader *)(ir))
 #define SR_SIZE(ir) (SR(ir)->fr->size)
 
-static INLINE FieldsReader *sr_fr(SegmentReader *sr)
+static FieldsReader *sr_fr(SegmentReader *sr)
 {
     FieldsReader *fr;
 
@@ -3953,12 +3953,12 @@ static INLINE FieldsReader *sr_fr(SegmentReader *sr)
     return fr;
 }
 
-static INLINE bool sr_is_deleted_i(SegmentReader *sr, int doc_num)
+static bool sr_is_deleted_i(SegmentReader *sr, int doc_num)
 {
     return (NULL != sr->deleted_docs && bv_get(sr->deleted_docs, doc_num));
 }
 
-static INLINE void sr_get_norms_into_i(SegmentReader *sr, int field_num,
+static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
                                        uchar *buf)
 {
     Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
@@ -3977,7 +3977,7 @@ static INLINE void sr_get_norms_into_i(SegmentReader *sr, int field_num,
     }
 }
 
-static INLINE uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
+static uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
 {
     Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
     if (NULL == norm) {                           /* not an indexed field */
@@ -4716,7 +4716,7 @@ IndexReader *mr_open(IndexReader **sub_readers, const int r_cnt)
     IndexReader *ir = mr_new(sub_readers, r_cnt);
     MultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FieldInfos *fis = fis_new(STORE_NO, INDEX_NO, TERM_VECTOR_NO);
+    FieldInfos *fis = fis_new(STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
@@ -5221,7 +5221,7 @@ static void dw_add_posting(MemoryPool *mp,
     }
 }
 
-static INLINE void dw_add_offsets(DocWriter *dw, int pos, off_t start, off_t end)
+static void dw_add_offsets(DocWriter *dw, int pos, off_t start, off_t end)
 {
     if (pos >= dw->offsets_capa) {
         int old_capa = dw->offsets_capa;
@@ -6424,7 +6424,7 @@ static void iw_add_segment(IndexWriter *iw, SegmentReader *sr)
         FieldInfo *fi = sub_fis->fields[j];
         FieldInfo *new_fi = fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
-            new_fi = fi_new(fi->name, STORE_NO, INDEX_NO, TERM_VECTOR_NO);
+            new_fi = fi_new(fi->name, STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO);
             new_fi->bits = fi->bits;
             fis_add_field(fis, new_fi);
         }

@@ -60,8 +60,8 @@ extern FrtExplanation *frt_index_explain(FrtIndex *self, FrtQuery *q, int doc_nu
 extern void frt_index_auto_flush_ir(FrtIndex *self);
 extern void frt_index_auto_flush_iw(FrtIndex *self);
 
-extern FRT_INLINE void frt_ensure_searcher_open(FrtIndex *self);
-extern FRT_INLINE void frt_ensure_reader_open(FrtIndex *self);
-extern FRT_INLINE void frt_ensure_writer_open(FrtIndex *self);
+extern void frt_ensure_searcher_open(FrtIndex *self);
+extern void frt_ensure_reader_open(FrtIndex *self);
+extern void frt_ensure_writer_open(FrtIndex *self);
 
 #endif

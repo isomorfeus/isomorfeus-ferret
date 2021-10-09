@@ -16,12 +16,6 @@
 
 #define FRT_DBL2S "%#.7g"
 
-#if defined(__GNUC__) && !defined(__cplusplus)
-#  define FRT_INLINE
-#else
-#  define FRT_INLINE
-#endif
-
 #if __GNUC__ >= 3
 #  define FRT_ATTR_ALWAYS_INLINE inline __attribute__ ((always_inline))
 #  define FRT_ATTR_MALLOC               __attribute__ ((malloc))
