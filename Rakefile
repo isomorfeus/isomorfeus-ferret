@@ -8,7 +8,7 @@ require 'bundler/setup'
 require 'rake/extensiontask'
 require 'rake/testtask'
 
-Rake::ExtensionTask.new :ferret_ext
+Rake::ExtensionTask.new :isomorfeus_ferret_ext
 
 task :specs do
   system('bundle exec rspec')
@@ -33,9 +33,6 @@ task :push do
   system("git push bitbucket")
 end
 
-task :default => [:compile, :specs]
-
-# 
 desc "Run tests with Valgrind"
 task :valgrind do
   sh "valgrind --suppressions=ferret_valgrind.supp " +
@@ -50,3 +47,5 @@ Rake::TestTask.new("units" => :compile) do |t|
   t.verbose = true
 end
 task :unit => :units
+
+task :default => [:compile, :unit]
