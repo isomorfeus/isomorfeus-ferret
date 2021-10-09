@@ -1,4 +1,4 @@
-#include "ferret.h"
+#include "isomorfeus_ferret.h"
 #include "frt_index.h"
 #include <ruby/st.h>
 
@@ -170,7 +170,7 @@ frb_get_field_info(FieldInfo *fi)
  *  Create a new FieldInfo object with the name +name+ and the properties
  *  specified in +options+. The available options are [:store, :index,
  *  :term_vector, :boost]. See the description of FieldInfo for more
- *  information on these properties. 
+ *  information on these properties.
  */
 static VALUE
 frb_fi_init(int argc, VALUE *argv, VALUE self)
@@ -312,7 +312,7 @@ frb_fi_store_offsets(VALUE self)
  *     fi.has_norms? -> bool
  *
  *  Return true if this field has a norms file. This is the same as calling;
- *    
+ *
  *    fi.indexed? and not fi.omit_norms?
  */
 static VALUE
@@ -395,7 +395,7 @@ frb_get_field_infos(FieldInfos *fis)
 /*
  *  call-seq:
  *     FieldInfos.new(defaults = {}) -> field_infos
- *     
+ *
  *  Create a new FieldInfos object which uses the default values for fields
  *  specified in the +default+ hash parameter. See FieldInfo for available
  *  property values.
@@ -552,7 +552,7 @@ frb_fis_each(VALUE self)
 /*
  *  call-seq:
  *     fis.to_s -> string
- *     
+ *
  *  Return a string representation of the FieldInfos object.
  */
 static VALUE
@@ -568,7 +568,7 @@ frb_fis_to_s(VALUE self)
 /*
  *  call-seq:
  *     fis.size -> int
- *     
+ *
  *  Return the number of fields in the FieldInfos object.
  */
 static VALUE
@@ -577,11 +577,11 @@ frb_fis_size(VALUE self)
     FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
     return INT2FIX(fis->size);
 }
- 
+
 /*
  *  call-seq:
  *     fis.create_index(dir) -> self
- *     
+ *
  *  Create a new index in the directory specified. The directory +dir+ can
  *  either be a string path representing a directory on the file-system or an
  *  actual directory object. Care should be taken when using this method. Any
@@ -605,7 +605,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
     store_deref(store);
     return self;
 }
- 
+
 /*
  *  call-seq:
  *     fis.fields -> symbol array
@@ -727,7 +727,7 @@ frb_te_doc_freq(VALUE self)
  *
  *  Skip to term +target+. This method can skip forwards or backwards. If you
  *  want to skip back to the start, pass the empty string "". That is;
- *  
+ *
  *    term_enum.skip_to("")
  *
  *  Returns the first term greater than or equal to +target+
@@ -744,7 +744,7 @@ frb_te_skip_to(VALUE self, VALUE rterm)
  *     term_enum.each {|term, doc_freq| do_something() } -> term_count
  *
  *  Iterates through all the terms in the field, yielding the term and the
- *  document frequency. 
+ *  document frequency.
  */
 static VALUE
 frb_te_each(VALUE self)
@@ -759,7 +759,7 @@ frb_te_each(VALUE self)
     /* each is being called so there will be no current term */
     rb_ivar_set(self, id_term, Qnil);
 
-    
+
     while (NULL != (term = te->next(te))) {
         term_cnt++;
         RARRAY_PTR(vals)[0] = rb_str_new(term, te->curr_term_len);
@@ -808,14 +808,14 @@ frb_te_set_field(VALUE self, VALUE rfield)
  *  having the method return arrays instead of objects, simply by passing an
  *  argument to the to_json method. For example;
  *
- *    term_enum.to_json() #=> 
+ *    term_enum.to_json() #=>
  *    # [
  *    #   {"term":"apple","frequency":12},
  *    #   {"term":"banana","frequency":2},
  *    #   {"term":"cantaloupe","frequency":12}
  *    # ]
  *
- *    term_enum.to_json(:fast) #=> 
+ *    term_enum.to_json(:fast) #=>
  *    # [
  *    #   ["apple",12],
  *    #   ["banana",2],
@@ -1049,7 +1049,7 @@ frb_tde_each(VALUE self)
  *  method return arrays instead of objects, simply by passing an argument to
  *  the to_json method. For example;
  *
- *    term_doc_enum.to_json() #=> 
+ *    term_doc_enum.to_json() #=>
  *    # [
  *    #   {"document":1,"frequency":12},
  *    #   {"document":11,"frequency":1},
@@ -1057,7 +1057,7 @@ frb_tde_each(VALUE self)
  *    #   {"document":30,"frequency":3}
  *    # ]
  *
- *    term_doc_enum.to_json(:fast) #=> 
+ *    term_doc_enum.to_json(:fast) #=>
  *    # [
  *    #   [1,12],
  *    #   [11,1],
@@ -1327,14 +1327,14 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
             store = open_fs_store(rs2s(rval));
             DEREF(store);
         }
-        
+
         /* Let ruby's garbage collector handle the closing of the store
            if (!close_dir) {
            close_dir = RTEST(rb_hash_aref(roptions, sym_close_dir));
            }
            */
         /* use_compound_file defaults to true */
-        config.use_compound_file = 
+        config.use_compound_file =
             (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse)
             ? false
             : true;
@@ -1492,7 +1492,7 @@ frb_get_doc(VALUE rdoc)
     return doc;
 }
 
-/* 
+/*
  *  call-seq:
  *     iw << document -> iw
  *     iw.add_document(document) -> iw
@@ -2169,7 +2169,7 @@ frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
 /*
  *  call-seq:
  *     index_reader.norms(field) -> string
- *  
+ *
  *  Expert: Returns a string containing the norm values for a field. The
  *  string length will be equal to the number of documents in the index and it
  *  could have null bytes.
@@ -2321,7 +2321,7 @@ frb_ir_num_docs(VALUE self)
     return INT2FIX(ir->num_docs(ir));
 }
 
-/* 
+/*
  *  call-seq:
  *     index_reader.undelete_all -> index_reader
  *
@@ -2711,7 +2711,7 @@ frb_ir_version(VALUE self)
  *  fields and you'd like to speed up the index. The norms file is the file
  *  which contains the boost values for each document for a particular field.
  *
- *  === :term_vector 
+ *  === :term_vector
  *
  *  See TermVector for a description of term-vectors. You can specify whether
  *  or not you would like to store term-vectors. The available options are
@@ -2738,7 +2738,7 @@ frb_ir_version(VALUE self)
  *                  |                         | tokenized its contents.
  *                  |                         |
  *                  | :untokenized            | Make this field searchable but
- *                  |                         | do not tokenize its contents. 
+ *                  |                         | do not tokenize its contents.
  *                  |                         | use this value for fields you
  *                  |                         | wish to sort by.
  *                  |                         |
@@ -2747,7 +2747,7 @@ frb_ir_version(VALUE self)
  *                  |                         | be omitted if you don't boost
  *                  |                         | any fields and you don't need
  *                  |                         | scoring based on field length.
- *                  |                         | 
+ *                  |                         |
  *                  | :untokenized_omit_norms | Same as :untokenized except omit
  *                  |                         | the norms file. Norms files can
  *                  |                         | be omitted if you don't boost
@@ -2773,11 +2773,11 @@ frb_ir_version(VALUE self)
  *                  |                         | set the default boost for a
  *                  |                         | field. This boost value will
  *                  |                         | used for all instances of the
- *                  |                         | field in the index unless 
+ *                  |                         | field in the index unless
  *                  |                         | otherwise specified when you
  *                  |                         | create the field. All values
  *                  |                         | should be positive.
- *                  |                         | 
+ *                  |                         |
  *
  *  == Examples
  *
@@ -2826,7 +2826,7 @@ Init_FieldInfo(void)
 
 /*
  *  Document-class: Ferret::Index::FieldInfos
- *  
+ *
  *  == Summary
  *
  *  The FieldInfos class holds all the field descriptors for an index. It is
@@ -2890,8 +2890,8 @@ Init_FieldInfos(void)
  *  == Summary
  *
  *  The TermEnum object is used to iterate through the terms in a field. To
- *  get a TermEnum you need to use the IndexReader#terms(field) method. 
- *  
+ *  get a TermEnum you need to use the IndexReader#terms(field) method.
+ *
  *  == Example
  *
  *    te = index_reader.terms(:content)
@@ -3128,7 +3128,7 @@ Init_TermVector(void)
  *                        includes memory used by the indexing process, not
  *                        the rest of your ruby application.
  *  term_index_interval:: Default: 128. The skip interval between terms in the
- *                        term dictionary. A smaller value will possibly 
+ *                        term dictionary. A smaller value will possibly
  *                        increase search performance while also increasing
  *                        memory usage and impacting negatively impacting
  *                        indexing performance.
@@ -3222,15 +3222,15 @@ Init_IndexWriter(void)
     rb_define_const(cIndexWriter, "COMMIT_LOCK_NAME",
                     rb_str_new2(COMMIT_LOCK_NAME));
     rb_define_const(cIndexWriter, "DEFAULT_CHUNK_SIZE",
-                    INT2FIX(default_config.chunk_size)); 
+                    INT2FIX(default_config.chunk_size));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_BUFFER_MEMORY",
-                    INT2FIX(default_config.max_buffer_memory)); 
+                    INT2FIX(default_config.max_buffer_memory));
     rb_define_const(cIndexWriter, "DEFAULT_TERM_INDEX_INTERVAL",
                     INT2FIX(default_config.index_interval));
     rb_define_const(cIndexWriter, "DEFAULT_DOC_SKIP_INTERVAL",
                     INT2FIX(default_config.skip_interval));
     rb_define_const(cIndexWriter, "DEFAULT_MERGE_FACTOR",
-                    INT2FIX(default_config.merge_factor)); 
+                    INT2FIX(default_config.merge_factor));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_BUFFERED_DOCS",
                     INT2FIX(default_config.max_buffered_docs));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_MERGE_DOCS",
@@ -3254,12 +3254,12 @@ Init_IndexWriter(void)
     rb_define_method(cIndexWriter, "analyzer=",     frb_iw_set_analyzer, 1);
     rb_define_method(cIndexWriter, "version",       frb_iw_version, 0);
 
-    rb_define_method(cIndexWriter, "chunk_size", 
+    rb_define_method(cIndexWriter, "chunk_size",
                      frb_iw_get_chunk_size, 0);
     rb_define_method(cIndexWriter, "chunk_size=",
                      frb_iw_set_chunk_size, 1);
 
-    rb_define_method(cIndexWriter, "max_buffer_memory", 
+    rb_define_method(cIndexWriter, "max_buffer_memory",
                      frb_iw_get_max_buffer_memory, 0);
     rb_define_method(cIndexWriter, "max_buffer_memory=",
                      frb_iw_set_max_buffer_memory, 1);
@@ -3274,12 +3274,12 @@ Init_IndexWriter(void)
     rb_define_method(cIndexWriter, "doc_skip_interval=",
                      frb_iw_set_skip_interval, 1);
 
-    rb_define_method(cIndexWriter, "merge_factor", 
+    rb_define_method(cIndexWriter, "merge_factor",
                      frb_iw_get_merge_factor, 0);
     rb_define_method(cIndexWriter, "merge_factor=",
                      frb_iw_set_merge_factor, 1);
 
-    rb_define_method(cIndexWriter, "max_buffered_docs", 
+    rb_define_method(cIndexWriter, "max_buffered_docs",
                      frb_iw_get_max_buffered_docs, 0);
     rb_define_method(cIndexWriter, "max_buffered_docs=",
                      frb_iw_set_max_buffered_docs, 1);

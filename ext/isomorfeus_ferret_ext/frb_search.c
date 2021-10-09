@@ -1,4 +1,4 @@
-#include "ferret.h"
+#include "isomorfeus_ferret.h"
 #include <ruby/st.h>
 #include <ctype.h>
 #include "frt_array.h"
@@ -120,10 +120,10 @@ static VALUE sym_filter_proc;
 static VALUE sym_c_filter_proc;
 
 static VALUE sym_excerpt_length;
-static VALUE sym_num_excerpts;  
-static VALUE sym_pre_tag;       
-static VALUE sym_post_tag;      
-static VALUE sym_ellipsis;      
+static VALUE sym_num_excerpts;
+static VALUE sym_pre_tag;
+static VALUE sym_post_tag;
+static VALUE sym_ellipsis;
 
 static Symbol fsym_id;
 
@@ -242,7 +242,7 @@ frb_lzd_load_to_json(LazyDoc *lzd, char **str, char *s, int *slen)
 	int diff = s - *str;
 	int len = diff, l;
 	LazyDocField *f;
-	
+
 	for (i = 0; i < lzd->size; i++) {
 		f = lzd->fields[i];
         /* 3 times length of field to make space for quoted quotes ('"') and
@@ -774,7 +774,7 @@ static void
 frb_bc_free(void *p)
 {
     object_del(p);
-    bc_deref((BooleanClause *)p);  
+    bc_deref((BooleanClause *)p);
 }
 
 static VALUE
@@ -1128,7 +1128,7 @@ frb_rq_init(VALUE self, VALUE rfield, VALUE roptions)
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-    
+
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
     q = rq_new(frb_field(rfield),
                lterm, uterm,
@@ -1180,7 +1180,7 @@ frb_trq_init(VALUE self, VALUE rfield, VALUE roptions)
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-    
+
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
     q = trq_new(frb_field(rfield),
                 lterm, uterm,
@@ -1268,7 +1268,7 @@ frb_phq_add(int argc, VALUE *argv, VALUE self)
             }
         default:
             rb_raise(rb_eArgError, "You can only add a string or an array of "
-                     "strings to a PhraseQuery, not a %s\n", 
+                     "strings to a PhraseQuery, not a %s\n",
                      rs2s(rb_obj_as_string(rterm)));
     }
     return self;
@@ -1378,7 +1378,7 @@ frb_wcq_init(int argc, VALUE *argv, VALUE self)
  *
  *  If a +:prefix_length+ > 0 is specified, a common prefix of that length is
  *  also required.
- *  
+ *
  *  You can also set +:max_terms+ to prevent memory overflow problems. By
  *  default it is set to 512.
  *
@@ -2005,13 +2005,13 @@ frb_f_get_bits(VALUE self, VALUE rindex_reader)
  *  == Examples
  *
  *    f = RangeFilter.new(:date, :lower => "200501", :include_lower => false)
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = RangeFilter.new(:date, :< => "200501")
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = RangeFilter.new(:date, :lower_exclusive => "200501")
  *
  *    f = RangeFilter.new(:date, :lower => "200501", :upper => 200502)
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = RangeFilter.new(:date, :>= => "200501", :<= => 200502)
  */
 static VALUE
@@ -2022,7 +2022,7 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-    
+
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
     f = rfilt_new(frb_field(rfield), lterm, uterm,
                   include_lower, include_upper);
@@ -2051,14 +2051,14 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
  *  == Examples
  *
  *    f = TypedRangeFilter.new(:date, :lower => "0.1", :include_lower => false)
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = TypedRangeFilter.new(:date, :< => "0.1")
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = TypedRangeFilter.new(:date, :lower_exclusive => "0.1")
  *
  *    # Note that you numbers can be strings or actual numbers
  *    f = TypedRangeFilter.new(:date, :lower => "-132.2", :upper => -1.4)
- *    # is equivalent to 
+ *    # is equivalent to
  *    f = TypedRangeFilter.new(:date, :>= => "-132.2", :<= => -1.4)
  */
 static VALUE
@@ -2069,7 +2069,7 @@ frb_trf_init(VALUE self, VALUE rfield, VALUE roptions)
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-    
+
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
     f = trfilt_new(frb_field(rfield), lterm, uterm,
                    include_lower, include_upper);
@@ -2108,7 +2108,7 @@ frb_qf_init(VALUE self, VALUE rquery)
  *
  ****************************************************************************/
 
-static void 
+static void
 frb_sf_free(void *p)
 {
     object_del(p);
@@ -2238,7 +2238,7 @@ frb_sf_get_name(VALUE self)
 /*
  *  call-seq:
  *     sort_field.type -> symbol
- *  
+ *
  *  Return the type of sort. Should be one of; +:auto+, +:integer+, +:float+,
  *  +:string+, +:byte+, +:doc_id+ or +:score+.
  */
@@ -2292,7 +2292,7 @@ frb_sf_to_s(VALUE self)
  *
  ****************************************************************************/
 
-static void 
+static void
 frb_sort_free(void *p)
 {
     Sort *sort = (Sort *)p;
@@ -2300,7 +2300,7 @@ frb_sort_free(void *p)
     sort_destroy(sort);
 }
 
-static void 
+static void
 frb_sort_mark(void *p)
 {
     Sort *sort = (Sort *)p;
@@ -2333,7 +2333,7 @@ frb_parse_sort_str(Sort *sort, char *xsort_str)
     end = &sort_str[len];
 
     s = sort_str;
-    
+
     while ((s < end)
            && (NULL != (comma = strchr(s, ',')) || (NULL != (comma = end)))) {
         bool reverse = false;
@@ -2396,7 +2396,7 @@ frb_sort_add(Sort *sort, VALUE rsf, bool reverse)
  *
  *  Create a new Sort object. If +reverse+ is true, all sort_fields will be
  *  reversed so if any of them are already reversed the  will be turned back
- *  to their natural order again. By default 
+ *  to their natural order again. By default
  */
 static VALUE
 frb_sort_init(int argc, VALUE *argv, VALUE self)
@@ -2408,7 +2408,7 @@ frb_sort_init(int argc, VALUE *argv, VALUE self)
     GET_SORT();
     switch (rb_scan_args(argc, argv, "02", &rfields, &rreverse)) {
         case 2: reverse = RTEST(rreverse);
-        case 1: 
+        case 1:
                 if (TYPE(rfields) == T_ARRAY) {
                     int i;
                     for (i = 0; i < RARRAY_LEN(rfields); i++) {
@@ -2549,7 +2549,7 @@ frb_sea_doc(VALUE self, VALUE rdoc_id)
  *  call-seq:
  *     searcher.max_doc -> number
  *
- *  Returns 1 + the maximum document id in the index. It is the 
+ *  Returns 1 + the maximum document id in the index. It is the
  *  document_id that will be used by the next document added to the index. If
  *  there are no deletions, this number also refers to the number of documents
  *  in the index.
@@ -2567,7 +2567,7 @@ call_filter_proc(int doc_id, float score, Searcher *self, void *arg)
     VALUE val = rb_funcall((VALUE)arg, id_call, 3,
                            INT2FIX(doc_id),
                            rb_float_new((double)score),
-                           object_get(self)); 
+                           object_get(self));
     switch (TYPE(val)) {
         case T_NIL:
         case T_FALSE:
@@ -2604,7 +2604,7 @@ cwfilt_eq(Filter *filt, Filter *o)
 static BitVector *
 cwfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
-    VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir)); 
+    VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
     BitVector *bv;
     Data_Get_Struct(rbv, BitVector, bv);
     REF(bv);
@@ -2686,7 +2686,7 @@ frb_sea_search_internal(Query *query, VALUE roptions, Searcher *sea)
         if (Qnil != (rval = rb_hash_aref(roptions, sym_sort))) {
             if (TYPE(rval) != T_DATA || CLASS_OF(rval) == cSortField) {
                 rval = frb_sort_init(1, &rval, frb_sort_alloc(cSort));
-            } 
+            }
             Data_Get_Struct(rval, Sort, sort);
         }
     }
@@ -2829,7 +2829,7 @@ frb_sea_search_each(int argc, VALUE *argv, VALUE self)
  *  you only want say 50 of them. The other search methods need to look at
  *  every single match to decide which one has the highest score. This search
  *  method just needs to find +:limit+ number of matches before it returns.
- *  
+ *
  *  === Options
  *
  *  :start_doc::    Default: 0. The start document to start the search from.
@@ -2990,7 +2990,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
             ellipsis = rs2s(rb_obj_as_string(v));
         }
     }
-    
+
     if ((excerpts = searcher_highlight(sea,
                                        query,
                                        FIX2INT(rdoc_id),
@@ -3311,7 +3311,7 @@ Init_Query(void)
  *
  *    # untokenized fields can also be searched with this query;
  *    query = TermQuery.new(:title, "Shawshank Redemption")
- *  
+ *
  *  Notice the all lowercase term Rails. This is important as most analyzers will
  *  downcase all text added to the index. The title in this case was not
  *  tokenized so the case would have been left as is.
@@ -3544,7 +3544,7 @@ Init_TypedRangeQuery(void)
  *
  *  PhraseQuery matches phrases like "the quick brown fox". Most people are
  *  familiar with phrase queries having used them in most internet search
- *  engines. 
+ *  engines.
  *
  *  === Slop
  *
@@ -3658,7 +3658,7 @@ Init_PrefixQuery(void)
  *
  *  WildcardQuery is a simple pattern matching query. There are two wild-card
  *  characters.
- *  
+ *
  *  * "*" which matches 0 or more characters
  *  * "?" which matches a single character
  *
@@ -3686,7 +3686,7 @@ Init_WildcardQuery(void)
     rb_define_method(cWildcardQuery, "initialize", frb_wcq_init, -1);
 }
 
-/* 
+/*
  *  Document-class: Ferret::Search::FuzzyQuery
  *
  *  == Summary
@@ -3975,7 +3975,7 @@ Init_SpanNearQuery(void)
  *                                  |__1__^
  *    # doesn't match => "brown fast _____ fox"
  *    #  not in order       ^_____2____|
- *    
+ *
  *  == NOTE
  *
  *  SpanOrQuery only works with other SpanQueries.
@@ -3999,7 +3999,7 @@ Init_SpanOrQuery(void)
  *  SpanNotQuery is like a BooleanQuery with a +:must_not+ clause. The
  *  difference being that the resulting query can be used in another
  *  SpanQuery.
- *    
+ *
  *  == Example
  *
  *  Let's say you wanted to search for all documents with the term "rails"
@@ -4120,7 +4120,7 @@ Init_TypedRangeFilter(void)
  *  is that Filter results are cached so if you have one query that is often
  *  added to other queries you may want to use a QueryFilter for performance
  *  reasons.
- *  
+ *
  *  == Example
  *
  *  Let's say you have a field +:approved+ which you set to yes when a
@@ -4251,7 +4251,7 @@ Init_SortField(void)
 
     rb_define_const(cSortField, "DOC_ID",
                     Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free, 
+                                     &frb_deref_free,
                                      (SortField *)&SORT_FIELD_DOC));
 
     oSORT_FIELD_DOC = rb_const_get(cSortField, rb_intern("DOC_ID"));
@@ -4259,7 +4259,7 @@ Init_SortField(void)
 
     rb_define_const(cSortField, "DOC_ID_REV",
                     Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free, 
+                                     &frb_deref_free,
                                      (SortField *)&SORT_FIELD_DOC_REV));
     object_add((SortField *)&SORT_FIELD_DOC_REV,
                rb_const_get(cSortField, rb_intern("DOC_ID_REV")));
@@ -4346,10 +4346,10 @@ Init_Searcher(void)
     sym_sort            = ID2SYM(rb_intern("sort"));
 
     sym_excerpt_length  = ID2SYM(rb_intern("excerpt_length"));
-    sym_num_excerpts    = ID2SYM(rb_intern("num_excerpts"));  
-    sym_pre_tag         = ID2SYM(rb_intern("pre_tag"));       
-    sym_post_tag        = ID2SYM(rb_intern("post_tag"));      
-    sym_ellipsis        = ID2SYM(rb_intern("ellipsis"));      
+    sym_num_excerpts    = ID2SYM(rb_intern("num_excerpts"));
+    sym_pre_tag         = ID2SYM(rb_intern("pre_tag"));
+    sym_post_tag        = ID2SYM(rb_intern("post_tag"));
+    sym_ellipsis        = ID2SYM(rb_intern("ellipsis"));
 
     /* Searcher */
     cSearcher = rb_define_class_under(mSearch, "Searcher", rb_cObject);

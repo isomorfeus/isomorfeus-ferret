@@ -1,4 +1,4 @@
-#include "ferret.h"
+#include "isomorfeus_ferret.h"
 #include "frt_store.h"
 
 static ID id_ref_cnt;
@@ -310,7 +310,7 @@ frb_dir_make_lock(VALUE self, VALUE rlock_name)
  *  dir:: Directory to load into memory
  */
 static VALUE
-frb_ramdir_init(int argc, VALUE *argv, VALUE self) 
+frb_ramdir_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rdir;
     Store *store;
@@ -350,7 +350,7 @@ frb_ramdir_init(int argc, VALUE *argv, VALUE self)
  *           deleted
  */
 static VALUE
-frb_fsdir_new(int argc, VALUE *argv, VALUE klass) 
+frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
 {
     VALUE self, rpath, rcreate;
     Store *store;
@@ -393,11 +393,11 @@ frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
  *  A Directory is an object which is used to access the index storage.
  *  Ruby's IO API is not used so that we can use different storage
  *  mechanisms to store the index. Some examples are;
- *  
+ *
  *  * File system based storage (currently implemented as FSDirectory)
  *  * RAM based storage (currently implemented as RAMDirectory)
  *  * Database based storage
- * 
+ *
  *  NOTE: Once a file has been written and closed, it can no longer be
  *  modified. To make any changes to the file it must be deleted and
  *  rewritten. For this reason, the method to open a file for writing is
@@ -423,21 +423,21 @@ Init_Directory(void)
 /*
  *  Document-class: Ferret::Store::Lock
  *
- *  A Lock is used to lock a data source so that not more than one 
+ *  A Lock is used to lock a data source so that not more than one
  *  output stream can access a data source at one time. It is possible
  *  that locks could be disabled. For example a read only index stored
  *  on a CDROM would have no need for a lock.
- * 
+ *
  *  You can use a lock in two ways. Firstly:
- * 
+ *
  *    write_lock = @directory.make_lock(LOCK_NAME)
  *    write_lock.obtain(WRITE_LOCK_TIME_OUT)
  *      ... # Do your file modifications # ...
  *    write_lock.release()
- * 
+ *
  *  Alternatively you could use the while locked method. This ensures that
  *  the lock will be released once processing has finished.
- * 
+ *
  *    write_lock = @directory.make_lock(LOCK_NAME)
  *    write_lock.while_locked(WRITE_LOCK_TIME_OUT) do
  *      ... # Do your file modifications # ...
@@ -497,7 +497,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  Document-module: Ferret::Store
  *
  *  The Store module contains all the classes required to handle the storing
- *  of an index. 
+ *  of an index.
  *
  *  NOTE: You can currently store an index on a file-system or in memory. If
  *  you want to add a different type of Directory, like a database Directory

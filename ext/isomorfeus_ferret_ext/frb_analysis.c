@@ -2,7 +2,7 @@
 #include <ruby/re.h>
 #include <locale.h>
 #include <ruby/st.h>
-#include "ferret.h"
+#include "isomorfeus_ferret.h"
 #include "frt_lang.h"
 #include "frt_analysis.h"
 
@@ -171,13 +171,13 @@ frb_set_token(Token *tk, VALUE rt)
  *  when necessary.
  *
  *  text::       the main text for the token.
- *  start::      the start offset of the token in bytes. 
- *  end::        the end offset of the token in bytes. 
+ *  start::      the start offset of the token in bytes.
+ *  end::        the end offset of the token in bytes.
  *  pos_inc::    the position increment of a token. See above.
  *  return::     a newly created and assigned Token object
  */
 static VALUE
-frb_token_init(int argc, VALUE *argv, VALUE self) 
+frb_token_init(int argc, VALUE *argv, VALUE self)
 {
     RToken *token;
     VALUE rtext, rstart, rend, rpos_inc, rtype;
@@ -200,7 +200,7 @@ frb_token_init(int argc, VALUE *argv, VALUE self)
  *
  *  Used to compare two tokens. Token is extended by Comparable so you can
  *  also use +<+, +>+, +<=+, +>=+ etc. to compare tokens.
- *  
+ *
  *  Tokens are sorted by the position in the text at which they occur, ie
  *  the start offset. If two tokens have the same start offset, (see
  *  pos_inc=) then, they are sorted by the end offset and then
@@ -337,25 +337,25 @@ frb_token_set_end_offset(VALUE self, VALUE rend)
  *  Set the position increment.  This determines the position of this token
  *  relative to the previous Token in a TokenStream, used in phrase
  *  searching.
- * 
+ *
  *  The default value is 1.
- * 
+ *
  *  Some common uses for this are:
- * 
+ *
  *  * Set it to zero to put multiple terms in the same position.  This is
  *    useful if, e.g., a word has multiple stems.  Searches for phrases
  *    including either stem will match.  In this case, all but the first
  *    stem's increment should be set to zero: the increment of the first
  *    instance should be one.  Repeating a token with an increment of zero
  *    can also be used to boost the scores of matches on that token.
- * 
+ *
  *  * Set it to values greater than one to inhibit exact phrase matches.
  *    If, for example, one does not want phrases to match across removed
  *    stop words, then one could build a stop word filter that removes stop
  *    words and also sets the increment to the number of stop words removed
  *    before each non-stop word.  Then exact phrase queries will only match
  *    when the terms occur with no intervening stop words.
- *  
+ *
  */
 static VALUE
 frb_token_set_pos_inc(VALUE self, VALUE rpos_inc)
@@ -453,11 +453,11 @@ get_wrapped_ts(VALUE self, VALUE rstr, TokenStream *ts)
 static VALUE
 frb_ts_set_text(VALUE self, VALUE rtext)
 {
-    TokenStream *ts; 
+    TokenStream *ts;
     Data_Get_Struct(self, TokenStream, ts);
     StringValue(rtext);
     ts->reset(ts, rs2s(rtext));
-    
+
     /* prevent garbage collection */
     rb_ivar_set(self, id_text, rtext);
 
@@ -474,13 +474,13 @@ static VALUE
 frb_ts_get_text(VALUE self)
 {
     VALUE rtext = Qnil;
-    TokenStream *ts; 
+    TokenStream *ts;
     Data_Get_Struct(self, TokenStream, ts);
     if ((rtext = object_get(&ts->text)) == Qnil) {
         if (ts->text) {
             rtext = rb_str_new2(ts->text);
             object_set(&ts->text, rtext);
-        } 
+        }
     }
     return rtext;
 }
@@ -580,7 +580,7 @@ cwrts_clone_i(TokenStream *orig_ts)
 }
 
 static TokenStream *
-frb_get_cwrapped_rts(VALUE rts) 
+frb_get_cwrapped_rts(VALUE rts)
 {
     TokenStream *ts;
     if (frb_is_cclass(rts) && DATA_PTR(rts)) {
@@ -627,7 +627,7 @@ typedef struct RegExpTokenStream {
     VALUE rtext;
     VALUE regex;
     VALUE proc;
-    long   curr_ind;  
+    long   curr_ind;
 } RegExpTokenStream;
 
 static void
@@ -808,7 +808,7 @@ rets_new(VALUE rtext, VALUE regex, VALUE proc)
  *  regexp:: regular expression used to recognize tokens in the input
  */
 static VALUE
-frb_rets_init(int argc, VALUE *argv, VALUE self) 
+frb_rets_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rtext, regex, proc;
     TokenStream *ts;
@@ -836,10 +836,10 @@ lower = (argc ? RTEST(rlower) : dflt)
  *  call-seq:
  *     AsciiLetterTokenizer.new() -> tokenizer
  *
- *  Create a new AsciiLetterTokenizer 
+ *  Create a new AsciiLetterTokenizer
  */
 static VALUE
-frb_a_letter_tokenizer_init(VALUE self, VALUE rstr) 
+frb_a_letter_tokenizer_init(VALUE self, VALUE rstr)
 {
     return get_wrapped_ts(self, rstr, letter_tokenizer_new());
 }
@@ -854,7 +854,7 @@ frb_a_letter_tokenizer_init(VALUE self, VALUE rstr)
  *  lower:: set to false if you don't wish to downcase tokens
  */
 static VALUE
-frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) 
+frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
@@ -867,10 +867,10 @@ frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
  *  call-seq:
  *     AsciiWhiteSpaceTokenizer.new() -> tokenizer
  *
- *  Create a new AsciiWhiteSpaceTokenizer 
+ *  Create a new AsciiWhiteSpaceTokenizer
  */
 static VALUE
-frb_a_whitespace_tokenizer_init(VALUE self, VALUE rstr) 
+frb_a_whitespace_tokenizer_init(VALUE self, VALUE rstr)
 {
     return get_wrapped_ts(self, rstr, whitespace_tokenizer_new());
 }
@@ -885,7 +885,7 @@ frb_a_whitespace_tokenizer_init(VALUE self, VALUE rstr)
  *  lower:: set to false if you don't wish to downcase tokens
  */
 static VALUE
-frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) 
+frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
@@ -898,10 +898,10 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
  *  call-seq:
  *     AsciiStandardTokenizer.new() -> tokenizer
  *
- *  Create a new AsciiStandardTokenizer 
+ *  Create a new AsciiStandardTokenizer
  */
 static VALUE
-frb_a_standard_tokenizer_init(VALUE self, VALUE rstr) 
+frb_a_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
     return get_wrapped_ts(self, rstr, standard_tokenizer_new());
 }
@@ -916,7 +916,7 @@ frb_a_standard_tokenizer_init(VALUE self, VALUE rstr)
  *  lower:: set to false if you don't wish to downcase tokens
  */
 static VALUE
-frb_standard_tokenizer_init(VALUE self, VALUE rstr) 
+frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
@@ -929,7 +929,7 @@ frb_standard_tokenizer_init(VALUE self, VALUE rstr)
  ****************************************************************************/
 
 
-/* 
+/*
  *  call-seq:
  *     AsciiLowerCaseFilter.new(token_stream) -> token_stream
  *
@@ -938,7 +938,7 @@ frb_standard_tokenizer_init(VALUE self, VALUE rstr)
  *  LowerCaseFilter.
  */
 static VALUE
-frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts) 
+frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
     TokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
     ts = lowercase_filter_new(ts);
@@ -949,7 +949,7 @@ frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts)
     return self;
 }
 
-/* 
+/*
  *  call-seq:
  *     LowerCaseFilter.new(token_stream) -> token_stream
  *
@@ -957,7 +957,7 @@ frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts)
  *  lowercase based on the current locale.
  */
 static VALUE
-frb_lowercase_filter_init(VALUE self, VALUE rsub_ts) 
+frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
     TokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
@@ -971,7 +971,7 @@ frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
     return self;
 }
 
-/* 
+/*
  *  call-seq:
  *     HyphenFilter.new(token_stream) -> token_stream
  *
@@ -982,7 +982,7 @@ frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
  *  used by default by the StandardAnalyzer.
  */
 static VALUE
-frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) 
+frb_hyphen_filter_init(VALUE self, VALUE rsub_ts)
 {
     TokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
     ts = hyphen_filter_new(ts);
@@ -993,7 +993,7 @@ frb_hyphen_filter_init(VALUE self, VALUE rsub_ts)
     return self;
 }
 
-/* 
+/*
  *  call-seq:
  *     StopFilter.new(token_stream) -> token_stream
  *     StopFilter.new(token_stream, ["the", "and", "it"]) -> token_stream
@@ -1007,7 +1007,7 @@ frb_hyphen_filter_init(VALUE self, VALUE rsub_ts)
  *                 Ferret::Analysis contains a number of stop-word lists.
  */
 static VALUE
-frb_stop_filter_init(int argc, VALUE *argv, VALUE self) 
+frb_stop_filter_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rsub_ts, rstop_words;
     TokenStream *ts;
@@ -1080,7 +1080,7 @@ static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg)
 }
 
 
-/* 
+/*
  *  call-seq:
  *     MappingFilter.new(token_stream, mapping) -> token_stream
  *
@@ -1105,7 +1105,7 @@ static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg)
  *                              })
  */
 static VALUE
-frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) 
+frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
 {
     TokenStream *ts;
     ts = frb_get_cwrapped_rts(rsub_ts);
@@ -1119,7 +1119,7 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
     return self;
 }
 
-/* 
+/*
  *  call-seq:
  *     StemFilter.new(token_stream) -> token_stream
  *     StemFilter.new(token_stream,
@@ -1135,7 +1135,7 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
  *  encoding::     The encoding of the data (default: "UTF-8")
  */
 static VALUE
-frb_stem_filter_init(int argc, VALUE *argv, VALUE self) 
+frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rsub_ts, ralgorithm, rcharenc;
     const char *algorithm = "english";
@@ -1192,7 +1192,7 @@ cwa_get_ts(Analyzer *a, Symbol field, char *text)
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
                            rb_str_new_cstr(field), rb_str_new_cstr(text));
     return frb_get_cwrapped_rts(rts);
-} 
+}
 
 Analyzer *
 frb_get_cwrapped_analyzer(VALUE ranalyzer)
@@ -1463,7 +1463,7 @@ frb_pfa_mark(void *p)
 
 /*** PerFieldAnalyzer ***/
 
-/* 
+/*
  *  call-seq:
  *     PerFieldAnalyzer.new(default_analyzer) -> analyzer
  *
@@ -1483,7 +1483,7 @@ frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer)
     return self;
 }
 
-/* 
+/*
  *  call-seq:
  *     per_field_analyzer.add_field(field_name, default_analyzer) -> self
  *     per_field_analyzer[field_name] = default_analyzer -> self
@@ -1509,9 +1509,9 @@ frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
  *  call-seq:
  *     analyzer.token_stream(field_name, input) -> token_stream
  *
- *  Create a new TokenStream to tokenize +input+. The TokenStream created will 
+ *  Create a new TokenStream to tokenize +input+. The TokenStream created will
  *  also depend on the +field_name+ in the case of the PerFieldAnalyzer.
- *  
+ *
  *  field_name:: name of the field to be tokenized
  *  input::      data from the field to be tokenized
  */
@@ -1551,7 +1551,7 @@ re_analyzer_destroy_i(Analyzer *a)
     free(a);
 }
 
-/* 
+/*
  *  call-seq:
  *     RegExpAnalyzer.new(reg_exp, lower = true) -> analyzer
  *
@@ -1667,12 +1667,12 @@ static VALUE frb_set_locale(VALUE self, VALUE locale)
  *  A Token is an occurrence of a term from the text of a field.  It consists
  *  of a term's text and the start and end offset of the term in the text of
  *  the field;
- * 
+ *
  *  The start and end offsets permit applications to re-associate a token with
  *  its source text, e.g., to display highlighted query terms in a document
  *  browser, or to show matching text fragments in a KWIC (KeyWord In Context)
  *  display, etc.
- * 
+ *
  *  === Attributes
  *
  *  text::  the terms text which may have been modified by a Token Filter or
@@ -1711,7 +1711,7 @@ static void Init_Token(void)
  *
  *  A TokenStream enumerates the sequence of tokens, either from
  *  fields of a document or from query text.
- * 
+ *
  *  This is an abstract class.  Concrete subclasses are:
  *
  *  Tokenizer::   a TokenStream whose input is a string
@@ -1919,7 +1919,7 @@ static void Init_RegExpTokenizer(void)
  *  === Example
  *
  *    ["One", "TWO", "three", "RÉSUMÉ"] => ["one", "two", "three", "rÉsumÉ"]
- *    
+ *
  */
 static void Init_AsciiLowerCaseFilter(void)
 {
@@ -1942,7 +1942,7 @@ static void Init_AsciiLowerCaseFilter(void)
  *  === Example
  *
  *    ["One", "TWO", "three", "RÉSUMÉ"] => ["one", "two", "three", "résumé"]
- *    
+ *
  */
 static void Init_LowerCaseFilter(void)
 {
@@ -1967,7 +1967,7 @@ static void Init_LowerCaseFilter(void)
  *  === Example
  *
  *    ["e-mail", "set-up"] => ["email", "e", "mail", "setup", "set", "up"]
- *    
+ *
  */
 static void Init_HyphenFilter(void)
 {
@@ -2052,7 +2052,7 @@ static void Init_StopFilter(void)
                      frb_stop_filter_init, -1);
 }
 
-/* 
+/*
  *  Document-class: Ferret::Analysis::StemFilter
  *
  *  == Summary
@@ -2062,12 +2062,12 @@ static void Init_StopFilter(void)
  *  be in lower case, so you will need to use LowerCaseFilter or lowercasing
  *  Tokenizer further down the Tokenizer chain in order for this to work
  *  properly!
- *  
+ *
  *  === Available algorithms and encodings
  *
  *    Algorithm       Algorithm Pseudonyms       Encoding
  *    ----------------------------------------------------------------
- *     "danish",     | "da", "dan"              | "ISO_8859_1", "UTF_8"  
+ *     "danish",     | "da", "dan"              | "ISO_8859_1", "UTF_8"
  *     "dutch",      | "dut", "nld"             | "ISO_8859_1", "UTF_8"
  *     "english",    | "en", "eng"              | "ISO_8859_1", "UTF_8"
  *     "finnish",    | "fi", "fin"              | "ISO_8859_1", "UTF_8"
@@ -2135,14 +2135,14 @@ static void Init_StemFilter(void)
  *
  *  An Analyzer builds TokenStreams, which analyze text.  It thus represents
  *  a policy for extracting index terms from text.
- * 
+ *
  *  Typical implementations first build a Tokenizer, which breaks the stream
  *  of characters from the Reader into raw Tokens. One or more TokenFilters
  *  may then be applied to the output of the Tokenizer.
- * 
+ *
  *  The default Analyzer just creates a LowerCaseTokenizer which converts
  *  all text to lowercase tokens. See LowerCaseTokenizer for more details.
- *  
+ *
  *  === Example
  *
  *  To create your own custom Analyzer you simply need to implement a
@@ -2468,7 +2468,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  == Classes
  *
  *  === Analyzer
- *  
+ *
  *  Analyzers handle all of your tokenizing needs. You pass an Analyzer to the
  *  indexing class when you create it and it will create the TokenStreams
  *  necessary to tokenize the fields in the documents. Most of the time you
@@ -2485,7 +2485,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  as you like but they always need to finish with a Tokenizer.
  *
  *  === Token
- *  
+ *
  *  A Token is a single term from a document field. A token contains the text
  *  representing the term as well as the start and end offset of the token.
  *  The start and end offset will represent the token as it appears in the

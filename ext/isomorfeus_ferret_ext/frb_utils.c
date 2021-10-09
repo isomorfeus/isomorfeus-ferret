@@ -1,4 +1,4 @@
-#include "ferret.h"
+#include "isomorfeus_ferret.h"
 #include "frt_bitvector.h"
 #include "frt_multimapper.h"
 #include <ruby/st.h>
@@ -41,10 +41,10 @@ frb_get_bv(BitVector *bv)
 /*
  *  call-seq:
  *     BitVector.new() -> new_bit_vector
- *  
+ *
  *  Returns a new empty bit vector object
  */
-static VALUE 
+static VALUE
 frb_bv_init(VALUE self)
 {
     return self;
@@ -53,8 +53,8 @@ frb_bv_init(VALUE self)
 /*
  *  call-seq:
  *     bv[i] = bool  -> bool
- *  
- *  Set the bit and _i_ to *val* (+true+ or 
+ *
+ *  Set the bit and _i_ to *val* (+true+ or
  *  +false+).
  */
 VALUE
@@ -79,7 +79,7 @@ frb_bv_set(VALUE self, VALUE rindex, VALUE rstate)
 /*
  *  call-seq:
  *     bv.set(i) -> self
- *  
+ *
  *  Set the bit at _i_ to *on* (+true+)
  */
 VALUE
@@ -92,7 +92,7 @@ frb_bv_set_on(VALUE self, VALUE rindex)
 /*
  *  call-seq:
  *     bv.unset(i) -> self
- *  
+ *
  *  Set the bit at _i_ to *off* (+false+)
  */
 VALUE
@@ -106,7 +106,7 @@ frb_bv_set_off(VALUE self, VALUE rindex)
  *  call-seq:
  *     bv.get(i) -> bool
  *     bv[i]     -> bool
- *  
+ *
  *  Get the bit value at _i_
  */
 VALUE
@@ -125,7 +125,7 @@ frb_bv_get(VALUE self, VALUE rindex)
 /*
  *  call-seq:
  *     bv.count -> bit_count
- *  
+ *
  *  Count the number of bits set in the bit vector. If the bit vector has been
  *  negated using +#not+ then count the number of unset bits
  *  instead.
@@ -141,7 +141,7 @@ frb_bv_count(VALUE self)
 /*
  *  call-seq:
  *     bv.clear -> self
- *  
+ *
  *  Clears all set bits in the bit vector. Negated bit vectors will still have
  *  all bits set to *off*.
  */
@@ -160,7 +160,7 @@ frb_bv_clear(VALUE self)
  *     bv1 == bv2    -> bool
  *     bv1 != bv2    -> bool
  *     bv1.eql(bv2)  -> bool
- *  
+ *
  *  Compares two bit vectors and returns true if both bit vectors have the same
  *  bits set.
  */
@@ -176,7 +176,7 @@ frb_bv_eql(VALUE self, VALUE other)
 /*
  *  call-seq:
  *     bv.hash -> int
- *  
+ *
  *  Used to store bit vectors in Hashes. Especially useful if you want to
  *  cache them.
  */
@@ -192,7 +192,7 @@ frb_bv_hash(VALUE self)
  *  call-seq:
  *     bv1 & bv2    -> anded_bv
  *     bv1.and(bv2) -> anded_bv
- *  
+ *
  *  Perform a boolean _and_ operation on +bv1+ and
  *  +bv2+
  */
@@ -208,7 +208,7 @@ frb_bv_and(VALUE self, VALUE other)
 /*
  *  call-seq:
  *     bv1.and!(bv2) -> self
- *  
+ *
  *  Perform a boolean _and_ operation on +bv1+ and
  *  +bv2+ in place on +bv1+
  */
@@ -226,7 +226,7 @@ frb_bv_and_x(VALUE self, VALUE other)
  *  call-seq:
  *     bv1 | bv2   -> ored_bv
  *     bv1.or(bv2) -> ored_bv
- *  
+ *
  *  Perform a boolean _or_ operation on +bv1+ and
  *  +bv2+
  */
@@ -242,7 +242,7 @@ frb_bv_or(VALUE self, VALUE other)
 /*
  *  call-seq:
  *     bv1.or!(bv2) -> self
- *  
+ *
  *  Perform a boolean _or_ operation on +bv1+ and
  *  +bv2+ in place on +bv1+
  */
@@ -260,7 +260,7 @@ frb_bv_or_x(VALUE self, VALUE other)
  *  call-seq:
  *     bv1 ^ bv2    -> xored_bv
  *     bv1.xor(bv2) -> xored_bv
- *  
+ *
  *  Perform a boolean _xor_ operation on +bv1+ and
  *  +bv2+
  */
@@ -276,7 +276,7 @@ frb_bv_xor(VALUE self, VALUE other)
 /*
  *  call-seq:
  *     bv1.xor!(bv2) -> self
- *  
+ *
  *  Perform a boolean _xor_ operation on +bv1+ and
  *  +bv2+ in place on +bv1+
  */
@@ -294,7 +294,7 @@ frb_bv_xor_x(VALUE self, VALUE other)
  *  call-seq:
  *     ~bv -> bv
  *     bv.not -> bv
- *  
+ *
  *  Perform a boolean _not_ operation on +bv+
  *  */
 VALUE
@@ -308,7 +308,7 @@ frb_bv_not(VALUE self)
 /*
  *  call-seq:
  *     bv.not! -> self
- *  
+ *
  *  Perform a boolean _not_ operation on +bv+ in-place
  */
 VALUE
@@ -323,7 +323,7 @@ frb_bv_not_x(VALUE self)
 /*
  *  call-seq:
  *     bv.reset_scan -> self
- *  
+ *
  *  Resets the BitVector ready for scanning. You should call this method
  *  before calling +#next+ or +#next_unset+. It isn't
  *  necessary for the other scan methods or for the +#each+ method.
@@ -340,7 +340,7 @@ frb_bv_reset_scan(VALUE self)
 /*
  *  call-seq:
  *     bv.next -> bit_num
- *  
+ *
  *  Returns the next set bit in the bit vector scanning from low order to high
  *  order. You should call +#reset_scan+ before calling this method
  *  if you want to scan from the beginning. It is automatically reset when you
@@ -357,7 +357,7 @@ frb_bv_next(VALUE self)
 /*
  *  call-seq:
  *     bv.next_unset -> bit_num
- *  
+ *
  *  Returns the next unset bit in the bit vector scanning from low order to
  *  high order. This method should only be called on bit vectors which have
  *  been flipped (negated). You should call +#reset_scan+ before
@@ -375,7 +375,7 @@ frb_bv_next_unset(VALUE self)
 /*
  *  call-seq:
  *     bv.next_from(from) -> bit_num
- *  
+ *
  *  Returns the next set bit in the bit vector scanning from low order to
  *  high order and starting at +from+. The scan is inclusive so if
  *  +from+ is equal to 10 and +bv[10]+ is set it will
@@ -397,7 +397,7 @@ frb_bv_next_from(VALUE self, VALUE rfrom)
 /*
  *  call-seq:
  *     bv.next_unset_from(from) -> bit_num
- *  
+ *
  *  Returns the next unset bit in the bit vector scanning from low order to
  *  high order and starting at +from+. The scan is inclusive so if
  *  +from+ is equal to 10 and +bv[10]+ is unset it will
@@ -419,7 +419,7 @@ frb_bv_next_unset_from(VALUE self, VALUE rfrom)
 /*
  *  call-seq:
  *     bv.each { |bit_num| }
- *  
+ *
  *  Iterate through all the set bits in the bit vector yielding each one in
  *  order
  */
@@ -446,7 +446,7 @@ frb_bv_each(VALUE self)
 /*
  *  call-seq:
  *     bv.to_a
- *  
+ *
  *  Iterate through all the set bits in the bit vector adding the index of
  *  each set bit to an array. This is useful if you want to perform array
  *  methods on the bit vector. If you want to convert an array to a bit_vector
@@ -478,7 +478,7 @@ frb_bv_to_a(VALUE self)
 
 static VALUE mUtils;
 
-/*  
+/*
  * Document-class: Ferret::Utils::BitVector
  *
  * == Summary
@@ -487,14 +487,14 @@ static VALUE mUtils;
  * This BitVector however allows you to count the set bits with the
  * +#count+ method (or unset bits of flipped bit vectors) and also
  * to quickly scan the set bits.
- * 
+ *
  * == Boolean Operations
  *
  * BitVector handles four boolean operations;
  *
  * * +&+
  * * +|+
- * * +^+ 
+ * * +^+
  * * +~+
  *
  *    bv1 = BitVector.new
@@ -504,7 +504,7 @@ static VALUE mUtils;
  *    bv4 = (bv1 & bv2) | ~bv3
  *
  * You can also do the operations in-place;
- * 
+ *
  * * +and!+
  * * +or!+
  * * +xor!+
@@ -518,7 +518,7 @@ static VALUE mUtils;
  * quickly scan for set bits. To print all set bits;
  *
  *    bv.each {|bit| puts bit }
- *   
+ *
  * Alternatively you could use the lower level +next+ or
  * +next_unset+ methods. Note that the +each+ method will
  * automatically scan unset bits if the BitVector has been flipped (using
@@ -640,12 +640,12 @@ static int frb_mulmap_add_mappings_i(VALUE key, VALUE value, VALUE arg)
 /*
  *  call-seq:
  *     MultiMapper.new() -> new_multi_mapper
- *  
+ *
  *  Returns a new multi-mapper object and compiles it for optimization.
  *
  *  Note that MultiMapper is immutable.
  */
-static VALUE 
+static VALUE
 frb_mulmap_init(VALUE self, VALUE rmappings)
 {
     MultiMapper *mulmap = DATA_PTR(self);
@@ -658,7 +658,7 @@ frb_mulmap_init(VALUE self, VALUE rmappings)
 /*
  *  call-seq:
  *     multi_mapper.map(string) -> mapped_string
- *  
+ *
  *  Performs all the mappings on the string.
  */
 VALUE
@@ -672,7 +672,7 @@ frb_mulmap_map(VALUE self, VALUE rstring)
     return rmapped_string;
 }
 
-/*  
+/*
  *  Document-class: Ferret::Utils::MultiMapper
  *
  *  == Summary
@@ -836,13 +836,13 @@ frb_pq_alloc(VALUE klass)
  *     PriorityQueue.new({:capacity => 32,
  *                        :less_than_proc => lambda{|a, b| a < b}) -> new_pq
  *     PriorityQueue.new({:capacity => 32}) {|a, b| a < b} -> new_pq
- *  
+ *
  *  Returns a new empty priority queue object with an optional capacity.
  *  Once the capacity is filled, the lowest valued elements will be
  *  automatically popped off the top of the queue as more elements are
  *  inserted into the queue.
  */
-static VALUE 
+static VALUE
 frb_pq_init(int argc, VALUE *argv, VALUE self)
 {
     if (argc >= 1) {
@@ -869,7 +869,7 @@ frb_pq_init(int argc, VALUE *argv, VALUE self)
                 rb_raise(rb_eArgError,
                          "PriorityQueue#initialize only takes a Hash or "
                          "an integer");
-                
+
                 break;
         }
         if (capa < 0) {
@@ -893,7 +893,7 @@ frb_pq_init(int argc, VALUE *argv, VALUE self)
 /*
  *  call-seq:
  *     pq.clone -> pq_clone
- *  
+ *
  *  Returns a shallow clone of the priority queue. That is only the priority
  *  queue is cloned, its contents are not cloned.
  */
@@ -912,7 +912,7 @@ frb_pq_clone(VALUE self)
 /*
  *  call-seq:
  *     pq.clear -> self
- *  
+ *
  *  Clears all elements from the priority queue. The size will be reset to 0.
  */
 static VALUE
@@ -928,7 +928,7 @@ frb_pq_clear(VALUE self)
  *  call-seq:
  *     pq.insert(elem) -> self
  *     pq << elem -> self
- *  
+ *
  *  Insert an element into a queue. It will be inserted into the correct
  *  position in the queue according to its priority.
  */
@@ -951,7 +951,7 @@ frb_pq_insert(VALUE self, VALUE elem)
 /*
  *  call-seq:
  *     pq.adjust -> self
- *  
+ *
  *  Sometimes you modify the top element in the priority queue so that its
  *  priority changes. When you do this you need to reorder the queue and you
  *  do this by calling the adjust method.
@@ -968,7 +968,7 @@ frb_pq_adjust(VALUE self)
 /*
  *  call-seq:
  *     pq.top -> elem
- *  
+ *
  *  Returns the top element in the queue but does not remove it from the
  *  queue.
  */
@@ -983,7 +983,7 @@ frb_pq_top(VALUE self)
 /*
  *  call-seq:
  *     pq.pop -> elem
- *  
+ *
  *  Returns the top element in the queue removing it from the queue.
  */
 static VALUE
@@ -1007,7 +1007,7 @@ frb_pq_pop(VALUE self)
 /*
  *  call-seq:
  *     pq.size -> integer
- *  
+ *
  *  Returns the size of the queue, ie. the number of elements currently stored
  *  in the queue. The _size_ of a PriorityQueue can never be greater than
  *  its _capacity_
@@ -1023,7 +1023,7 @@ frb_pq_size(VALUE self)
 /*
  *  call-seq:
  *     pq.capacity -> integer
- *  
+ *
  *  Returns the capacity of the queue, ie. the number of elements that can be
  *  stored in a Priority queue before they start to drop off the end.  The
  *  _size_ of a PriorityQueue can never be greater than its
@@ -1037,7 +1037,7 @@ frb_pq_capa(VALUE self)
     return INT2FIX(pq->capa);
 }
 
-/*  
+/*
  *  Document-class: Ferret::Utils::PriorityQueue
  *
  *  == Summary
@@ -1057,10 +1057,10 @@ frb_pq_capa(VALUE self)
  *  of the queue as more elements are added.
  *
  *  == Example
- *  
+ *
  *  Here is a toy example that sorts strings by their length and has a capacity
  *  of 5;
- *    
+ *
  *    q = PriorityQueue.new(5) {|a, b| a.size < b.size}
  *    q << "x"
  *    q << "xxxxx"
