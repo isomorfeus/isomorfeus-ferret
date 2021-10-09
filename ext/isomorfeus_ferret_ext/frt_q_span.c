@@ -1798,7 +1798,7 @@ Query *spanfq_new_nr(Query *match, int end)
 
 Query *spanfq_new(Query *match, int end)
 {
-    REF(match);
+    FRT_REF(match);
     return spanfq_new_nr(match, end);
 }
 
@@ -1982,7 +1982,7 @@ Query *spanoq_add_clause_nr(Query *self, Query *clause)
 
 Query *spanoq_add_clause(Query *self, Query *clause)
 {
-    REF(clause);
+    FRT_REF(clause);
     return spanoq_add_clause_nr(self, clause);
 }
 
@@ -2172,7 +2172,7 @@ Query *spannq_add_clause_nr(Query *self, Query *clause)
 
 Query *spannq_add_clause(Query *self, Query *clause)
 {
-    REF(clause);
+    FRT_REF(clause);
     return spannq_add_clause_nr(self, clause);
 }
 
@@ -2284,8 +2284,8 @@ Query *spanxq_new_nr(Query *inc, Query *exc)
 
 Query *spanxq_new(Query *inc, Query *exc)
 {
-    REF(inc);
-    REF(exc);
+    FRT_REF(inc);
+    FRT_REF(exc);
     return spanxq_new_nr(inc, exc);
 }
 

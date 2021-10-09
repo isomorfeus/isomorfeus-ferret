@@ -2,29 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define MP_ALLOC                           FRT_MP_ALLOC
-#define MP_ALLOC_AND_ZERO                  FRT_MP_ALLOC_AND_ZERO
-#define MP_ALLOC_AND_ZERO_N                FRT_MP_ALLOC_AND_ZERO_N
-#define MP_ALLOC_N                         FRT_MP_ALLOC_N
-#define MP_BUF_SIZE                        FRT_MP_BUF_SIZE
-#define MP_INIT_CAPA                       FRT_MP_INIT_CAPA
-#define MUTEX_INITIALIZER                  FRT_MUTEX_INITIALIZER
-#define MUTEX_RECURSIVE_INITIALIZER        FRT_MUTEX_RECURSIVE_INITIALIZER
-#define NELEMS                             FRT_NELEMS
-#define NEXT_NUM                           FRT_NEXT_NUM
-#define OFF_T_PFX                          FRT_OFF_T_PFX
-#define PARSE_ERROR                        FRT_PARSE_ERROR
-#define PHQ_INIT_CAPA                      FRT_PHQ_INIT_CAPA
-#define PQ_ADDED                           FRT_PQ_ADDED
-#define PQ_DROPPED                         FRT_PQ_DROPPED
-#define PQ_INSERTED                        FRT_PQ_INSERTED
-#define PREV_NUM                           FRT_PREV_NUM
-#define QP_CONC_WORDS                      FRT_QP_CONC_WORDS
-#define QP_MAX_CLAUSES                     FRT_QP_MAX_CLAUSES
-#define QUERY_STRING_START_SIZE            FRT_QUERY_STRING_START_SIZE
-#define RECAPA                             FRT_RECAPA
-#define REF                                FRT_REF
-#define RETURN_EARLY                       FRT_RETURN_EARLY
 #define SCANNER                            FRT_SCANNER
 #define SCORER_NULLIFY                     FRT_SCORER_NULLIFY
 #define SEGMENTS_FILE_NAME                 FRT_SEGMENTS_FILE_NAME

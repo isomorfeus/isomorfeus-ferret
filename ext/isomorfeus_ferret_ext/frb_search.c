@@ -781,7 +781,7 @@ static VALUE
 frb_bc_wrap(BooleanClause *bc)
 {
     VALUE self = Data_Wrap_Struct(cBooleanClause, &frb_bc_mark, &frb_bc_free, bc);
-    REF(bc);
+    FRT_REF(bc);
     object_add(bc, self);
     return self;
 }
@@ -822,7 +822,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
         occur = frb_get_occur(roccur);
     }
     Data_Get_Struct(rquery, Query, sub_q);
-    REF(sub_q);
+    FRT_REF(sub_q);
     bc = bc_new(sub_q, occur);
     Frt_Wrap_Struct(self, &frb_bc_mark, &frb_bc_free, bc);
     object_add(bc, self);
@@ -1632,8 +1632,8 @@ frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
     Data_Get_Struct(rquery, Query, sq);
     Data_Get_Struct(rfilter, Filter, f);
     q = fq_new(sq, f);
-    REF(sq);
-    REF(f);
+    FRT_REF(sq);
+    FRT_REF(f);
     Frt_Wrap_Struct(self, &frb_fqq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -2607,7 +2607,7 @@ cwfilt_get_bv_i(Filter *filt, IndexReader *ir)
     VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
     BitVector *bv;
     Data_Get_Struct(rbv, BitVector, bv);
-    REF(bv);
+    FRT_REF(bv);
     return bv;
 }
 
@@ -2617,7 +2617,7 @@ frb_get_cwrapped_filter(VALUE rval)
     Filter *filter;
     if (frb_is_cclass(rval) && DATA_PTR(rval)) {
         Data_Get_Struct(rval, Filter, filter);
-        REF(filter);
+        FRT_REF(filter);
     }
     else {
         filter               = filt_new(CWrappedFilter);

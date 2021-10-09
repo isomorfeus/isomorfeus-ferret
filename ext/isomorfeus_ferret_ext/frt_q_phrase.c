@@ -199,14 +199,14 @@ static bool phsc_do_next(Scorer *self)
     PhPos **phrase_positions = phsc->phrase_pos;
 
     PhPos *first = phrase_positions[pp_first_idx];
-    PhPos *last  = phrase_positions[PREV_NUM(pp_first_idx, pp_cnt)];
+    PhPos *last  = phrase_positions[FRT_PREV_NUM(pp_first_idx, pp_cnt)];
     while (phsc->more) {
         /* find doc with all the terms */
         while (phsc->more && first->doc < last->doc) {
             /* skip first upto last */
             phsc->more = pp_skip_to(first, last->doc);
             last = first;
-            pp_first_idx = NEXT_NUM(pp_first_idx, pp_cnt);
+            pp_first_idx = FRT_NEXT_NUM(pp_first_idx, pp_cnt);
             first = phrase_positions[pp_first_idx];
         }
 
@@ -220,7 +220,7 @@ static bool phsc_do_next(Scorer *self)
                 /* continuing search so re-set first and last */
                 pp_first_idx = phsc->pp_first_idx;
                 first = phrase_positions[pp_first_idx];
-                last =  phrase_positions[PREV_NUM(pp_first_idx, pp_cnt)];
+                last =  phrase_positions[FRT_PREV_NUM(pp_first_idx, pp_cnt)];
                 phsc->more = pp_next(last);     /* trigger further scanning */
             }
             else {
@@ -251,7 +251,7 @@ static bool phsc_next(Scorer *self)
         phsc->first_time = false;
     } else if (phsc->more) {
         /* trigger further scanning */
-        phsc->more = pp_next(phsc->phrase_pos[PREV_NUM(phsc->pp_first_idx, phsc->pp_cnt)]);
+        phsc->more = pp_next(phsc->phrase_pos[FRT_PREV_NUM(phsc->pp_first_idx, phsc->pp_cnt)]);
     }
     return phsc_do_next(self);
 }
@@ -319,7 +319,7 @@ static Scorer *phsc_new(Weight *weight,
     PhSc(self)->first_time      = true;
     PhSc(self)->more            = true;
     PhSc(self)->check_repeats   = false;
-    
+
     if (slop) {
         term_set = hs_new_str((free_ft)NULL);
     }
@@ -387,7 +387,7 @@ static float ephsc_phrase_freq(Scorer *self)
                 }
             } while (first->position < last->position);
             last = first;
-            pp_first_idx = NEXT_NUM(pp_first_idx, pp_cnt);
+            pp_first_idx = FRT_NEXT_NUM(pp_first_idx, pp_cnt);
             first = phrase_positions[pp_first_idx];
         }
         freq += 1.0f; /* all equal: a match */
@@ -913,7 +913,7 @@ static MatchVector *phq_get_matchv_i(Query *self, MatchVector *mv,
                 while (first->pos < last->pos) {
                     if (tvpe_skip_to(first, last->pos)) {
                         last = first;
-                        first_index = NEXT_NUM(first_index, pos_cnt);
+                        first_index = FRT_NEXT_NUM(first_index, pos_cnt);
                         first = tvpe_a[first_index];
                     }
                     else {

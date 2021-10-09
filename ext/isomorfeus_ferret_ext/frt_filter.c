@@ -153,6 +153,6 @@ Filter *qfilt_new_nr(Query *query)
 
 Filter *qfilt_new(Query *query)
 {
-    REF(query);
+    FRT_REF(query);
     return qfilt_new_nr(query);
 }

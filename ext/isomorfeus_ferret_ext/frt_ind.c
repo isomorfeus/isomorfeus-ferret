@@ -53,7 +53,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
     mutex_init(&self->mutex, NULL);
     self->has_writes = false;
     if (store) {
-        REF(store);
+        FRT_REF(store);
         self->store = store;
     } else {
         self->store = open_ram_store();
@@ -61,7 +61,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
     }
     if (analyzer) {
         self->analyzer = analyzer;
-        REF(analyzer);
+        FRT_REF(analyzer);
     } else {
         self->analyzer = mb_standard_analyzer_new(true);
     }
@@ -80,7 +80,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
     self->auto_flush = false;
     self->check_latest = true;
 
-    REF(self->analyzer);
+    FRT_REF(self->analyzer);
     self->qp = qp_new(self->analyzer);
     for (hse = def_fields->first; hse; hse = hse->next) {
         qp_add_field(self->qp, (Symbol)hse->elem, true, true);
@@ -122,7 +122,7 @@ void ensure_writer_open(Index *self)
         INDEX_CLOSE_READER(self);
 
         /* make sure the analzyer isn't deleted by the IndexWriter */
-        REF(self->analyzer);
+        FRT_REF(self->analyzer);
         self->iw = iw_open(self->store, self->analyzer, false);
         self->iw->config.use_compound_file = self->config.use_compound_file;
     }

@@ -156,7 +156,7 @@ frb_get_field_info(FieldInfo *fi)
         rfi = object_get(fi);
         if (rfi == Qnil) {
             rfi = Data_Wrap_Struct(cFieldInfo, NULL, &frb_fi_free, fi);
-            REF(fi);
+            FRT_REF(fi);
             object_add(fi, rfi);
         }
     }
@@ -385,7 +385,7 @@ frb_get_field_infos(FieldInfos *fis)
         if (rfis == Qnil) {
             rfis = Data_Wrap_Struct(cFieldInfos, &frb_fis_mark, &frb_fis_free,
                                     fis);
-            REF(fis);
+            FRT_REF(fis);
             object_add(fis, rfis);
         }
     }
@@ -499,7 +499,7 @@ frb_fis_add(VALUE self, VALUE rfi)
     FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
     FieldInfo *fi = (FieldInfo *)frb_rb_data_ptr(rfi);
     fis_add_field(fis, fi);
-    REF(fi);
+    FRT_REF(fi);
     return self;
 }
 
@@ -595,7 +595,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
     Store *store = NULL;
     if (TYPE(rdir) == T_DATA) {
         store = DATA_PTR(rdir);
-        REF(store);
+        FRT_REF(store);
     } else {
         StringValue(rdir);
         frb_create_dir(rdir);
@@ -2089,7 +2089,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                 case T_DATA:
                     if (CLASS_OF(rdir) == cIndexReader) {
                         Data_Get_Struct(rdir, IndexReader, sub_readers[i]);
-                        REF(sub_readers[i]);
+                        FRT_REF(sub_readers[i]);
                         continue;
                     } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
                         store = DATA_PTR(rdir);

@@ -157,6 +157,6 @@ Query *csq_new_nr(Filter *filter)
 
 Query *csq_new(Filter *filter)
 {
-    REF(filter);
+    FRT_REF(filter);
     return csq_new_nr(filter);
 }

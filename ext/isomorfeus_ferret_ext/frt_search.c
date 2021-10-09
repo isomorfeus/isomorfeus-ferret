@@ -263,7 +263,7 @@ Weight *w_create(size_t size, Query *query)
               (int)size, (int)sizeof(Weight));
     }
 #endif
-    REF(query);
+    FRT_REF(query);
     self->query                     = query;
     self->get_query                 = &w_get_query;
     self->get_value                 = &w_get_value;
@@ -303,7 +303,7 @@ static const char *QUERY_NAMES[] = {
 static const char *UNKNOWN_QUERY_NAME = "UnkownQuery";
 
 const char *q_get_query_name(QueryType type) {
-    if (type >= NELEMS(QUERY_NAMES)) {
+    if (type >= FRT_NELEMS(QUERY_NAMES)) {
         return UNKNOWN_QUERY_NAME;
     }
     else {
@@ -401,7 +401,7 @@ Query *q_combine(Query **queries, int q_cnt)
 
     if (uniques->size == 1) {
         ret_q = (Query *)uniques->first->elem;
-        REF(ret_q);
+        FRT_REF(ret_q);
     } else {
         HashSetEntry *hse;
         ret_q = bq_new(true);

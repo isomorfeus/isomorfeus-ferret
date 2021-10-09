@@ -585,7 +585,7 @@ frb_get_cwrapped_rts(VALUE rts)
     TokenStream *ts;
     if (frb_is_cclass(rts) && DATA_PTR(rts)) {
         GET_TS(ts, rts);
-        REF(ts);
+        FRT_REF(ts);
     }
     else {
         ts = ts_new(CWrappedTokenStream);
@@ -1200,7 +1200,7 @@ frb_get_cwrapped_analyzer(VALUE ranalyzer)
     Analyzer *a = NULL;
     if (frb_is_cclass(ranalyzer) && DATA_PTR(ranalyzer)) {
         Data_Get_Struct(ranalyzer, Analyzer, a);
-        REF(a);
+        FRT_REF(a);
     }
     else {
         a = (Analyzer *)frt_ecalloc(sizeof(CWrappedAnalyzer));
@@ -1229,7 +1229,7 @@ frb_get_analyzer(Analyzer *a)
         self = object_get(a);
         if (self == Qnil) {
             self = Data_Wrap_Struct(cAnalyzer, NULL, &frb_analyzer_free, a);
-            REF(a);
+            FRT_REF(a);
             object_add(a, self);
         }
     }
@@ -1577,7 +1577,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
         rets = frb_lowercase_filter_init(frb_data_alloc(cLowerCaseFilter), rets);
         ts = DATA_PTR(rets);
     }
-    REF(ts);
+    FRT_REF(ts);
 
     a = analyzer_new(ts, &re_analyzer_destroy_i, NULL);
     Frt_Wrap_Struct(self, &frb_re_analyzer_mark, &frb_analyzer_free, a);

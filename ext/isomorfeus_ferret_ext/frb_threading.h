@@ -8,7 +8,6 @@ typedef void * frt_mutex_t;
 typedef struct FrtHash *frt_thread_key_t;
 typedef int frt_thread_once_t;
 #define FRT_MUTEX_INITIALIZER NULL
-#define FRT_MUTEX_RECURSIVE_INITIALIZER NULL
 #define FRT_THREAD_ONCE_INIT 1;
 #define frt_mutex_init(a, b)
 #define frt_mutex_lock(a)

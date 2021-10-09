@@ -19,7 +19,7 @@ MemoryPool *mp_new_capa(int chuck_size, int init_buf_capa)
 
 MemoryPool *mp_new()
 {
-    return mp_new_capa(MP_BUF_SIZE, MP_INIT_CAPA);
+    return mp_new_capa(FRT_MP_BUF_SIZE, FRT_MP_INIT_CAPA);
 }
 
 void *mp_alloc(MemoryPool *mp, int size)

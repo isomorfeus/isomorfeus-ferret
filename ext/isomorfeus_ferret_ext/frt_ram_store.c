@@ -287,7 +287,7 @@ static OutStream *ram_new_output(Store *store, const char *filename)
         rf = rf_new(filename);
         h_set(store->dir.ht, rf->name, rf);
     }
-    REF(rf);
+    FRT_REF(rf);
     os->pointer = 0;
     os->file.rf = rf;
     os->m = &RAM_OUT_STREAM_METHODS;
@@ -368,7 +368,7 @@ static InStream *ram_open_input(Store *store, const char *filename)
         rb_raise(cFileNotFoundError,
               "tried to open \"%s\" but it doesn't exist", filename);
     }
-    REF(rf);
+    FRT_REF(rf);
     is = is_new();
     is->file.rf = rf;
     is->d.pointer = 0;

@@ -310,7 +310,6 @@ extern FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *
  * FrtPhraseQuery
  ***************************************************************************/
 
-#define FRT_PHQ_INIT_CAPA 4
 typedef struct FrtPhraseQuery
 {
     FrtQuery          super;

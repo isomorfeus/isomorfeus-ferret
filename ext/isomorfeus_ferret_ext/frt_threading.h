@@ -7,7 +7,6 @@ typedef pthread_mutex_t frt_mutex_t;
 typedef pthread_key_t frt_thread_key_t;
 typedef pthread_once_t frt_thread_once_t;
 #define FRT_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define FRT_MUTEX_RECURSIVE_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
 #define FRT_THREAD_ONCE_INIT PTHREAD_ONCE_INIT
 #define frt_mutex_init(a, b) pthread_mutex_init(a, b)
 #define frt_mutex_lock(a) pthread_mutex_lock(a)

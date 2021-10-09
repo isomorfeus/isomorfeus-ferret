@@ -697,7 +697,7 @@ static void si_delete_files(SegmentInfo *si, FieldInfos *fis, Deleter *dlr)
         }
     }
     else {
-        for (i = NELEMS(INDEX_EXTENSIONS) - 1; i >= 0; i--) {
+        for (i = FRT_NELEMS(INDEX_EXTENSIONS) - 1; i >= 0; i--) {
             memcpy(ext, INDEX_EXTENSIONS[i], 4);
             DEL(file_name);
         }
@@ -927,7 +927,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
         TRY
             fsf->generation = gen;
             run(store, fsf);
-            RETURN_EARLY();
+            FRT_RETURN_EARLY();
             return;
         case FRT_IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
             FRT_HANDLED();
@@ -977,8 +977,8 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                          * prev_seg_file_name */
 
                         /* pop two contexts as we are in nested try blocks */
-                        RETURN_EARLY();
-                        RETURN_EARLY();
+                        FRT_RETURN_EARLY();
+                        FRT_RETURN_EARLY();
                         return;
                     case FRT_IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
                         FRT_HANDLED();
@@ -994,7 +994,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
 SegmentInfos *sis_new(FieldInfos *fis)
 {
     SegmentInfos *sis = FRT_ALLOC_AND_ZERO(SegmentInfos);
-    REF(fis);
+    FRT_REF(fis);
     sis->fis = fis;
     sis->format = FORMAT;
     sis->version = (u64)time(NULL);
@@ -2461,11 +2461,11 @@ static void tw_add(TermWriter *tw,
               tw->last_term, term, *tw->last_term, *term);
     }
     if (ti->frq_ptr < tw->last_term_info.frq_ptr) {
-        rb_raise(cStateError, "%"OFF_T_PFX"d > %"OFF_T_PFX"d", ti->frq_ptr,
+        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->frq_ptr,
               tw->last_term_info.frq_ptr);
     }
     if (ti->prx_ptr < tw->last_term_info.prx_ptr) {
-        rb_raise(cStateError, "%"OFF_T_PFX"d > %"OFF_T_PFX"d", ti->prx_ptr,
+        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->prx_ptr,
               tw->last_term_info.prx_ptr);
     }
 #endif
@@ -3298,7 +3298,7 @@ static void file_name_filter_init()
 {
     int i;
     fn_extensions = h_new_str((free_ft)NULL, (free_ft)NULL);
-    for (i = 0; i < NELEMS(INDEX_EXTENSIONS); i++) {
+    for (i = 0; i < FRT_NELEMS(INDEX_EXTENSIONS); i++) {
       h_set(fn_extensions, INDEX_EXTENSIONS[i], (char *)INDEX_EXTENSIONS[i]);
     }
     register_for_cleanup(fn_extensions, (free_ft)&h_destroy);
@@ -3516,7 +3516,7 @@ void deleter_find_deletable_files(Deleter *dlr)
 
     for(i = 0; i < sis->size; i++) {
         SegmentInfo *si = (SegmentInfo *)sis->segs[i];
-        REF(si);
+        FRT_REF(si);
         h_set(current, si->name, si);
     }
 
@@ -3602,7 +3602,7 @@ static IndexReader *ir_setup(IndexReader *ir, Store *store, SegmentInfos *sis,
 
     if (store) {
         ir->store = store;
-        REF(store);
+        FRT_REF(store);
     }
     ir->sis = sis;
     ir->fis = fis;
@@ -4855,7 +4855,7 @@ Offset *offset_new(off_t start, off_t end)
 
 static Occurence *occ_new(MemoryPool *mp, int pos)
 {
-    Occurence *occ = MP_ALLOC(mp, Occurence);
+    Occurence *occ = FRT_MP_ALLOC(mp, Occurence);
     occ->pos = pos;
     occ->next = NULL;
     return occ;
@@ -4869,7 +4869,7 @@ static Occurence *occ_new(MemoryPool *mp, int pos)
 
 Posting *p_new(MemoryPool *mp, int doc_num, int pos)
 {
-    Posting *p = MP_ALLOC(mp, Posting);
+    Posting *p = FRT_MP_ALLOC(mp, Posting);
     p->doc_num = doc_num;
     p->first_occ = occ_new(mp, pos);
     p->freq = 1;
@@ -4886,7 +4886,7 @@ Posting *p_new(MemoryPool *mp, int doc_num, int pos)
 PostingList *pl_new(MemoryPool *mp, const char *term,
                            int term_len, Posting *p)
 {
-    PostingList *pl = MP_ALLOC(mp, PostingList);
+    PostingList *pl = FRT_MP_ALLOC(mp, PostingList);
     pl->term = (char *)mp_memdup(mp, term, term_len + 1);
     pl->term_len = term_len;
     pl->first = pl->last = p;
@@ -4919,12 +4919,12 @@ int pl_cmp(const PostingList **pl1, const PostingList **pl2)
 
 static FieldInverter *fld_inv_new(DocWriter *dw, FieldInfo *fi)
 {
-    FieldInverter *fld_inv = MP_ALLOC(dw->mp, FieldInverter);
+    FieldInverter *fld_inv = FRT_MP_ALLOC(dw->mp, FieldInverter);
     fld_inv->is_tokenized = fi_is_tokenized(fi);
     fld_inv->store_term_vector = fi_store_term_vector(fi);
     fld_inv->store_offsets = fi_store_offsets(fi);
     if ((fld_inv->has_norms = fi_has_norms(fi)) == true) {
-        fld_inv->norms = MP_ALLOC_AND_ZERO_N(dw->mp, uchar,
+        fld_inv->norms = FRT_MP_ALLOC_AND_ZERO_N(dw->mp, uchar,
                                              dw->max_buffered_docs);
     }
     fld_inv->fi = fi;
@@ -5887,7 +5887,7 @@ static void iw_create_compound_file(Store *store, FieldInfos *fis,
     ext = file_name + seg_len + 1;
 
     cw = open_cw(store, cfs_file_name);
-    for (i = 0; i < NELEMS(COMPOUND_EXTENSIONS); i++) {
+    for (i = 0; i < FRT_NELEMS(COMPOUND_EXTENSIONS); i++) {
         memcpy(ext, COMPOUND_EXTENSIONS[i], 4);
         MOVE_TO_COMPOUND_DIR(file_name);
     }
@@ -6168,7 +6168,7 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
 
         iw->sis = sis_read(store);
         iw->fis = iw->sis->fis;
-        REF(iw->fis);
+        FRT_REF(iw->fis);
     XCATCHALL
         if (iw->write_lock) {
             iw->write_lock->release(iw->write_lock);
@@ -6187,7 +6187,7 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
     iw->deleter = deleter_new(iw->sis, store);
     deleter_delete_deletable_files(iw->deleter);
 
-    REF(store);
+    FRT_REF(store);
     return iw;
 }
 

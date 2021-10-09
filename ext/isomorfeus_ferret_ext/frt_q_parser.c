@@ -2031,7 +2031,7 @@ static int get_word(YYSTYPE *lvalp, QParser *qp)
     char c;
     char *buf = qp->buf[qp->buf_index];
     char *bufp = buf;
-    qp->buf_index = (qp->buf_index + 1) % QP_CONC_WORDS;
+    qp->buf_index = (qp->buf_index + 1) % FRT_QP_CONC_WORDS;
 
     if (qp->dynbuf) {
         free(qp->dynbuf);
@@ -2877,7 +2877,7 @@ QParser *qp_new(Analyzer *analyzer)
     self->or_default = true;
     self->wild_lower = true;
     self->clean_str = false;
-    self->max_clauses = QP_MAX_CLAUSES;
+    self->max_clauses = FRT_QP_MAX_CLAUSES;
     self->handle_parse_errors = false;
     self->allow_any_fields = false;
     self->use_keywords = true;

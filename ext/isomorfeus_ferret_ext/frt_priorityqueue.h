@@ -110,11 +110,11 @@ typedef enum {
  * @param elem the element to add to the PriorityQueue
  * @returns one of three values;
  *   <pre>
- *     0 == PQ_DROPPED  the element was too small (according to the less_than
- *                      function) so it was destroyed
- *     1 == PQ_ADDED    the element was successfully added
- *     2 == PQ_INSERTED the element was successfully added after another
- *                      element was dropped and destroyed
+ *     0 == FRT_PQ_DROPPED  the element was too small (according to the less_than
+ *                          function) so it was destroyed
+ *     1 == FRT_PQ_ADDED    the element was successfully added
+ *     2 == FRT_PQ_INSERTED the element was successfully added after another
+ *                          element was dropped and destroyed
  *   </pre>
  */
 extern FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *self,

@@ -1129,7 +1129,7 @@ static void sf_destroy_i(TokenStream *ts)
 static TokenStream *sf_clone_i(TokenStream *orig_ts)
 {
     TokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
-    REF(StopFilt(new_ts)->words);
+    FRT_REF(StopFilt(new_ts)->words);
     return new_ts;
 }
 
@@ -1211,7 +1211,7 @@ static void mf_destroy_i(TokenStream *ts)
 static TokenStream *mf_clone_i(TokenStream *orig_ts)
 {
     TokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
-    REF(MFilt(new_ts)->mapper);
+    FRT_REF(MFilt(new_ts)->mapper);
     return new_ts;
 }
 

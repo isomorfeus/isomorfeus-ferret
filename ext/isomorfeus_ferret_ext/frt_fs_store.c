@@ -251,7 +251,7 @@ static void fso_flush_i(OutStream *os, const uchar *src, int len)
 static void fso_seek_i(OutStream *os, off_t pos)
 {
     if (lseek(os->file.fd, pos, SEEK_SET) < 0) {
-        rb_raise(rb_eIOError, "seeking position %"OFF_T_PFX"d: <%s>",
+        rb_raise(rb_eIOError, "seeking position %"FRT_OFF_T_PFX"d: <%s>",
               pos, strerror(errno));
     }
 }
@@ -305,7 +305,7 @@ static void fsi_read_i(InStream *is, uchar *path, int len)
 static void fsi_seek_i(InStream *is, off_t pos)
 {
     if (lseek(is->file.fd, pos, SEEK_SET) < 0) {
-        rb_raise(rb_eIOError, "seeking pos %"OFF_T_PFX"d: <%s>",
+        rb_raise(rb_eIOError, "seeking pos %"FRT_OFF_T_PFX"d: <%s>",
               pos, strerror(errno));
     }
 }
@@ -418,7 +418,7 @@ static void fs_close_lock_i(Lock *lock)
 static Hash *stores = NULL;
 
 #ifndef UNTHREADED
-static mutex_t stores_mutex = MUTEX_INITIALIZER;
+static mutex_t stores_mutex = FRT_MUTEX_INITIALIZER;
 #endif
 
 static void fs_close_i(Store *store)

@@ -32,7 +32,7 @@ frb_get_bv(BitVector *bv)
     VALUE rbv;
     if ((rbv = object_get(bv)) == Qnil) {
         rbv = Data_Wrap_Struct(cBitVector, NULL, &frb_bv_free, bv);
-        REF(bv);
+        FRT_REF(bv);
         object_add(bv, rbv);
     }
     return rbv;

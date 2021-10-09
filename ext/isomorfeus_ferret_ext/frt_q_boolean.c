@@ -348,7 +348,7 @@ static bool csc_do_next(Scorer *self)
     const int sub_sc_cnt = csc->ss_cnt;
     int first_idx = csc->first_idx;
     Scorer *first_sc = csc->sub_scorers[first_idx];
-    Scorer *last_sc = csc->sub_scorers[PREV_NUM(first_idx, sub_sc_cnt)];
+    Scorer *last_sc = csc->sub_scorers[FRT_PREV_NUM(first_idx, sub_sc_cnt)];
 
     /* skip to doc with all clauses */
     while (csc->more && (first_sc->doc < last_sc->doc)) {
@@ -356,7 +356,7 @@ static bool csc_do_next(Scorer *self)
         csc->more = first_sc->skip_to(first_sc, last_sc->doc);
         /* move first to last */
         last_sc = first_sc;
-        first_idx = NEXT_NUM(first_idx, sub_sc_cnt);
+        first_idx = FRT_NEXT_NUM(first_idx, sub_sc_cnt);
         first_sc = csc->sub_scorers[first_idx];
     }
     self->doc = first_sc->doc;
@@ -372,7 +372,7 @@ static bool csc_next(Scorer *self)
     }
     else if (csc->more) {
         /* trigger further scanning */
-        const int last_idx = PREV_NUM(csc->first_idx, csc->ss_cnt);
+        const int last_idx = FRT_PREV_NUM(csc->first_idx, csc->ss_cnt);
         Scorer *sub_scorer = csc->sub_scorers[last_idx];
         csc->more = sub_scorer->next(sub_scorer);
     }
@@ -981,15 +981,15 @@ static void bsc_add_scorer(Scorer *self, Scorer *scorer, unsigned int occur)
 
     switch (occur) {
         case FRT_BC_MUST:
-            RECAPA(bsc, rs_cnt, rs_capa, required_scorers, Scorer *);
+            FRT_RECAPA(bsc, rs_cnt, rs_capa, required_scorers, Scorer *);
             bsc->required_scorers[bsc->rs_cnt++] = scorer;
             break;
         case FRT_BC_SHOULD:
-            RECAPA(bsc, os_cnt, os_capa, optional_scorers, Scorer *);
+            FRT_RECAPA(bsc, os_cnt, os_capa, optional_scorers, Scorer *);
             bsc->optional_scorers[bsc->os_cnt++] = scorer;
             break;
         case FRT_BC_MUST_NOT:
-            RECAPA(bsc, ps_cnt, ps_capa, prohibited_scorers, Scorer *);
+            FRT_RECAPA(bsc, ps_cnt, ps_capa, prohibited_scorers, Scorer *);
             bsc->prohibited_scorers[bsc->ps_cnt++] = scorer;
             break;
         default:
@@ -1381,7 +1381,7 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
                 memcpy(BQ(new_self)->clauses, BQ(self)->clauses,
                        BQ(self)->clause_capa * sizeof(BooleanClause *));
                 for (j = 0; j < clause_cnt; j++) {
-                    REF(BQ(self)->clauses[j]);
+                    FRT_REF(BQ(self)->clauses[j]);
                 }
                 self->ref_cnt--;
                 self = new_self;
@@ -1418,7 +1418,7 @@ static char *bq_to_s(Query *self, Symbol field)
     char *buffer;
     char *clause_str;
     int bp = 0;
-    int size = QUERY_STRING_START_SIZE;
+    int size = FRT_QUERY_STRING_START_SIZE;
     int needed;
     int clause_len;
 
@@ -1589,7 +1589,7 @@ BooleanClause *bq_add_clause_nr(Query *self, BooleanClause *bc)
 
 BooleanClause *bq_add_clause(Query *self, BooleanClause *bc)
 {
-    REF(bc);
+    FRT_REF(bc);
     return bq_add_clause_nr(self, bc);
 }
 
@@ -1610,7 +1610,7 @@ BooleanClause *bq_add_query_nr(Query *self, Query *sub_query, BCType occur)
 
 BooleanClause *bq_add_query(Query *self, Query *sub_query, BCType occur)
 {
-    REF(sub_query);
+    FRT_REF(sub_query);
     return bq_add_query_nr(self, sub_query, occur);
 }
 

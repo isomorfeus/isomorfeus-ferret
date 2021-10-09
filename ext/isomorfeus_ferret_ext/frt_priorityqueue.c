@@ -119,18 +119,18 @@ PriorityQueueInsertEnum pq_insert(PriorityQueue *pq,
 {
     if (pq->size < pq->capa) {
         pq_push(pq, elem);
-        return PQ_ADDED;
+        return FRT_PQ_ADDED;
     }
 
     if (pq->size > 0 && pq->less_than_i(pq->heap[1], elem)) {
         pq->free_elem_i(pq->heap[1]);
         pq->heap[1] = elem;
         pq_down(pq);
-        return PQ_INSERTED;
+        return FRT_PQ_INSERTED;
     }
 
     pq->free_elem_i(elem);
-    return PQ_DROPPED;
+    return FRT_PQ_DROPPED;
 }
 
 void *pq_top(PriorityQueue *pq)

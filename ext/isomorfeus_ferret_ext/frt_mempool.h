@@ -24,11 +24,8 @@ extern char *frt_mp_strndup(FrtMemoryPool *mp, const char *str, int len);
 extern void *frt_mp_memdup(FrtMemoryPool *mp, const void *p, int len);
 extern int frt_mp_used(FrtMemoryPool *mp);
 
-#define FRT_MP_ALLOC_N(mp,type,n) (type *)frt_mp_alloc(mp, sizeof(type)*(n))
 #define FRT_MP_ALLOC(mp,type) (type *)frt_mp_alloc(mp, sizeof(type))
 
-#define FRT_MP_ALLOC_AND_ZERO(mp,type)\
-    (type*)memset(frt_mp_alloc(mp, sizeof(type)), 0, sizeof(type))
 #define FRT_MP_ALLOC_AND_ZERO_N(mp,type,n)\
     (type*)FRT_ZEROSET_N(frt_mp_alloc(mp, sizeof(type)*(n)), type, n)
 

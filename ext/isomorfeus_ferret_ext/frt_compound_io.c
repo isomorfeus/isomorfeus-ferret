@@ -136,7 +136,7 @@ static void cmpdi_read_i(InStream *is, uchar *b, int len)
 
     if ((start + len) > cis->length) {
         rb_raise(rb_eEOFError, "Tried to read past end of file. File length is "
-              "<%"OFF_T_PFX"d> and tried to read to <%"OFF_T_PFX"d>",
+              "<%"FRT_OFF_T_PFX"d> and tried to read to <%"FRT_OFF_T_PFX"d>",
               cis->length, start + len);
     }
 
@@ -325,7 +325,7 @@ static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
     /* Verify that remainder is 0 */
     if (remainder != 0) {
         rb_raise(rb_eIOError, "There seems to be an error in the compound file "
-              "should have read to the end but there are <%"OFF_T_PFX"d> "
+              "should have read to the end but there are <%"FRT_OFF_T_PFX"d> "
               "bytes left", remainder);
     }
 
@@ -334,8 +334,8 @@ static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
     len = end_ptr - start_ptr;
     if (len != length) {
         rb_raise(rb_eIOError, "Difference in compound file output file offsets "
-              "<%"OFF_T_PFX"d> does not match the original file lenght "
-              "<%"OFF_T_PFX"d>", len, length);
+              "<%"FRT_OFF_T_PFX"d> does not match the original file lenght "
+              "<%"FRT_OFF_T_PFX"d>", len, length);
     }
 
     is_close(is);
