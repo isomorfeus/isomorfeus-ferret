@@ -522,8 +522,8 @@ MatchVector *matchv_new()
     MatchVector *matchv = FRT_ALLOC(MatchVector);
 
     matchv->size = 0;
-    matchv->capa = MATCH_VECTOR_INIT_CAPA;
-    matchv->matches = FRT_ALLOC_N(MatchRange, MATCH_VECTOR_INIT_CAPA);
+    matchv->capa = FRT_MATCH_VECTOR_INIT_CAPA;
+    matchv->matches = FRT_ALLOC_N(MatchRange, FRT_MATCH_VECTOR_INIT_CAPA);
 
     return matchv;
 }

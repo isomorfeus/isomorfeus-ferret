@@ -51,7 +51,6 @@ typedef void (*frt_free_ft)(void *key);
 #define FRT_MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define FRT_MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
-#define FRT_MAX3(a, b, c) ((a) > (b) ? ((a) > (c) ? (a) : (c)) : ((b) > (c) ? (b) : (c)))
 
 #define FRT_ABS(n) ((n >= 0) ? n : -n)
 #define FRT_TO_WORD(n) (((n - 1) >> 5) + 1)
@@ -94,11 +93,6 @@ extern int frt_scmp(const void *p1, const void *p2);
 extern int frt_icmp(const void *p1, const void *p2);
 extern int frt_icmp_risky(const void *p1, const void *p2);
 extern void frt_strsort(char **string_array, int size);
-
-extern int frt_min2(int a, int b);
-extern int frt_min3(int a, int b, int c);
-extern int frt_max2(int a, int b);
-extern int frt_max3(int a, int b, int c);
 
 extern char *frt_dbl_to_s(char *buf, double num);
 extern char *frt_strfmt(const char *fmt, ...);

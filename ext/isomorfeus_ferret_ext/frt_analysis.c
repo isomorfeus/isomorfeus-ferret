@@ -17,8 +17,8 @@
 Token *tk_set(Token *tk,
                      char *text, int tlen, off_t start, off_t end, int pos_inc)
 {
-    if (tlen >= MAX_WORD_SIZE) {
-        tlen = MAX_WORD_SIZE - 1;
+    if (tlen >= FRT_MAX_WORD_SIZE) {
+        tlen = FRT_MAX_WORD_SIZE - 1;
     }
     memcpy(tk->text, text, sizeof(char) * tlen);
     tk->text[tlen] = '\0';
@@ -45,7 +45,7 @@ Token *tk_set_no_len(Token *tk,
 static Token *w_tk_set(Token *tk, wchar_t *text, off_t start,
                               off_t end, int pos_inc)
 {
-    int len = wcstombs(tk->text, text, MAX_WORD_SIZE - 1);
+    int len = wcstombs(tk->text, text, FRT_MAX_WORD_SIZE - 1);
     tk->text[len] = '\0';
     tk->len = len;
     tk->start = start;
@@ -351,11 +351,11 @@ static Token *mb_wst_next_lc(TokenStream *ts)
     char *start;
     char *t = ts->t;
     wchar_t wchr;
-    wchar_t wbuf[MAX_WORD_SIZE + 1], *w, *w_end;
+    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *w, *w_end;
     mbstate_t *state = &(MBTS(ts)->state);
 
     w = wbuf;
-    w_end = &wbuf[MAX_WORD_SIZE];
+    w_end = &wbuf[FRT_MAX_WORD_SIZE];
 
     i = mb_next_char(&wchr, t, state);
     while (wchr != 0 && iswspace(wchr)) {
@@ -489,11 +489,11 @@ static Token *mb_lt_next_lc(TokenStream *ts)
     char *start;
     char *t = ts->t;
     wchar_t wchr;
-    wchar_t wbuf[MAX_WORD_SIZE + 1], *w, *w_end;
+    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *w, *w_end;
     mbstate_t *state = &(MBTS(ts)->state);
 
     w = wbuf;
-    w_end = &wbuf[MAX_WORD_SIZE];
+    w_end = &wbuf[FRT_MAX_WORD_SIZE];
 
     i = mb_next_char(&wchr, t, state);
     while (wchr != 0 && !iswalpha(wchr)) {
@@ -645,7 +645,7 @@ static int legacy_std_get_alpha(TokenStream *ts, char *token)
     int i = 0;
     char *t = ts->t;
     while (t[i] != '\0' && isalnum(t[i])) {
-        if (i < MAX_WORD_SIZE) {
+        if (i < FRT_MAX_WORD_SIZE) {
             token[i] = t[i];
         }
         i++;
@@ -668,8 +668,8 @@ static int mb_legacy_std_get_alpha(TokenStream *ts, char *token)
     }
 
     i = (int)(t - ts->t);
-    if (i > MAX_WORD_SIZE) {
-        i = MAX_WORD_SIZE - 1;
+    if (i > FRT_MAX_WORD_SIZE) {
+        i = FRT_MAX_WORD_SIZE - 1;
     }
     memcpy(token, ts->t, i);
     return i;
@@ -815,7 +815,7 @@ static char *std_get_url(char *input, char *token, int i, int *len)
         if (isurlpunc(input[i]) && isurlpunc(input[i - 1])) {
             break; /* can't have two puncs in a row */
         }
-        if (i < MAX_WORD_SIZE) {
+        if (i < FRT_MAX_WORD_SIZE) {
             token[i] = input[i];
         }
         i++;
@@ -823,8 +823,8 @@ static char *std_get_url(char *input, char *token, int i, int *len)
     next = input + i;
 
     /* We don't want to index past the end of the token capacity) */
-    if (i >= MAX_WORD_SIZE) {
-        i = MAX_WORD_SIZE - 1;
+    if (i >= FRT_MAX_WORD_SIZE) {
+        i = FRT_MAX_WORD_SIZE - 1;
     }
 
     /* strip trailing puncs */
@@ -886,7 +886,7 @@ static Token *legacy_std_next(TokenStream *ts)
     char *t;
     char *start = NULL;
     char *num_end = NULL;
-    char token[MAX_WORD_SIZE + 1];
+    char token[FRT_MAX_WORD_SIZE + 1];
     int token_i = 0;
     int len;
     bool is_acronym;
@@ -1217,12 +1217,12 @@ static TokenStream *mf_clone_i(TokenStream *orig_ts)
 
 static Token *mf_next(TokenStream *ts)
 {
-    char buf[MAX_WORD_SIZE + 1];
+    char buf[FRT_MAX_WORD_SIZE + 1];
     MultiMapper *mapper = MFilt(ts)->mapper;
     TokenFilter *tf = TkFilt(ts);
     Token *tk = tf->sub_ts->next(tf->sub_ts);
     if (tk != NULL) {
-        tk->len = mulmap_map_len(mapper, buf, tk->text, MAX_WORD_SIZE);
+        tk->len = mulmap_map_len(mapper, buf, tk->text, FRT_MAX_WORD_SIZE);
         memcpy(tk->text, buf, tk->len + 1);
     }
     return tk;
@@ -1342,22 +1342,22 @@ TokenStream *hyphen_filter_new(TokenStream *sub_ts)
 
 static Token *mb_lcf_next(TokenStream *ts)
 {
-    wchar_t wbuf[MAX_WORD_SIZE + 1], *wchr;
+    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *wchr;
     Token *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
     int x;
-    wbuf[MAX_WORD_SIZE] = 0;
+    wbuf[FRT_MAX_WORD_SIZE] = 0;
 
     if (tk == NULL) {
         return tk;
     }
 
-    if ((x=mbstowcs(wbuf, tk->text, MAX_WORD_SIZE)) <= 0) return tk;
+    if ((x=mbstowcs(wbuf, tk->text, FRT_MAX_WORD_SIZE)) <= 0) return tk;
     wchr = wbuf;
     while (*wchr != 0) {
         *wchr = towlower(*wchr);
         wchr++;
     }
-    tk->len = wcstombs(tk->text, wbuf, MAX_WORD_SIZE);
+    tk->len = wcstombs(tk->text, wbuf, FRT_MAX_WORD_SIZE);
     if (tk->len <= 0) {
         strcpy(tk->text, "BAD_DATA");
         tk->len = 8;
@@ -1420,8 +1420,8 @@ static Token *stemf_next(TokenStream *ts)
     }
     stemmed = sb_stemmer_stem(stemmer, (sb_symbol *)tk->text, tk->len);
     len = sb_stemmer_length(stemmer);
-    if (len >= MAX_WORD_SIZE) {
-        len = MAX_WORD_SIZE - 1;
+    if (len >= FRT_MAX_WORD_SIZE) {
+        len = FRT_MAX_WORD_SIZE - 1;
     }
 
     memcpy(tk->text, stemmed, len);

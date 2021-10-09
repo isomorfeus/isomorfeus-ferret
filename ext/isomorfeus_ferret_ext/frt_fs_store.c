@@ -42,14 +42,14 @@ extern VALUE cFileNotFoundError;
  */
 static char *join_path(char *buf, const char *base, const char *filename)
 {
-  snprintf(buf, MAX_FILE_PATH, "%s"DIR_SEPARATOR"%s", base, filename);
+  snprintf(buf, FRT_MAX_FILE_PATH, "%s"DIR_SEPARATOR"%s", base, filename);
   return buf;
 }
 
 static void fs_touch(Store *store, const char *filename)
 {
     int f;
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     join_path(path, store->dir.path, filename);
     if ((f = creat(path, store->file_mode)) == 0) {
         rb_raise(rb_eIOError, "couldn't create file %s: <%s>", path,
@@ -61,7 +61,7 @@ static void fs_touch(Store *store, const char *filename)
 static int fs_exists(Store *store, const char *filename)
 {
     int fd;
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     join_path(path, store->dir.path, filename);
     fd = open(path, 0);
     if (fd < 0) {
@@ -77,13 +77,13 @@ static int fs_exists(Store *store, const char *filename)
 
 static int fs_remove(Store *store, const char *filename)
 {
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     return remove(join_path(path, store->dir.path, filename));
 }
 
 static void fs_rename(Store *store, const char *from, const char *to)
 {
-    char path1[MAX_FILE_PATH], path2[MAX_FILE_PATH];
+    char path1[FRT_MAX_FILE_PATH], path2[FRT_MAX_FILE_PATH];
 
 #if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
     remove(join_path(path1, store->dir.path, to));
@@ -148,7 +148,7 @@ static void fs_clear_locks(Store *store)
 
     while ((de = readdir(d)) != NULL) {
         if (file_is_lock(de->d_name)) {
-            char path[MAX_FILE_PATH];
+            char path[FRT_MAX_FILE_PATH];
             remove(join_path(path, store->dir.path, de->d_name));
         }
     }
@@ -157,7 +157,7 @@ static void fs_clear_locks(Store *store)
 
 static void remove_if_index_file(const char *base_path, const char *file_name)
 {
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     char *basename;
     join_path(path, base_path, file_name);
     /* get basename of path */
@@ -229,7 +229,7 @@ static void fs_destroy(Store *store)
 
 static off_t fs_length(Store *store, const char *filename)
 {
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     struct stat stt;
 
     if (stat(join_path(path, store->dir.path, filename), &stt)) {
@@ -271,7 +271,7 @@ static const struct OutStreamMethods FS_OUT_STREAM_METHODS = {
 
 static OutStream *fs_new_output(Store *store, const char *filename)
 {
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename),
                   O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
     OutStream *os;
@@ -337,7 +337,7 @@ static const struct InStreamMethods FS_IN_STREAM_METHODS = {
 static InStream *fs_open_input(Store *store, const char *filename)
 {
     InStream *is;
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
     if (fd < 0) {
         rb_raise(cFileNotFoundError,
@@ -398,7 +398,7 @@ static Lock *fs_open_lock_i(Store *store, const char *lockname)
 {
     Lock *lock = FRT_ALLOC(Lock);
     char lname[100];
-    char path[MAX_FILE_PATH];
+    char path[FRT_MAX_FILE_PATH];
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
     lock->name = estrdup(join_path(path, store->dir.path, lname));
     lock->store = store;

@@ -21,13 +21,13 @@
  * for a word to be a match.
  *
  * Note that fuzq->text_len and m are both the lengths text *after* the prefix
- * so `MIN(fuzq->text_len, m) + fuzq->pre_len)` actually gets the byte length
+ * so `FRT_MIN(fuzq->text_len, m) + fuzq->pre_len)` actually gets the byte length
  * of the shorter string out of the query string and the index term being
  * compared.
  */
 static int fuzq_calculate_max_distance(FuzzyQuery *fuzq, int m)
 {
-    return (int)((1.0 - fuzq->min_sim) * (MIN(fuzq->text_len, m) + fuzq->pre_len));
+    return (int)((1.0 - fuzq->min_sim) * (FRT_MIN(fuzq->text_len, m) + fuzq->pre_len));
 }
 
 /**
@@ -101,8 +101,8 @@ static float fuzq_score_mn(FuzzyQuery *fuzq,
 
         for (j = 0; j < n; j++) {
             d_curr[j + 1] = (s_i == text[j])
-                ? min3(d_prev[j + 1] + 1, d_curr[j] + 1, d_prev[j])
-                : min3(d_prev[j + 1], d_curr[j], d_prev[j]) + 1;
+                ? FRT_MIN3(d_prev[j + 1] + 1, d_curr[j] + 1, d_prev[j])
+                : FRT_MIN3(d_prev[j + 1], d_curr[j], d_prev[j]) + 1;
             if (prune && d_curr[j + 1] <= max_distance) {
                 prune = false;
             }
@@ -116,7 +116,7 @@ static float fuzq_score_mn(FuzzyQuery *fuzq,
      * than the number of characters in the shorter word.  but this was
      * the formula that was previously used in FuzzyTermEnum, so it has
      * not been changed (even though min_sim must be greater than 0.0) */
-    return (float)(1.0f - ((float)d_curr[n] / (float) (fuzq->pre_len + min2(n, m))));
+    return (float)(1.0f - ((float)d_curr[n] / (float) (fuzq->pre_len + FRT_MIN(n, m))));
 }
 
 /**

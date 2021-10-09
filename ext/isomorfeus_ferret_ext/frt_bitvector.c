@@ -11,7 +11,7 @@ BitVector *bv_new_capa(int capa)
 
     /* The capacity passed by the user is number of bits allowed, however we
      * store capacity as the number of words (U32) allocated. */
-    bv->capa = max2(TO_WORD(capa), 4);
+    bv->capa = FRT_MAX(TO_WORD(capa), 4);
     bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
     bv->curr_bit = -1;
     bv->ref_cnt = 1;
@@ -58,7 +58,7 @@ int bv_eq(BitVector *bv1, BitVector *bv2)
 
     bits = bv1->bits;
     bits2 = bv2->bits;
-    min_size = min2(bv1->size, bv2->size);
+    min_size = FRT_MIN(bv1->size, bv2->size);
     word_size = TO_WORD(min_size);
 
     for (i = 0; i < word_size; i++) {

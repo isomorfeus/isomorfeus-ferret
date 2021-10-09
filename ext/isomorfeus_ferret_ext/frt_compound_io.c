@@ -316,7 +316,7 @@ static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
     remainder = length = is_length(is);
 
     while (remainder > 0) {
-        len = MIN(remainder, FRT_BUFFER_SIZE);
+        len = FRT_MIN(remainder, FRT_BUFFER_SIZE);
         is_read_bytes(is, buffer, len);
         os_write_bytes(os, buffer, len);
         remainder -= len;

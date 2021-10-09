@@ -2343,7 +2343,7 @@ frb_get_doc_range(IndexReader *ir, int pos, int len, int max)
 {
     VALUE ary;
     int i;
-    max = min2(max, pos+len);
+    max = FRT_MIN(max, pos+len);
     len = max - pos;
     ary = rb_ary_new2(len);
     for (i = 0; i < len; i++) {

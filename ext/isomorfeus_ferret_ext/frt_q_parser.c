@@ -2071,11 +2071,11 @@ static int get_word(YYSTYPE *lvalp, QParser *qp)
          * dynamic buffer is allocated enough space to hold the whole query
          * string so it's capacity doesn't need to be checked again once
          * allocated. */
-        if (!qp->dynbuf && ((bufp - buf) == MAX_WORD_SIZE)) {
+        if (!qp->dynbuf && ((bufp - buf) == FRT_MAX_WORD_SIZE)) {
             qp->dynbuf = FRT_ALLOC_AND_ZERO_N(char, strlen(qp->qstr) + 1);
-            strncpy(qp->dynbuf, buf, MAX_WORD_SIZE);
+            strncpy(qp->dynbuf, buf, FRT_MAX_WORD_SIZE);
             buf = qp->dynbuf;
-            bufp = buf + MAX_WORD_SIZE;
+            bufp = buf + FRT_MAX_WORD_SIZE;
         }
     }
 get_word_done:

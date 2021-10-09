@@ -1424,7 +1424,7 @@ static TermVector *fr_read_term_vector(FieldsReader *fr, int field_num)
         int i, j, delta_start, delta_len, total_len, freq;
         int store_positions = fi_store_positions(fi);
         int store_offsets = fi_store_offsets(fi);
-        uchar buffer[MAX_WORD_SIZE];
+        uchar buffer[FRT_MAX_WORD_SIZE];
         TVTerm *term;
 
         tv->term_cnt = num_terms;
@@ -3782,7 +3782,7 @@ static void ir_commit_i(IndexReader *ir)
             ir->set_deleter_i(ir, deleter_new(ir->sis, ir->store));
         }
         if (ir->is_owner) {
-            char curr_seg_fn[MAX_FILE_PATH];
+            char curr_seg_fn[FRT_MAX_FILE_PATH];
             mutex_lock(&ir->store->mutex);
 
             sis_curr_seg_file_name(curr_seg_fn, ir->store);
@@ -5291,13 +5291,13 @@ Hash *dw_invert_field(DocWriter *dw,
         fld_inv->length = num_terms;
     }
     else {
-        char buf[MAX_WORD_SIZE];
-        buf[MAX_WORD_SIZE - 1] = '\0';
+        char buf[FRT_MAX_WORD_SIZE];
+        buf[FRT_MAX_WORD_SIZE - 1] = '\0';
         for (i = 0; i < df_size; i++) {
             int len = df->lengths[i];
             char *data_ptr = df->data[i];
-            if (len > MAX_WORD_SIZE) {
-                len = MAX_WORD_SIZE - 1;
+            if (len > FRT_MAX_WORD_SIZE) {
+                len = FRT_MAX_WORD_SIZE - 1;
                 data_ptr = (char *)memcpy(buf, df->data[i], len);
             }
             dw_add_posting(mp, curr_plists, fld_plists, doc_num, data_ptr,
@@ -5756,8 +5756,8 @@ static void sm_merge_terms(SegmentMerger *sm)
      * term put in the index with the next one. So the size of the buffer must
      * by index_interval + 2. */
     sm->term_buf_ptr = 0;
-    sm->term_buf_size = (sm->config->index_interval + 1) * MAX_WORD_SIZE;
-    sm->term_buf = FRT_ALLOC_N(char, sm->term_buf_size + MAX_WORD_SIZE);
+    sm->term_buf_size = (sm->config->index_interval + 1) * FRT_MAX_WORD_SIZE;
+    sm->term_buf = FRT_ALLOC_N(char, sm->term_buf_size + FRT_MAX_WORD_SIZE);
 
     sm->queue = pq_new(sm->seg_cnt, (lt_ft)&smi_lt, NULL);
 

@@ -21,27 +21,6 @@ bool  x_abort_on_exception = true;
 bool  x_has_aborted = false;
 FILE *x_exception_stream = NULL;
 
-// todo: no need for these
-int min3(int a, int b, int c)
-{
-    return MIN3(a, b, c);
-}
-
-int min2(int a, int b)
-{
-    return MIN(a, b);
-}
-
-int max3(int a, int b, int c)
-{
-    return MAX3(a, b, c);
-}
-
-int max2(int a, int b)
-{
-    return MAX(a, b);
-}
-
 int scmp(const void *p1, const void *p2)
 {
     return strcmp(*(char **) p1, *(char **) p2);

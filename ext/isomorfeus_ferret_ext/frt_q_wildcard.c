@@ -95,7 +95,7 @@ static Query *wcq_rewrite(Query *self, IndexReader *ir)
 
         if (field_num >= 0) {
             TermEnum *te;
-            char prefix[MAX_WORD_SIZE] = "";
+            char prefix[FRT_MAX_WORD_SIZE] = "";
             int prefix_len;
 
             pattern = (first_ques && (!first_star || first_star > first_ques))

@@ -2,14 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define MATCH_VECTOR_INIT_CAPA             FRT_MATCH_VECTOR_INIT_CAPA
-#define MAX                                FRT_MAX
-#define MAX3                               FRT_MAX3
-#define MAX_FILE_PATH                      FRT_MAX_FILE_PATH
-#define MAX_WORD_SIZE                      FRT_MAX_WORD_SIZE
-#define MEM_ERROR                          FRT_MEM_ERROR
-#define MIN                                FRT_MIN
-#define MIN3                               FRT_MIN3
 #define MP_ALLOC                           FRT_MP_ALLOC
 #define MP_ALLOC_AND_ZERO                  FRT_MP_ALLOC_AND_ZERO
 #define MP_ALLOC_AND_ZERO_N                FRT_MP_ALLOC_AND_ZERO_N
@@ -572,8 +564,6 @@
 #define matchv_destroy                                 frt_matchv_destroy
 #define matchv_new                                     frt_matchv_new
 #define matchv_sort                                    frt_matchv_sort
-#define max2                                           frt_max2
-#define max3                                           frt_max3
 #define mb_legacy_standard_analyzer_new                frt_mb_legacy_standard_analyzer_new
 #define mb_legacy_standard_analyzer_new_with_words     frt_mb_legacy_standard_analyzer_new_with_words
 #define mb_legacy_standard_analyzer_new_with_words_len frt_mb_legacy_standard_analyzer_new_with_words_len
@@ -587,8 +577,6 @@
 #define mb_standard_tokenizer_new                      frt_mb_standard_tokenizer_new
 #define mb_whitespace_analyzer_new                     frt_mb_whitespace_analyzer_new
 #define mb_whitespace_tokenizer_new                    frt_mb_whitespace_tokenizer_new
-#define min2                                           frt_min2
-#define min3                                           frt_min3
 #define mp_alloc                                       frt_mp_alloc
 #define mp_destroy                                     frt_mp_destroy
 #define mp_memdup                                      frt_mp_memdup

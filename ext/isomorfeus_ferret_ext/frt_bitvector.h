@@ -408,11 +408,11 @@ void frt_bv_capa(FrtBitVector *bv, int capa, int size)
     int i;                                                            \
     int a_wsz = FRT_TO_WORD(a->size);                                 \
     int b_wsz = FRT_TO_WORD(b->size);                                 \
-    int max_size = frt_max2(a->size, b->size);                        \
-    int min_size = frt_min2(a->size, b->size);                        \
+    int max_size = FRT_MAX(a->size, b->size);                        \
+    int min_size = FRT_MIN(a->size, b->size);                        \
     int max_word_size = FRT_TO_WORD(max_size);                        \
     int min_word_size = FRT_TO_WORD(min_size);                        \
-    int capa = frt_max2(frt_round2(max_word_size), 4);                \
+    int capa = FRT_MAX(frt_round2(max_word_size), 4);                \
                                                                       \
     bv->extends_as_ones = (a->extends_as_ones op b->extends_as_ones); \
     frt_bv_capa(bv, capa, max_size);                                  \
@@ -461,7 +461,7 @@ FrtBitVector *frt_bv_not_i(FrtBitVector *bv, FrtBitVector *bv1)
 {
     int i;
     int word_size = FRT_TO_WORD(bv1->size);
-    int capa = frt_max2(frt_round2(word_size), 4);
+    int capa = FRT_MAX(frt_round2(word_size), 4);
 
     bv->extends_as_ones = !bv1->extends_as_ones;
     frt_bv_capa(bv, capa, bv1->size);
