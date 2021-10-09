@@ -215,7 +215,7 @@ SortField *sort_field_byte_new(Symbol field, bool reverse)
 {
     return sort_field_alloc(field, SORT_TYPE_BYTE, reverse,
                             &sf_byte_compare, &sf_byte_get_val,
-                            &BYTE_FIELD_INDEX_CLASS);
+                            &FRT_BYTE_FIELD_INDEX_CLASS);
 }
 
 /***************************************************************************

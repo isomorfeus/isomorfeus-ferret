@@ -20,7 +20,7 @@ BitVector *bv_new_capa(int capa)
 
 BitVector *bv_new()
 {
-    return bv_new_capa(BV_INIT_CAPA);
+    return bv_new_capa(FRT_BV_INIT_CAPA);
 }
 
 void bv_destroy(BitVector *bv)

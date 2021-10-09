@@ -789,14 +789,14 @@ frb_bc_wrap(BooleanClause *bc)
 static BCType
 frb_get_occur(VALUE roccur)
 {
-    BCType occur = BC_SHOULD;
+    BCType occur = FRT_BC_SHOULD;
 
     if (roccur == sym_should) {
-        occur = BC_SHOULD;
+        occur = FRT_BC_SHOULD;
     } else if (roccur == sym_must) {
-        occur = BC_MUST;
+        occur = FRT_BC_MUST;
     } else if (roccur == sym_must_not) {
-        occur = BC_MUST_NOT;
+        occur = FRT_BC_MUST_NOT;
     } else {
         rb_raise(rb_eArgError, "occur argument must be one of [:must, "
                  ":should, :must_not]");
@@ -816,7 +816,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
 {
     BooleanClause *bc;
     VALUE rquery, roccur;
-    unsigned int occur = BC_SHOULD;
+    unsigned int occur = FRT_BC_SHOULD;
     Query *sub_q;
     if (rb_scan_args(argc, argv, "11", &rquery, &roccur) == 2) {
         occur = frb_get_occur(roccur);
@@ -920,13 +920,13 @@ frb_bc_to_s(VALUE self)
     GET_BC();
     qstr = bc->query->to_s(bc->query, NULL);
     switch (bc->occur) {
-        case BC_SHOULD:
+        case FRT_BC_SHOULD:
             ostr = "Should";
             break;
-        case BC_MUST:
+        case FRT_BC_MUST:
             ostr = "Must";
             break;
-        case BC_MUST_NOT:
+        case FRT_BC_MUST_NOT:
             ostr = "Must Not";
             break;
     }
@@ -1007,7 +1007,7 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
 {
     GET_Q();
     VALUE rquery, roccur;
-    BCType occur = BC_SHOULD;
+    BCType occur = FRT_BC_SHOULD;
     Query *sub_q;
     VALUE klass;
 

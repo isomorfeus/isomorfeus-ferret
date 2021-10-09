@@ -288,7 +288,7 @@ CompoundWriter *open_cw(Store *store, char *name)
     cw->store = store;
     cw->name = name;
     cw->ids = hs_new_str(&free);
-    cw->file_entries = ary_new_type_capa(CWFileEntry, CW_INIT_CAPA);
+    cw->file_entries = ary_new_type_capa(CWFileEntry, FRT_CW_INIT_CAPA);
     return cw;
 }
 
@@ -309,14 +309,14 @@ static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
     off_t start_ptr = os_pos(os);
     off_t end_ptr;
     off_t remainder, length, len;
-    uchar buffer[BUFFER_SIZE];
+    uchar buffer[FRT_BUFFER_SIZE];
 
     InStream *is = cw->store->open_input(cw->store, src->name);
 
     remainder = length = is_length(is);
 
     while (remainder > 0) {
-        len = MIN(remainder, BUFFER_SIZE);
+        len = MIN(remainder, FRT_BUFFER_SIZE);
         is_read_bytes(is, buffer, len);
         os_write_bytes(os, buffer, len);
         remainder -= len;

@@ -122,7 +122,7 @@ static void byte_destroy_index(void *p)
     free(&index[-1]);
 }
 
-const FieldIndexClass BYTE_FIELD_INDEX_CLASS = {
+const FieldIndexClass FRT_BYTE_FIELD_INDEX_CLASS = {
     "byte",
     &byte_create_index,
     &byte_destroy_index,
@@ -204,7 +204,7 @@ float get_float_value(FieldIndex *field_index, long doc_num)
 /******************************************************************************
  * StringFieldIndex < FieldIndex
  ******************************************************************************/
- 
+
 static void *string_create_index(int size)
 {
     StringIndex *self = FRT_ALLOC_AND_ZERO(StringIndex);

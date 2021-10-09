@@ -3220,7 +3220,7 @@ Init_IndexWriter(void)
     rb_define_const(cIndexWriter, "WRITE_LOCK_NAME",
                     rb_str_new2(WRITE_LOCK_NAME));
     rb_define_const(cIndexWriter, "COMMIT_LOCK_NAME",
-                    rb_str_new2(COMMIT_LOCK_NAME));
+                    rb_str_new2(FRT_COMMIT_LOCK_NAME));
     rb_define_const(cIndexWriter, "DEFAULT_CHUNK_SIZE",
                     INT2FIX(default_config.chunk_size));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_BUFFER_MEMORY",

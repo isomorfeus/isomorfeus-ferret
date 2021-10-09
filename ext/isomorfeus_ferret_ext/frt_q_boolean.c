@@ -125,7 +125,7 @@ static bool dssc_advance_after_current(Scorer *self)
             }
         }
 
-        if (dssc->num_matches >= dssc->min_num_matches) { 
+        if (dssc->num_matches >= dssc->min_num_matches) {
             return true;
         }
         else if (scorer_queue->size < dssc->min_num_matches) {
@@ -164,7 +164,7 @@ static bool dssc_skip_to(Scorer *self, int doc_num)
     if (doc_num <= self->doc) {
         doc_num = self->doc + 1;
     }
-    while (true) { 
+    while (true) {
         Scorer *top = (Scorer *)pq_top(scorer_queue);
         if (top->doc >= doc_num) {
             return dssc_advance_after_current(self);
@@ -209,7 +209,7 @@ static void dssc_destroy(Scorer *self)
 }
 
 static Scorer *disjunction_sum_scorer_new(Scorer **sub_scorers, int ss_cnt,
-                                          int min_num_matches) 
+                                          int min_num_matches)
 {
     Scorer *self = scorer_new(DisjunctionSumScorer, NULL);
     DSSc(self)->ss_cnt = ss_cnt;
@@ -420,7 +420,7 @@ static void csc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *conjunction_scorer_new(Similarity *similarity) 
+static Scorer *conjunction_scorer_new(Similarity *similarity)
 {
     Scorer *self = scorer_new(ConjunctionScorer, similarity);
 
@@ -656,7 +656,7 @@ static bool rxsc_to_non_excluded(Scorer *self)
     Scorer *excl_scorer = RXSc(self)->excl_scorer;
     int excl_doc = excl_scorer->doc, req_doc;
 
-    do { 
+    do {
         /* may be excluded */
         req_doc = req_scorer->doc;
         if (req_doc < excl_doc) {
@@ -944,7 +944,7 @@ static Scorer *counting_sum_scorer_create(BooleanScorer *bsc)
                 bsc,
                 counting_disjunction_sum_scorer_new(bsc->coordinator,
                                                        bsc->optional_scorers,
-                                                       bsc->os_cnt, 1), 
+                                                       bsc->os_cnt, 1),
                 NULL, 0); /* no optional scorers left */
         }
     }
@@ -972,23 +972,23 @@ static Scorer *bsc_init_counting_sum_scorer(BooleanScorer *bsc)
     return bsc->counting_sum_scorer = counting_sum_scorer_create(bsc);
 }
 
-static void bsc_add_scorer(Scorer *self, Scorer *scorer, unsigned int occur) 
+static void bsc_add_scorer(Scorer *self, Scorer *scorer, unsigned int occur)
 {
     BooleanScorer *bsc = BSc(self);
-    if (occur != BC_MUST_NOT) {
+    if (occur != FRT_BC_MUST_NOT) {
         bsc->coordinator->max_coord++;
     }
 
     switch (occur) {
-        case BC_MUST:
+        case FRT_BC_MUST:
             RECAPA(bsc, rs_cnt, rs_capa, required_scorers, Scorer *);
             bsc->required_scorers[bsc->rs_cnt++] = scorer;
             break;
-        case BC_SHOULD:
+        case FRT_BC_SHOULD:
             RECAPA(bsc, os_cnt, os_capa, optional_scorers, Scorer *);
             bsc->optional_scorers[bsc->os_cnt++] = scorer;
             break;
-        case BC_MUST_NOT:
+        case FRT_BC_MUST_NOT:
             RECAPA(bsc, ps_cnt, ps_capa, prohibited_scorers, Scorer *);
             bsc->prohibited_scorers[bsc->ps_cnt++] = scorer;
             break;
@@ -1267,15 +1267,15 @@ void bc_set_occur(BooleanClause *self, BCType occur)
 {
     self->occur = occur;
     switch (occur) {
-        case BC_SHOULD:
+        case FRT_BC_SHOULD:
             self->is_prohibited = false;
             self->is_required = false;
             break;
-        case BC_MUST:
+        case FRT_BC_MUST:
             self->is_prohibited = false;
             self->is_required = true;
             break;
-        case BC_MUST_NOT:
+        case FRT_BC_MUST_NOT:
             self->is_prohibited = true;
             self->is_required = false;
             break;
@@ -1300,7 +1300,7 @@ static unsigned long long bc_hash(BooleanClause *self)
 
 static int  bc_eq(BooleanClause *self, BooleanClause *o)
 {
-    return ((self->occur == o->occur) && q_eq(self->query, o->query)); 
+    return ((self->occur == o->occur) && q_eq(self->query, o->query));
 }
 
 BooleanClause *bc_new(Query *query, BCType occur)
@@ -1323,7 +1323,7 @@ static MatchVector *bq_get_matchv_i(Query *self, MatchVector *mv,
 {
     int i;
     for (i = BQ(self)->clause_cnt - 1; i >= 0; i--) {
-        if (BQ(self)->clauses[i]->occur != BC_MUST_NOT) {
+        if (BQ(self)->clauses[i]->occur != FRT_BC_MUST_NOT) {
             Query *q = BQ(self)->clauses[i]->query;
             q->get_matchv_i(q, mv, tv);
         }
@@ -1338,7 +1338,7 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
     bool rewritten = false;
     bool has_non_prohibited_clause = false;
 
-    if (clause_cnt == 1) { 
+    if (clause_cnt == 1) {
         /* optimize 1-clause queries */
         BooleanClause *clause = BQ(self)->clauses[0];
         if (! clause->is_prohibited) {
@@ -1395,7 +1395,7 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
         }
     }
     if (clause_cnt > 0 && !has_non_prohibited_clause) {
-        bq_add_query_nr(self, maq_new(), BC_MUST);
+        bq_add_query_nr(self, maq_new(), FRT_BC_MUST);
     }
 
     return self;
@@ -1497,7 +1497,7 @@ static float bq_coord_disabled(Similarity *sim, int overlap, int max_overlap)
 static Similarity *bq_get_similarity(Query *self, Searcher *searcher)
 {
     if (!BQ(self)->similarity) {
-        Similarity *sim = q_get_similarity_i(self, searcher); 
+        Similarity *sim = q_get_similarity_i(self, searcher);
         BQ(self)->similarity = FRT_ALLOC(Similarity);
         memcpy(BQ(self)->similarity, sim, sizeof(Similarity));
         BQ(self)->similarity->coord = &bq_coord_disabled;
@@ -1545,8 +1545,8 @@ Query *bq_new(bool coord_disabled)
     }
     BQ(self)->max_clause_cnt = DEFAULT_MAX_CLAUSE_COUNT;
     BQ(self)->clause_cnt = 0;
-    BQ(self)->clause_capa = BOOLEAN_CLAUSES_START_CAPA;
-    BQ(self)->clauses = FRT_ALLOC_N(BooleanClause *, BOOLEAN_CLAUSES_START_CAPA);
+    BQ(self)->clause_capa = FRT_BOOLEAN_CLAUSES_START_CAPA;
+    BQ(self)->clauses = FRT_ALLOC_N(BooleanClause *, FRT_BOOLEAN_CLAUSES_START_CAPA);
     BQ(self)->similarity = NULL;
     BQ(self)->original_boost = 0.0f;
 

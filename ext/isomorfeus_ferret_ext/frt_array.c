@@ -3,14 +3,14 @@
 #include <string.h>
 #include "frt_internal.h"
 
-#define META_CNT ARY_META_CNT
+#define META_CNT FRT_ARY_META_CNT
 #define DATA_SZ sizeof(int) * META_CNT
 
 void **ary_new_i(int type_size, int init_capa)
 {
     void **ary;
     if (init_capa <= 0) {
-        init_capa = ARY_INIT_CAPA;
+        init_capa = FRT_ARY_INIT_CAPA;
     }
     ary = (void **)&(((int *)ecalloc(DATA_SZ +
                                         init_capa * type_size))[META_CNT]);

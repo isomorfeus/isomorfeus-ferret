@@ -217,7 +217,7 @@ static void qp_pop_fields(QParser *self);
                 field = (Symbol)hse->elem;\
                 sq = func;\
                 TRY\
-                  if (sq) bq_add_query_nr(q, sq, BC_SHOULD);\
+                  if (sq) bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
                 XCATCHALL\
                   if (sq) q_deref(sq);\
                 XENDTRY\
@@ -1604,17 +1604,17 @@ yyreduce:
 
   case 8:
 #line 234 "src/q_parser.y"
-    { T (yyval.bcls) = get_bool_cls((yyvsp[(2) - (2)].query), BC_MUST); E }
+    { T (yyval.bcls) = get_bool_cls((yyvsp[(2) - (2)].query), FRT_BC_MUST); E }
     break;
 
   case 9:
 #line 235 "src/q_parser.y"
-    { T (yyval.bcls) = get_bool_cls((yyvsp[(2) - (2)].query), BC_MUST_NOT); E }
+    { T (yyval.bcls) = get_bool_cls((yyvsp[(2) - (2)].query), FRT_BC_MUST_NOT); E }
     break;
 
   case 10:
 #line 236 "src/q_parser.y"
-    { T (yyval.bcls) = get_bool_cls((yyvsp[(1) - (1)].query), BC_SHOULD); E }
+    { T (yyval.bcls) = get_bool_cls((yyvsp[(1) - (1)].query), FRT_BC_SHOULD); E }
     break;
 
   case 12:
@@ -2240,8 +2240,8 @@ static Query *get_bool_q(BCArray *bca)
         BooleanClause *bc = bca->clauses[0];
         if (bc->is_prohibited) {
             q = bq_new(false);
-            bq_add_query_nr(q, bc->query, BC_MUST_NOT);
-            bq_add_query_nr(q, maq_new(), BC_MUST);
+            bq_add_query_nr(q, bc->query, FRT_BC_MUST_NOT);
+            bq_add_query_nr(q, maq_new(), FRT_BC_MUST);
         }
         else {
             q = bc->query;
@@ -2302,11 +2302,11 @@ static BCArray *add_and_cls(BCArray *bca, BooleanClause *clause)
     if (clause) {
         if (bca->size == 1) {
             if (!bca->clauses[0]->is_prohibited) {
-                bc_set_occur(bca->clauses[0], BC_MUST);
+                bc_set_occur(bca->clauses[0], FRT_BC_MUST);
             }
         }
         if (!clause->is_prohibited) {
-            bc_set_occur(clause, BC_MUST);
+            bc_set_occur(clause, FRT_BC_MUST);
         }
         bca_add_clause(bca, clause);
     }

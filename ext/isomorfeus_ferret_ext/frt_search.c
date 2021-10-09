@@ -154,7 +154,7 @@ static void hit_pq_up(PriorityQueue *pq)
     heap[i] = node;
 }
 
-static void hit_pq_insert(PriorityQueue *pq, Hit *hit) 
+static void hit_pq_insert(PriorityQueue *pq, Hit *hit)
 {
     if (pq->size < pq->capa) {
         Hit *new_hit = FRT_ALLOC(Hit);
@@ -173,7 +173,7 @@ static void hit_pq_insert(PriorityQueue *pq, Hit *hit)
     }
 }
 
-static void hit_pq_multi_insert(PriorityQueue *pq, Hit *hit) 
+static void hit_pq_multi_insert(PriorityQueue *pq, Hit *hit)
 {
     hit_pq_insert(pq, hit);
     free(hit);
@@ -301,7 +301,7 @@ static const char *QUERY_NAMES[] = {
 };
 
 static const char *UNKNOWN_QUERY_NAME = "UnkownQuery";
-    
+
 const char *q_get_query_name(QueryType type) {
     if (type >= NELEMS(QUERY_NAMES)) {
         return UNKNOWN_QUERY_NAME;
@@ -337,7 +337,7 @@ void q_destroy_i(Query *self)
 }
 
 void q_deref(Query *self)
-{  
+{
     if (--(self->ref_cnt) == 0) {
         self->destroy_i(self);
     }
@@ -380,7 +380,7 @@ Query *q_combine(Query **queries, int q_cnt)
                 splittable = false;
             } else {
                 for (j = 0; j < BQ(q)->clause_cnt; j++) {
-                    if (BQ(q)->clauses[j]->occur != BC_SHOULD) {
+                    if (BQ(q)->clauses[j]->occur != FRT_BC_SHOULD) {
                         splittable = false;
                         break;
                     }
@@ -400,14 +400,14 @@ Query *q_combine(Query **queries, int q_cnt)
     }
 
     if (uniques->size == 1) {
-        ret_q = (Query *)uniques->first->elem; 
+        ret_q = (Query *)uniques->first->elem;
         REF(ret_q);
     } else {
         HashSetEntry *hse;
         ret_q = bq_new(true);
         for (hse = uniques->first; hse; hse = hse->next) {
             q = (Query *)hse->elem;
-            bq_add_query(ret_q, q, BC_SHOULD);
+            bq_add_query(ret_q, q, FRT_BC_SHOULD);
         }
     }
     hs_destroy(uniques);
@@ -706,7 +706,7 @@ static Excerpt *excerpt_expand(Excerpt *e, const int len, TermVector *tv)
             offsets[i].end = offsets[i-1].end;
         }
     }
-    
+
     while (did_expansion) {
         did_expansion = false;
         if (e->start_pos > 0
@@ -727,7 +727,7 @@ static Excerpt *excerpt_expand(Excerpt *e, const int len, TermVector *tv)
 
 static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
                              LazyDocField *lazy_df,
-                             const char *pre_tag, 
+                             const char *pre_tag,
                              const char *post_tag,
                              const char *ellipsis)
 {
@@ -784,7 +784,7 @@ static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
 static char *highlight_field(MatchVector *mv,
                              LazyDocField *lazy_df,
                              TermVector *tv,
-                             const char *pre_tag, 
+                             const char *pre_tag,
                              const char *post_tag)
 {
     const int pre_len = (int)strlen(pre_tag);
@@ -869,7 +869,7 @@ char **searcher_highlight(Searcher *self,
             matchv_set_offsets(mv, offsets);
             excerpt_pq = pq_new(mv->size, (lt_ft)&excerpt_lt, &free);
             /* add all possible excerpts to the priority queue */
-            
+
             for (e_start = e_end = 0; e_start < mv->size; e_start++) {
                 const int start_offset = matches[e_start].start_offset;
                 if (e_start > e_end) {
@@ -1041,13 +1041,13 @@ static TopDocs *isea_search_w(Searcher *self,
 
     Scorer *scorer;
     Hit hit;
-    
+
     float max_score = 0.0f;
     float score = 0.0f;
     float filter_factor = 1.0f;
 
     BitVector *bits = (filter ? filt_get_bv(filter, ISEA(self)->ir) : NULL);
-    
+
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
@@ -1170,7 +1170,7 @@ static void isea_search_each(Searcher *self, Query *query, Filter *filter,
 /*
  * Scan the index for all documents that match a query and write the results
  * to a buffer. It will stop scanning once the limit is reached and it starts
- * scanning from offset_docnum. 
+ * scanning from offset_docnum.
  *
  * Note: Unlike the offset_docnum in other search methods, this offset_docnum
  * refers to document number and not hit.
@@ -1344,7 +1344,7 @@ static TopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
 }
 
 static void cdfsea_search_each(Searcher *self, Query *query, Filter *filter,
-                               PostFilter *pf, 
+                               PostFilter *pf,
                                void (*fn)(Searcher *, int, float, void *),
                                void *arg)
 {
@@ -1353,7 +1353,7 @@ static void cdfsea_search_each(Searcher *self, Query *query, Filter *filter,
 }
 
 static void cdfsea_search_each_w(Searcher *self, Weight *w, Filter *filter,
-                                 PostFilter *pf, 
+                                 PostFilter *pf,
                                  void (*fn)(Searcher *, int, float, void *),
                                  void *arg)
 {
@@ -1526,7 +1526,7 @@ static Weight *msea_create_weight(Searcher *self, Query *query)
     doc_freqs = msea_get_doc_freqs(self, terms);
 
     for (hse = terms->first, i = 0; hse; ++i, hse = hse->next) {
-        h_set(df_map, hse->elem, imalloc(doc_freqs[i])); 
+        h_set(df_map, hse->elem, imalloc(doc_freqs[i]));
     }
     hs_destroy(terms);
     free(doc_freqs);
@@ -1670,7 +1670,7 @@ static TopDocs *msea_search_w(Searcher *self,
     PriorityQueue *hq;
     Hit *(*hq_pop)(PriorityQueue *pq);
     void (*hq_insert)(PriorityQueue *pq, Hit *hit);
-    
+
     float max_score = 0.0f;
 
     (void)load_fields; /* does it automatically */

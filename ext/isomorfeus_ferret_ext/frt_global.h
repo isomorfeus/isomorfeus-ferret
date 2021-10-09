@@ -25,14 +25,12 @@
 #if __GNUC__ >= 3
 #  define FRT_ATTR_ALWAYS_INLINE inline __attribute__ ((always_inline))
 #  define FRT_ATTR_MALLOC               __attribute__ ((malloc))
-#  define FRT_ATTR_PURE                 __attribute__ ((pure))
 #  define FRT_ATTR_CONST                __attribute__ ((const))
 #  define likely(x)   __builtin_expect(!!(x), 1)
 #  define unlikely(x) __builtin_expect(!!(x), 0)
 #else
 #  define FRT_ATTR_ALWAYS_INLINE
 #  define FRT_ATTR_MALLOC
-#  define FRT_ATTR_PURE
 #  define FRT_ATTR_CONST
 #  define likely(x)   (x)
 #  define unlikely(x) (x)
@@ -78,7 +76,7 @@ typedef void (*frt_free_ft)(void *key);
     }\
   } while (0)
 
-#if POSH_OS_WIN32 
+#if POSH_OS_WIN32
 # define Jx fprintf(stderr,"%s, %d\n", __FILE__, __LINE__);
 # define Xj fprintf(stdout,"%s, %d\n", __FILE__, __LINE__);
 #else

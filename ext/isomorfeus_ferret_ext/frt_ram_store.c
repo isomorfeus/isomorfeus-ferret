@@ -9,7 +9,7 @@ static RAMFile *rf_new(const char *name)
 {
     RAMFile *rf = FRT_ALLOC(RAMFile);
     rf->buffers = FRT_ALLOC(uchar *);
-    rf->buffers[0] = FRT_ALLOC_N(uchar, BUFFER_SIZE);
+    rf->buffers[0] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
     rf->name = estrdup(name);
     rf->len = 0;
     rf->bufcnt = 1;
@@ -21,7 +21,7 @@ static void rf_extend_if_necessary(RAMFile *rf, int buf_num)
 {
     while (rf->bufcnt <= buf_num) {
         FRT_REALLOC_N(rf->buffers, uchar *, (rf->bufcnt + 1));
-        rf->buffers[rf->bufcnt++] = FRT_ALLOC_N(uchar, BUFFER_SIZE);
+        rf->buffers[rf->bufcnt++] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
     }
 }
 
@@ -194,9 +194,9 @@ static void ramo_flush_i(OutStream *os, const uchar *src, int len)
     int src_offset;
     off_t pointer = os->pointer;
 
-    buffer_number = (int)(pointer / BUFFER_SIZE);
-    buffer_offset = pointer % BUFFER_SIZE;
-    bytes_in_buffer = BUFFER_SIZE - buffer_offset;
+    buffer_number = (int)(pointer / FRT_BUFFER_SIZE);
+    buffer_offset = pointer % FRT_BUFFER_SIZE;
+    bytes_in_buffer = FRT_BUFFER_SIZE - buffer_offset;
     bytes_to_copy = bytes_in_buffer < len ? bytes_in_buffer : len;
 
     rf_extend_if_necessary(rf, buffer_number);
@@ -246,10 +246,10 @@ void ramo_write_to(OutStream *os, OutStream *other_o)
     int last_buffer_offset;
 
     os_flush(os);
-    last_buffer_number = (int) (rf->len / BUFFER_SIZE);
-    last_buffer_offset = rf->len % BUFFER_SIZE;
+    last_buffer_number = (int) (rf->len / FRT_BUFFER_SIZE);
+    last_buffer_offset = rf->len % FRT_BUFFER_SIZE;
     for (i = 0; i <= last_buffer_number; i++) {
-        len = (i == last_buffer_number ? last_buffer_offset : BUFFER_SIZE);
+        len = (i == last_buffer_number ? last_buffer_offset : FRT_BUFFER_SIZE);
         os_write_bytes(other_o, rf->buffers[i], len);
     }
 }
@@ -305,9 +305,9 @@ static void rami_read_i(InStream *is, uchar *b, int len)
     uchar *buffer;
 
     while (remainder > 0) {
-        buffer_number = (int) (start / BUFFER_SIZE);
-        buffer_offset = start % BUFFER_SIZE;
-        bytes_in_buffer = BUFFER_SIZE - buffer_offset;
+        buffer_number = (int) (start / FRT_BUFFER_SIZE);
+        buffer_offset = start % FRT_BUFFER_SIZE;
+        bytes_in_buffer = FRT_BUFFER_SIZE - buffer_offset;
 
         if (bytes_in_buffer >= remainder) {
             bytes_to_copy = remainder;

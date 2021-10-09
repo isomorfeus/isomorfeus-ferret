@@ -224,7 +224,7 @@ static INLINE void index_del_doc_with_key_i(Index *self, Document *doc,
         Symbol field = (Symbol)hse->elem;
         df = doc_get_field(doc, field);
         if (!df) continue;
-        bq_add_query(q, tq_new(field, df->data[0]), BC_MUST);
+        bq_add_query(q, tq_new(field, df->data[0]), FRT_BC_MUST);
     }
     td = searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
     if (td->total_hits > 1) {

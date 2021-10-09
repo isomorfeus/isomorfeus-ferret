@@ -4,7 +4,7 @@
 #include "frt_internal.h"
 
 #define VINT_MAX_LEN 10
-#define VINT_END BUFFER_SIZE - VINT_MAX_LEN
+#define VINT_END FRT_BUFFER_SIZE - VINT_MAX_LEN
 
 extern VALUE cLockError;
 
@@ -149,7 +149,7 @@ void os_seek(OutStream *os, off_t new_pos)
  */
 INLINE void os_write_byte(OutStream *os, uchar b)
 {
-    if (os->buf.pos >= BUFFER_SIZE) {
+    if (os->buf.pos >= FRT_BUFFER_SIZE) {
         os_flush(os);
     }
     write_byte(os, b);
@@ -161,7 +161,7 @@ void os_write_bytes(OutStream *os, const uchar *buf, int len)
         os_flush(os);
     }
 
-    if (len < BUFFER_SIZE) {
+    if (len < FRT_BUFFER_SIZE) {
         os->m->flush_i(os, buf, len);
         os->buf.start += len;
     }
@@ -169,11 +169,11 @@ void os_write_bytes(OutStream *os, const uchar *buf, int len)
         int pos = 0;
         int size;
         while (pos < len) {
-            if (len - pos < BUFFER_SIZE) {
+            if (len - pos < FRT_BUFFER_SIZE) {
                 size = len - pos;
             }
             else {
-                size = BUFFER_SIZE;
+                size = FRT_BUFFER_SIZE;
             }
             os->m->flush_i(os, buf + pos, size);
             pos += size;
@@ -207,7 +207,7 @@ InStream *is_new()
 static void is_refill(InStream *is)
 {
     off_t start = is->buf.start + is->buf.pos;
-    off_t last = start + BUFFER_SIZE;
+    off_t last = start + FRT_BUFFER_SIZE;
     off_t flen = is->m->length_i(is);
 
     if (last > flen) {          /* don't read past EOF */
@@ -627,10 +627,10 @@ int file_is_lock(const char *filename)
 void is2os_copy_bytes(InStream *is, OutStream *os, int cnt)
 {
     int len;
-    uchar buf[BUFFER_SIZE];
+    uchar buf[FRT_BUFFER_SIZE];
 
-    for (; cnt > 0; cnt -= BUFFER_SIZE) {
-        len = ((cnt > BUFFER_SIZE) ? BUFFER_SIZE : cnt);
+    for (; cnt > 0; cnt -= FRT_BUFFER_SIZE) {
+        len = ((cnt > FRT_BUFFER_SIZE) ? FRT_BUFFER_SIZE : cnt);
         is_read_bytes(is, buf, len);
         os_write_bytes(os, buf, len);
     }

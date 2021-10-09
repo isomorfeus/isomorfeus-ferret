@@ -284,7 +284,7 @@ char *get_stacktrace()
 #ifdef HAVE_GDB
     FILE *stream;
     char *gdb_filename = NULL, *buf = NULL, *stack = NULL;
-    int   offset = -BUFFER_SIZE;
+    int   offset = -FRT_BUFFER_SIZE;
 
     if ( !(buf = build_shell_command()) ) {
         fprintf(EXCEPTION_STREAM,
@@ -299,10 +299,10 @@ char *get_stacktrace()
     }
 
     do {
-        offset += BUFFER_SIZE;
-        FRT_REALLOC_N(stack, char, offset + BUFFER_SIZE);
-        ZEROSET_N(stack + offset, char, BUFFER_SIZE);
-    } while(fread(stack + offset, 1, BUFFER_SIZE, stream) == BUFFER_SIZE);
+        offset += FRT_BUFFER_SIZE;
+        FRT_REALLOC_N(stack, char, offset + FRT_BUFFER_SIZE);
+        ZEROSET_N(stack + offset, char, FRT_BUFFER_SIZE);
+    } while(fread(stack + offset, 1, FRT_BUFFER_SIZE, stream) == FRT_BUFFER_SIZE);
 
     pclose(stream);
 

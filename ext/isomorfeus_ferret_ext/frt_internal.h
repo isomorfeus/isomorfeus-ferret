@@ -2,24 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Constants */
-#define ARG_ERROR                          FRT_ARG_ERROR
-#define ARY_INIT_CAPA                      FRT_ARY_INIT_CAPA
-#define ARY_META_CNT                       FRT_ARY_META_CNT
-#define ATTR_ALWAYS_INLINE                 FRT_ATTR_ALWAYS_INLINE
-#define ATTR_CONST                         FRT_ATTR_CONST
-#define ATTR_MALLOC                        FRT_ATTR_MALLOC
-#define ATTR_PURE                          FRT_ATTR_PURE
-#define BC_MUST                            FRT_BC_MUST
-#define BC_MUST_NOT                        FRT_BC_MUST_NOT
-#define BC_SHOULD                          FRT_BC_SHOULD
-#define BODY                               FRT_BODY
-#define BOOLEAN_CLAUSES_START_CAPA         FRT_BOOLEAN_CLAUSES_START_CAPA
-#define BUFFER_SIZE                        FRT_BUFFER_SIZE
-#define BV_INIT_CAPA                       FRT_BV_INIT_CAPA
-#define BV_OP                              FRT_BV_OP
-#define BYTE_FIELD_INDEX_CLASS             FRT_BYTE_FIELD_INDEX_CLASS
-#define COMMIT_LOCK_NAME                   FRT_COMMIT_LOCK_NAME
-#define CW_INIT_CAPA                       FRT_CW_INIT_CAPA
 #define DBL2S                              FRT_DBL2S
 #define DEFAULT_MAX_CLAUSE_COUNT           FRT_DEFAULT_MAX_CLAUSE_COUNT
 #define DEF_MAX_TERMS                      FRT_DEF_MAX_TERMS
