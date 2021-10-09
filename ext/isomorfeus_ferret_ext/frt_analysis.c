@@ -1193,7 +1193,7 @@ TokenStream *stop_filter_new_with_words(TokenStream *sub_ts,
 
 TokenStream *stop_filter_new(TokenStream *ts)
 {
-    return stop_filter_new_with_words(ts, FULL_ENGLISH_STOP_WORDS);
+    return stop_filter_new_with_words(ts, FRT_FULL_ENGLISH_STOP_WORDS);
 }
 
 /****************************************************************************
@@ -1562,19 +1562,19 @@ Analyzer *utf8_standard_analyzer_new_with_words(const char **words,
 
 Analyzer *standard_analyzer_new(bool lowercase)
 {
-    return standard_analyzer_new_with_words(FULL_ENGLISH_STOP_WORDS,
+    return standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                             lowercase);
 }
 
 Analyzer *mb_standard_analyzer_new(bool lowercase)
 {
-    return mb_standard_analyzer_new_with_words(FULL_ENGLISH_STOP_WORDS,
+    return mb_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                lowercase);
 }
 
 Analyzer *utf8_standard_analyzer_new(bool lowercase)
 {
-    return utf8_standard_analyzer_new_with_words(FULL_ENGLISH_STOP_WORDS,
+    return utf8_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                  lowercase);
 }
 
@@ -1628,13 +1628,13 @@ Analyzer *mb_legacy_standard_analyzer_new_with_words(const char **words,
 
 Analyzer *legacy_standard_analyzer_new(bool lowercase)
 {
-    return legacy_standard_analyzer_new_with_words(FULL_ENGLISH_STOP_WORDS,
+    return legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                    lowercase);
 }
 
 Analyzer *mb_legacy_standard_analyzer_new(bool lowercase)
 {
-    return mb_legacy_standard_analyzer_new_with_words(FULL_ENGLISH_STOP_WORDS,
+    return mb_legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                       lowercase);
 }
 
@@ -1668,7 +1668,7 @@ static void pfa_sub_a_destroy_i(void *p)
     a_deref(a);
 }
 
-void pfa_add_field(Analyzer *self, 
+void pfa_add_field(Analyzer *self,
                    Symbol field,
                    Analyzer *analyzer)
 {

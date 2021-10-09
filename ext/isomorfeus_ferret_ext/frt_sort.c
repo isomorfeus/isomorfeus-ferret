@@ -265,7 +265,7 @@ SortField *sort_field_float_new(Symbol field, bool reverse)
 {
     return sort_field_alloc(field, SORT_TYPE_FLOAT, reverse,
                             &sf_float_compare, &sf_float_get_val,
-                            &FLOAT_FIELD_INDEX_CLASS);
+                            &FRT_FLOAT_FIELD_INDEX_CLASS);
 }
 
 /***************************************************************************
@@ -360,7 +360,7 @@ typedef struct Sorter {
 
 #define SET_AUTO(upper_type, lower_type) \
     sf->type = SORT_TYPE_ ## upper_type;\
-    sf->field_index_class = &upper_type ## _FIELD_INDEX_CLASS;\
+    sf->field_index_class = &FRT_ ## upper_type ## _FIELD_INDEX_CLASS;\
     sf->compare = sf_ ## lower_type ## _compare;\
     sf->get_val = sf_ ## lower_type ## _get_val
 
@@ -410,7 +410,7 @@ static void sort_field_auto_evaluate(SortField *sf, char *text)
     } else {
         sscanf(text, "%f%n", &float_val, &scan_len);
         if (scan_len == text_len) {
-            set_auto(sf, SORT_TYPE_FLOAT, &FLOAT_FIELD_INDEX_CLASS,
+            set_auto(sf, SORT_TYPE_FLOAT, &FRT_FLOAT_FIELD_INDEX_CLASS,
                      sf_float_compare, sf_float_get_val);
         } else {
             set_auto(sf, SORT_TYPE_STRING, &STRING_FIELD_INDEX_CLASS,

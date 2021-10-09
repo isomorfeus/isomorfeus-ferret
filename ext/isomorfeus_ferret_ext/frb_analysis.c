@@ -1381,7 +1381,7 @@ get_rstopwords(const char **stop_words)
 
 /*
  *  call-seq:
- *     AsciiStandardAnalyzer.new(lower = true, stop_words = FULL_ENGLISH_STOP_WORDS)
+ *     AsciiStandardAnalyzer.new(lower = true, stop_words = FRT_FULL_ENGLISH_STOP_WORDS)
  *     -> analyzer
  *
  *  Create a new AsciiStandardAnalyzer which downcases tokens by default but
@@ -1414,7 +1414,7 @@ frb_a_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
 
 /*
  *  call-seq:
- *     StandardAnalyzer.new(stop_words = FULL_ENGLISH_STOP_WORDS, lower=true)
+ *     StandardAnalyzer.new(stop_words = FRT_FULL_ENGLISH_STOP_WORDS, lower=true)
  *     -> analyzer
  *
  *  Create a new StandardAnalyzer which downcases tokens by default but can
@@ -2314,7 +2314,7 @@ static void Init_WhiteSpaceAnalyzer(void)
  *  ASCII-analyzers. If it were implemented in Ruby it would look like this;
  *
  *    class AsciiStandardAnalyzer
- *      def initialize(stop_words = FULL_ENGLISH_STOP_WORDS, lower = true)
+ *      def initialize(stop_words = FRT_FULL_ENGLISH_STOP_WORDS, lower = true)
  *        @lower = lower
  *        @stop_words = stop_words
  *      end
@@ -2351,7 +2351,7 @@ static void Init_AsciiStandardAnalyzer(void)
  *  it were implemented in Ruby it would look like this;
  *
  *    class StandardAnalyzer
- *      def initialize(stop_words = FULL_ENGLISH_STOP_WORDS, lower = true)
+ *      def initialize(stop_words = FRT_FULL_ENGLISH_STOP_WORDS, lower = true)
  *        @lower = lower
  *        @stop_words = stop_words
  *      end
@@ -2520,33 +2520,33 @@ Init_Analysis(void)
     rb_define_const(mAnalysis, "ENGLISH_STOP_WORDS",
                     get_rstopwords(FRT_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_ENGLISH_STOP_WORDS",
-                    get_rstopwords(FULL_ENGLISH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "EXTENDED_ENGLISH_STOP_WORDS",
                     get_rstopwords(FRT_EXTENDED_ENGLISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_FRENCH_STOP_WORDS",
-                    get_rstopwords(FULL_FRENCH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_FRENCH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_SPANISH_STOP_WORDS",
-                    get_rstopwords(FULL_SPANISH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_SPANISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_PORTUGUESE_STOP_WORDS",
-                    get_rstopwords(FULL_PORTUGUESE_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_PORTUGUESE_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_ITALIAN_STOP_WORDS",
-                    get_rstopwords(FULL_ITALIAN_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_ITALIAN_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_GERMAN_STOP_WORDS",
-                    get_rstopwords(FULL_GERMAN_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_GERMAN_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_DUTCH_STOP_WORDS",
-                    get_rstopwords(FULL_DUTCH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_DUTCH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_SWEDISH_STOP_WORDS",
-                    get_rstopwords(FULL_SWEDISH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_SWEDISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_NORWEGIAN_STOP_WORDS",
-                    get_rstopwords(FULL_NORWEGIAN_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_NORWEGIAN_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_DANISH_STOP_WORDS",
-                    get_rstopwords(FULL_DANISH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_DANISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_RUSSIAN_STOP_WORDS",
-                    get_rstopwords(FULL_RUSSIAN_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_RUSSIAN_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_FINNISH_STOP_WORDS",
-                    get_rstopwords(FULL_FINNISH_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_FINNISH_STOP_WORDS));
     rb_define_const(mAnalysis, "FULL_HUNGARIAN_STOP_WORDS",
-                    get_rstopwords(FULL_HUNGARIAN_STOP_WORDS));
+                    get_rstopwords(FRT_FULL_HUNGARIAN_STOP_WORDS));
 
     Init_Token();
     Init_TokenStream();

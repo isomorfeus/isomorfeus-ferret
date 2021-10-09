@@ -16,7 +16,7 @@ const char *FRT_ENGLISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_ENGLISH_STOP_WORDS[] = {
+const char *FRT_FULL_ENGLISH_STOP_WORDS[] = {
     "a", "about", "above", "after", "again", "against", "all", "am", "an",
     "and", "any", "are", "aren't", "as", "at", "be", "because", "been",
     "before", "being", "below", "between", "both", "but", "by", "cannot",
@@ -73,7 +73,7 @@ const char *FRT_EXTENDED_ENGLISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_FRENCH_STOP_WORDS[] = {
+const char *FRT_FULL_FRENCH_STOP_WORDS[] = {
     "au", "aux", "avec", "ce", "ces", "dans", "de", "des", "du", "elle", "en",
     "et", "eux", "il", "je", "la", "le", "leur", "lui", "ma", "mais", "me",
     "même", "mes", "moi", "mon", "ne", "nos", "notre", "nous", "on", "ou",
@@ -95,7 +95,7 @@ const char *FULL_FRENCH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_SPANISH_STOP_WORDS[] = {
+const char *FRT_FULL_SPANISH_STOP_WORDS[] = {
     "de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las", "por",
     "un", "para", "con", "no", "una", "su", "al", "lo", "como", "más", "pero",
     "sus", "le", "ya", "o", "este", "sí", "porque", "esta", "entre", "cuando",
@@ -142,7 +142,7 @@ const char *FULL_SPANISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_PORTUGUESE_STOP_WORDS[] = {
+const char *FRT_FULL_PORTUGUESE_STOP_WORDS[] = {
     "de", "a", "o", "que", "e", "do", "da", "em", "um", "para", "com", "não",
     "uma", "os", "no", "se", "na", "por", "mais", "as", "dos", "como", "mas",
     "ao", "ele", "das", "à", "seu", "sua", "ou", "quando", "muito", "nos",
@@ -173,7 +173,7 @@ const char *FULL_PORTUGUESE_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_ITALIAN_STOP_WORDS[] = {
+const char *FRT_FULL_ITALIAN_STOP_WORDS[] = {
     "ad", "al", "allo", "ai", "agli", "all", "agl", "alla", "alle", "con",
     "col", "coi", "da", "dal", "dallo", "dai", "dagli", "dall", "dagl",
     "dalla", "dalle", "di", "del", "dello", "dei", "degli", "dell", "degl",
@@ -213,7 +213,7 @@ const char *FULL_ITALIAN_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_GERMAN_STOP_WORDS[] = {
+const char *FRT_FULL_GERMAN_STOP_WORDS[] = {
     "aber", "alle", "allem", "allen", "aller", "alles", "als", "also", "am",
     "an", "ander", "andere", "anderem", "anderen", "anderer", "anderes",
     "anderm", "andern", "anderr", "anders", "auch", "auf", "aus", "bei",
@@ -246,7 +246,7 @@ const char *FULL_GERMAN_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_DUTCH_STOP_WORDS[] = {
+const char *FRT_FULL_DUTCH_STOP_WORDS[] = {
     "de", "en", "van", "ik", "te", "dat", "die", "in", "een", "hij", "het",
     "niet", "zijn", "is", "was", "op", "aan", "met", "als", "voor", "had",
     "er", "maar", "om", "hem", "dan", "zou", "of", "wat", "mijn", "men",
@@ -261,7 +261,7 @@ const char *FULL_DUTCH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_SWEDISH_STOP_WORDS[] = {
+const char *FRT_FULL_SWEDISH_STOP_WORDS[] = {
     "och", "det", "att", "i", "en", "jag", "hon", "som", "han", "på", "den",
     "med", "var", "sig", "för", "så", "till", "är", "men", "ett", "om",
     "hade", "de", "av", "icke", "mig", "du", "henne", "då", "sin", "nu",
@@ -279,7 +279,7 @@ const char *FULL_SWEDISH_STOP_WORDS[] = {
 };
 
 
-const char *FULL_NORWEGIAN_STOP_WORDS[] = {
+const char *FRT_FULL_NORWEGIAN_STOP_WORDS[] = {
     "og", "i", "jeg", "det", "at", "en", "et", "den", "til", "er", "som",
     "på", "de", "med", "han", "av", "ikke", "ikkje", "der", "så", "var",
     "meg", "seg", "men", "ett", "har", "om", "vi", "min", "mitt", "ha",
@@ -303,7 +303,7 @@ const char *FULL_NORWEGIAN_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_DANISH_STOP_WORDS[] = {
+const char *FRT_FULL_DANISH_STOP_WORDS[] = {
     "og", "i", "jeg", "det", "at", "en", "den", "til", "er", "som", "på",
     "de", "med", "han", "af", "for", "ikke", "der", "var", "mig", "sig",
     "men", "et", "har", "om", "vi", "min", "havde", "ham", "hun", "nu",
@@ -317,7 +317,7 @@ const char *FULL_DANISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_RUSSIAN_STOP_WORDS[] = {
+const char *FRT_FULL_RUSSIAN_STOP_WORDS[] = {
     "а", "без", "более", "бы", "был", "была", "были", "было", "быть", "в",
     "вам", "вас", "весь", "во", "вот", "все", "всего", "всех", "вы", "где",
     "да", "даже", "для", "до", "его", "ее", "ей", "ею", "если", "есть", "еще",
@@ -331,21 +331,7 @@ const char *FULL_RUSSIAN_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_RUSSIAN_STOP_WORDS_KOI8_R[] = {
-    "Á", "ÂÅÚ", "ÂÏÌÅÅ", "ÂÙ", "ÂÙÌ", "ÂÙÌÁ", "ÂÙÌÉ", "ÂÙÌÏ", "ÂÙÔØ", "×",
-    "×ÁÍ", "×ÁÓ", "×ÅÓØ", "×Ï", "×ÏÔ", "×ÓÅ", "×ÓÅÇÏ", "×ÓÅÈ", "×Ù", "ÇÄÅ",
-    "ÄÁ", "ÄÁÖÅ", "ÄÌÑ", "ÄÏ", "ÅÇÏ", "ÅÅ", "ÅÊ", "ÅÀ", "ÅÓÌÉ", "ÅÓÔØ", "ÅÝÅ",
-    "ÖÅ", "ÚÁ", "ÚÄÅÓØ", "É", "ÉÚ", "ÉÌÉ", "ÉÍ", "ÉÈ", "Ë", "ËÁË", "ËÏ",
-    "ËÏÇÄÁ", "ËÔÏ", "ÌÉ", "ÌÉÂÏ", "ÍÎÅ", "ÍÏÖÅÔ", "ÍÙ", "ÎÁ", "ÎÁÄÏ", "ÎÁÛ",
-    "ÎÅ", "ÎÅÇÏ", "ÎÅÅ", "ÎÅÔ", "ÎÉ", "ÎÉÈ", "ÎÏ", "ÎÕ", "Ï", "ÏÂ", "ÏÄÎÁËÏ",
-    "ÏÎ", "ÏÎÁ", "ÏÎÉ", "ÏÎÏ", "ÏÔ", "ÏÞÅÎØ", "ÐÏ", "ÐÏÄ", "ÐÒÉ", "Ó", "ÓÏ",
-    "ÔÁË", "ÔÁËÖÅ", "ÔÁËÏÊ", "ÔÁÍ", "ÔÅ", "ÔÅÍ", "ÔÏ", "ÔÏÇÏ", "ÔÏÖÅ", "ÔÏÊ",
-    "ÔÏÌØËÏ", "ÔÏÍ", "ÔÙ", "Õ", "ÕÖÅ", "ÈÏÔÑ", "ÞÅÇÏ", "ÞÅÊ", "ÞÅÍ", "ÞÔÏ",
-    "ÞÔÏÂÙ", "ÞØÅ", "ÞØÑ", "ÜÔÁ", "ÜÔÉ", "ÜÔÏ", "Ñ",
-    NULL
-};
-
-const char *FULL_FINNISH_STOP_WORDS[] = {
+const char *FRT_FULL_FINNISH_STOP_WORDS[] = {
     "olla", "olen", "olet", "on", "olemme", "olette", "ovat", "ole", "oli",
     "olisi", "olisit", "olisin", "olisimme", "olisitte", "olisivat", "olit",
     "olin", "olimme", "olitte", "olivat", "ollut", "olleet", "en", "et", "ei",
@@ -380,7 +366,7 @@ const char *FULL_FINNISH_STOP_WORDS[] = {
     NULL
 };
 
-const char *FULL_HUNGARIAN_STOP_WORDS[] = {
+const char *FRT_FULL_HUNGARIAN_STOP_WORDS[] = {
     "a", "ahogy", "ahol", "aki", "akik", "akkor", "alatt", "által",
     "általában", "amely", "amelyek", "amelyekben", "amelyeket", "amelyet",
     "amelynek", "ami", "amit", "amolyan", "amíg", "amikor", "át", "abban",

@@ -80,8 +80,6 @@
 
 /* TODO make this an enum */
 #define FRT_BODY 0
-#define FRT_FINALLY 1
-#define FRT_FERRET_ERROR 2
 #define FRT_IO_ERROR 3
 #define FRT_FILE_NOT_FOUND_ERROR 4
 #define FRT_ARG_ERROR 5

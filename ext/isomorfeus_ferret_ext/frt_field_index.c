@@ -186,7 +186,7 @@ static void float_handle_term(void *index_ptr,
     }
 }
 
-const FieldIndexClass FLOAT_FIELD_INDEX_CLASS = {
+const FieldIndexClass FRT_FLOAT_FIELD_INDEX_CLASS = {
     "float",
     &float_create_index,
     &free,
@@ -195,7 +195,7 @@ const FieldIndexClass FLOAT_FIELD_INDEX_CLASS = {
 
 float get_float_value(FieldIndex *field_index, long doc_num)
 {
-    if (field_index->klass == &FLOAT_FIELD_INDEX_CLASS && doc_num >= 0) {
+    if (field_index->klass == &FRT_FLOAT_FIELD_INDEX_CLASS && doc_num >= 0) {
         return ((float *)field_index->index)[doc_num];
     }
     return 0.0f;

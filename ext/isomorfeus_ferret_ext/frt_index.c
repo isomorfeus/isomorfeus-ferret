@@ -221,7 +221,7 @@ static INLINE void fi_set_store(FieldInfo *fi, int store)
         case STORE_NO:
             break;
         case STORE_YES:
-            fi->bits |= FI_IS_STORED_BM;
+            fi->bits |= FRT_FI_IS_STORED_BM;
             break;
     }
 }
@@ -232,17 +232,17 @@ static INLINE void fi_set_index(FieldInfo *fi, int index)
         case INDEX_NO:
             break;
         case INDEX_YES:
-            fi->bits |= FI_IS_INDEXED_BM | FI_IS_TOKENIZED_BM;
+            fi->bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM;
             break;
         case INDEX_UNTOKENIZED:
-            fi->bits |= FI_IS_INDEXED_BM;
+            fi->bits |= FRT_FI_IS_INDEXED_BM;
             break;
         case INDEX_YES_OMIT_NORMS:
-            fi->bits |= FI_OMIT_NORMS_BM | FI_IS_INDEXED_BM |
-                FI_IS_TOKENIZED_BM;
+            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM |
+                FRT_FI_IS_TOKENIZED_BM;
             break;
         case INDEX_UNTOKENIZED_OMIT_NORMS:
-            fi->bits |= FI_OMIT_NORMS_BM | FI_IS_INDEXED_BM;
+            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM;
             break;
     }
 }
@@ -253,17 +253,17 @@ static INLINE void fi_set_term_vector(FieldInfo *fi, int term_vector)
         case TERM_VECTOR_NO:
             break;
         case TERM_VECTOR_YES:
-            fi->bits |= FI_STORE_TERM_VECTOR_BM;
+            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM;
             break;
         case TERM_VECTOR_WITH_POSITIONS:
-            fi->bits |= FI_STORE_TERM_VECTOR_BM | FI_STORE_POSITIONS_BM;
+            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM;
             break;
         case TERM_VECTOR_WITH_OFFSETS:
-            fi->bits |= FI_STORE_TERM_VECTOR_BM | FI_STORE_OFFSETS_BM;
+            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM;
             break;
         case TERM_VECTOR_WITH_POSITIONS_OFFSETS:
-            fi->bits |= FI_STORE_TERM_VECTOR_BM | FI_STORE_POSITIONS_BM |
-                FI_STORE_OFFSETS_BM;
+            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM |
+                FRT_FI_STORE_OFFSETS_BM;
             break;
     }
 }
@@ -929,7 +929,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             run(store, fsf);
             RETURN_EARLY();
             return;
-        case IO_ERROR: case FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
+        case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
             HANDLED();
             /*
             if (gen != sis_current_segment_generation(store)) {
@@ -980,7 +980,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         RETURN_EARLY();
                         RETURN_EARLY();
                         return;
-                    case IO_ERROR: case FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
+                    case IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
                         HANDLED();
                         /* TODO:LOG "secondary Exception on '" +
                          * prev_seg_file_name + "': " + err2 + "'; will retry"*/
