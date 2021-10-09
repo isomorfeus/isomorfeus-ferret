@@ -979,7 +979,5 @@
 #define xexit                                          frt_xexit
 #define xmsg_buffer                                    frt_xmsg_buffer
 #define xmsg_buffer_final                              frt_xmsg_buffer_final
-#define xpop_context                                   frt_xpop_context
-#define xpush_context                                  frt_xpush_context
 
 #endif

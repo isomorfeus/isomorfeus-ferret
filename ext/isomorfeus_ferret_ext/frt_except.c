@@ -33,7 +33,7 @@ static void exception_stack_alloc(void)
     thread_key_create(&exception_stack_key, NULL);
 }
 
-void xpush_context(xcontext_t *context)
+void frt_xpush_context(xcontext_t *context)
 {
     xcontext_t *top_context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
@@ -44,7 +44,7 @@ void xpush_context(xcontext_t *context)
     context->in_finally = false;
 }
 
-static INLINE void xraise_context(xcontext_t *context,
+static INLINE void frt_xraise_context(xcontext_t *context,
                                     volatile int excode,
                                     const char *const msg)
 {
@@ -54,7 +54,7 @@ static INLINE void xraise_context(xcontext_t *context,
     longjmp(context->jbuf, excode);
 }
 
-void xraise(int excode, const char *const msg)
+void frt_xraise(int excode, const char *const msg)
 {
     xcontext_t *top_context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
@@ -64,7 +64,7 @@ void xraise(int excode, const char *const msg)
         XEXIT(ERROR_TYPES[excode], msg);
     }
     else if (!top_context->in_finally) {
-        xraise_context(top_context, excode, msg);
+        frt_xraise_context(top_context, excode, msg);
     }
     else if (top_context->handled) {
         top_context->msg = msg;
@@ -73,7 +73,7 @@ void xraise(int excode, const char *const msg)
     }
 }
 
-void xpop_context()
+void frt_xpop_context()
 {
     xcontext_t *top_cxt, *context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
@@ -82,7 +82,7 @@ void xpop_context()
     thread_setspecific(exception_stack_key, context);
     if (!top_cxt->handled) {
         if (context) {
-            xraise_context(context, top_cxt->excode, top_cxt->msg);
+            frt_xraise_context(context, top_cxt->excode, top_cxt->msg);
         }
         else {
             XEXIT(ERROR_TYPES[top_cxt->excode], top_cxt->msg);
