@@ -115,13 +115,13 @@ static float fqw_get_value(FrtWeight *self)
     return sub_weight->get_value(sub_weight);
 }
 
-static FrtExplanation *fqw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *fqw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtWeight *sub_weight = FQW(self)->sub_weight;
     return sub_weight->explain(sub_weight, ir, doc_num);
 }
 
-static FrtScorer *fqw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *fqw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     FrtWeight *sub_weight = FQW(self)->sub_weight;
     FrtScorer *scorer = sub_weight->scorer(sub_weight, ir);

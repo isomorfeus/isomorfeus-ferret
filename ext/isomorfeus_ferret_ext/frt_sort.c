@@ -384,7 +384,7 @@ static void sort_field_auto_evaluate(FrtSortField *sf, char *text)
     }
 }
 
-static Comparator *sorter_get_comparator(FrtSortField *sf, IndexReader *ir)
+static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir)
 {
     void *index = NULL;
     if (sf->type > FRT_SORT_TYPE_DOC) {
@@ -545,7 +545,7 @@ void fshq_pq_destroy(FrtPriorityQueue *self)
     pq_destroy(self);
 }
 
-FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, IndexReader *ir)
+FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
 {
     FrtPriorityQueue *self = pq_new(size, &fshq_less_than, &free);
     int i;

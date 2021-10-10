@@ -240,7 +240,7 @@ static off_t fs_length(FrtStore *store, const char *filename)
     return stt.st_size;
 }
 
-static void fso_flush_i(OutStream *os, const uchar *src, int len)
+static void fso_flush_i(FrtOutStream *os, const uchar *src, int len)
 {
     if (len != write(os->file.fd, src, len)) {
         rb_raise(rb_eIOError, "flushing src of length %d, <%s>", len,
@@ -248,7 +248,7 @@ static void fso_flush_i(OutStream *os, const uchar *src, int len)
     }
 }
 
-static void fso_seek_i(OutStream *os, off_t pos)
+static void fso_seek_i(FrtOutStream *os, off_t pos)
 {
     if (lseek(os->file.fd, pos, SEEK_SET) < 0) {
         rb_raise(rb_eIOError, "seeking position %"FRT_OFF_T_PFX"d: <%s>",
@@ -256,25 +256,25 @@ static void fso_seek_i(OutStream *os, off_t pos)
     }
 }
 
-static void fso_close_i(OutStream *os)
+static void fso_close_i(FrtOutStream *os)
 {
     if (close(os->file.fd)) {
         rb_raise(rb_eIOError, "closing file: <%s>", strerror(errno));
     }
 }
 
-static const struct OutStreamMethods FS_OUT_STREAM_METHODS = {
+static const struct FrtOutStreamMethods FS_OUT_STREAM_METHODS = {
     fso_flush_i,
     fso_seek_i,
     fso_close_i
 };
 
-static OutStream *fs_new_output(FrtStore *store, const char *filename)
+static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename),
                   O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
-    OutStream *os;
+    FrtOutStream *os;
     if (fd < 0) {
         rb_raise(rb_eIOError, "couldn't create OutStream %s: <%s>",
               path, strerror(errno));
@@ -286,7 +286,7 @@ static OutStream *fs_new_output(FrtStore *store, const char *filename)
     return os;
 }
 
-static void fsi_read_i(InStream *is, uchar *path, int len)
+static void fsi_read_i(FrtInStream *is, uchar *path, int len)
 {
     int fd = is->file.fd;
     off_t pos = is_pos(is);
@@ -302,7 +302,7 @@ static void fsi_read_i(InStream *is, uchar *path, int len)
     }
 }
 
-static void fsi_seek_i(InStream *is, off_t pos)
+static void fsi_seek_i(FrtInStream *is, off_t pos)
 {
     if (lseek(is->file.fd, pos, SEEK_SET) < 0) {
         rb_raise(rb_eIOError, "seeking pos %"FRT_OFF_T_PFX"d: <%s>",
@@ -310,7 +310,7 @@ static void fsi_seek_i(InStream *is, off_t pos)
     }
 }
 
-static void fsi_close_i(InStream *is)
+static void fsi_close_i(FrtInStream *is)
 {
     if (close(is->file.fd)) {
         rb_raise(rb_eIOError, "%s", strerror(errno));
@@ -318,7 +318,7 @@ static void fsi_close_i(InStream *is)
     free(is->d.path);
 }
 
-static off_t fsi_length_i(InStream *is)
+static off_t fsi_length_i(FrtInStream *is)
 {
     struct stat stt;
     if (fstat(is->file.fd, &stt)) {
@@ -327,16 +327,16 @@ static off_t fsi_length_i(InStream *is)
     return stt.st_size;
 }
 
-static const struct InStreamMethods FS_IN_STREAM_METHODS = {
+static const struct FrtInStreamMethods FS_IN_STREAM_METHODS = {
     fsi_read_i,
     fsi_seek_i,
     fsi_length_i,
     fsi_close_i
 };
 
-static InStream *fs_open_input(FrtStore *store, const char *filename)
+static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
 {
-    InStream *is;
+    FrtInStream *is;
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
     if (fd < 0) {
@@ -353,7 +353,7 @@ static InStream *fs_open_input(FrtStore *store, const char *filename)
 
 #define LOCK_OBTAIN_TIMEOUT 10
 
-static int fs_lock_obtain(Lock *lock)
+static int fs_lock_obtain(FrtLock *lock)
 {
     int f;
     int trys = LOCK_OBTAIN_TIMEOUT;
@@ -374,7 +374,7 @@ static int fs_lock_obtain(Lock *lock)
     }
 }
 
-static int fs_lock_is_locked(Lock *lock)
+static int fs_lock_is_locked(FrtLock *lock)
 {
     int f = open(lock->name, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
     if (f >= 0) {
@@ -389,14 +389,14 @@ static int fs_lock_is_locked(Lock *lock)
     }
 }
 
-static void fs_lock_release(Lock *lock)
+static void fs_lock_release(FrtLock *lock)
 {
     remove(lock->name);
 }
 
-static Lock *fs_open_lock_i(FrtStore *store, const char *lockname)
+static FrtLock *fs_open_lock_i(FrtStore *store, const char *lockname)
 {
-    Lock *lock = FRT_ALLOC(Lock);
+    FrtLock *lock = FRT_ALLOC(FrtLock);
     char lname[100];
     char path[FRT_MAX_FILE_PATH];
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
@@ -408,7 +408,7 @@ static Lock *fs_open_lock_i(FrtStore *store, const char *lockname)
     return lock;
 }
 
-static void fs_close_lock_i(Lock *lock)
+static void fs_close_lock_i(FrtLock *lock)
 {
     remove(lock->name);
     free(lock->name);

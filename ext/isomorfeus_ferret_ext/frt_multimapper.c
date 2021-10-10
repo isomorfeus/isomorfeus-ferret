@@ -110,11 +110,11 @@ static NonDeterministicState *ndstate_new()
     return self;
 }
 
-MultiMapper *mulmap_new()
+FrtMultiMapper *mulmap_new()
 {
-    MultiMapper *self = FRT_ALLOC_AND_ZERO(MultiMapper);
+    FrtMultiMapper *self = FRT_ALLOC_AND_ZERO(FrtMultiMapper);
     self->capa = 128;
-    self->mappings = FRT_ALLOC_N(Mapping *, 128);
+    self->mappings = FRT_ALLOC_N(FrtMapping *, 128);
     self->d_capa = 128;
     self->dstates = FRT_ALLOC_N(FrtDeterministicState *, 128);
     self->dstates_map = NULL;
@@ -123,7 +123,7 @@ MultiMapper *mulmap_new()
     return self;
 }
 
-static void mulmap_free_dstates(MultiMapper *self)
+static void mulmap_free_dstates(FrtMultiMapper *self)
 {
     if (self->d_size > 0) {
         int i;
@@ -134,15 +134,15 @@ static void mulmap_free_dstates(MultiMapper *self)
     }
 }
 
-void mulmap_add_mapping(MultiMapper *self, const char *pattern, const char *rep)
+void mulmap_add_mapping(FrtMultiMapper *self, const char *pattern, const char *rep)
 {
     if (pattern == NULL || pattern[0] == '\0') {
         rb_raise(rb_eArgError, "Tried to add empty pattern to multi_mapper");
     } else {
-        Mapping *mapping = FRT_ALLOC(Mapping);
+        FrtMapping *mapping = FRT_ALLOC(FrtMapping);
         if (self->size >= self->capa) {
             self->capa <<= 1;
-            FRT_REALLOC_N(self->mappings, Mapping *, self->capa);
+            FRT_REALLOC_N(self->mappings, FrtMapping *, self->capa);
         }
         mapping->pattern = estrdup(pattern);
         mapping->replacement = estrdup(rep);
@@ -160,7 +160,7 @@ static void mulmap_bv_set_states(FrtBitVector *bv, int *states, int cnt)
     }
 }
 
-static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVector *bv)
+static FrtDeterministicState *mulmap_process_state(FrtMultiMapper *self, FrtBitVector *bv)
 {
     FrtDeterministicState *current_state
         = (FrtDeterministicState *)h_get(self->dstates_map, bv);
@@ -209,7 +209,7 @@ static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVect
     return current_state;
 }
 
-void mulmap_compile(MultiMapper *self)
+void mulmap_compile(FrtMultiMapper *self)
 {
     NonDeterministicState *start = ndstate_new();
     int i, j;
@@ -217,7 +217,7 @@ void mulmap_compile(MultiMapper *self)
     int capa = 128;
     LetterState *ls;
     FrtState **nstates = FRT_ALLOC_N(FrtState *, capa);
-    Mapping **mappings = self->mappings;
+    FrtMapping **mappings = self->mappings;
     unsigned char alphabet[256];
     nstates[0] = (FrtState *)start;
     memset(alphabet, 0, 256);
@@ -259,7 +259,7 @@ void mulmap_compile(MultiMapper *self)
     free(nstates);
 }
 
-int mulmap_map_len(MultiMapper *self, char *to, char *from, int capa)
+int mulmap_map_len(FrtMultiMapper *self, char *to, char *from, int capa)
 {
     FrtDeterministicState *start = self->dstates[0];
     FrtDeterministicState *state = start;
@@ -288,14 +288,14 @@ int mulmap_map_len(MultiMapper *self, char *to, char *from, int capa)
     return d - to;
 }
 
-char *mulmap_map(MultiMapper *self, char *to, char *from, int capa)
+char *mulmap_map(FrtMultiMapper *self, char *to, char *from, int capa)
 {
     mulmap_map_len(self, to, from, capa);
     return to;
 }
 
 /* Maps a string to a dynamically allocated string */
-char *mulmap_dynamic_map(MultiMapper *self, char *from)
+char *mulmap_dynamic_map(FrtMultiMapper *self, char *from)
 {
     FrtDeterministicState *start = self->dstates[0];
     FrtDeterministicState *state = start;
@@ -333,13 +333,13 @@ char *mulmap_dynamic_map(MultiMapper *self, char *from)
     return to;
 }
 
-void mulmap_destroy(MultiMapper *self)
+void mulmap_destroy(FrtMultiMapper *self)
 {
     if (--(self->ref_cnt) <= 0) {
         int i;
         mulmap_free_dstates(self);
         for (i = self->size - 1; i >= 0; i--) {
-            Mapping *mapping = self->mappings[i];
+            FrtMapping *mapping = self->mappings[i];
             free(mapping->pattern);
             free(mapping->replacement);
             free(mapping);

@@ -311,7 +311,7 @@ const char *q_get_query_name(FrtQueryType type) {
     }
 }
 
-static FrtQuery *q_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *q_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     (void)ir;
     self->ref_cnt++;
@@ -428,7 +428,7 @@ int q_eq(FrtQuery *self, FrtQuery *o)
             && self->eq(self, o));
 }
 
-static MatchVector *q_get_matchv_i(FrtQuery *self, MatchVector *mv, FrtTermVector *tv)
+static FrtMatchVector *q_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv)
 {
     /* be default we don't add any matches */
     (void)self; (void)tv;
@@ -505,34 +505,34 @@ int scorer_doc_cmp(const void *p1, const void *p2)
 /* ** MatchRange ** */
 static int match_range_cmp(const void *p1, const void *p2)
 {
-    int diff = ((MatchRange *)p1)->start - ((MatchRange *)p2)->start;
+    int diff = ((FrtMatchRange *)p1)->start - ((FrtMatchRange *)p2)->start;
     if (diff != 0) {
         return diff;
     }
     else {
-        return ((MatchRange *)p2)->end - ((MatchRange *)p1)->end;
+        return ((FrtMatchRange *)p2)->end - ((FrtMatchRange *)p1)->end;
     }
 }
 
 
 
 /* ** MatchVector ** */
-MatchVector *matchv_new()
+FrtMatchVector *matchv_new()
 {
-    MatchVector *matchv = FRT_ALLOC(MatchVector);
+    FrtMatchVector *matchv = FRT_ALLOC(FrtMatchVector);
 
     matchv->size = 0;
     matchv->capa = FRT_MATCH_VECTOR_INIT_CAPA;
-    matchv->matches = FRT_ALLOC_N(MatchRange, FRT_MATCH_VECTOR_INIT_CAPA);
+    matchv->matches = FRT_ALLOC_N(FrtMatchRange, FRT_MATCH_VECTOR_INIT_CAPA);
 
     return matchv;
 }
 
-MatchVector *matchv_add(MatchVector *self, int start, int end)
+FrtMatchVector *matchv_add(FrtMatchVector *self, int start, int end)
 {
     if (self->size >= self->capa) {
         self->capa <<= 1;
-        FRT_REALLOC_N(self->matches, MatchRange, self->capa);
+        FRT_REALLOC_N(self->matches, FrtMatchRange, self->capa);
     }
     self->matches[self->size].start = start;
     self->matches[self->size].end   = end;
@@ -541,13 +541,13 @@ MatchVector *matchv_add(MatchVector *self, int start, int end)
     return self;
 }
 
-MatchVector *matchv_sort(MatchVector *self)
+FrtMatchVector *matchv_sort(FrtMatchVector *self)
 {
-    qsort(self->matches, self->size, sizeof(MatchRange), &match_range_cmp);
+    qsort(self->matches, self->size, sizeof(FrtMatchRange), &match_range_cmp);
     return self;
 }
 
-MatchVector *matchv_compact(MatchVector *self)
+FrtMatchVector *matchv_compact(FrtMatchVector *self)
 {
     int left, right;
     matchv_sort(self);
@@ -570,7 +570,7 @@ MatchVector *matchv_compact(MatchVector *self)
     return self;
 }
 
-MatchVector *matchv_compact_with_breaks(MatchVector *self)
+FrtMatchVector *matchv_compact_with_breaks(FrtMatchVector *self)
 {
     int left, right;
     matchv_sort(self);
@@ -595,7 +595,7 @@ MatchVector *matchv_compact_with_breaks(MatchVector *self)
 }
 
 
-static MatchVector *matchv_set_offsets(MatchVector *mv, Offset *offsets)
+static FrtMatchVector *matchv_set_offsets(FrtMatchVector *mv, FrtOffset *offsets)
 {
     int i;
     for (i = 0; i < mv->size; i++) {
@@ -605,7 +605,7 @@ static MatchVector *matchv_set_offsets(MatchVector *mv, Offset *offsets)
     return mv;
 }
 
-void matchv_destroy(MatchVector *self)
+void matchv_destroy(FrtMatchVector *self)
 {
     free(self->matches);
     free(self);
@@ -617,12 +617,12 @@ void matchv_destroy(MatchVector *self)
  *
  ***************************************************************************/
 
-MatchVector *searcher_get_match_vector(FrtSearcher *self,
+FrtMatchVector *searcher_get_match_vector(FrtSearcher *self,
                                        FrtQuery *query,
                                        const int doc_num,
                                        FrtSymbol field)
 {
-    MatchVector *mv = matchv_new();
+    FrtMatchVector *mv = matchv_new();
     bool rewrite = query->get_matchv_i == q_get_matchv_i;
     FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
     if (rewrite) {
@@ -679,7 +679,7 @@ static Excerpt *excerpt_new(int start, int end, double score)
     return excerpt;
 }
 
-static Excerpt *excerpt_recalc_score(Excerpt *e, MatchVector *mv)
+static Excerpt *excerpt_recalc_score(Excerpt *e, FrtMatchVector *mv)
 {
     int i;
     double score = 0.0;
@@ -693,7 +693,7 @@ static Excerpt *excerpt_recalc_score(Excerpt *e, MatchVector *mv)
 /* expand an excerpt to it's largest possible size */
 static Excerpt *excerpt_expand(Excerpt *e, const int len, FrtTermVector *tv)
 {
-    Offset *offsets = tv->offsets;
+    FrtOffset *offsets = tv->offsets;
     int offset_cnt = tv->offset_cnt;
     bool did_expansion = true;
     int i;
@@ -725,8 +725,8 @@ static Excerpt *excerpt_expand(Excerpt *e, const int len, FrtTermVector *tv)
     return e;
 }
 
-static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
-                             LazyDocField *lazy_df,
+static char *excerpt_get_str(Excerpt *e, FrtMatchVector *mv,
+                             FrtLazyDocField *lazy_df,
                              const char *pre_tag,
                              const char *post_tag,
                              const char *ellipsis)
@@ -747,7 +747,7 @@ static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
         e_ptr += ellipsis_len;
     }
     for (i = e->start; i <= e->end; i++) {
-        MatchRange *mr = mv->matches + i;
+        FrtMatchRange *mr = mv->matches + i;
         len = mr->start_offset - last_offset;
         if (len) {
             lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
@@ -781,8 +781,8 @@ static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
     return excerpt_str;
 }
 
-static char *highlight_field(MatchVector *mv,
-                             LazyDocField *lazy_df,
+static char *highlight_field(FrtMatchVector *mv,
+                             FrtLazyDocField *lazy_df,
                              FrtTermVector *tv,
                              const char *pre_tag,
                              const char *post_tag)
@@ -798,7 +798,7 @@ static char *highlight_field(MatchVector *mv,
         matchv_compact_with_breaks(mv);
         matchv_set_offsets(mv, tv->offsets);
         for (i = 0; i < mv->size; i++) {
-            MatchRange *mr = mv->matches + i;
+            FrtMatchRange *mr = mv->matches + i;
             len = mr->start_offset - last_offset;
             if (len) {
                 lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
@@ -841,14 +841,14 @@ char **searcher_highlight(FrtSearcher *self,
 {
     char **excerpt_strs = NULL;
     FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
-    LazyDoc *lazy_doc = self->get_lazy_doc(self, doc_num);
-    LazyDocField *lazy_df = NULL;
+    FrtLazyDoc *lazy_doc = self->get_lazy_doc(self, doc_num);
+    FrtLazyDocField *lazy_df = NULL;
     if (lazy_doc) {
         lazy_df = lazy_doc_get(lazy_doc, field);
     }
     if (tv && lazy_df && tv->term_cnt > 0 && tv->terms[0].positions != NULL
         && tv->offsets != NULL) {
-        MatchVector *mv;
+        FrtMatchVector *mv;
         query = self->rewrite(self, query);
         mv = query->get_matchv_i(query, matchv_new(), tv);
         q_deref(query);
@@ -860,9 +860,9 @@ char **searcher_highlight(FrtSearcher *self,
         else if (mv->size > 0) {
             Excerpt **excerpts = FRT_ALLOC_AND_ZERO_N(Excerpt *, num_excerpts);
             int e_start, e_end, i, j;
-            MatchRange *matches = mv->matches;
+            FrtMatchRange *matches = mv->matches;
             double running_score = 0.0;
-            Offset *offsets = tv->offsets;
+            FrtOffset *offsets = tv->offsets;
             FrtPriorityQueue *excerpt_pq;
 
             matchv_compact_with_breaks(mv);
@@ -988,7 +988,7 @@ static FrtSimilarity *sea_get_similarity(FrtSearcher *self)
  *
  ***************************************************************************/
 
-#define ISEA(searcher) ((IndexSearcher *)(searcher))
+#define ISEA(searcher) ((FrtIndexSearcher *)(searcher))
 
 int isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 {
@@ -997,19 +997,19 @@ int isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 
 static FrtDocument *isea_get_doc(FrtSearcher *self, int doc_num)
 {
-    IndexReader *ir = ISEA(self)->ir;
+    FrtIndexReader *ir = ISEA(self)->ir;
     return ir->get_doc(ir, doc_num);
 }
 
-static LazyDoc *isea_get_lazy_doc(FrtSearcher *self, int doc_num)
+static FrtLazyDoc *isea_get_lazy_doc(FrtSearcher *self, int doc_num)
 {
-    IndexReader *ir = ISEA(self)->ir;
+    FrtIndexReader *ir = ISEA(self)->ir;
     return ir->get_lazy_doc(ir, doc_num);
 }
 
 static int isea_max_doc(FrtSearcher *self)
 {
-    IndexReader *ir = ISEA(self)->ir;
+    FrtIndexReader *ir = ISEA(self)->ir;
     return ir->max_doc(ir);
 }
 
@@ -1240,7 +1240,7 @@ static FrtTermVector *isea_get_term_vector(FrtSearcher *self,
                                           const int doc_num,
                                           FrtSymbol field)
 {
-    IndexReader *ir = ISEA(self)->ir;
+    FrtIndexReader *ir = ISEA(self)->ir;
     return ir->term_vector(ir, doc_num, field);
 }
 
@@ -1252,9 +1252,9 @@ static void isea_close(FrtSearcher *self)
     free(self);
 }
 
-FrtSearcher *isea_new(IndexReader *ir)
+FrtSearcher *isea_new(FrtIndexReader *ir)
 {
-    FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(IndexSearcher);
+    FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(FrtIndexSearcher);
 
     ISEA(self)->ir          = ir;
     ISEA(self)->close_ir    = true;
@@ -1432,10 +1432,10 @@ static FrtSearcher *cdfsea_new(Hash *df_map, int max_doc)
  *
  ***************************************************************************/
 
-#define MSEA(searcher) ((MultiSearcher *)(searcher))
+#define MSEA(searcher) ((FrtMultiSearcher *)(searcher))
 static int msea_get_searcher_index(FrtSearcher *self, int n)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int lo = 0;                 /* search starts array */
     int hi = msea->s_cnt - 1;   /* for 1st element < n, return its index */
     int mid, mid_val;
@@ -1464,7 +1464,7 @@ static int msea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 {
     int i;
     int doc_freq = 0;
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     for (i = 0; i < msea->s_cnt; i++) {
         FrtSearcher *s = msea->searchers[i];
         doc_freq += s->doc_freq(s, field, term);
@@ -1475,15 +1475,15 @@ static int msea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 
 static FrtDocument *msea_get_doc(FrtSearcher *self, int doc_num)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtSearcher *s = msea->searchers[i];
     return s->get_doc(s, doc_num - msea->starts[i]);
 }
 
-static LazyDoc *msea_get_lazy_doc(FrtSearcher *self, int doc_num)
+static FrtLazyDoc *msea_get_lazy_doc(FrtSearcher *self, int doc_num)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtSearcher *s = msea->searchers[i];
     return s->get_lazy_doc(s, doc_num - msea->starts[i]);
@@ -1560,7 +1560,7 @@ static void msea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *filte
 {
     int i;
     struct MultiSearchEachArg mse_arg;
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     FrtSearcher *s;
 
     mse_arg.fn = fn;
@@ -1590,7 +1590,7 @@ static int msea_search_unscored_w(FrtSearcher *self,
                                   int offset_docnum)
 {
     int i, count = 0;
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
 
     for (i = 0; count < limit && i < msea->s_cnt; i++) {
         /* if offset_docnum falls in this or previous indexes */
@@ -1752,7 +1752,7 @@ static FrtQuery *msea_rewrite(FrtSearcher *self, FrtQuery *original)
 {
     int i;
     FrtSearcher *s;
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     FrtQuery **queries = FRT_ALLOC_N(FrtQuery *, msea->s_cnt), *rewritten;
 
     for (i = 0; i < msea->s_cnt; i++) {
@@ -1770,7 +1770,7 @@ static FrtQuery *msea_rewrite(FrtSearcher *self, FrtQuery *original)
 
 static FrtExplanation *msea_explain(FrtSearcher *self, FrtQuery *query, int doc_num)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtWeight *w = q_weight(query, self);
     FrtSearcher *s = msea->searchers[i];
@@ -1781,7 +1781,7 @@ static FrtExplanation *msea_explain(FrtSearcher *self, FrtQuery *query, int doc_
 
 static FrtExplanation *msea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtSearcher *s = msea->searchers[i];
     FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
@@ -1791,7 +1791,7 @@ static FrtExplanation *msea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_n
 static FrtTermVector *msea_get_term_vector(FrtSearcher *self, const int doc_num,
                                         FrtSymbol field)
 {
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtSearcher *s = msea->searchers[i];
     return s->get_term_vector(s, doc_num - msea->starts[i], field);
@@ -1806,7 +1806,7 @@ static void msea_close(FrtSearcher *self)
 {
     int i;
     FrtSearcher *s;
-    MultiSearcher *msea = MSEA(self);
+    FrtMultiSearcher *msea = MSEA(self);
     if (msea->close_subs) {
         for (i = 0; i < msea->s_cnt; i++) {
             s = msea->searchers[i];
@@ -1821,7 +1821,7 @@ static void msea_close(FrtSearcher *self)
 FrtSearcher *msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs)
 {
     int i, max_doc = 0;
-    FrtSearcher *self = (FrtSearcher *)FRT_ALLOC(MultiSearcher);
+    FrtSearcher *self = (FrtSearcher *)FRT_ALLOC(FrtMultiSearcher);
     int *starts = FRT_ALLOC_N(int, s_cnt + 1);
     for (i = 0; i < s_cnt; i++) {
         starts[i] = max_doc;

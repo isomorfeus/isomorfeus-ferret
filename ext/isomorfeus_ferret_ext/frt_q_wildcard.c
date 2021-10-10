@@ -78,7 +78,7 @@ bool wc_match(const char *pattern, const char *text)
     return false;
 }
 
-static FrtQuery *wcq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *q;
     const char *pattern = WCQ(self)->pattern;
@@ -91,7 +91,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, IndexReader *ir)
     }
     else {
         const int field_num = fis_get_field_num(ir->fis, WCQ(self)->field);
-        q = multi_tq_new_conf(WCQ(self)->field, MTQMaxTerms(self), 0.0);
+        q = multi_tq_new_conf(WCQ(self)->field, FrtMTQMaxTerms(self), 0.0);
 
         if (field_num >= 0) {
             FrtTermEnum *te;
@@ -153,7 +153,7 @@ FrtQuery *wcq_new(FrtSymbol field, const char *pattern)
 
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = estrdup(pattern);
-    MTQMaxTerms(self)       = FRT_WILD_CARD_QUERY_MAX_TERMS;
+    FrtMTQMaxTerms(self)       = FRT_WILD_CARD_QUERY_MAX_TERMS;
 
     self->type              = WILD_CARD_QUERY;
     self->rewrite           = &wcq_rewrite;

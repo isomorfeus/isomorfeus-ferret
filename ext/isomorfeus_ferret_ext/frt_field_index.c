@@ -32,7 +32,7 @@ static void field_index_destroy(void *p)
     free(self);
 }
 
-FrtFieldIndex *field_index_get(IndexReader *ir, FrtSymbol field,
+FrtFieldIndex *field_index_get(FrtIndexReader *ir, FrtSymbol field,
                             const FrtFieldIndexClass *klass)
 {
     int length = 0;

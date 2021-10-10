@@ -13,7 +13,7 @@
 typedef struct MatchAllScorer
 {
     FrtScorer          super;
-    IndexReader    *ir;
+    FrtIndexReader    *ir;
     int             max_doc;
     float           score;
 } MatchAllScorer;
@@ -47,7 +47,7 @@ static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
     return expl_new(1.0, "MatchAllScorer");
 }
 
-static FrtScorer *masc_new(FrtWeight *weight, IndexReader *ir)
+static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
 {
     FrtScorer *self        = scorer_new(MatchAllScorer, weight->similarity);
 
@@ -76,7 +76,7 @@ static char *maw_to_s(FrtWeight *self)
     return strfmt("MatchAllWeight(%f)", self->value);
 }
 
-static FrtExplanation *maw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *maw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     if (!ir->is_deleted(ir, doc_num)) {

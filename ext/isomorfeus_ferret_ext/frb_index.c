@@ -77,7 +77,7 @@ frb_fi_free(void *p)
 static void
 frb_fi_get_params(VALUE roptions,
                   FrtStoreValue *store,
-                  IndexValue *index,
+                  FrtIndexValue *index,
                   FrtTermVectorValue *term_vector,
                   float *boost)
 {
@@ -178,7 +178,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions, rname;
     FrtFieldInfo *fi;
     FrtStoreValue store = FRT_STORE_YES;
-    IndexValue index = FRT_INDEX_YES;
+    FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
 
@@ -406,7 +406,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions;
     FrtFieldInfos *fis;
     FrtStoreValue store = FRT_STORE_YES;
-    IndexValue index = FRT_INDEX_YES;
+    FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
 
@@ -516,7 +516,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
     FrtStoreValue store = fis->store;
-    IndexValue index = fis->index;
+    FrtIndexValue index = fis->index;
     FrtTermVectorValue term_vector = fis->term_vector;
     float boost = 1.0f;
     VALUE rname, roptions;
@@ -1176,7 +1176,7 @@ frb_tde_skip_to(VALUE self, VALUE rtarget)
  ****************************************************************************/
 
 static VALUE
-frb_get_tv_offsets(Offset *offset)
+frb_get_tv_offsets(FrtOffset *offset)
 {
     return rb_struct_new(cTVOffsets,
                          ULL2NUM((u64)offset->start),
@@ -1231,7 +1231,7 @@ frb_get_tv(FrtTermVector *tv)
     }
 
     if (tv->offsets) {
-        Offset *offsets = tv->offsets;
+        FrtOffset *offsets = tv->offsets;
         roffsets = rb_ary_new2(o_cnt);
         for (i = 0; i < o_cnt; i++) {
           rb_ary_store(roffsets, i, frb_get_tv_offsets(&offsets[i]));
@@ -1250,13 +1250,13 @@ frb_get_tv(FrtTermVector *tv)
 void
 frb_iw_free(void *p)
 {
-    iw_close((IndexWriter *)p);
+    iw_close((FrtIndexWriter *)p);
 }
 
 void
 frb_iw_mark(void *p)
 {
-    IndexWriter *iw = (IndexWriter *)p;
+    FrtIndexWriter *iw = (FrtIndexWriter *)p;
     frb_gc_mark(iw->analyzer);
     frb_gc_mark(iw->store);
     frb_gc_mark(iw->fis);
@@ -1273,7 +1273,7 @@ frb_iw_mark(void *p)
 static VALUE
 frb_iw_close(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     Frt_Unwrap_Struct(self);
     iw_close(iw);
     return Qnil;
@@ -1311,7 +1311,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     bool create_if_missing = true;
     FrtStore *store = NULL;
     FrtAnalyzer *analyzer = NULL;
-    IndexWriter *volatile iw = NULL;
+    FrtIndexWriter *volatile iw = NULL;
     FrtConfig config = default_config;
 
     rb_scan_args(argc, argv, "01", &roptions);
@@ -1394,12 +1394,12 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
  *     iw.doc_count -> number
  *
  *  Returns the number of documents in the Index. Note that deletions won't be
- *  taken into account until the IndexWriter has been committed.
+ *  taken into account until the FrtIndexWriter has been committed.
  */
 static VALUE
 frb_iw_get_doc_count(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw_doc_count(iw));
 }
 
@@ -1503,7 +1503,7 @@ frb_get_doc(VALUE rdoc)
 static VALUE
 frb_iw_add_doc(VALUE self, VALUE rdoc)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     FrtDocument *doc = frb_get_doc(rdoc);
     iw_add_doc(iw, doc);
     doc_destroy(doc);
@@ -1525,7 +1525,7 @@ frb_iw_add_doc(VALUE self, VALUE rdoc)
 static VALUE
 frb_iw_optimize(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw_optimize(iw);
     return self;
 }
@@ -1541,7 +1541,7 @@ frb_iw_optimize(VALUE self)
 static VALUE
 frb_iw_commit(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw_commit(iw);
     return self;
 }
@@ -1559,16 +1559,16 @@ frb_iw_commit(VALUE self)
 static VALUE
 frb_iw_add_readers(VALUE self, VALUE rreaders)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     int i;
-    IndexReader **irs;
+    FrtIndexReader **irs;
     Check_Type(rreaders, T_ARRAY);
 
-    irs = FRT_ALLOC_N(IndexReader *, RARRAY_LEN(rreaders));
+    irs = FRT_ALLOC_N(FrtIndexReader *, RARRAY_LEN(rreaders));
     i = RARRAY_LEN(rreaders);
     while (i-- > 0) {
-        IndexReader *ir;
-        Data_Get_Struct(RARRAY_PTR(rreaders)[i], IndexReader, ir);
+        FrtIndexReader *ir;
+        Data_Get_Struct(RARRAY_PTR(rreaders)[i], FrtIndexReader, ir);
         irs[i] = ir;
     }
     iw_add_readers(iw, irs, RARRAY_LEN(rreaders));
@@ -1590,7 +1590,7 @@ frb_iw_add_readers(VALUE self, VALUE rreaders)
 static VALUE
 frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     if (TYPE(rterm) == T_ARRAY) {
         const int term_cnt = RARRAY_LEN(rterm);
         int i;
@@ -1610,13 +1610,13 @@ frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm)
  *  call-seq:
  *     index_writer.field_infos -> FieldInfos
  *
- *  Get the FieldInfos object for this IndexWriter. This is useful if you need
+ *  Get the FieldInfos object for this FrtIndexWriter. This is useful if you need
  *  to dynamically add new fields to the index with specific properties.
  */
 static VALUE
 frb_iw_field_infos(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return frb_get_field_infos(iw->fis);
 }
 
@@ -1630,7 +1630,7 @@ frb_iw_field_infos(VALUE self)
 static VALUE
 frb_iw_get_analyzer(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return frb_get_analyzer(iw->analyzer);
 }
 
@@ -1645,7 +1645,7 @@ frb_iw_get_analyzer(VALUE self)
 static VALUE
 frb_iw_set_analyzer(VALUE self, VALUE ranalyzer)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
 
     a_deref(iw->analyzer);
     iw->analyzer = frb_get_cwrapped_analyzer(ranalyzer);
@@ -1661,7 +1661,7 @@ frb_iw_set_analyzer(VALUE self, VALUE ranalyzer)
 static VALUE
 frb_iw_version(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return ULL2NUM(iw->sis->version);
 }
 
@@ -1674,7 +1674,7 @@ frb_iw_version(VALUE self)
 static VALUE
 frb_iw_get_chunk_size(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.chunk_size);
 }
 
@@ -1687,7 +1687,7 @@ frb_iw_get_chunk_size(VALUE self)
 static VALUE
 frb_iw_set_chunk_size(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.chunk_size = FIX2INT(rval);
     return rval;
 }
@@ -1701,7 +1701,7 @@ frb_iw_set_chunk_size(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_max_buffer_memory(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.max_buffer_memory);
 }
 
@@ -1714,7 +1714,7 @@ frb_iw_get_max_buffer_memory(VALUE self)
 static VALUE
 frb_iw_set_max_buffer_memory(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.max_buffer_memory = FIX2INT(rval);
     return rval;
 }
@@ -1728,7 +1728,7 @@ frb_iw_set_max_buffer_memory(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_index_interval(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.index_interval);
 }
 
@@ -1741,7 +1741,7 @@ frb_iw_get_index_interval(VALUE self)
 static VALUE
 frb_iw_set_index_interval(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.index_interval = FIX2INT(rval);
     return rval;
 }
@@ -1755,7 +1755,7 @@ frb_iw_set_index_interval(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_skip_interval(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.skip_interval);
 }
 
@@ -1768,7 +1768,7 @@ frb_iw_get_skip_interval(VALUE self)
 static VALUE
 frb_iw_set_skip_interval(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.skip_interval = FIX2INT(rval);
     return rval;
 }
@@ -1782,7 +1782,7 @@ frb_iw_set_skip_interval(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_merge_factor(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.merge_factor);
 }
 
@@ -1795,7 +1795,7 @@ frb_iw_get_merge_factor(VALUE self)
 static VALUE
 frb_iw_set_merge_factor(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.merge_factor = FIX2INT(rval);
     return rval;
 }
@@ -1809,7 +1809,7 @@ frb_iw_set_merge_factor(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_max_buffered_docs(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.max_buffered_docs);
 }
 
@@ -1822,7 +1822,7 @@ frb_iw_get_max_buffered_docs(VALUE self)
 static VALUE
 frb_iw_set_max_buffered_docs(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.max_buffered_docs = FIX2INT(rval);
     return rval;
 }
@@ -1836,7 +1836,7 @@ frb_iw_set_max_buffered_docs(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_max_merge_docs(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.max_merge_docs);
 }
 
@@ -1849,7 +1849,7 @@ frb_iw_get_max_merge_docs(VALUE self)
 static VALUE
 frb_iw_set_max_merge_docs(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.max_merge_docs = FIX2INT(rval);
     return rval;
 }
@@ -1863,7 +1863,7 @@ frb_iw_set_max_merge_docs(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_max_field_length(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.max_field_length);
 }
 
@@ -1876,7 +1876,7 @@ frb_iw_get_max_field_length(VALUE self)
 static VALUE
 frb_iw_set_max_field_length(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.max_field_length = FIX2INT(rval);
     return rval;
 }
@@ -1890,7 +1890,7 @@ frb_iw_set_max_field_length(VALUE self, VALUE rval)
 static VALUE
 frb_iw_get_use_compound_file(VALUE self)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return iw->config.use_compound_file ? Qtrue : Qfalse;
 }
 
@@ -1903,7 +1903,7 @@ frb_iw_get_use_compound_file(VALUE self)
 static VALUE
 frb_iw_set_use_compound_file(VALUE self, VALUE rval)
 {
-    IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
+    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     iw->config.use_compound_file = RTEST(rval);
     return rval;
 }
@@ -1917,11 +1917,11 @@ frb_iw_set_use_compound_file(VALUE self, VALUE rval)
 static void
 frb_lzd_data_free(void *p)
 {
-    lazy_doc_close((LazyDoc *)p);
+    lazy_doc_close((FrtLazyDoc *)p);
 }
 
 static VALUE
-frb_lazy_df_load(VALUE self, VALUE rkey, LazyDocField *lazy_df)
+frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df)
 {
     VALUE rdata = Qnil;
     if (lazy_df) {
@@ -1951,7 +1951,7 @@ frb_lazy_df_load(VALUE self, VALUE rkey, LazyDocField *lazy_df)
 static VALUE
 frb_lzd_default(VALUE self, VALUE rkey)
 {
-    LazyDoc *lazy_doc = (LazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
+    FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
     FrtSymbol field = frb_field(rkey);
     VALUE rfield = ID2SYM(rb_intern(field));
 
@@ -1981,17 +1981,17 @@ frb_lzd_fields(VALUE self)
 static VALUE
 frb_lzd_load(VALUE self)
 {
-    LazyDoc *lazy_doc = (LazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
+    FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
     int i;
     for (i = 0; i < lazy_doc->size; i++) {
-        LazyDocField *lazy_df = lazy_doc->fields[i];
+        FrtLazyDocField *lazy_df = lazy_doc->fields[i];
         frb_lazy_df_load(self, ID2SYM(rb_intern(lazy_df->name)), lazy_df);
     }
     return self;
 }
 
 VALUE
-frb_get_lazy_doc(LazyDoc *lazy_doc)
+frb_get_lazy_doc(FrtLazyDoc *lazy_doc)
 {
     int i;
     VALUE rfields = rb_ary_new2(lazy_doc->size);
@@ -2021,13 +2021,13 @@ void
 frb_ir_free(void *p)
 {
     object_del(p);
-    ir_close((IndexReader *)p);
+    ir_close((FrtIndexReader *)p);
 }
 
 void
 frb_ir_mark(void *p)
 {
-    IndexReader *ir = (IndexReader *)p;
+    FrtIndexReader *ir = (FrtIndexReader *)p;
     frb_gc_mark(ir->store);
 }
 
@@ -2036,7 +2036,7 @@ static VALUE frb_ir_close(VALUE self);
 void
 frb_mr_mark(void *p)
 {
-    MultiReader *mr = (MultiReader *)p;
+    FrtMultiReader *mr = (FrtMultiReader *)p;
     int i;
     for (i = 0; i < mr->r_cnt; i++) {
         frb_gc_mark(mr->sub_readers[i]);
@@ -2073,7 +2073,7 @@ static VALUE
 frb_ir_init(VALUE self, VALUE rdir)
 {
     FrtStore *store = NULL;
-    IndexReader *ir;
+    FrtIndexReader *ir;
     int i;
     FrtFieldInfos *fis;
     VALUE rfield_num_map = rb_hash_new();
@@ -2081,14 +2081,14 @@ frb_ir_init(VALUE self, VALUE rdir)
     if (TYPE(rdir) == T_ARRAY) {
         VALUE rdirs = rdir;
         const int reader_cnt = RARRAY_LEN(rdir);
-        IndexReader **sub_readers = FRT_ALLOC_N(IndexReader *, reader_cnt);
+        FrtIndexReader **sub_readers = FRT_ALLOC_N(FrtIndexReader *, reader_cnt);
         int i;
         for (i = 0; i < reader_cnt; i++) {
             rdir = RARRAY_PTR(rdirs)[i];
             switch (TYPE(rdir)) {
                 case T_DATA:
                     if (CLASS_OF(rdir) == cIndexReader) {
-                        Data_Get_Struct(rdir, IndexReader, sub_readers[i]);
+                        Data_Get_Struct(rdir, FrtIndexReader, sub_readers[i]);
                         FRT_REF(sub_readers[i]);
                         continue;
                     } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
@@ -2161,7 +2161,7 @@ frb_ir_init(VALUE self, VALUE rdir)
 static VALUE
 frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (uchar)NUM2CHR(rval));
     return self;
 }
@@ -2177,7 +2177,7 @@ frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
 static VALUE
 frb_ir_norms(VALUE self, VALUE rfield)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     uchar *norms;
     norms = ir_get_norms(ir, frb_field(rfield));
     if (norms) {
@@ -2196,7 +2196,7 @@ frb_ir_norms(VALUE self, VALUE rfield)
 static VALUE
 frb_ir_get_norms_into(VALUE self, VALUE rfield, VALUE rnorms, VALUE roffset)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     int offset;
     offset = FIX2INT(roffset);
     Check_Type(rnorms, T_STRING);
@@ -2222,7 +2222,7 @@ frb_ir_get_norms_into(VALUE self, VALUE rfield, VALUE rnorms, VALUE roffset)
 static VALUE
 frb_ir_commit(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     ir_commit(ir);
     return self;
 }
@@ -2240,7 +2240,7 @@ frb_ir_commit(VALUE self)
 static VALUE
 frb_ir_close(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     object_del(ir);
     Frt_Unwrap_Struct(self);
     ir_close(ir);
@@ -2257,7 +2257,7 @@ frb_ir_close(VALUE self)
 static VALUE
 frb_ir_has_deletions(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return ir->has_deletions(ir) ? Qtrue : Qfalse;
 }
 
@@ -2272,7 +2272,7 @@ frb_ir_has_deletions(VALUE self)
 static VALUE
 frb_ir_delete(VALUE self, VALUE rdoc_id)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     ir_delete_doc(ir, FIX2INT(rdoc_id));
     return self;
 }
@@ -2286,7 +2286,7 @@ frb_ir_delete(VALUE self, VALUE rdoc_id)
 static VALUE
 frb_ir_is_deleted(VALUE self, VALUE rdoc_id)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return ir->is_deleted(ir, FIX2INT(rdoc_id)) ? Qtrue : Qfalse;
 }
 
@@ -2302,7 +2302,7 @@ frb_ir_is_deleted(VALUE self, VALUE rdoc_id)
 static VALUE
 frb_ir_max_doc(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return INT2FIX(ir->max_doc(ir));
 }
 
@@ -2317,7 +2317,7 @@ frb_ir_max_doc(VALUE self)
 static VALUE
 frb_ir_num_docs(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return INT2FIX(ir->num_docs(ir));
 }
 
@@ -2333,13 +2333,13 @@ frb_ir_num_docs(VALUE self)
 static VALUE
 frb_ir_undelete_all(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     ir_undelete_all(ir);
     return self;
 }
 
 static VALUE
-frb_get_doc_range(IndexReader *ir, int pos, int len, int max)
+frb_get_doc_range(FrtIndexReader *ir, int pos, int len, int max)
 {
     VALUE ary;
     int i;
@@ -2364,7 +2364,7 @@ frb_get_doc_range(IndexReader *ir, int pos, int len, int max)
 static VALUE
 frb_ir_get_doc(int argc, VALUE *argv, VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     VALUE arg1, arg2;
     long pos, len;
     long max = ir->max_doc(ir);
@@ -2411,7 +2411,7 @@ frb_ir_get_doc(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_ir_is_latest(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return ir_is_latest(ir) ? Qtrue : Qfalse;
 }
 
@@ -2425,7 +2425,7 @@ frb_ir_is_latest(VALUE self)
 static VALUE
 frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtTermVector *tv;
     VALUE rtv;
     tv = ir->term_vector(ir, FIX2INT(rdoc_id), frb_field(rfield));
@@ -2456,7 +2456,7 @@ frb_add_each_tv(void *key, void *value, void *rtvs)
 static VALUE
 frb_ir_term_vectors(VALUE self, VALUE rdoc_id)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     Hash *tvs = ir->term_vectors(ir, FIX2INT(rdoc_id));
     VALUE rtvs = rb_hash_new();
     h_each(tvs, &frb_add_each_tv, (void *)rtvs);
@@ -2476,7 +2476,7 @@ frb_ir_term_vectors(VALUE self, VALUE rdoc_id)
 static VALUE
 frb_ir_term_docs(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, ir->term_docs(ir));
 }
 
@@ -2490,7 +2490,7 @@ frb_ir_term_docs(VALUE self)
 static VALUE
 frb_ir_term_docs_for(VALUE self, VALUE rfield, VALUE rterm)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, ir_term_docs_for(ir,
                                               frb_field(rfield),
                                               StringValuePtr(rterm)));
@@ -2507,7 +2507,7 @@ frb_ir_term_docs_for(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_ir_term_positions(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, ir->term_positions(ir));
 }
 
@@ -2522,7 +2522,7 @@ frb_ir_term_positions(VALUE self)
 static VALUE
 frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, ir_term_positions_for(ir,
                                                    frb_field(rfield),
                                                    StringValuePtr(rterm)));
@@ -2538,7 +2538,7 @@ frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_ir_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return INT2FIX(ir_doc_freq(ir,
                                frb_field(rfield),
                                StringValuePtr(rterm)));
@@ -2554,7 +2554,7 @@ frb_ir_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_ir_terms(VALUE self, VALUE rfield)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_te(self, ir_terms(ir, frb_field(rfield)));
 }
 
@@ -2568,7 +2568,7 @@ frb_ir_terms(VALUE self, VALUE rfield)
 static VALUE
 frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_te(self, ir_terms_from(ir,
                                           frb_field(rfield),
                                           StringValuePtr(rterm)));
@@ -2583,7 +2583,7 @@ frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_ir_term_count(VALUE self, VALUE rfield)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtTermEnum *te = ir_terms(ir, frb_field(rfield));
     int count = 0;
     while (te->next(te)) {
@@ -2605,7 +2605,7 @@ frb_ir_term_count(VALUE self, VALUE rfield)
 static VALUE
 frb_ir_fields(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtFieldInfos *fis = ir->fis;
     VALUE rfield_names = rb_ary_new();
     int i;
@@ -2624,7 +2624,7 @@ frb_ir_fields(VALUE self)
 static VALUE
 frb_ir_field_infos(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_field_infos(ir->fis);
 }
 
@@ -2640,7 +2640,7 @@ frb_ir_field_infos(VALUE self)
 static VALUE
 frb_ir_tk_fields(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtFieldInfos *fis = ir->fis;
     VALUE rfield_names = rb_ary_new();
     int i;
@@ -2660,7 +2660,7 @@ frb_ir_tk_fields(VALUE self)
 static VALUE
 frb_ir_version(VALUE self)
 {
-    IndexReader *ir = (IndexReader *)DATA_PTR(self);
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return ULL2NUM(ir->sis->version);
 }
 

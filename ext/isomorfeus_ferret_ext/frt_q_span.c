@@ -30,7 +30,7 @@ static void spanq_destroy_i(FrtQuery *self)
     q_destroy_i(self);
 }
 
-static MatchVector *mv_to_term_mv(MatchVector *term_mv, MatchVector *full_mv,
+static FrtMatchVector *mv_to_term_mv(FrtMatchVector *term_mv, FrtMatchVector *full_mv,
                                   HashSet *terms, FrtTermVector *tv)
 {
     HashSetEntry *hse;
@@ -128,7 +128,7 @@ static int tv_tde_doc_num(FrtTermDocEnum *tde)
     return TV_TDE(tde)->doc;
 }
 
-static FrtTermDocEnum *spanq_ir_term_positions(IndexReader *ir)
+static FrtTermDocEnum *spanq_ir_term_positions(FrtIndexReader *ir)
 {
     TVTermDocEnum *tv_tde = FRT_ALLOC(TVTermDocEnum);
     FrtTermDocEnum *tde      = (FrtTermDocEnum *)tv_tde;
@@ -144,13 +144,13 @@ static FrtTermDocEnum *spanq_ir_term_positions(IndexReader *ir)
     return tde;
 }
 
-static MatchVector *spanq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                        FrtTermVector *tv)
 {
     if (strcmp(SpQ(self)->field, tv->field) == 0) {
         FrtSpanEnum *sp_enum;
-        IndexReader *ir = FRT_ALLOC(IndexReader);
-        MatchVector *full_mv = matchv_new();
+        FrtIndexReader *ir = FRT_ALLOC(FrtIndexReader);
+        FrtMatchVector *full_mv = matchv_new();
         HashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
         ir->fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
@@ -187,7 +187,7 @@ static MatchVector *spanq_get_matchv_i(FrtQuery *self, MatchVector *mv,
 typedef struct SpanScorer
 {
     FrtScorer          super;
-    IndexReader    *ir;
+    FrtIndexReader    *ir;
     FrtSpanEnum       *spans;
     FrtSimilarity     *sim;
     uchar          *norms;
@@ -281,7 +281,7 @@ static void spansc_destroy(FrtScorer *self)
     scorer_destroy_i(self);
 }
 
-static FrtScorer *spansc_new(FrtWeight *weight, IndexReader *ir)
+static FrtScorer *spansc_new(FrtWeight *weight, FrtIndexReader *ir)
 {
     FrtScorer *self = NULL;
     const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
@@ -418,7 +418,7 @@ static void spante_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spante_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spante_new(FrtQuery *query, FrtIndexReader *ir)
 {
     char *term = SpTQ(query)->term;
     FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanTermEnum);
@@ -613,7 +613,7 @@ static void spanmte_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanmte_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spanmte_new(FrtQuery *query, FrtIndexReader *ir)
 {
     FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanMultiTermEnum);
     SpanMultiTermEnum *smte = SpMTEn(self);
@@ -720,7 +720,7 @@ static void spanfe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanfe_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spanfe_new(FrtQuery *query, FrtIndexReader *ir)
 {
     FrtSpanEnum *self          = (FrtSpanEnum *)FRT_ALLOC(SpanFirstEnum);
     FrtSpanFirstQuery *sfq     = SpFQ(query);
@@ -897,7 +897,7 @@ static void spanoe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanoe_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spanoe_new(FrtQuery *query, FrtIndexReader *ir)
 {
     FrtQuery *clause;
     FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanOrEnum);
@@ -1203,7 +1203,7 @@ static void spanne_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanne_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spanne_new(FrtQuery *query, FrtIndexReader *ir)
 {
     int i;
     FrtQuery *clause;
@@ -1350,7 +1350,7 @@ static void spanxe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanxe_new(FrtQuery *query, IndexReader *ir)
+static FrtSpanEnum *spanxe_new(FrtQuery *query, FrtIndexReader *ir)
 {
     FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanNotEnum);
     SpanNotEnum *sxe    = SpXEn(self);
@@ -1386,7 +1386,7 @@ typedef struct SpanWeight
     HashSet    *terms;
 } SpanWeight;
 
-static FrtExplanation *spanw_explain(FrtWeight *self, IndexReader *ir, int target)
+static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int target)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -1735,7 +1735,7 @@ static HashSet *spanfq_get_terms(FrtQuery *self)
     return SpQ(sfq->match)->get_terms(sfq->match);
 }
 
-static FrtQuery *spanfq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *q, *rq;
 
@@ -1855,7 +1855,7 @@ static HashSet *spanoq_get_terms(FrtQuery *self)
     return terms;
 }
 
-static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, IndexReader *ir)
+static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     if (soq->c_cnt == 1) {
@@ -1866,7 +1866,7 @@ static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, IndexReader *ir)
     return spanoe_new(self, ir);
 }
 
-static FrtQuery *spanoq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
@@ -2039,7 +2039,7 @@ static HashSet *spannq_get_terms(FrtQuery *self)
     return terms;
 }
 
-static FrtSpanEnum *spannq_get_spans(FrtQuery *self, IndexReader *ir)
+static FrtSpanEnum *spannq_get_spans(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
 
@@ -2051,7 +2051,7 @@ static FrtSpanEnum *spannq_get_spans(FrtQuery *self, IndexReader *ir)
     return spanne_new(self, ir);
 }
 
-static FrtQuery *spannq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *spannq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
     int i;
@@ -2200,7 +2200,7 @@ static HashSet *spanxq_get_terms(FrtQuery *self)
     return SpQ(SpXQ(self)->inc)->get_terms(SpXQ(self)->inc);
 }
 
-static FrtQuery *spanxq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
     FrtQuery *q, *rq;
@@ -2323,7 +2323,7 @@ static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
     return buffer;
 }
 
-static FrtQuery *spanprq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *spanprq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     const int field_num = fis_get_field_num(ir->fis, SpQ(self)->field);
     FrtQuery *volatile q = spanmtq_new_conf(SpQ(self)->field, SpPfxQ(self)->max_terms);

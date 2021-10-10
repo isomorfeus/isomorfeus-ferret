@@ -31,7 +31,7 @@ frb_unwrap_locks(FrtStore *store)
 void
 frb_lock_free(void *p)
 {
-    Lock *lock = (Lock *)p;
+    FrtLock *lock = (FrtLock *)p;
     object_del(p);
     close_lock(lock);
 }
@@ -39,11 +39,11 @@ frb_lock_free(void *p)
 void
 frb_lock_mark(void *p)
 {
-    Lock *lock = (Lock *)p;
+    FrtLock *lock = (FrtLock *)p;
     frb_gc_mark(lock->store);
 }
 
-#define GET_LOCK(lock, self) Data_Get_Struct(self, Lock, lock)
+#define GET_LOCK(lock, self) Data_Get_Struct(self, FrtLock, lock)
 
 /*
  *  call-seq:
@@ -68,7 +68,7 @@ frb_lock_obtain(int argc, VALUE *argv, VALUE self)
 {
     VALUE rtimeout;
     int timeout = 1;
-    Lock *lock;
+    FrtLock *lock;
     GET_LOCK(lock, self);
 
     if (rb_scan_args(argc, argv, "01", &rtimeout) > 0) {
@@ -101,7 +101,7 @@ frb_lock_while_locked(int argc, VALUE *argv, VALUE self)
 {
     VALUE rtimeout;
     int timeout = 1;
-    Lock *lock;
+    FrtLock *lock;
     GET_LOCK(lock, self);
     if (rb_scan_args(argc, argv, "01", &rtimeout) > 0) {
         timeout = FIX2INT(rtimeout);
@@ -124,7 +124,7 @@ frb_lock_while_locked(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_lock_is_locked(VALUE self)
 {
-    Lock *lock;
+    FrtLock *lock;
     GET_LOCK(lock, self);
     return lock->is_locked(lock) ? Qtrue : Qfalse;
 }
@@ -139,7 +139,7 @@ frb_lock_is_locked(VALUE self)
 static VALUE
 frb_lock_release(VALUE self)
 {
-    Lock *lock;
+    FrtLock *lock;
     GET_LOCK(lock, self);
     lock->release(lock);
     return self;
@@ -282,7 +282,7 @@ static VALUE
 frb_dir_make_lock(VALUE self, VALUE rlock_name)
 {
     VALUE rlock;
-    Lock *lock;
+    FrtLock *lock;
     FrtStore *store = DATA_PTR(self);
     StringValue(rlock_name);
     lock = open_lock(store, rs2s(rlock_name));

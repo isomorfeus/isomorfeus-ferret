@@ -135,7 +135,7 @@ extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern HashSet *frb_get_fields(VALUE rfields);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
-extern VALUE frb_get_lazy_doc(LazyDoc *lazy_doc);
+extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
 
 /****************************************************************************
  *
@@ -212,8 +212,8 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
         int doc_id = FIX2INT(rb_funcall(rhit, id_doc, 0));
         const char *value = "";
         size_t value_len = 0;
-        LazyDoc *lzd = sea->get_lazy_doc(sea, doc_id);
-        LazyDocField *lzdf = lazy_doc_get(lzd, field);
+        FrtLazyDoc *lzd = sea->get_lazy_doc(sea, doc_id);
+        FrtLazyDocField *lzdf = lazy_doc_get(lzd, field);
         if (NULL != lzdf) {
             value = lazy_df_get_data(lzdf, 0);
             value_len = strlen(value);
@@ -236,12 +236,12 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
 }
 
 static char *
-frb_lzd_load_to_json(LazyDoc *lzd, char **str, char *s, int *slen)
+frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
 {
 	int i, j;
 	int diff = s - *str;
 	int len = diff, l;
-	LazyDocField *f;
+	FrtLazyDocField *f;
 
 	for (i = 0; i < lzd->size; i++) {
 		f = lzd->fields[i];
@@ -291,7 +291,7 @@ frb_td_to_json(VALUE self)
 	int i;
 	VALUE rhits = rb_funcall(self, id_hits, 0);
 	VALUE rhit;
-	LazyDoc *lzd;
+	FrtLazyDoc *lzd;
 	FrtSearcher *sea = (FrtSearcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
 	const int num_hits = RARRAY_LEN(rhits);
 	int doc_id;
@@ -752,7 +752,7 @@ frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm)
     }
 
     q = (*mm)(frb_field(rfield), StringValuePtr(rterm));
-    MTQMaxTerms(q) = max_terms;
+    FrtMTQMaxTerms(q) = max_terms;
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1978,9 +1978,9 @@ static VALUE
 frb_f_get_bits(VALUE self, VALUE rindex_reader)
 {
     FrtBitVector *bv;
-    IndexReader *ir;
+    FrtIndexReader *ir;
     GET_F();
-    Data_Get_Struct(rindex_reader, IndexReader, ir);
+    Data_Get_Struct(rindex_reader, FrtIndexReader, ir);
     bv = filt_get_bv(f, ir);
     return frb_get_bv(bv);
 }
@@ -2510,7 +2510,7 @@ static VALUE
 frb_sea_get_reader(VALUE self, VALUE rterm)
 {
     GET_SEA();
-    return object_get(((IndexSearcher *)sea)->ir);
+    return object_get(((FrtIndexSearcher *)sea)->ir);
 }
 
 /*
@@ -2602,7 +2602,7 @@ cwfilt_eq(FrtFilter *filt, FrtFilter *o)
 }
 
 static FrtBitVector *
-cwfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
+cwfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
     FrtBitVector *bv;
@@ -3022,7 +3022,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
 static void
 frb_sea_mark(void *p)
 {
-    IndexSearcher *isea = (IndexSearcher *)p;
+    FrtIndexSearcher *isea = (FrtIndexSearcher *)p;
     frb_gc_mark(isea->ir);
     frb_gc_mark(isea->ir->store);
 }
@@ -3046,7 +3046,7 @@ static VALUE
 frb_sea_init(VALUE self, VALUE obj)
 {
     FrtStore *store = NULL;
-    IndexReader *ir = NULL;
+    FrtIndexReader *ir = NULL;
     FrtSearcher *sea;
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
@@ -3061,13 +3061,13 @@ frb_sea_init(VALUE self, VALUE obj)
             ir = ir_open(store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
-            Data_Get_Struct(obj, IndexReader, ir);
+            Data_Get_Struct(obj, FrtIndexReader, ir);
         } else {
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
     }
     sea = isea_new(ir);
-    ((IndexSearcher *)sea)->close_ir = false;
+    ((FrtIndexSearcher *)sea)->close_ir = false;
     Frt_Wrap_Struct(self, &frb_sea_mark, &frb_sea_free, sea);
     object_add(sea, self);
     return self;
@@ -3083,7 +3083,7 @@ static void
 frb_ms_free(void *p)
 {
     FrtSearcher *sea = (FrtSearcher *)p;
-    MultiSearcher *msea = (MultiSearcher *)sea;
+    FrtMultiSearcher *msea = (FrtMultiSearcher *)sea;
     free(msea->searchers);
     object_del(sea);
     searcher_close(sea);
@@ -3093,7 +3093,7 @@ static void
 frb_ms_mark(void *p)
 {
     int i;
-    MultiSearcher *msea = (MultiSearcher *)p;
+    FrtMultiSearcher *msea = (FrtMultiSearcher *)p;
     for (i = 0; i < msea->s_cnt; i++) {
         frb_gc_mark(msea->searchers[i]);
     }

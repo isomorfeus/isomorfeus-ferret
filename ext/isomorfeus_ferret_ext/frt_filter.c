@@ -22,7 +22,7 @@ void filt_deref(FrtFilter *filt)
     }
 }
 
-FrtBitVector *filt_get_bv(FrtFilter *filt, IndexReader *ir)
+FrtBitVector *filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtCacheObject *co = (FrtCacheObject *)h_get(filt->cache, ir);
 
@@ -103,7 +103,7 @@ static char *qfilt_to_s(FrtFilter *filt)
     return filter_str;
 }
 
-static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
+static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     FrtSearcher *sea = isea_new(ir);

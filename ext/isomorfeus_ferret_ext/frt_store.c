@@ -11,7 +11,7 @@ extern VALUE cLockError;
 /*
  * TODO: add try finally
  */
-void with_lock(Lock *lock, void (*func)(void *arg), void *arg)
+void with_lock(FrtLock *lock, void (*func)(void *arg), void *arg)
 {
     if (!lock->obtain(lock)) {
         rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
@@ -26,7 +26,7 @@ void with_lock(Lock *lock, void (*func)(void *arg), void *arg)
 void with_lock_name(FrtStore *store, const char *lock_name,
                     void (*func)(void *arg), void *arg)
 {
-    Lock *lock = store->open_lock_i(store, lock_name);
+    FrtLock *lock = store->open_lock_i(store, lock_name);
     if (!lock->obtain(lock)) {
         rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
     }
@@ -46,19 +46,19 @@ void store_deref(FrtStore *store)
     }
 }
 
-Lock *open_lock(FrtStore *store, const char *lockname)
+FrtLock *open_lock(FrtStore *store, const char *lockname)
 {
-    Lock *lock = store->open_lock_i(store, lockname);
+    FrtLock *lock = store->open_lock_i(store, lockname);
     hs_add(store->locks, lock);
     return lock;
 }
 
-void close_lock(Lock *lock)
+void close_lock(FrtLock *lock)
 {
     hs_del(lock->store->locks, lock);
 }
 
-static void close_lock_i(Lock *lock)
+static void close_lock_i(FrtLock *lock)
 {
     lock->store->close_lock_i(lock);
 }
@@ -94,9 +94,9 @@ void store_destroy(FrtStore *store)
  *
  * @return a newly allocated and initialized OutStream object
  */
-OutStream *os_new()
+FrtOutStream *os_new()
 {
-    OutStream *os = FRT_ALLOC(OutStream);
+    FrtOutStream *os = FRT_ALLOC(FrtOutStream);
     os->buf.start = 0;
     os->buf.pos = 0;
     os->buf.len = 0;
@@ -104,30 +104,30 @@ OutStream *os_new()
 }
 
 /**
- * Flush the countents of the OutStream's buffers
+ * Flush the countents of the FrtOutStream's buffers
  *
  * @param the OutStream to flush
  */
-void os_flush(OutStream *os)
+void os_flush(FrtOutStream *os)
 {
     os->m->flush_i(os, os->buf.buf, os->buf.pos);
     os->buf.start += os->buf.pos;
     os->buf.pos = 0;
 }
 
-void os_close(OutStream *os)
+void os_close(FrtOutStream *os)
 {
     os_flush(os);
     os->m->close_i(os);
     free(os);
 }
 
-off_t os_pos(OutStream *os)
+off_t os_pos(FrtOutStream *os)
 {
     return os->buf.start + os->buf.pos;
 }
 
-void os_seek(OutStream *os, off_t new_pos)
+void os_seek(FrtOutStream *os, off_t new_pos)
 {
     os_flush(os);
     os->buf.start = new_pos;
@@ -147,7 +147,7 @@ void os_seek(OutStream *os, off_t new_pos)
  * @param b  the byte to write
  * @raise FRT_IO_ERROR if there is an IO error writing to the filesystem
  */
-void os_write_byte(OutStream *os, uchar b)
+void os_write_byte(FrtOutStream *os, uchar b)
 {
     if (os->buf.pos >= FRT_BUFFER_SIZE) {
         os_flush(os);
@@ -155,7 +155,7 @@ void os_write_byte(OutStream *os, uchar b)
     write_byte(os, b);
 }
 
-void os_write_bytes(OutStream *os, const uchar *buf, int len)
+void os_write_bytes(FrtOutStream *os, const uchar *buf, int len)
 {
     if (os->buf.pos > 0) {      /* flush buffer */
         os_flush(os);
@@ -187,9 +187,9 @@ void os_write_bytes(OutStream *os, const uchar *buf, int len)
  *
  * @return a newly allocated and initialized InStream
  */
-InStream *is_new()
+FrtInStream *is_new()
 {
-    InStream *is = FRT_ALLOC(InStream);
+    FrtInStream *is = FRT_ALLOC(FrtInStream);
     is->buf.start = 0;
     is->buf.pos = 0;
     is->buf.len = 0;
@@ -204,7 +204,7 @@ InStream *is_new()
  * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-static void is_refill(InStream *is)
+static void is_refill(FrtInStream *is)
 {
     off_t start = is->buf.start + is->buf.pos;
     off_t last = start + FRT_BUFFER_SIZE;
@@ -241,7 +241,7 @@ static void is_refill(InStream *is)
  * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-uchar is_read_byte(InStream *is)
+uchar is_read_byte(FrtInStream *is)
 {
     if (is->buf.pos >= is->buf.len) {
         is_refill(is);
@@ -250,12 +250,12 @@ uchar is_read_byte(InStream *is)
     return read_byte(is);
 }
 
-off_t is_pos(InStream *is)
+off_t is_pos(FrtInStream *is)
 {
     return is->buf.start + is->buf.pos;
 }
 
-uchar *is_read_bytes(InStream *is, uchar *buf, int len)
+uchar *is_read_bytes(FrtInStream *is, uchar *buf, int len)
 {
     int i;
     off_t start;
@@ -277,7 +277,7 @@ uchar *is_read_bytes(InStream *is, uchar *buf, int len)
     return buf;
 }
 
-void is_seek(InStream *is, off_t pos)
+void is_seek(FrtInStream *is, off_t pos)
 {
     if (pos >= is->buf.start && pos < (is->buf.start + is->buf.len)) {
         is->buf.pos = pos - is->buf.start;  /* seek within buffer */
@@ -290,7 +290,7 @@ void is_seek(InStream *is, off_t pos)
     }
 }
 
-void is_close(InStream *is)
+void is_close(FrtInStream *is)
 {
     if (--(*(is->ref_cnt_ptr)) < 0) {
         is->m->close_i(is);
@@ -299,15 +299,15 @@ void is_close(InStream *is)
     free(is);
 }
 
-InStream *is_clone(InStream *is)
+FrtInStream *is_clone(FrtInStream *is)
 {
-    InStream *new_index_i = FRT_ALLOC(InStream);
-    memcpy(new_index_i, is, sizeof(InStream));
+    FrtInStream *new_index_i = FRT_ALLOC(FrtInStream);
+    memcpy(new_index_i, is, sizeof(FrtInStream));
     (*(new_index_i->ref_cnt_ptr))++;
     return new_index_i;
 }
 
-i32 is_read_i32(InStream *is)
+i32 is_read_i32(FrtInStream *is)
 {
     return ((i32)is_read_byte(is) << 24) |
         ((i32)is_read_byte(is) << 16) |
@@ -315,7 +315,7 @@ i32 is_read_i32(InStream *is)
         ((i32)is_read_byte(is));
 }
 
-i64 is_read_i64(InStream *is)
+i64 is_read_i64(FrtInStream *is)
 {
     return ((i64)is_read_byte(is) << 56) |
         ((i64)is_read_byte(is) << 48) |
@@ -327,7 +327,7 @@ i64 is_read_i64(InStream *is)
         ((i64)is_read_byte(is));
 }
 
-u32 is_read_u32(InStream *is)
+u32 is_read_u32(FrtInStream *is)
 {
     return ((u32)is_read_byte(is) << 24) |
         ((u32)is_read_byte(is) << 16) |
@@ -335,7 +335,7 @@ u32 is_read_u32(InStream *is)
         ((u32)is_read_byte(is));
 }
 
-u64 is_read_u64(InStream *is)
+u64 is_read_u64(FrtInStream *is)
 {
     return ((u64)is_read_byte(is) << 56) |
         ((u64)is_read_byte(is) << 48) |
@@ -348,7 +348,7 @@ u64 is_read_u64(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-unsigned int is_read_vint(InStream *is)
+unsigned int is_read_vint(FrtInStream *is)
 {
     register unsigned int res, b;
     register int shift = 7;
@@ -378,7 +378,7 @@ unsigned int is_read_vint(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-off_t is_read_voff_t(InStream *is)
+off_t is_read_voff_t(FrtInStream *is)
 {
     register off_t res, b;
     register int shift = 7;
@@ -408,7 +408,7 @@ off_t is_read_voff_t(InStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-u64 is_read_vll(InStream *is)
+u64 is_read_vll(FrtInStream *is)
 {
     register u64 res, b;
     register int shift = 7;
@@ -437,7 +437,7 @@ u64 is_read_vll(InStream *is)
     return res;
 }
 
-void is_skip_vints(InStream *is, register int cnt)
+void is_skip_vints(FrtInStream *is, register int cnt)
 {
     for (; cnt > 0; cnt--) {
         while ((is_read_byte(is) & 0x80) != 0) {
@@ -447,7 +447,7 @@ void is_skip_vints(InStream *is, register int cnt)
 
 /*
  * FIXME: Not used. Do we need/want this?
-static void is_read_chars(InStream *is, char *buffer,
+static void is_read_chars(FrtInStream *is, char *buffer,
                           int off, int len)
 {
     int end, i;
@@ -460,7 +460,7 @@ static void is_read_chars(InStream *is, char *buffer,
 }
 */
 
-char *is_read_string(InStream *is)
+char *is_read_string(FrtInStream *is)
 {
     register int length = (int) is_read_vint(is);
     char *str = FRT_ALLOC_N(char, length + 1);
@@ -480,7 +480,7 @@ char *is_read_string(InStream *is)
     return str;
 }
 
-char *is_read_string_safe(InStream *is)
+char *is_read_string_safe(FrtInStream *is)
 {
     register int length = (int) is_read_vint(is);
     char *str = FRT_ALLOC_N(char, length + 1);
@@ -504,7 +504,7 @@ char *is_read_string_safe(InStream *is)
     return str;
 }
 
-void os_write_i32(OutStream *os, i32 num)
+void os_write_i32(FrtOutStream *os, i32 num)
 {
     os_write_byte(os, (uchar)((num >> 24) & 0xFF));
     os_write_byte(os, (uchar)((num >> 16) & 0xFF));
@@ -512,7 +512,7 @@ void os_write_i32(OutStream *os, i32 num)
     os_write_byte(os, (uchar)(num & 0xFF));
 }
 
-void os_write_i64(OutStream *os, i64 num)
+void os_write_i64(FrtOutStream *os, i64 num)
 {
     os_write_byte(os, (uchar)((num >> 56) & 0xFF));
     os_write_byte(os, (uchar)((num >> 48) & 0xFF));
@@ -524,7 +524,7 @@ void os_write_i64(OutStream *os, i64 num)
     os_write_byte(os, (uchar)(num & 0xFF));
 }
 
-void os_write_u32(OutStream *os, u32 num)
+void os_write_u32(FrtOutStream *os, u32 num)
 {
     os_write_byte(os, (uchar)((num >> 24) & 0xFF));
     os_write_byte(os, (uchar)((num >> 16) & 0xFF));
@@ -532,7 +532,7 @@ void os_write_u32(OutStream *os, u32 num)
     os_write_byte(os, (uchar)(num & 0xFF));
 }
 
-void os_write_u64(OutStream *os, u64 num)
+void os_write_u64(FrtOutStream *os, u64 num)
 {
     os_write_byte(os, (uchar)((num >> 56) & 0xFF));
     os_write_byte(os, (uchar)((num >> 48) & 0xFF));
@@ -545,7 +545,7 @@ void os_write_u64(OutStream *os, u64 num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_vint(OutStream *os, register unsigned int num)
+void os_write_vint(FrtOutStream *os, register unsigned int num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -564,7 +564,7 @@ void os_write_vint(OutStream *os, register unsigned int num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_voff_t(OutStream *os, register off_t num)
+void os_write_voff_t(FrtOutStream *os, register off_t num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -583,7 +583,7 @@ void os_write_voff_t(OutStream *os, register off_t num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_vll(OutStream *os, register u64 num)
+void os_write_vll(FrtOutStream *os, register u64 num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
@@ -601,12 +601,12 @@ void os_write_vll(OutStream *os, register u64 num)
     }
 }
 
-void os_write_string_len(OutStream *os, const char *str, int len)
+void os_write_string_len(FrtOutStream *os, const char *str, int len)
 {
     os_write_vint(os, len);
     os_write_bytes(os, (uchar *)str, len);
 }
-void os_write_string(OutStream *os, const char *str)
+void os_write_string(FrtOutStream *os, const char *str)
 {
     os_write_string_len(os, str, (int)strlen(str));
 }
@@ -624,7 +624,7 @@ int file_is_lock(const char *filename)
     return ((start > 0) && (strcmp(FRT_LOCK_EXT, &filename[start]) == 0));
 }
 
-void is2os_copy_bytes(InStream *is, OutStream *os, int cnt)
+void is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
 {
     int len;
     uchar buf[FRT_BUFFER_SIZE];
@@ -636,7 +636,7 @@ void is2os_copy_bytes(InStream *is, OutStream *os, int cnt)
     }
 }
 
-void is2os_copy_vints(InStream *is, OutStream *os, int cnt)
+void is2os_copy_vints(FrtInStream *is, FrtOutStream *os, int cnt)
 {
     uchar b;
     for (; cnt > 0; cnt--) {

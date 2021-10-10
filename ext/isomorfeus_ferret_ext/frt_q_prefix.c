@@ -33,11 +33,11 @@ static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
     return buffer;
 }
 
-static FrtQuery *prq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *prq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     const int field_num = fis_get_field_num(ir->fis, PfxQ(self)->field);
     FrtQuery *volatile q = multi_tq_new_conf(PfxQ(self)->field,
-                                          MTQMaxTerms(self), 0.0);
+                                          FrtMTQMaxTerms(self), 0.0);
     q->boost = self->boost;        /* set the boost */
 
     if (field_num >= 0) {
@@ -84,7 +84,7 @@ FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
 
     PfxQ(self)->field       = field;
     PfxQ(self)->prefix      = estrdup(prefix);
-    MTQMaxTerms(self)       = PREFIX_QUERY_MAX_TERMS;
+    FrtMTQMaxTerms(self)       = PREFIX_QUERY_MAX_TERMS;
 
     self->type              = PREFIX_QUERY;
     self->rewrite           = &prq_rewrite;

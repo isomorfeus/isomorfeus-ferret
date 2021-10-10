@@ -142,7 +142,7 @@ static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
  *
  ***************************************************************************/
 
-static FrtScorer *tw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *tw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     FrtTermQuery *tq = TQ(self->query);
     FrtTermDocEnum *tde = ir_term_docs_for(ir, tq->field, tq->term);
@@ -152,7 +152,7 @@ static FrtScorer *tw_scorer(FrtWeight *self, IndexReader *ir)
     return tsc_new(self, tde, ir_get_norms(ir, tq->field));
 }
 
-static FrtExplanation *tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
@@ -278,7 +278,7 @@ static int tq_eq(FrtQuery *self, FrtQuery *o)
         && (strcmp(TQ(self)->field, TQ(o)->field) == 0);
 }
 
-static MatchVector *tq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                     FrtTermVector *tv)
 {
     if (strcmp(tv->field, TQ(self)->field) == 0) {

@@ -181,12 +181,12 @@ static off_t ram_length(FrtStore *store, const char *filename)
     }
 }
 
-off_t ramo_length(OutStream *os)
+off_t ramo_length(FrtOutStream *os)
 {
     return os->file.rf->len;
 }
 
-static void ramo_flush_i(OutStream *os, const uchar *src, int len)
+static void ramo_flush_i(FrtOutStream *os, const uchar *src, int len)
 {
     uchar *buffer;
     FrtRAMFile *rf = os->file.rf;
@@ -220,25 +220,25 @@ static void ramo_flush_i(OutStream *os, const uchar *src, int len)
     }
 }
 
-static void ramo_seek_i(OutStream *os, off_t pos)
+static void ramo_seek_i(FrtOutStream *os, off_t pos)
 {
     os->pointer = pos;
 }
 
-void ramo_reset(OutStream *os)
+void ramo_reset(FrtOutStream *os)
 {
     os_seek(os, 0);
     os->file.rf->len = 0;
 }
 
-static void ramo_close_i(OutStream *os)
+static void ramo_close_i(FrtOutStream *os)
 {
     FrtRAMFile *rf = os->file.rf;
     FRT_DEREF(rf);
     rf_close(rf);
 }
 
-void ramo_write_to(OutStream *os, OutStream *other_o)
+void ramo_write_to(FrtOutStream *os, FrtOutStream *other_o)
 {
     int i, len;
     FrtRAMFile *rf = os->file.rf;
@@ -254,16 +254,16 @@ void ramo_write_to(OutStream *os, OutStream *other_o)
     }
 }
 
-static const struct OutStreamMethods RAM_OUT_STREAM_METHODS = {
+static const struct FrtOutStreamMethods RAM_OUT_STREAM_METHODS = {
     ramo_flush_i,
     ramo_seek_i,
     ramo_close_i
 };
 
-OutStream *ram_new_buffer()
+FrtOutStream *ram_new_buffer()
 {
     FrtRAMFile *rf = rf_new("");
-    OutStream *os = os_new();
+    FrtOutStream *os = os_new();
 
     FRT_DEREF(rf);
     os->file.rf = rf;
@@ -272,16 +272,16 @@ OutStream *ram_new_buffer()
     return os;
 }
 
-void ram_destroy_buffer(OutStream *os)
+void ram_destroy_buffer(FrtOutStream *os)
 {
     rf_close(os->file.rf);
     free(os);
 }
 
-static OutStream *ram_new_output(FrtStore *store, const char *filename)
+static FrtOutStream *ram_new_output(FrtStore *store, const char *filename)
 {
     FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
-    OutStream *os = os_new();
+    FrtOutStream *os = os_new();
 
     if (rf == NULL) {
         rf = rf_new(filename);
@@ -294,7 +294,7 @@ static OutStream *ram_new_output(FrtStore *store, const char *filename)
     return os;
 }
 
-static void rami_read_i(InStream *is, uchar *b, int len)
+static void rami_read_i(FrtInStream *is, uchar *b, int len)
 {
     FrtRAMFile *rf = is->file.rf;
 
@@ -325,34 +325,34 @@ static void rami_read_i(InStream *is, uchar *b, int len)
     is->d.pointer += len;
 }
 
-static off_t rami_length_i(InStream *is)
+static off_t rami_length_i(FrtInStream *is)
 {
     return is->file.rf->len;
 }
 
-static void rami_seek_i(InStream *is, off_t pos)
+static void rami_seek_i(FrtInStream *is, off_t pos)
 {
     is->d.pointer = pos;
 }
 
-static void rami_close_i(InStream *is)
+static void rami_close_i(FrtInStream *is)
 {
     FrtRAMFile *rf = is->file.rf;
     FRT_DEREF(rf);
     rf_close(rf);
 }
 
-static const struct InStreamMethods RAM_IN_STREAM_METHODS = {
+static const struct FrtInStreamMethods RAM_IN_STREAM_METHODS = {
     rami_read_i,
     rami_seek_i,
     rami_length_i,
     rami_close_i
 };
 
-static InStream *ram_open_input(FrtStore *store, const char *filename)
+static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
 {
     FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
-    InStream *is = NULL;
+    FrtInStream *is = NULL;
 
     if (rf == NULL) {
         /*
@@ -379,7 +379,7 @@ static InStream *ram_open_input(FrtStore *store, const char *filename)
 
 #define LOCK_OBTAIN_TIMEOUT 5
 
-static int ram_lock_obtain(Lock *lock)
+static int ram_lock_obtain(FrtLock *lock)
 {
     int ret = true;
     if (ram_exists(lock->store, lock->name)) {
@@ -389,19 +389,19 @@ static int ram_lock_obtain(Lock *lock)
     return ret;
 }
 
-static int ram_lock_is_locked(Lock *lock)
+static int ram_lock_is_locked(FrtLock *lock)
 {
     return ram_exists(lock->store, lock->name);
 }
 
-static void ram_lock_release(Lock *lock)
+static void ram_lock_release(FrtLock *lock)
 {
     ram_remove(lock->store, lock->name);
 }
 
-static Lock *ram_open_lock_i(FrtStore *store, const char *lockname)
+static FrtLock *ram_open_lock_i(FrtStore *store, const char *lockname)
 {
-    Lock *lock = FRT_ALLOC(Lock);
+    FrtLock *lock = FRT_ALLOC(FrtLock);
     char lname[100];
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
     lock->name = estrdup(lname);
@@ -412,7 +412,7 @@ static Lock *ram_open_lock_i(FrtStore *store, const char *lockname)
     return lock;
 }
 
-static void ram_close_lock_i(Lock *lock)
+static void ram_close_lock_i(FrtLock *lock)
 {
     free(lock->name);
     free(lock);
@@ -450,8 +450,8 @@ struct CopyFileArg
 static void copy_files(const char *fname, void *arg)
 {
     struct CopyFileArg *cfa = (struct CopyFileArg *)arg;
-    OutStream *os = cfa->to_store->new_output(cfa->to_store, fname);
-    InStream *is = cfa->from_store->open_input(cfa->from_store, fname);
+    FrtOutStream *os = cfa->to_store->new_output(cfa->to_store, fname);
+    FrtInStream *is = cfa->from_store->open_input(cfa->from_store, fname);
     int len = (int)is_length(is);
     uchar *buffer = FRT_ALLOC_N(uchar, len + 1);
 

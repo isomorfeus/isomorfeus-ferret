@@ -152,7 +152,7 @@ static FrtTokenStream *cts_new()
 
 /* * Multi-byte TokenStream * */
 
-#define MBTS(token_stream) ((MultiByteTokenStream *)(token_stream))
+#define MBTS(token_stream) ((FrtMultiByteTokenStream *)(token_stream))
 
 static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
 {
@@ -179,12 +179,12 @@ static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text)
 
 static FrtTokenStream *mb_ts_clone_i(FrtTokenStream *orig_ts)
 {
-    return ts_clone_size(orig_ts, sizeof(MultiByteTokenStream));
+    return ts_clone_size(orig_ts, sizeof(FrtMultiByteTokenStream));
 }
 
 static FrtTokenStream *mb_ts_new()
 {
-    FrtTokenStream *ts = ts_new(MultiByteTokenStream);
+    FrtTokenStream *ts = ts_new(FrtMultiByteTokenStream);
     ts->reset = &mb_ts_reset;
     ts->clone_i = &mb_ts_clone_i;
     ts->ref_cnt = 1;
@@ -635,7 +635,7 @@ FrtTokenStream *utf8_standard_tokenizer_new()
  *
  ****************************************************************************/
 
-#define LSTDTS(token_stream) ((LegacyStandardTokenizer *)(token_stream))
+#define LSTDTS(token_stream) ((FrtLegacyStandardTokenizer *)(token_stream))
 
 /*
  * LegacyStandardTokenizer
@@ -881,7 +881,7 @@ static bool mb_legacy_std_advance_to_start(FrtTokenStream *ts)
 
 static FrtToken *legacy_std_next(FrtTokenStream *ts)
 {
-    LegacyStandardTokenizer *std_tz = LSTDTS(ts);
+    FrtLegacyStandardTokenizer *std_tz = LSTDTS(ts);
     char *s;
     char *t;
     char *start = NULL;
@@ -1031,12 +1031,12 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
 
 static FrtTokenStream *legacy_std_ts_clone_i(FrtTokenStream *orig_ts)
 {
-    return ts_clone_size(orig_ts, sizeof(LegacyStandardTokenizer));
+    return ts_clone_size(orig_ts, sizeof(FrtLegacyStandardTokenizer));
 }
 
 static FrtTokenStream *legacy_std_ts_new()
 {
-    FrtTokenStream *ts = ts_new(LegacyStandardTokenizer);
+    FrtTokenStream *ts = ts_new(FrtLegacyStandardTokenizer);
 
     ts->clone_i     = &legacy_std_ts_clone_i;
     ts->next        = &legacy_std_next;
@@ -1128,7 +1128,7 @@ static void sf_destroy_i(FrtTokenStream *ts)
 
 static FrtTokenStream *sf_clone_i(FrtTokenStream *orig_ts)
 {
-    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
+    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(FrtMappingFilter));
     FRT_REF(StopFilt(new_ts)->words);
     return new_ts;
 }
@@ -1200,7 +1200,7 @@ FrtTokenStream *stop_filter_new(FrtTokenStream *ts)
  * MappingFilter
  ****************************************************************************/
 
-#define MFilt(filter) ((MappingFilter *)(filter))
+#define MFilt(filter) ((FrtMappingFilter *)(filter))
 
 static void mf_destroy_i(FrtTokenStream *ts)
 {
@@ -1210,7 +1210,7 @@ static void mf_destroy_i(FrtTokenStream *ts)
 
 static FrtTokenStream *mf_clone_i(FrtTokenStream *orig_ts)
 {
-    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
+    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(FrtMappingFilter));
     FRT_REF(MFilt(new_ts)->mapper);
     return new_ts;
 }
@@ -1218,7 +1218,7 @@ static FrtTokenStream *mf_clone_i(FrtTokenStream *orig_ts)
 static FrtToken *mf_next(FrtTokenStream *ts)
 {
     char buf[FRT_MAX_WORD_SIZE + 1];
-    MultiMapper *mapper = MFilt(ts)->mapper;
+    FrtMultiMapper *mapper = MFilt(ts)->mapper;
     FrtTokenFilter *tf = TkFilt(ts);
     FrtToken *tk = tf->sub_ts->next(tf->sub_ts);
     if (tk != NULL) {
@@ -1230,7 +1230,7 @@ static FrtToken *mf_next(FrtTokenStream *ts)
 
 static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text)
 {
-    MultiMapper *mm = MFilt(ts)->mapper;
+    FrtMultiMapper *mm = MFilt(ts)->mapper;
     if (mm->d_size == 0) {
         mulmap_compile(MFilt(ts)->mapper);
     }
@@ -1240,7 +1240,7 @@ static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text)
 
 FrtTokenStream *mapping_filter_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts   = tf_new(MappingFilter, sub_ts);
+    FrtTokenStream *ts   = tf_new(FrtMappingFilter, sub_ts);
     MFilt(ts)->mapper = mulmap_new();
     ts->next          = &mf_next;
     ts->destroy_i     = &mf_destroy_i;

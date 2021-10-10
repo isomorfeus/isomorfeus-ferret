@@ -536,7 +536,7 @@ static char *phw_to_s(FrtWeight *self)
     return strfmt("PhraseWeight(%f)", self->value);
 }
 
-static FrtScorer *phw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     int i;
     FrtScorer *phsc = NULL;
@@ -580,7 +580,7 @@ static FrtScorer *phw_scorer(FrtWeight *self, IndexReader *ir)
     return phsc;
 }
 
-static FrtExplanation *phw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -824,7 +824,7 @@ static TVPosEnum *get_tvpe(FrtTermVector *tv, char **terms, int t_cnt, int offse
     return tvpe;
 }
 
-static MatchVector *phq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                      FrtTermVector *tv)
 {
     if (strcmp(tv->field, PhQ(self)->field) == 0) {
@@ -1064,7 +1064,7 @@ static void phq_destroy(FrtQuery *self)
     q_destroy_i(self);
 }
 
-static FrtQuery *phq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtPhraseQuery *phq = PhQ(self);
     (void)ir;

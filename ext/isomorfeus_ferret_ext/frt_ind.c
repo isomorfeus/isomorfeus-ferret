@@ -32,21 +32,21 @@ static const char *NON_UNIQUE_KEY_ERROR_MSG =
     }                            \
 } while (0)
 
-void index_auto_flush_ir(Index *self)
+void index_auto_flush_ir(FrtIndex *self)
 {
     AUTOFLUSH_IR(self);
 }
 
-void index_auto_flush_iw(Index *self)
+void index_auto_flush_iw(FrtIndex *self)
 {
     AUTOFLUSH_IW(self);
 }
 
 
-Index *index_new(FrtStore *store, FrtAnalyzer *analyzer, HashSet *def_fields,
+FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, HashSet *def_fields,
                  bool create)
 {
-    Index *self = FRT_ALLOC_AND_ZERO(Index);
+    FrtIndex *self = FRT_ALLOC_AND_ZERO(FrtIndex);
     HashSetEntry *hse;
     /* FIXME: need to add these to the query parser */
     self->config = default_config;
@@ -93,7 +93,7 @@ Index *index_new(FrtStore *store, FrtAnalyzer *analyzer, HashSet *def_fields,
     return self;
 }
 
-void index_destroy(Index *self)
+void index_destroy(FrtIndex *self)
 {
     mutex_destroy(&self->mutex);
     INDEX_CLOSE_READER(self);
@@ -105,7 +105,7 @@ void index_destroy(Index *self)
     free(self);
 }
 
-void index_flush(Index *self)
+void index_flush(FrtIndex *self)
 {
     if (self->ir) {
         ir_commit(self->ir);
@@ -116,7 +116,7 @@ void index_flush(Index *self)
     self->has_writes = false;
 }
 
-void ensure_writer_open(Index *self)
+void ensure_writer_open(FrtIndex *self)
 {
     if (!self->iw) {
         INDEX_CLOSE_READER(self);
@@ -128,7 +128,7 @@ void ensure_writer_open(Index *self)
     }
 }
 
-void ensure_reader_open(Index *self)
+void ensure_reader_open(FrtIndex *self)
 {
     if (self->ir) {
         if (self->check_latest && !ir_is_latest(self->ir)) {
@@ -144,7 +144,7 @@ void ensure_reader_open(Index *self)
     self->ir = ir_open(self->store);
 }
 
-void ensure_searcher_open(Index *self)
+void ensure_searcher_open(FrtIndex *self)
 {
     ensure_reader_open(self);
     if (!self->sea) {
@@ -152,7 +152,7 @@ void ensure_searcher_open(Index *self)
     }
 }
 
-int index_size(Index *self)
+int index_size(FrtIndex *self)
 {
     int size;
     mutex_lock(&self->mutex);
@@ -164,7 +164,7 @@ int index_size(Index *self)
     return size;
 }
 
-void index_optimize(Index *self)
+void index_optimize(FrtIndex *self)
 {
     mutex_lock(&self->mutex);
     {
@@ -175,7 +175,7 @@ void index_optimize(Index *self)
     mutex_unlock(&self->mutex);
 }
 
-bool index_has_del(Index *self)
+bool index_has_del(FrtIndex *self)
 {
     bool has_del;
     mutex_lock(&self->mutex);
@@ -187,7 +187,7 @@ bool index_has_del(Index *self)
     return has_del;
 }
 
-bool index_is_deleted(Index *self, int doc_num)
+bool index_is_deleted(FrtIndex *self, int doc_num)
 {
     bool is_del;
     mutex_lock(&self->mutex);
@@ -199,7 +199,7 @@ bool index_is_deleted(Index *self, int doc_num)
     return is_del;
 }
 
-static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
+static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
                                             HashSet *key)
 {
     FrtQuery *q;
@@ -237,7 +237,7 @@ static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
     td_destroy(td);
 }
 
-static void index_add_doc_i(Index *self, FrtDocument *doc)
+static void index_add_doc_i(FrtIndex *self, FrtDocument *doc)
 {
     if (self->key) {
         index_del_doc_with_key_i(self, doc, self->key);
@@ -247,7 +247,7 @@ static void index_add_doc_i(Index *self, FrtDocument *doc)
     AUTOFLUSH_IW(self);
 }
 
-void index_add_doc(Index *self, FrtDocument *doc)
+void index_add_doc(FrtIndex *self, FrtDocument *doc)
 {
     mutex_lock(&self->mutex);
     {
@@ -256,7 +256,7 @@ void index_add_doc(Index *self, FrtDocument *doc)
     mutex_unlock(&self->mutex);
 }
 
-void index_add_string(Index *self, char *str)
+void index_add_string(FrtIndex *self, char *str)
 {
     FrtDocument *doc = doc_new();
     doc_add_field(doc, df_add_data(df_new(self->def_field), estrdup(str)));
@@ -264,7 +264,7 @@ void index_add_string(Index *self, char *str)
     doc_destroy(doc);
 }
 
-void index_add_array(Index *self, char **fields)
+void index_add_array(FrtIndex *self, char **fields)
 {
     int i;
     FrtDocument *doc = doc_new();
@@ -276,7 +276,7 @@ void index_add_array(Index *self, char **fields)
     doc_destroy(doc);
 }
 
-FrtQuery *index_get_query(Index *self, char *qstr)
+FrtQuery *index_get_query(FrtIndex *self, char *qstr)
 {
     int i;
     FrtFieldInfos *fis;
@@ -288,7 +288,7 @@ FrtQuery *index_get_query(Index *self, char *qstr)
     return qp_parse(self->qp, qstr);
 }
 
-FrtTopDocs *index_search_str(Index *self, char *qstr, int first_doc,
+FrtTopDocs *index_search_str(FrtIndex *self, char *qstr, int first_doc,
                           int num_docs, FrtFilter *filter, FrtSort *sort,
                           FrtPostFilter *post_filter)
 {
@@ -301,7 +301,7 @@ FrtTopDocs *index_search_str(Index *self, char *qstr, int first_doc,
     return td;
 }
 
-FrtDocument *index_get_doc(Index *self, int doc_num)
+FrtDocument *index_get_doc(FrtIndex *self, int doc_num)
 {
     FrtDocument *doc;
     ensure_reader_open(self);
@@ -309,7 +309,7 @@ FrtDocument *index_get_doc(Index *self, int doc_num)
     return doc;
 }
 
-FrtDocument *index_get_doc_ts(Index *self, int doc_num)
+FrtDocument *index_get_doc_ts(FrtIndex *self, int doc_num)
 {
     FrtDocument *doc;
     mutex_lock(&self->mutex);
@@ -320,7 +320,7 @@ FrtDocument *index_get_doc_ts(Index *self, int doc_num)
     return doc;
 }
 
-int index_term_id(Index *self, FrtSymbol field, const char *term)
+int index_term_id(FrtIndex *self, FrtSymbol field, const char *term)
 {
     FrtTermDocEnum *tde;
     int doc_num = -1;
@@ -333,7 +333,7 @@ int index_term_id(Index *self, FrtSymbol field, const char *term)
     return doc_num;
 }
 
-FrtDocument *index_get_doc_term(Index *self, FrtSymbol field,
+FrtDocument *index_get_doc_term(FrtIndex *self, FrtSymbol field,
                              const char *term)
 {
     FrtDocument *doc = NULL;
@@ -351,12 +351,12 @@ FrtDocument *index_get_doc_term(Index *self, FrtSymbol field,
     return doc;
 }
 
-FrtDocument *index_get_doc_id(Index *self, const char *id)
+FrtDocument *index_get_doc_id(FrtIndex *self, const char *id)
 {
     return index_get_doc_term(self, self->id_field, id);
 }
 
-void index_delete(Index *self, int doc_num)
+void index_delete(FrtIndex *self, int doc_num)
 {
     mutex_lock(&self->mutex);
     {
@@ -367,7 +367,7 @@ void index_delete(Index *self, int doc_num)
     mutex_unlock(&self->mutex);
 }
 
-void index_delete_term(Index *self, FrtSymbol field, const char *term)
+void index_delete_term(FrtIndex *self, FrtSymbol field, const char *term)
 {
     FrtTermDocEnum *tde;
     mutex_lock(&self->mutex);
@@ -390,7 +390,7 @@ void index_delete_term(Index *self, FrtSymbol field, const char *term)
     mutex_unlock(&self->mutex);
 }
 
-void index_delete_id(Index *self, const char *id)
+void index_delete_id(FrtIndex *self, const char *id)
 {
     index_delete_term(self, self->id_field, id);
 }
@@ -398,10 +398,10 @@ void index_delete_id(Index *self, const char *id)
 static void index_qdel_i(FrtSearcher *sea, int doc_num, float score, void *arg)
 {
     (void)score; (void)arg;
-    ir_delete_doc(((IndexSearcher *)sea)->ir, doc_num);
+    ir_delete_doc(((FrtIndexSearcher *)sea)->ir, doc_num);
 }
 
-void index_delete_query(Index *self, FrtQuery *q, FrtFilter *f,
+void index_delete_query(FrtIndex *self, FrtQuery *q, FrtFilter *f,
                         FrtPostFilter *post_filter)
 {
     mutex_lock(&self->mutex);
@@ -413,7 +413,7 @@ void index_delete_query(Index *self, FrtQuery *q, FrtFilter *f,
     mutex_unlock(&self->mutex);
 }
 
-void index_delete_query_str(Index *self, char *qstr, FrtFilter *f,
+void index_delete_query_str(FrtIndex *self, char *qstr, FrtFilter *f,
                             FrtPostFilter *post_filter)
 {
     FrtQuery *q = index_get_query(self, qstr);
@@ -421,7 +421,7 @@ void index_delete_query_str(Index *self, char *qstr, FrtFilter *f,
     q_deref(q);
 }
 
-FrtExplanation *index_explain(Index *self, FrtQuery *q, int doc_num)
+FrtExplanation *index_explain(FrtIndex *self, FrtQuery *q, int doc_num)
 {
     FrtExplanation *expl;
     mutex_lock(&self->mutex);

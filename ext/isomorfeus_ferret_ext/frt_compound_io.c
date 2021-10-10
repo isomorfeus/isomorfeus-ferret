@@ -5,7 +5,7 @@
 
 extern VALUE cStateError;
 extern void store_destroy(FrtStore *store);
-extern InStream *is_new();
+extern FrtInStream *is_new();
 extern FrtStore *store_new();
 
 /****************************************************************************
@@ -101,18 +101,18 @@ static off_t cmpd_length(FrtStore *store, const char *file_name)
     }
 }
 
-static void cmpdi_seek_i(InStream *is, off_t pos)
+static void cmpdi_seek_i(FrtInStream *is, off_t pos)
 {
     (void)is;
     (void)pos;
 }
 
-static void cmpdi_close_i(InStream *is)
+static void cmpdi_close_i(FrtInStream *is)
 {
     free(is->d.cis);
 }
 
-static off_t cmpdi_length_i(InStream *is)
+static off_t cmpdi_length_i(FrtInStream *is)
 {
     return (is->d.cis->length);
 }
@@ -120,7 +120,7 @@ static off_t cmpdi_length_i(InStream *is)
 /*
  * raises: FRT_EOF_ERROR
  */
-static void cmpdi_read_i(InStream *is, uchar *b, int len)
+static void cmpdi_read_i(FrtInStream *is, uchar *b, int len)
 {
     FrtCompoundInStream *cis = is->d.cis;
     off_t start = is_pos(is);
@@ -135,16 +135,16 @@ static void cmpdi_read_i(InStream *is, uchar *b, int len)
     is_read_bytes(cis->sub, b, len);
 }
 
-static const struct InStreamMethods CMPD_IN_STREAM_METHODS = {
+static const struct FrtInStreamMethods CMPD_IN_STREAM_METHODS = {
     cmpdi_read_i,
     cmpdi_seek_i,
     cmpdi_length_i,
     cmpdi_close_i
 };
 
-static InStream *cmpd_create_input(InStream *sub_is, off_t offset, off_t length)
+static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t length)
 {
-    InStream *is = is_new();
+    FrtInStream *is = is_new();
     FrtCompoundInStream *cis = FRT_ALLOC(FrtCompoundInStream);
 
     cis->sub = sub_is;
@@ -156,11 +156,11 @@ static InStream *cmpd_create_input(InStream *sub_is, off_t offset, off_t length)
     return is;
 }
 
-static InStream *cmpd_open_input(FrtStore *store, const char *file_name)
+static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
 {
     FileEntry *entry;
     FrtCompoundStore *cmpd = store->dir.cmpd;
-    InStream *is;
+    FrtInStream *is;
 
     mutex_lock(&store->mutex);
     if (cmpd->stream == NULL) {
@@ -181,7 +181,7 @@ static InStream *cmpd_open_input(FrtStore *store, const char *file_name)
     return is;
 }
 
-static OutStream *cmpd_new_output(FrtStore *store, const char *file_name)
+static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
@@ -189,7 +189,7 @@ static OutStream *cmpd_new_output(FrtStore *store, const char *file_name)
     return NULL;
 }
 
-static Lock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
+static FrtLock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
 {
     (void)store;
     (void)lock_name;
@@ -197,7 +197,7 @@ static Lock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
     return NULL;
 }
 
-static void cmpd_close_lock_i(Lock *lock)
+static void cmpd_close_lock_i(FrtLock *lock)
 {
     (void)lock;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
@@ -211,7 +211,7 @@ FrtStore *open_cmpd_store(FrtStore *store, const char *name)
     FileEntry *volatile entry = NULL;
     FrtStore *new_store = NULL;
     FrtCompoundStore *volatile cmpd = NULL;
-    InStream *volatile is = NULL;
+    FrtInStream *volatile is = NULL;
 
     FRT_TRY
         cmpd = FRT_ALLOC_AND_ZERO(FrtCompoundStore);
@@ -295,14 +295,14 @@ void cw_add_file(FrtCompoundWriter *cw, char *id)
     ary_last(cw->file_entries).name = id;
 }
 
-static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, OutStream *os)
+static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os)
 {
     off_t start_ptr = os_pos(os);
     off_t end_ptr;
     off_t remainder, length, len;
     uchar buffer[FRT_BUFFER_SIZE];
 
-    InStream *is = cw->store->open_input(cw->store, src->name);
+    FrtInStream *is = cw->store->open_input(cw->store, src->name);
 
     remainder = length = is_length(is);
 
@@ -334,7 +334,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, OutStream *
 
 void cw_close(FrtCompoundWriter *cw)
 {
-    OutStream *os = NULL;
+    FrtOutStream *os = NULL;
     int i;
 
     if (cw->ids->size <= 0) {

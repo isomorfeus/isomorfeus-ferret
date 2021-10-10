@@ -572,20 +572,20 @@ static void
 frb_mulmap_free(void *p)
 {
     object_del(p);
-    mulmap_destroy((MultiMapper *)p);
+    mulmap_destroy((FrtMultiMapper *)p);
 }
 
 static VALUE
 frb_mulmap_alloc(VALUE klass)
 {
-    MultiMapper *mulmap = mulmap_new();
+    FrtMultiMapper *mulmap = mulmap_new();
     VALUE rmulmap = Data_Wrap_Struct(klass, NULL, &frb_mulmap_free, mulmap);
     object_add(mulmap, rmulmap);
     return rmulmap;
 }
 
 /* XXX: Duplication from frb_add_mapping_i in r_analysis.c */
-static void frb_mulmap_add_mapping_i(MultiMapper *mulmap, VALUE from,
+static void frb_mulmap_add_mapping_i(FrtMultiMapper *mulmap, VALUE from,
                                             const char *to)
 {
     switch (TYPE(from)) {
@@ -609,7 +609,7 @@ static int frb_mulmap_add_mappings_i(VALUE key, VALUE value, VALUE arg)
     if (key == Qundef) {
         return ST_CONTINUE;
     } else {
-        MultiMapper *mulmap = (MultiMapper *)arg;
+        FrtMultiMapper *mulmap = (FrtMultiMapper *)arg;
         const char *to;
         switch (TYPE(value)) {
             case T_STRING:
@@ -648,7 +648,7 @@ static int frb_mulmap_add_mappings_i(VALUE key, VALUE value, VALUE arg)
 static VALUE
 frb_mulmap_init(VALUE self, VALUE rmappings)
 {
-    MultiMapper *mulmap = DATA_PTR(self);
+    FrtMultiMapper *mulmap = DATA_PTR(self);
     rb_hash_foreach(rmappings, frb_mulmap_add_mappings_i, (VALUE)mulmap);
     mulmap_compile(mulmap);
 
@@ -664,7 +664,7 @@ frb_mulmap_init(VALUE self, VALUE rmappings)
 VALUE
 frb_mulmap_map(VALUE self, VALUE rstring)
 {
-    MultiMapper *mulmap = DATA_PTR(self);
+    FrtMultiMapper *mulmap = DATA_PTR(self);
     char *string = rs2s(rb_obj_as_string(rstring));
     char *mapped_string = mulmap_dynamic_map(mulmap, string);
     VALUE rmapped_string = rb_str_new2(mapped_string);

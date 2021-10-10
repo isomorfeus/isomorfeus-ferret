@@ -174,7 +174,7 @@ static char *fuzq_to_s(FrtQuery *self, FrtSymbol curr_field)
     return buffer;
 }
 
-static FrtQuery *fuzq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *q;
     FrtFuzzyQuery *fuzq = FzQ(self);
@@ -192,7 +192,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, IndexReader *ir)
         return tq_new(fuzq->field, term);
     }
 
-    q = multi_tq_new_conf(fuzq->field, MTQMaxTerms(self), fuzq->min_sim);
+    q = multi_tq_new_conf(fuzq->field, FrtMTQMaxTerms(self), fuzq->min_sim);
     if (pre_len > 0) {
         prefix = FRT_ALLOC_N(char, pre_len + 1);
         strncpy(prefix, term, pre_len);
@@ -262,7 +262,7 @@ FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
     FzQ(self)->pre_len    = pre_len ? pre_len : FRT_DEF_PRE_LEN;
     FzQ(self)->min_sim    = min_sim ? min_sim : FRT_DEF_MIN_SIM;
     FzQ(self)->da         = NULL;
-    MTQMaxTerms(self)     = max_terms ? max_terms : FRT_DEF_MAX_TERMS;
+    FrtMTQMaxTerms(self)     = max_terms ? max_terms : FRT_DEF_MAX_TERMS;
 
     self->type            = FUZZY_QUERY;
     self->to_s            = &fuzq_to_s;

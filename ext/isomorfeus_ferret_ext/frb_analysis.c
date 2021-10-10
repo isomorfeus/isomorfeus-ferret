@@ -1111,7 +1111,7 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
     ts = frb_get_cwrapped_rts(rsub_ts);
     ts = mapping_filter_new(ts);
     rb_hash_foreach(mapping, frb_add_mappings_i, (VALUE)ts);
-    mulmap_compile(((MappingFilter *)ts)->mapper);
+    mulmap_compile(((FrtMappingFilter *)ts)->mapper);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);

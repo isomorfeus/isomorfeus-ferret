@@ -212,7 +212,7 @@ static char *rfilt_to_s(FrtFilter *filt)
     return rfstr;
 }
 
-static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
+static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
@@ -339,7 +339,7 @@ do {\
 } while (te->next(te))
 
 
-static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
+static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     Range *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
@@ -459,7 +459,7 @@ static void rq_destroy(FrtQuery *self)
     q_destroy_i(self);
 }
 
-static MatchVector *rq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                     FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
@@ -492,7 +492,7 @@ static MatchVector *rq_get_matchv_i(FrtQuery *self, MatchVector *mv,
     return mv;
 }
 
-static FrtQuery *rq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;
@@ -569,7 +569,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
     }\
 }\
 
-static MatchVector *trq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                      FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
@@ -634,7 +634,7 @@ static MatchVector *trq_get_matchv_i(FrtQuery *self, MatchVector *mv,
     return mv;
 }
 
-static FrtQuery *trq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;

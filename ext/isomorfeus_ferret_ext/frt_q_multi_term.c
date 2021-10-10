@@ -5,7 +5,7 @@
 #include "frt_symbol.h"
 #include "frt_internal.h"
 
-#define MTQ(query) ((MultiTermQuery *)(query))
+#define MTQ(query) ((FrtMultiTermQuery *)(query))
 
 /***************************************************************************
  *
@@ -335,7 +335,7 @@ static char *multi_tw_to_s(FrtWeight *self)
     return strfmt("MultiTermWeight(%f)", self->value);
 }
 
-static FrtScorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *multi_tw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     FrtScorer *multi_tsc = NULL;
     FrtPriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
@@ -370,7 +370,7 @@ static FrtScorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
     return multi_tsc;
 }
 
-static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -385,7 +385,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int do
     FrtExplanation *field_norm_expl;
 
     char *query_str;
-    MultiTermQuery *mtq = MTQ(self->query);
+    FrtMultiTermQuery *mtq = MTQ(self->query);
     const char *field = mtq->field;
     FrtPriorityQueue *bt_pq = mtq->boosted_terms;
     int i;
@@ -601,7 +601,7 @@ static int multi_tq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-static MatchVector *multi_tq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *multi_tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                           FrtTermVector *tv)
 {
     if (strcmp(tv->field, MTQ(self)->field) == 0) {
@@ -631,7 +631,7 @@ FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
               "%d < 0. ", max_terms);
     }
 
-    self                     = q_new(MultiTermQuery);
+    self                     = q_new(FrtMultiTermQuery);
 
     MTQ(self)->field         = field;
     MTQ(self)->boosted_terms = pq_new(max_terms,

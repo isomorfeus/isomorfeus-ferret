@@ -1140,7 +1140,7 @@ static void bw_normalize(FrtWeight *self, float normalization_factor)
     }
 }
 
-static FrtScorer *bw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *bw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     FrtScorer *bsc = bsc_new(self->similarity);
     FrtBooleanQuery *bq = BQ(self->query);
@@ -1179,7 +1179,7 @@ static void bw_destroy(FrtWeight *self)
     w_destroy(self);
 }
 
-static FrtExplanation *bw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtBooleanQuery *bq = BQ(self->query);
     FrtExplanation *sum_expl = expl_new(0.0f, "sum of:");
@@ -1318,7 +1318,7 @@ FrtBooleanClause *bc_new(FrtQuery *query, FrtBCType occur)
  *
  ***************************************************************************/
 
-static MatchVector *bq_get_matchv_i(FrtQuery *self, MatchVector *mv,
+static FrtMatchVector *bq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                     FrtTermVector *tv)
 {
     int i;
@@ -1331,7 +1331,7 @@ static MatchVector *bq_get_matchv_i(FrtQuery *self, MatchVector *mv,
     return mv;
 }
 
-static FrtQuery *bq_rewrite(FrtQuery *self, IndexReader *ir)
+static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     int i;
     const int clause_cnt = BQ(self)->clause_cnt;
