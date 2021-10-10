@@ -67,7 +67,7 @@ Index *index_new(Store *store, FrtAnalyzer *analyzer, HashSet *def_fields,
     }
 
     if (create) {
-        FieldInfos *fis = fis_new(FRT_STORE_YES, FRT_INDEX_YES,
+        FrtFieldInfos *fis = fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                                   FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         index_create(self->store, fis);
         fis_deref(fis);
@@ -279,7 +279,7 @@ void index_add_array(Index *self, char **fields)
 Query *index_get_query(Index *self, char *qstr)
 {
     int i;
-    FieldInfos *fis;
+    FrtFieldInfos *fis;
     ensure_searcher_open(self);
     fis = self->ir->fis;
     for (i = fis->size - 1; i >= 0; i--) {
@@ -289,7 +289,7 @@ Query *index_get_query(Index *self, char *qstr)
 }
 
 TopDocs *index_search_str(Index *self, char *qstr, int first_doc,
-                          int num_docs, Filter *filter, Sort *sort,
+                          int num_docs, FrtFilter *filter, Sort *sort,
                           PostFilter *post_filter)
 {
     Query *query;
@@ -401,7 +401,7 @@ static void index_qdel_i(Searcher *sea, int doc_num, float score, void *arg)
     ir_delete_doc(((IndexSearcher *)sea)->ir, doc_num);
 }
 
-void index_delete_query(Index *self, Query *q, Filter *f,
+void index_delete_query(Index *self, Query *q, FrtFilter *f,
                         PostFilter *post_filter)
 {
     mutex_lock(&self->mutex);
@@ -413,7 +413,7 @@ void index_delete_query(Index *self, Query *q, Filter *f,
     mutex_unlock(&self->mutex);
 }
 
-void index_delete_query_str(Index *self, char *qstr, Filter *f,
+void index_delete_query_str(Index *self, char *qstr, FrtFilter *f,
                             PostFilter *post_filter)
 {
     Query *q = index_get_query(self, qstr);

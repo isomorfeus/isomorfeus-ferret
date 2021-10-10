@@ -71,7 +71,7 @@ static void
 frb_fi_free(void *p)
 {
     object_del(p);
-    fi_deref((FieldInfo *)p);
+    fi_deref((FrtFieldInfo *)p);
 }
 
 static void
@@ -148,7 +148,7 @@ frb_fi_get_params(VALUE roptions,
 }
 
 static VALUE
-frb_get_field_info(FieldInfo *fi)
+frb_get_field_info(FrtFieldInfo *fi)
 {
 
     VALUE rfi = Qnil;
@@ -176,7 +176,7 @@ static VALUE
 frb_fi_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE roptions, rname;
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     StoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
     TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
@@ -202,7 +202,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_fi_name(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return rb_str_new_cstr(fi->name);
 }
 
@@ -215,7 +215,7 @@ frb_fi_name(VALUE self)
 static VALUE
 frb_fi_is_stored(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_stored(fi) ? Qtrue : Qfalse;
 }
 
@@ -228,7 +228,7 @@ frb_fi_is_stored(VALUE self)
 static VALUE
 frb_fi_is_indexed(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_indexed(fi) ? Qtrue : Qfalse;
 }
 
@@ -246,7 +246,7 @@ frb_fi_is_indexed(VALUE self)
 static VALUE
 frb_fi_is_tokenized(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_tokenized(fi) ? Qtrue : Qfalse;
 }
 
@@ -264,7 +264,7 @@ frb_fi_is_tokenized(VALUE self)
 static VALUE
 frb_fi_omit_norms(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_omit_norms(fi) ? Qtrue : Qfalse;
 }
 
@@ -277,7 +277,7 @@ frb_fi_omit_norms(VALUE self)
 static VALUE
 frb_fi_store_term_vector(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_term_vector(fi) ? Qtrue : Qfalse;
 }
 
@@ -290,7 +290,7 @@ frb_fi_store_term_vector(VALUE self)
 static VALUE
 frb_fi_store_positions(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_positions(fi) ? Qtrue : Qfalse;
 }
 
@@ -303,7 +303,7 @@ frb_fi_store_positions(VALUE self)
 static VALUE
 frb_fi_store_offsets(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_offsets(fi) ? Qtrue : Qfalse;
 }
 
@@ -318,7 +318,7 @@ frb_fi_store_offsets(VALUE self)
 static VALUE
 frb_fi_has_norms(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_has_norms(fi) ? Qtrue : Qfalse;
 }
 
@@ -331,7 +331,7 @@ frb_fi_has_norms(VALUE self)
 static VALUE
 frb_fi_boost(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return rb_float_new((double)fi->boost);
 }
 
@@ -344,7 +344,7 @@ frb_fi_boost(VALUE self)
 static VALUE
 frb_fi_to_s(VALUE self)
 {
-    FieldInfo *fi = (FieldInfo *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     char *fi_s = fi_to_s(fi);
     VALUE rfi_s = rb_str_new2(fi_s);
     free(fi_s);
@@ -361,14 +361,14 @@ static void
 frb_fis_free(void *p)
 {
     object_del(p);
-    fis_deref((FieldInfos *)p);
+    fis_deref((FrtFieldInfos *)p);
 }
 
 static void
 frb_fis_mark(void *p)
 {
     int i;
-    FieldInfos *fis = (FieldInfos *)p;
+    FrtFieldInfos *fis = (FrtFieldInfos *)p;
 
     for (i = 0; i < fis->size; i++) {
         frb_gc_mark(fis->fields[i]);
@@ -376,7 +376,7 @@ frb_fis_mark(void *p)
 }
 
 static VALUE
-frb_get_field_infos(FieldInfos *fis)
+frb_get_field_infos(FrtFieldInfos *fis)
 {
 
     VALUE rfis = Qnil;
@@ -404,7 +404,7 @@ static VALUE
 frb_fis_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE roptions;
-    FieldInfos *fis;
+    FrtFieldInfos *fis;
     StoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
     TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
@@ -430,7 +430,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_fis_to_a(VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rary = rb_ary_new();
     int i;
 
@@ -455,7 +455,7 @@ frb_fis_to_a(VALUE self)
 static VALUE
 frb_fis_get(VALUE self, VALUE ridx)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rfi = Qnil;
     switch (TYPE(ridx)) {
         case T_FIXNUM: {
@@ -496,8 +496,8 @@ frb_fis_get(VALUE self, VALUE ridx)
 static VALUE
 frb_fis_add(VALUE self, VALUE rfi)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
-    FieldInfo *fi = (FieldInfo *)frb_rb_data_ptr(rfi);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frb_rb_data_ptr(rfi);
     fis_add_field(fis, fi);
     FRT_REF(fi);
     return self;
@@ -513,8 +513,8 @@ frb_fis_add(VALUE self, VALUE rfi)
 static VALUE
 frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
-    FieldInfo *fi;
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
+    FrtFieldInfo *fi;
     StoreValue store = fis->store;
     IndexValue index = fis->index;
     TermVectorValue term_vector = fis->term_vector;
@@ -541,7 +541,7 @@ static VALUE
 frb_fis_each(VALUE self)
 {
     int i;
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
 
     for (i = 0; i < fis->size; i++) {
         rb_yield(frb_get_field_info(fis->fields[i]));
@@ -558,7 +558,7 @@ frb_fis_each(VALUE self)
 static VALUE
 frb_fis_to_s(VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     char *fis_s = fis_to_s(fis);
     VALUE rfis_s = rb_str_new2(fis_s);
     free(fis_s);
@@ -574,7 +574,7 @@ frb_fis_to_s(VALUE self)
 static VALUE
 frb_fis_size(VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     return INT2FIX(fis->size);
 }
 
@@ -591,7 +591,7 @@ frb_fis_size(VALUE self)
 static VALUE
 frb_fis_create_index(VALUE self, VALUE rdir)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     Store *store = NULL;
     if (TYPE(rdir) == T_DATA) {
         store = DATA_PTR(rdir);
@@ -617,7 +617,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
 static VALUE
 frb_fis_get_fields(VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
@@ -636,7 +636,7 @@ frb_fis_get_fields(VALUE self)
 static VALUE
 frb_fis_get_tk_fields(VALUE self)
 {
-    FieldInfos *fis = (FieldInfos *)DATA_PTR(self);
+    FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
@@ -1364,9 +1364,9 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
         create = true;
     }
     if (create) {
-        FieldInfos *fis;
+        FrtFieldInfos *fis;
         if ((rval = rb_hash_aref(roptions, sym_field_infos)) != Qnil) {
-            Data_Get_Struct(rval, FieldInfos, fis);
+            Data_Get_Struct(rval, FrtFieldInfos, fis);
             index_create(store, fis);
         } else {
             fis = fis_new(FRT_STORE_YES, FRT_INDEX_YES,
@@ -2075,7 +2075,7 @@ frb_ir_init(VALUE self, VALUE rdir)
     Store *store = NULL;
     IndexReader *ir;
     int i;
-    FieldInfos *fis;
+    FrtFieldInfos *fis;
     VALUE rfield_num_map = rb_hash_new();
 
     if (TYPE(rdir) == T_ARRAY) {
@@ -2140,7 +2140,7 @@ frb_ir_init(VALUE self, VALUE rdir)
 
     fis = ir->fis;
     for (i = 0; i < fis->size; i++) {
-        FieldInfo *fi = fis->fields[i];
+        FrtFieldInfo *fi = fis->fields[i];
         rb_hash_aset(rfield_num_map,
                      ID2SYM(rb_intern(fi->name)),
                      INT2FIX(fi->number));
@@ -2606,7 +2606,7 @@ static VALUE
 frb_ir_fields(VALUE self)
 {
     IndexReader *ir = (IndexReader *)DATA_PTR(self);
-    FieldInfos *fis = ir->fis;
+    FrtFieldInfos *fis = ir->fis;
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
@@ -2641,7 +2641,7 @@ static VALUE
 frb_ir_tk_fields(VALUE self)
 {
     IndexReader *ir = (IndexReader *)DATA_PTR(self);
-    FieldInfos *fis = ir->fis;
+    FrtFieldInfos *fis = ir->fis;
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {

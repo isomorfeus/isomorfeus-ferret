@@ -9,7 +9,7 @@
  ***************************************************************************/
 
 #define FQSc(scorer) ((FilteredQueryScorer *)(scorer))
-#define FQQ(query) ((FilteredQuery *)(query))
+#define FQQ(query) ((FrtFilteredQuery *)(query))
 
 typedef struct FilteredQueryScorer
 {
@@ -125,7 +125,7 @@ static Scorer *fqw_scorer(Weight *self, IndexReader *ir)
 {
     Weight *sub_weight = FQW(self)->sub_weight;
     Scorer *scorer = sub_weight->scorer(sub_weight, ir);
-    Filter *filter = FQQ(self->query)->filter;
+    FrtFilter *filter = FQQ(self->query)->filter;
 
     return fqsc_new(scorer, filt_get_bv(filter, ir), self->similarity);
 }
@@ -166,7 +166,7 @@ static Weight *fqw_new(Query *query, Weight *sub_weight, Similarity *sim)
 
 static char *fq_to_s(Query *self, Symbol default_field)
 {
-    FilteredQuery *fq = FQQ(self);
+    FrtFilteredQuery *fq = FQQ(self);
     char *filter_str = fq->filter->to_s(fq->filter);
     char *query_str = fq->query->to_s(fq->query, default_field);
     char *buffer;
@@ -196,9 +196,9 @@ static Weight *fq_new_weight(Query *self, Searcher *searcher)
                       searcher->similarity);
 }
 
-Query *fq_new(Query *query, Filter *filter)
+Query *fq_new(Query *query, FrtFilter *filter)
 {
-    Query *self = q_new(FilteredQuery);
+    Query *self = q_new(FrtFilteredQuery);
 
     FQQ(self)->query        = query;
     FQQ(self)->filter       = filter;

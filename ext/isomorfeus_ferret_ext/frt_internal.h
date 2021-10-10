@@ -2,18 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Types */
-#define FieldDoc                FrtFieldDoc
-#define FieldIndex              FrtFieldIndex
-#define FieldIndexClass         FrtFieldIndexClass
-#define FieldInfo               FrtFieldInfo
-#define FieldInfos              FrtFieldInfos
-#define FieldInverter           FrtFieldInverter
-#define FieldStack              FrtFieldStack
-#define FieldsReader            FrtFieldsReader
-#define FieldsWriter            FrtFieldsWriter
-#define Filter                  FrtFilter
-#define FilteredQuery           FrtFilteredQuery
-#define FuzzyQuery              FrtFuzzyQuery
 #define Hash                    FrtHash
 #define HashEntry               FrtHashEntry
 #define HashKeyStatus           FrtHashKeyStatus

@@ -9,20 +9,20 @@
  *
  ***************************************************************************/
 
-void filt_destroy_i(Filter *filt)
+void filt_destroy_i(FrtFilter *filt)
 {
     h_destroy(filt->cache);
     free(filt);
 }
 
-void filt_deref(Filter *filt)
+void filt_deref(FrtFilter *filt)
 {
     if (--(filt->ref_cnt) == 0) {
         filt->destroy_i(filt);
     }
 }
 
-FrtBitVector *filt_get_bv(Filter *filt, IndexReader *ir)
+FrtBitVector *filt_get_bv(FrtFilter *filt, IndexReader *ir)
 {
     FrtCacheObject *co = (FrtCacheObject *)h_get(filt->cache, ir);
 
@@ -38,26 +38,26 @@ FrtBitVector *filt_get_bv(Filter *filt, IndexReader *ir)
     return (FrtBitVector *)co->obj;
 }
 
-static char *filt_to_s_i(Filter *filt)
+static char *filt_to_s_i(FrtFilter *filt)
 {
     return estrdup(filt->name);
 }
 
-static unsigned long long filt_hash_default(Filter *filt)
+static unsigned long long filt_hash_default(FrtFilter *filt)
 {
     (void)filt;
     return 0;
 }
 
-static int filt_eq_default(Filter *filt, Filter *o)
+static int filt_eq_default(FrtFilter *filt, FrtFilter *o)
 {
     (void)filt; (void)o;
     return false;
 }
 
-Filter *filt_create(size_t size, Symbol name)
+FrtFilter *filt_create(size_t size, Symbol name)
 {
-    Filter *filt    = (Filter *)emalloc(size);
+    FrtFilter *filt    = (FrtFilter *)emalloc(size);
     filt->cache     = co_hash_create();
     filt->name      = name;
     filt->to_s      = &filt_to_s_i;
@@ -68,12 +68,12 @@ Filter *filt_create(size_t size, Symbol name)
     return filt;
 }
 
-unsigned long long filt_hash(Filter *filt)
+unsigned long long filt_hash(FrtFilter *filt)
 {
     return sym_hash(filt->name) ^ filt->hash(filt);
 }
 
-int filt_eq(Filter *filt, Filter *o)
+int filt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return ((filt == o)
             || ((strcmp(filt->name, o->name) == 0)
@@ -90,11 +90,11 @@ int filt_eq(Filter *filt, Filter *o)
 #define QF(filt) ((QueryFilter *)(filt))
 typedef struct QueryFilter
 {
-    Filter super;
+    FrtFilter super;
     Query *query;
 } QueryFilter;
 
-static char *qfilt_to_s(Filter *filt)
+static char *qfilt_to_s(FrtFilter *filt)
 {
     Query *query = QF(filt)->query;
     char *query_str = query->to_s(query, NULL);
@@ -103,7 +103,7 @@ static char *qfilt_to_s(Filter *filt)
     return filter_str;
 }
 
-static FrtBitVector *qfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Searcher *sea = isea_new(ir);
@@ -120,26 +120,26 @@ static FrtBitVector *qfilt_get_bv_i(Filter *filt, IndexReader *ir)
     return bv;
 }
 
-static unsigned long long qfilt_hash(Filter *filt)
+static unsigned long long qfilt_hash(FrtFilter *filt)
 {
     return q_hash(QF(filt)->query);
 }
 
-static int qfilt_eq(Filter *filt, Filter *o)
+static int qfilt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return q_eq(QF(filt)->query, QF(o)->query);
 }
 
-static void qfilt_destroy_i(Filter *filt)
+static void qfilt_destroy_i(FrtFilter *filt)
 {
     Query *query = QF(filt)->query;
     q_deref(query);
     filt_destroy_i(filt);
 }
 
-Filter *qfilt_new_nr(Query *query)
+FrtFilter *qfilt_new_nr(Query *query)
 {
-    Filter *filt = filt_new(QueryFilter);
+    FrtFilter *filt = filt_new(QueryFilter);
 
     QF(filt)->query = query;
 
@@ -151,7 +151,7 @@ Filter *qfilt_new_nr(Query *query)
     return filt;
 }
 
-Filter *qfilt_new(Query *query)
+FrtFilter *qfilt_new(Query *query)
 {
     FRT_REF(query);
     return qfilt_new_nr(query);

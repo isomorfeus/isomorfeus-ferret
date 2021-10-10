@@ -1024,7 +1024,7 @@ static TopDocs *isea_search_w(Searcher *self,
                               Weight *weight,
                               int first_doc,
                               int num_docs,
-                              Filter *filter,
+                              FrtFilter *filter,
                               Sort *sort,
                               PostFilter *post_filter,
                               bool load_fields)
@@ -1113,7 +1113,7 @@ static TopDocs *isea_search(Searcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
-                            Filter *filter,
+                            FrtFilter *filter,
                             Sort *sort,
                             PostFilter *post_filter,
                             bool load_fields)
@@ -1125,7 +1125,7 @@ static TopDocs *isea_search(Searcher *self,
     return td;
 }
 
-static void isea_search_each_w(Searcher *self, Weight *weight, Filter *filter,
+static void isea_search_each_w(Searcher *self, Weight *weight, FrtFilter *filter,
                                PostFilter *post_filter,
                                void (*fn)(Searcher *, int, float, void *),
                                void *arg)
@@ -1157,7 +1157,7 @@ static void isea_search_each_w(Searcher *self, Weight *weight, Filter *filter,
     scorer->destroy(scorer);
 }
 
-static void isea_search_each(Searcher *self, Query *query, Filter *filter,
+static void isea_search_each(Searcher *self, Query *query, FrtFilter *filter,
                              PostFilter *post_filter,
                              void (*fn)(Searcher *, int, float, void *),
                              void *arg)
@@ -1326,7 +1326,7 @@ static Weight *cdfsea_create_weight(Searcher *self, Query *query)
 }
 
 static TopDocs *cdfsea_search_w(Searcher *self, Weight *w, int fd, int nd,
-                                Filter *f, Sort *s, PostFilter *pf, bool load)
+                                FrtFilter *f, Sort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)w; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
@@ -1335,7 +1335,7 @@ static TopDocs *cdfsea_search_w(Searcher *self, Weight *w, int fd, int nd,
 }
 
 static TopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
-                              Filter *f, Sort *s, PostFilter *pf, bool load)
+                              FrtFilter *f, Sort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)q; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
@@ -1343,7 +1343,7 @@ static TopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
     return NULL;
 }
 
-static void cdfsea_search_each(Searcher *self, Query *query, Filter *filter,
+static void cdfsea_search_each(Searcher *self, Query *query, FrtFilter *filter,
                                PostFilter *pf,
                                void (*fn)(Searcher *, int, float, void *),
                                void *arg)
@@ -1352,7 +1352,7 @@ static void cdfsea_search_each(Searcher *self, Query *query, Filter *filter,
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static void cdfsea_search_each_w(Searcher *self, Weight *w, Filter *filter,
+static void cdfsea_search_each_w(Searcher *self, Weight *w, FrtFilter *filter,
                                  PostFilter *pf,
                                  void (*fn)(Searcher *, int, float, void *),
                                  void *arg)
@@ -1553,7 +1553,7 @@ static void msea_search_each_i(Searcher *self, int doc_num, float score, void *a
     mse_arg->fn(self, doc_num + mse_arg->start, score, mse_arg->arg);
 }
 
-static void msea_search_each_w(Searcher *self, Weight *w, Filter *filter,
+static void msea_search_each_w(Searcher *self, Weight *w, FrtFilter *filter,
                                PostFilter *post_filter,
                                void (*fn)(Searcher *, int, float, void *),
                                void *arg)
@@ -1573,7 +1573,7 @@ static void msea_search_each_w(Searcher *self, Weight *w, Filter *filter,
     }
 }
 
-static void msea_search_each(Searcher *self, Query *query, Filter *filter,
+static void msea_search_each(Searcher *self, Query *query, FrtFilter *filter,
                              PostFilter *post_filter,
                              void (*fn)(Searcher *, int, float, void *),
                              void *arg)
@@ -1657,7 +1657,7 @@ static TopDocs *msea_search_w(Searcher *self,
                               Weight *weight,
                               int first_doc,
                               int num_docs,
-                              Filter *filter,
+                              FrtFilter *filter,
                               Sort *sort,
                               PostFilter *post_filter,
                               bool load_fields)
@@ -1735,7 +1735,7 @@ static TopDocs *msea_search(Searcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
-                            Filter *filter,
+                            FrtFilter *filter,
                             Sort *sort,
                             PostFilter *post_filter,
                             bool load_fields)

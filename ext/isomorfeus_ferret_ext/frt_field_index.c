@@ -5,43 +5,43 @@
 
 /***************************************************************************
  *
- * FieldIndex
+ * FrtFieldIndex
  *
  ***************************************************************************/
 
 static unsigned long long field_index_hash(const void *p)
 {
-    FieldIndex *self = (FieldIndex *)p;
+    FrtFieldIndex *self = (FrtFieldIndex *)p;
     return sym_hash(self->field) ^ (unsigned long long)(self->klass);
 }
 
 static int field_index_eq(const void *p1, const void *p2)
 {
-    FieldIndex *fi1 = (FieldIndex *)p1;
-    FieldIndex *fi2 = (FieldIndex *)p2;
+    FrtFieldIndex *fi1 = (FrtFieldIndex *)p1;
+    FrtFieldIndex *fi2 = (FrtFieldIndex *)p2;
     return (strcmp(fi1->field, fi2->field) == 0) &&
         (fi1->klass->type == fi2->klass->type);
 }
 
 static void field_index_destroy(void *p)
 {
-    FieldIndex *self = (FieldIndex *)p;
+    FrtFieldIndex *self = (FrtFieldIndex *)p;
     if (self->index) {
         self->klass->destroy_index(self->index);
     }
     free(self);
 }
 
-FieldIndex *field_index_get(IndexReader *ir, Symbol field,
-                            const FieldIndexClass *klass)
+FrtFieldIndex *field_index_get(IndexReader *ir, Symbol field,
+                            const FrtFieldIndexClass *klass)
 {
     int length = 0;
     TermEnum *volatile te = NULL;
     TermDocEnum *volatile tde = NULL;
-    FieldInfo *fi = fis_get_field(ir->fis, field);
+    FrtFieldInfo *fi = fis_get_field(ir->fis, field);
     const volatile int field_num = fi ? fi->number : -1;
-    FieldIndex *volatile self = NULL;
-    FieldIndex key;
+    FrtFieldIndex *volatile self = NULL;
+    FrtFieldIndex key;
 
     if (field_num < 0) {
         rb_raise(rb_eArgError,
@@ -56,10 +56,10 @@ FieldIndex *field_index_get(IndexReader *ir, Symbol field,
 
     key.field = field;
     key.klass = klass;
-    self = (FieldIndex *)h_get(ir->field_index_cache, &key);
+    self = (FrtFieldIndex *)h_get(ir->field_index_cache, &key);
 
     if (self == NULL) {
-        self = FRT_ALLOC(FieldIndex);
+        self = FRT_ALLOC(FrtFieldIndex);
         self->klass = klass;
         /* FieldIndex only lives as long as the IndexReader lives so we can
          * just use the field_infos field string */
@@ -122,7 +122,7 @@ static void byte_destroy_index(void *p)
     free(&index[-1]);
 }
 
-const FieldIndexClass FRT_BYTE_FIELD_INDEX_CLASS = {
+const FrtFieldIndexClass FRT_BYTE_FIELD_INDEX_CLASS = {
     "byte",
     &byte_create_index,
     &byte_destroy_index,
@@ -149,14 +149,14 @@ static void integer_handle_term(void *index_ptr,
     }
 }
 
-const FieldIndexClass FRT_INTEGER_FIELD_INDEX_CLASS = {
+const FrtFieldIndexClass FRT_INTEGER_FIELD_INDEX_CLASS = {
     "integer",
     &integer_create_index,
     &free,
     &integer_handle_term
 };
 
-long get_integer_value(FieldIndex *field_index, long doc_num)
+long get_integer_value(FrtFieldIndex *field_index, long doc_num)
 {
     if (field_index->klass == &FRT_INTEGER_FIELD_INDEX_CLASS && doc_num >= 0) {
         return ((long *)field_index->index)[doc_num];
@@ -186,14 +186,14 @@ static void float_handle_term(void *index_ptr,
     }
 }
 
-const FieldIndexClass FRT_FLOAT_FIELD_INDEX_CLASS = {
+const FrtFieldIndexClass FRT_FLOAT_FIELD_INDEX_CLASS = {
     "float",
     &float_create_index,
     &free,
     &float_handle_term
 };
 
-float get_float_value(FieldIndex *field_index, long doc_num)
+float get_float_value(FrtFieldIndex *field_index, long doc_num)
 {
     if (field_index->klass == &FRT_FLOAT_FIELD_INDEX_CLASS && doc_num >= 0) {
         return ((float *)field_index->index)[doc_num];
@@ -244,14 +244,14 @@ static void string_handle_term(void *index_ptr,
     index->v_size++;
 }
 
-const FieldIndexClass FRT_STRING_FIELD_INDEX_CLASS = {
+const FrtFieldIndexClass FRT_STRING_FIELD_INDEX_CLASS = {
     "string",
     &string_create_index,
     &string_destroy_index,
     &string_handle_term
 };
 
-const char *get_string_value(FieldIndex *field_index, long doc_num)
+const char *get_string_value(FrtFieldIndex *field_index, long doc_num)
 {
     if (field_index->klass == &FRT_STRING_FIELD_INDEX_CLASS) {
         StringIndex *string_index = (StringIndex *)field_index->index;

@@ -1467,7 +1467,7 @@ static VALUE
 frb_fq_pre_len(VALUE self)
 {
     GET_Q();
-    return INT2FIX(((FuzzyQuery *)q)->pre_len);
+    return INT2FIX(((FrtFuzzyQuery *)q)->pre_len);
 }
 
 /*
@@ -1480,7 +1480,7 @@ static VALUE
 frb_fq_min_sim(VALUE self)
 {
     GET_Q();
-    return rb_float_new((double)((FuzzyQuery *)q)->min_sim);
+    return rb_float_new((double)((FrtFuzzyQuery *)q)->min_sim);
 }
 
 /*
@@ -1595,8 +1595,8 @@ static VALUE
 frb_csq_init(VALUE self, VALUE rfilter)
 {
     Query *q;
-    Filter *filter;
-    Data_Get_Struct(rfilter, Filter, filter);
+    FrtFilter *filter;
+    Data_Get_Struct(rfilter, FrtFilter, filter);
     q = csq_new(filter);
 
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
@@ -1613,7 +1613,7 @@ frb_csq_init(VALUE self, VALUE rfilter)
 static void
 frb_fqq_mark(void *p)
 {
-    FilteredQuery *fq = (FilteredQuery *)p;
+    FrtFilteredQuery *fq = (FrtFilteredQuery *)p;
     frb_gc_mark(fq->query);
     frb_gc_mark(fq->filter);
 }
@@ -1628,9 +1628,9 @@ static VALUE
 frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
 {
     Query *sq, *q;
-    Filter *f;
+    FrtFilter *f;
     Data_Get_Struct(rquery, Query, sq);
-    Data_Get_Struct(rfilter, Filter, f);
+    Data_Get_Struct(rfilter, FrtFilter, f);
     q = fq_new(sq, f);
     FRT_REF(sq);
     FRT_REF(f);
@@ -1941,10 +1941,10 @@ static void
 frb_f_free(void *p)
 {
     object_del(p);
-    filt_deref((Filter *)p);
+    filt_deref((FrtFilter *)p);
 }
 
-#define GET_F() Filter *f = (Filter *)DATA_PTR(self)
+#define GET_F() FrtFilter *f = (FrtFilter *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -2017,7 +2017,7 @@ frb_f_get_bits(VALUE self, VALUE rindex_reader)
 static VALUE
 frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
 {
-    Filter *f;
+    FrtFilter *f;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
@@ -2064,7 +2064,7 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
 static VALUE
 frb_trf_init(VALUE self, VALUE rfield, VALUE roptions)
 {
-    Filter *f;
+    FrtFilter *f;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
@@ -2094,7 +2094,7 @@ static VALUE
 frb_qf_init(VALUE self, VALUE rquery)
 {
     Query *q;
-    Filter *f;
+    FrtFilter *f;
     Data_Get_Struct(rquery, Query, q);
     f = qfilt_new(q);
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
@@ -2584,25 +2584,25 @@ call_filter_proc(int doc_id, float score, Searcher *self, void *arg)
 
 typedef struct CWrappedFilter
 {
-    Filter super;
+    FrtFilter super;
     VALUE  rfilter;
 } CWrappedFilter;
 #define CWF(filt) ((CWrappedFilter *)(filt))
 
 static unsigned long long
-cwfilt_hash(Filter *filt)
+cwfilt_hash(FrtFilter *filt)
 {
     return (unsigned long long)NUM2ULONG(rb_funcall(CWF(filt)->rfilter, id_hash, 0));
 }
 
 static int
-cwfilt_eq(Filter *filt, Filter *o)
+cwfilt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return RTEST(rb_funcall(CWF(filt)->rfilter, id_eql, 1, CWF(o)->rfilter));
 }
 
 static FrtBitVector *
-cwfilt_get_bv_i(Filter *filt, IndexReader *ir)
+cwfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
     FrtBitVector *bv;
@@ -2611,12 +2611,12 @@ cwfilt_get_bv_i(Filter *filt, IndexReader *ir)
     return bv;
 }
 
-Filter *
+FrtFilter *
 frb_get_cwrapped_filter(VALUE rval)
 {
-    Filter *filter;
+    FrtFilter *filter;
     if (frb_is_cclass(rval) && DATA_PTR(rval)) {
-        Data_Get_Struct(rval, Filter, filter);
+        Data_Get_Struct(rval, FrtFilter, filter);
         FRT_REF(filter);
     }
     else {
@@ -2634,7 +2634,7 @@ frb_sea_search_internal(Query *query, VALUE roptions, Searcher *sea)
 {
     VALUE rval;
     int offset = 0, limit = 10;
-    Filter *filter = NULL;
+    FrtFilter *filter = NULL;
     Sort *sort = NULL;
     TopDocs *td;
 

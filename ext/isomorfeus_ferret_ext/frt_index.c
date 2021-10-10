@@ -215,7 +215,7 @@ Hash *co_hash_create()
  *
  ****************************************************************************/
 
-static void fi_set_store(FieldInfo *fi, int store)
+static void fi_set_store(FrtFieldInfo *fi, int store)
 {
     switch (store) {
         case FRT_STORE_NO:
@@ -226,7 +226,7 @@ static void fi_set_store(FieldInfo *fi, int store)
     }
 }
 
-static void fi_set_index(FieldInfo *fi, int index)
+static void fi_set_index(FrtFieldInfo *fi, int index)
 {
     switch (index) {
         case FRT_INDEX_NO:
@@ -247,7 +247,7 @@ static void fi_set_index(FieldInfo *fi, int index)
     }
 }
 
-static void fi_set_term_vector(FieldInfo *fi, int term_vector)
+static void fi_set_term_vector(FrtFieldInfo *fi, int term_vector)
 {
     switch (term_vector) {
         case FRT_TERM_VECTOR_NO:
@@ -277,12 +277,12 @@ static void fi_check_params(int store, int index, int term_vector)
     }
 }
 
-FieldInfo *fi_new(Symbol name,
+FrtFieldInfo *fi_new(Symbol name,
                   StoreValue store,
                   IndexValue index,
                   TermVectorValue term_vector)
 {
-    FieldInfo *fi = FRT_ALLOC(FieldInfo);
+    FrtFieldInfo *fi = FRT_ALLOC(FrtFieldInfo);
     assert(NULL != name);
     fi_check_params(store, index, term_vector);
     fi->name = name;
@@ -295,14 +295,14 @@ FieldInfo *fi_new(Symbol name,
     return fi;
 }
 
-void fi_deref(FieldInfo *fi)
+void fi_deref(FrtFieldInfo *fi)
 {
     if (0 == --(fi->ref_cnt)) {
         free(fi);
     }
 }
 
-char *fi_to_s(FieldInfo *fi)
+char *fi_to_s(FrtFieldInfo *fi)
 {
     char *str = FRT_ALLOC_N(char, strlen((char *)fi->name) + 200);
     char *s = str;
@@ -329,15 +329,15 @@ char *fi_to_s(FieldInfo *fi)
  *
  ****************************************************************************/
 
-FieldInfos *fis_new(StoreValue store, IndexValue index,
+FrtFieldInfos *fis_new(StoreValue store, IndexValue index,
                     TermVectorValue term_vector)
 {
-    FieldInfos *fis = FRT_ALLOC(FieldInfos);
+    FrtFieldInfos *fis = FRT_ALLOC(FrtFieldInfos);
     fi_check_params(store, index, term_vector);
     fis->field_dict = h_new_str(NULL, (free_ft)&fi_deref);
     fis->size = 0;
     fis->capa = FIELD_INFOS_INIT_CAPA;
-    fis->fields = FRT_ALLOC_N(FieldInfo *, fis->capa);
+    fis->fields = FRT_ALLOC_N(FrtFieldInfo *, fis->capa);
     fis->store = store;
     fis->index = index;
     fis->term_vector = term_vector;
@@ -345,11 +345,11 @@ FieldInfos *fis_new(StoreValue store, IndexValue index,
     return fis;
 }
 
-FieldInfo *fis_add_field(FieldInfos *fis, FieldInfo *fi)
+FrtFieldInfo *fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
 {
     if (fis->size == fis->capa) {
         fis->capa <<= 1;
-        FRT_REALLOC_N(fis->fields, FieldInfo *, fis->capa);
+        FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
     if (!h_set_safe(fis->field_dict, fi->name, fi)) {
         rb_raise(rb_eArgError, "Field :%s already exists", (char *)fi->name);
@@ -360,29 +360,29 @@ FieldInfo *fis_add_field(FieldInfos *fis, FieldInfo *fi)
     return fi;
 }
 
-FieldInfo *fis_get_field(FieldInfos *fis, Symbol name)
+FrtFieldInfo *fis_get_field(FrtFieldInfos *fis, Symbol name)
 {
-    return (FieldInfo *)h_get(fis->field_dict, name);
+    return (FrtFieldInfo *)h_get(fis->field_dict, name);
 }
 
-int fis_get_field_num(FieldInfos *fis, Symbol name)
+int fis_get_field_num(FrtFieldInfos *fis, Symbol name)
 {
-    FieldInfo *fi = (FieldInfo *)h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(fis->field_dict, name);
     if (fi) { return fi->number; }
     else { return -1; }
 }
 
-FieldInfo *fis_get_or_add_field(FieldInfos *fis, Symbol name)
+FrtFieldInfo *fis_get_or_add_field(FrtFieldInfos *fis, Symbol name)
 {
-    FieldInfo *fi = (FieldInfo *)h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(fis->field_dict, name);
     if (!fi) {
-        fi = (FieldInfo*)fi_new(name, fis->store, fis->index, fis->term_vector);
+        fi = (FrtFieldInfo*)fi_new(name, fis->store, fis->index, fis->term_vector);
         fis_add_field(fis, fi);
     }
     return fi;
 }
 
-FieldInfo *fis_by_number(FieldInfos *fis, int num)
+FrtFieldInfo *fis_by_number(FrtFieldInfos *fis, int num)
 {
     if (num >= 0 && num < fis->size) {
         return fis->fields[num];
@@ -392,9 +392,9 @@ FieldInfo *fis_by_number(FieldInfos *fis, int num)
     }
 }
 
-FieldInfos *fis_read(InStream *is)
+FrtFieldInfos *fis_read(InStream *is)
 {
-    FieldInfos *volatile fis = NULL;
+    FrtFieldInfos *volatile fis = NULL;
     FRT_TRY
         do {
             StoreValue store_val;
@@ -402,13 +402,13 @@ FieldInfos *fis_read(InStream *is)
             TermVectorValue term_vector_val;
             volatile int i;
             union { u32 i; float f; } tmp;
-            FieldInfo *volatile fi;
+            FrtFieldInfo *volatile fi;
             store_val = (StoreValue)is_read_vint(is);
             index_val = (IndexValue)is_read_vint(is);
             term_vector_val = (TermVectorValue)is_read_vint(is);
             fis = fis_new(store_val, index_val, term_vector_val);
             for (i = is_read_vint(is); i > 0; i--) {
-                fi = FRT_ALLOC_AND_ZERO(FieldInfo);
+                fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
                 FRT_TRY
                     fi->name = is_read_string_safe(is);
                     tmp.i = is_read_u32(is);
@@ -427,11 +427,11 @@ FieldInfos *fis_read(InStream *is)
     return fis;
 }
 
-void fis_write(FieldInfos *fis, OutStream *os)
+void fis_write(FrtFieldInfos *fis, OutStream *os)
 {
     int i;
     union { u32 i; float f; } tmp;
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     const int fis_size = fis->size;
 
     os_write_vint(os, fis->store);
@@ -455,7 +455,7 @@ static const char *store_str[] = {
     ""
 };
 
-static const char *fi_store_str(FieldInfo *fi)
+static const char *fi_store_str(FrtFieldInfo *fi)
 {
     return store_str[fi->bits & 0x3];
 }
@@ -471,7 +471,7 @@ static const char *index_str[] = {
     ":omit_norms"
 };
 
-static const char *fi_index_str(FieldInfo *fi)
+static const char *fi_index_str(FrtFieldInfo *fi)
 {
     return index_str[(fi->bits >> 2) & 0x7];
 }
@@ -487,16 +487,16 @@ static const char *term_vector_str[] = {
     ":with_positions_offsets"
 };
 
-static const char *fi_term_vector_str(FieldInfo *fi)
+static const char *fi_term_vector_str(FrtFieldInfo *fi)
 {
     return term_vector_str[(fi->bits >> 5) & 0x7];
 }
 
-char *fis_to_s(FieldInfos *fis)
+char *fis_to_s(FrtFieldInfos *fis)
 {
     int i, pos, capa = 200 + fis->size * 120;
     char *buf = FRT_ALLOC_N(char, capa);
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     const int fis_size = fis->size;
 
     pos = sprintf(buf,
@@ -523,7 +523,7 @@ char *fis_to_s(FieldInfos *fis)
     return buf;
 }
 
-void fis_deref(FieldInfos *fis)
+void fis_deref(FrtFieldInfos *fis)
 {
     if (0 == --(fis->ref_cnt)) {
         h_destroy(fis->field_dict);
@@ -532,7 +532,7 @@ void fis_deref(FieldInfos *fis)
     }
 }
 
-static bool fis_has_vectors(FieldInfos *fis)
+static bool fis_has_vectors(FrtFieldInfos *fis)
 {
     int i;
     const int fis_size = fis->size;
@@ -672,7 +672,7 @@ static char *si_norm_file_name(SegmentInfo *si, char *buf, int field_num)
 static void deleter_queue_file(FrtDeleter *dlr, const char *file_name);
 #define DEL(file_name) deleter_queue_file(dlr, file_name)
 
-static void si_delete_files(SegmentInfo *si, FieldInfos *fis, FrtDeleter *dlr)
+static void si_delete_files(SegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *dlr)
 {
     int i;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -991,7 +991,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
     }
 }
 
-SegmentInfos *sis_new(FieldInfos *fis)
+SegmentInfos *sis_new(FrtFieldInfos *fis)
 {
     SegmentInfos *sis = FRT_ALLOC_AND_ZERO(SegmentInfos);
     FRT_REF(fis);
@@ -1279,9 +1279,9 @@ LazyDocField *frt_lazy_doc_get(LazyDoc *self, Symbol field)
 
 #define FIELDS_IDX_PTR_SIZE 12
 
-FieldsReader *fr_open(Store *store, const char *segment, FieldInfos *fis)
+FrtFieldsReader *fr_open(Store *store, const char *segment, FrtFieldInfos *fis)
 {
-    FieldsReader *fr = FRT_ALLOC(FieldsReader);
+    FrtFieldsReader *fr = FRT_ALLOC(FrtFieldsReader);
     InStream *fdx_in;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t segment_len = strlen(segment);
@@ -1300,18 +1300,18 @@ FieldsReader *fr_open(Store *store, const char *segment, FieldInfos *fis)
     return fr;
 }
 
-FieldsReader *fr_clone(FieldsReader *orig)
+FrtFieldsReader *fr_clone(FrtFieldsReader *orig)
 {
-    FieldsReader *fr = FRT_ALLOC(FieldsReader);
+    FrtFieldsReader *fr = FRT_ALLOC(FrtFieldsReader);
 
-    memcpy(fr, orig, sizeof(FieldsReader));
+    memcpy(fr, orig, sizeof(FrtFieldsReader));
     fr->fdx_in = is_clone(orig->fdx_in);
     fr->fdt_in = is_clone(orig->fdt_in);
 
     return fr;
 }
 
-void fr_close(FieldsReader *fr)
+void fr_close(FrtFieldsReader *fr)
 {
     is_close(fr->fdt_in);
     is_close(fr->fdx_in);
@@ -1330,7 +1330,7 @@ static FrtDocField *fr_df_new(Symbol name, int size)
     return df;
 }
 
-FrtDocument *fr_get_doc(FieldsReader *fr, int doc_num)
+FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
 {
     int i, j;
     off_t pos;
@@ -1346,7 +1346,7 @@ FrtDocument *fr_get_doc(FieldsReader *fr, int doc_num)
 
     for (i = 0; i < stored_cnt; i++) {
         const int field_num = is_read_vint(fdt_in);
-        FieldInfo *fi = fr->fis->fields[field_num];
+        FrtFieldInfo *fi = fr->fis->fields[field_num];
         const int df_size = is_read_vint(fdt_in);
         FrtDocField *df = fr_df_new(fi->name, df_size);
 
@@ -1370,7 +1370,7 @@ FrtDocument *fr_get_doc(FieldsReader *fr, int doc_num)
     return doc;
 }
 
-LazyDoc *fr_get_lazy_doc(FieldsReader *fr, int doc_num)
+LazyDoc *fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
 {
     int start = 0;
     int i, j;
@@ -1385,7 +1385,7 @@ LazyDoc *fr_get_lazy_doc(FieldsReader *fr, int doc_num)
     stored_cnt = is_read_vint(fdt_in);
     lazy_doc = lazy_doc_new(stored_cnt, fdt_in);
     for (i = 0; i < stored_cnt; i++) {
-        FieldInfo *fi = fr->fis->fields[is_read_vint(fdt_in)];
+        FrtFieldInfo *fi = fr->fis->fields[is_read_vint(fdt_in)];
         const int data_cnt = is_read_vint(fdt_in);
         LazyDocField *lazy_df = lazy_df_new(fi->name, data_cnt);
         const int field_start = start;
@@ -1410,11 +1410,11 @@ LazyDoc *fr_get_lazy_doc(FieldsReader *fr, int doc_num)
     return lazy_doc;
 }
 
-static TermVector *fr_read_term_vector(FieldsReader *fr, int field_num)
+static TermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
 {
     TermVector *tv = FRT_ALLOC_AND_ZERO(TermVector);
     InStream *fdt_in = fr->fdt_in;
-    FieldInfo *fi = fr->fis->fields[field_num];
+    FrtFieldInfo *fi = fr->fis->fields[field_num];
     const int num_terms = is_read_vint(fdt_in);
 
     tv->field_num = field_num;
@@ -1470,7 +1470,7 @@ static TermVector *fr_read_term_vector(FieldsReader *fr, int field_num)
     return tv;
 }
 
-Hash *fr_get_tv(FieldsReader *fr, int doc_num)
+Hash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
 {
     Hash *term_vectors = h_new_str(NULL, (free_ft)&tv_destroy);
     int i;
@@ -1509,7 +1509,7 @@ Hash *fr_get_tv(FieldsReader *fr, int doc_num)
     return term_vectors;
 }
 
-TermVector *fr_get_field_tv(FieldsReader *fr, int doc_num, int field_num)
+TermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
 {
     TermVector *tv = NULL;
 
@@ -1550,9 +1550,9 @@ TermVector *fr_get_field_tv(FieldsReader *fr, int doc_num, int field_num)
  *
  ****************************************************************************/
 
-FieldsWriter *fw_open(Store *store, const char *segment, FieldInfos *fis)
+FrtFieldsWriter *fw_open(Store *store, const char *segment, FrtFieldInfos *fis)
 {
-    FieldsWriter *fw = FRT_ALLOC(FieldsWriter);
+    FrtFieldsWriter *fw = FRT_ALLOC(FrtFieldsWriter);
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t segment_len = strlen(segment);
 
@@ -1572,7 +1572,7 @@ FieldsWriter *fw_open(Store *store, const char *segment, FieldInfos *fis)
     return fw;
 }
 
-void fw_close(FieldsWriter *fw)
+void fw_close(FrtFieldsWriter *fw)
 {
     os_close(fw->fdt_out);
     os_close(fw->fdx_out);
@@ -1581,11 +1581,11 @@ void fw_close(FieldsWriter *fw)
     free(fw);
 }
 
-void fw_add_doc(FieldsWriter *fw, FrtDocument *doc)
+void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 {
     int i, j, stored_cnt = 0;
     FrtDocField *df;
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     OutStream *fdt_out = fw->fdt_out, *fdx_out = fw->fdx_out;
     const int doc_size = doc->size;
 
@@ -1622,7 +1622,7 @@ void fw_add_doc(FieldsWriter *fw, FrtDocument *doc)
     ramo_write_to(fw->buffer, fdt_out);
 }
 
-void fw_write_tv_index(FieldsWriter *fw)
+void fw_write_tv_index(FrtFieldsWriter *fw)
 {
     int i;
     const int tv_cnt = ary_size(fw->tv_fields);
@@ -1637,7 +1637,7 @@ void fw_write_tv_index(FieldsWriter *fw)
     }
 }
 
-void fw_add_postings(FieldsWriter *fw,
+void fw_add_postings(FrtFieldsWriter *fw,
                      int field_num,
                      PostingList **plists,
                      int posting_count,
@@ -1651,7 +1651,7 @@ void fw_add_postings(FieldsWriter *fw,
     PostingList *plist;
     Posting *posting;
     Occurence *occ;
-    FieldInfo *fi = fw->fis->fields[field_num];
+    FrtFieldInfo *fi = fw->fis->fields[field_num];
     int store_positions = fi_store_positions(fi);
 
     ary_grow(fw->tv_fields);
@@ -3595,7 +3595,7 @@ static void ir_acquire_write_lock(IndexReader *ir)
 }
 
 static IndexReader *ir_setup(IndexReader *ir, Store *store, SegmentInfos *sis,
-                      FieldInfos *fis, int is_owner)
+                      FrtFieldInfos *fis, int is_owner)
 {
     mutex_init(&ir->mutex, NULL);
     mutex_init(&ir->field_index_mutex, NULL);
@@ -3921,7 +3921,7 @@ typedef struct SegmentReader {
     IndexReader ir;
     SegmentInfo *si;
     char *segment;
-    FieldsReader *fr;
+    FrtFieldsReader *fr;
     FrtBitVector *deleted_docs;
     InStream *frq_in;
     InStream *prx_in;
@@ -3941,11 +3941,11 @@ typedef struct SegmentReader {
 #define SR(ir) ((SegmentReader *)(ir))
 #define SR_SIZE(ir) (SR(ir)->fr->size)
 
-static FieldsReader *sr_fr(SegmentReader *sr)
+static FrtFieldsReader *sr_fr(SegmentReader *sr)
 {
-    FieldsReader *fr;
+    FrtFieldsReader *fr;
 
-    if (NULL == (fr = (FieldsReader *)thread_getspecific(sr->thread_fr))) {
+    if (NULL == (fr = (FrtFieldsReader *)thread_getspecific(sr->thread_fr))) {
         fr = fr_clone(sr->fr);
         ary_push(sr->fr_bucket, fr);
         thread_setspecific(sr->thread_fr, fr);
@@ -4096,7 +4096,7 @@ static void sr_commit_i(IndexReader *ir)
     if (SR(ir)->norms_dirty) { /* re-write norms */
         int i;
         const int field_cnt = ir->fis->size;
-        FieldInfo *fi;
+        FrtFieldInfo *fi;
         for (i = field_cnt - 1; i >= 0; i--) {
             fi = ir->fis->fields[i];
             if (fi_is_indexed(fi)) {
@@ -4230,8 +4230,8 @@ static TermDocEnum *sr_term_positions(IndexReader *ir)
 static TermVector *sr_term_vector(IndexReader *ir, int doc_num,
                                   Symbol field)
 {
-    FieldInfo *fi = (FieldInfo *)h_get(ir->fis->field_dict, field);
-    FieldsReader *fr;
+    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(ir->fis->field_dict, field);
+    FrtFieldsReader *fr;
 
     if (!fi || !fi_store_term_vector(fi) || !SR(ir)->fr ||
         !(fr = sr_fr(SR(ir)))) {
@@ -4243,7 +4243,7 @@ static TermVector *sr_term_vector(IndexReader *ir, int doc_num,
 
 static Hash *sr_term_vectors(IndexReader *ir, int doc_num)
 {
-    FieldsReader *fr;
+    FrtFieldsReader *fr;
     if (!SR(ir)->fr || NULL == (fr = sr_fr(SR(ir)))) {
         return NULL;
     }
@@ -4354,7 +4354,7 @@ static IndexReader *sr_setup_i(SegmentReader *sr)
     return ir;
 }
 
-static IndexReader *sr_open(SegmentInfos *sis, FieldInfos *fis, int si_num,
+static IndexReader *sr_open(SegmentInfos *sis, FrtFieldInfos *fis, int si_num,
                             bool is_owner)
 {
     SegmentReader *sr = FRT_ALLOC_AND_ZERO(SegmentReader);
@@ -4689,7 +4689,7 @@ static IndexReader *mr_new(IndexReader **sub_readers, const int r_cnt)
 
 static IndexReader *mr_open_i(Store *store,
                        SegmentInfos *sis,
-                       FieldInfos *fis,
+                       FrtFieldInfos *fis,
                        IndexReader **sub_readers,
                        const int r_cnt)
 {
@@ -4716,17 +4716,17 @@ IndexReader *mr_open(IndexReader **sub_readers, const int r_cnt)
     IndexReader *ir = mr_new(sub_readers, r_cnt);
     MultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FieldInfos *fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
     /* Merge FieldInfos */
     for (i = 0; i < r_cnt; i++) {
-        FieldInfos *sub_fis = sub_readers[i]->fis;
+        FrtFieldInfos *sub_fis = sub_readers[i]->fis;
         const int sub_fis_size = sub_fis->size;
         for (j = 0; j < sub_fis_size; j++) {
-            FieldInfo *fi = sub_fis->fields[j];
-            FieldInfo *new_fi = fis_get_or_add_field(fis, fi->name);
+            FrtFieldInfo *fi = sub_fis->fields[j];
+            FrtFieldInfo *new_fi = fis_get_or_add_field(fis, fi->name);
             new_fi->bits |= fi->bits;
             if (fi->number != new_fi->number) {
                 need_field_map = true;
@@ -4739,13 +4739,13 @@ IndexReader *mr_open(IndexReader **sub_readers, const int r_cnt)
     if (need_field_map) {
         mr->field_num_map = FRT_ALLOC_N(int *, r_cnt);
         for (i = 0; i < r_cnt; i++) {
-            FieldInfos *sub_fis = sub_readers[i]->fis;
+            FrtFieldInfos *sub_fis = sub_readers[i]->fis;
             const int fis_size = fis->size;
 
             mr->field_num_map[i] = FRT_ALLOC_N(int, fis_size);
             for (j = 0; j < fis_size; j++) {
-                FieldInfo *fi = fis->fields[j];
-                FieldInfo *fi_sub = fis_get_field(sub_fis, fi->name);
+                FrtFieldInfo *fi = fis->fields[j];
+                FrtFieldInfo *fi_sub = fis_get_field(sub_fis, fi->name);
                 /* set non existant field nums to -1. The MultiReader will
                  * skip readers which don't have needed fields */
                 mr->field_num_map[i][j] = fi_sub ? fi_sub->number : -1;
@@ -4782,7 +4782,7 @@ static void ir_open_i(Store *store, FindSegmentsFile *fsf)
     SegmentInfos *volatile sis = NULL;
     FRT_TRY
     do {
-        FieldInfos *fis;
+        FrtFieldInfos *fis;
         mutex_lock(&store->mutex);
         sis_read_i(store, fsf);
         sis = fsf->ret.sis;
@@ -4913,13 +4913,13 @@ int pl_cmp(const PostingList **pl1, const PostingList **pl2)
 
 /****************************************************************************
  *
- * FieldInverter
+ * FrtFieldInverter
  *
  ****************************************************************************/
 
-static FieldInverter *fld_inv_new(FrtDocWriter *dw, FieldInfo *fi)
+static FrtFieldInverter *fld_inv_new(FrtDocWriter *dw, FrtFieldInfo *fi)
 {
-    FieldInverter *fld_inv = FRT_MP_ALLOC(dw->mp, FieldInverter);
+    FrtFieldInverter *fld_inv = FRT_MP_ALLOC(dw->mp, FrtFieldInverter);
     fld_inv->is_tokenized = fi_is_tokenized(fi);
     fld_inv->store_term_vector = fi_store_term_vector(fi);
     fld_inv->store_offsets = fi_store_offsets(fi);
@@ -4935,7 +4935,7 @@ static FieldInverter *fld_inv_new(FrtDocWriter *dw, FieldInfo *fi)
     return fld_inv;
 }
 
-static void fld_inv_destroy(FieldInverter *fld_inv)
+static void fld_inv_destroy(FrtFieldInverter *fld_inv)
 {
     h_destroy(fld_inv->plists);
 }
@@ -5006,7 +5006,7 @@ static void skip_buf_destroy(SkipBuffer *skip_buf)
  *
  ****************************************************************************/
 
-static void dw_write_norms(FrtDocWriter *dw, FieldInverter *fld_inv)
+static void dw_write_norms(FrtDocWriter *dw, FrtFieldInverter *fld_inv)
 {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *norms_out;
@@ -5051,10 +5051,10 @@ static void dw_flush(FrtDocWriter *dw)
 {
     int i, j, last_doc, doc_code, doc_freq, last_pos, posting_count;
     int skip_interval = dw->skip_interval;
-    FieldInfos *fis = dw->fis;
+    FrtFieldInfos *fis = dw->fis;
     const int fields_count = fis->size;
-    FieldInverter *fld_inv;
-    FieldInfo *fi;
+    FrtFieldInverter *fld_inv;
+    FrtFieldInfo *fi;
     PostingList **pls, *pl;
     Posting *p;
     Occurence *occ;
@@ -5075,7 +5075,7 @@ static void dw_flush(FrtDocWriter *dw)
     for (i = 0; i < fields_count; i++) {
         fi = fis->fields[i];
         if (!fi_is_indexed(fi) || NULL ==
-            (fld_inv = (FieldInverter*)h_get_int(dw->fields, fi->number))) {
+            (fld_inv = (FrtFieldInverter*)h_get_int(dw->fields, fi->number))) {
             continue;
         }
         if (!fi_omit_norms(fi)) {
@@ -5180,9 +5180,9 @@ void dw_close(FrtDocWriter *dw)
     free(dw);
 }
 
-FieldInverter *dw_get_fld_inv(FrtDocWriter *dw, FieldInfo *fi)
+FrtFieldInverter *dw_get_fld_inv(FrtDocWriter *dw, FrtFieldInfo *fi)
 {
-    FieldInverter *fld_inv = (FieldInverter*)h_get_int(dw->fields, fi->number);
+    FrtFieldInverter *fld_inv = (FrtFieldInverter*)h_get_int(dw->fields, fi->number);
 
     if (!fld_inv) {
         fld_inv = fld_inv_new(dw, fi);
@@ -5237,7 +5237,7 @@ static void dw_add_offsets(FrtDocWriter *dw, int pos, off_t start, off_t end)
 }
 
 Hash *dw_invert_field(FrtDocWriter *dw,
-                           FieldInverter *fld_inv,
+                           FrtFieldInverter *fld_inv,
                            FrtDocField *df)
 {
     MemoryPool *mp = dw->mp;
@@ -5324,9 +5324,9 @@ void dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
     int i;
     float boost;
     FrtDocField *df;
-    FieldInverter *fld_inv;
+    FrtFieldInverter *fld_inv;
     Hash *postings;
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     const int doc_size = doc->size;
 
     /* fw_add_doc will add new fields as necessary */
@@ -5493,7 +5493,7 @@ static char *smi_next(SegmentMergeInfo *smi)
 typedef struct SegmentMerger {
     TermInfo ti;
     Store *store;
-    FieldInfos *fis;
+    FrtFieldInfos *fis;
     SegmentInfo *si;
     SegmentMergeInfo **smis;
     int seg_cnt;
@@ -5777,7 +5777,7 @@ static void sm_merge_norms(SegmentMerger *sm)
     int i, j, k;
     Store *store;
     uchar byte;
-    FieldInfo *fi;
+    FrtFieldInfo *fi;
     OutStream *os;
     InStream *is;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -5838,7 +5838,7 @@ static int sm_merge(SegmentMerger *sm)
  ****************************************************************************/
 
 /* prepare an index ready for writing */
-void index_create(Store *store, FieldInfos *fis)
+void index_create(Store *store, FrtFieldInfos *fis)
 {
     SegmentInfos *sis = sis_new(fis);
     store->clear_all(store);
@@ -5872,7 +5872,7 @@ int iw_doc_count(IndexWriter *iw)
     deleter_queue_file(dlr, file_name);\
     cw_add_file(cw, file_name)
 
-static void iw_create_compound_file(Store *store, FieldInfos *fis,
+static void iw_create_compound_file(Store *store, FrtFieldInfos *fis,
                                     SegmentInfo *si, char *cfs_file_name,
                                     FrtDeleter *dlr)
 {
@@ -6354,7 +6354,7 @@ static void iw_cp_norms(IndexWriter *iw, SegmentReader *sr,
                         SegmentInfo *si, int *map)
 {
     int i;
-    FieldInfos *fis = IR(sr)->fis;
+    FrtFieldInfos *fis = IR(sr)->fis;
     const int field_cnt = fis->size;
     InStream *norms_in;
     OutStream *norms_out;
@@ -6385,8 +6385,8 @@ static void iw_cp_map_files(IndexWriter *iw, SegmentReader *sr,
                             SegmentInfo *si)
 {
     int i;
-    FieldInfos *from_fis = IR(sr)->fis;
-    FieldInfos *to_fis = iw->fis;
+    FrtFieldInfos *from_fis = IR(sr)->fis;
+    FrtFieldInfos *to_fis = iw->fis;
     const int map_size = from_fis->size;
     int *field_map = FRT_ALLOC_N(int, map_size);
 
@@ -6412,8 +6412,8 @@ static void iw_cp_files(IndexWriter *iw, SegmentReader *sr,
 static void iw_add_segment(IndexWriter *iw, SegmentReader *sr)
 {
     SegmentInfo *si = sis_new_segment(iw->sis, 0, iw->store);
-    FieldInfos *fis = iw->fis;
-    FieldInfos *sub_fis = sr->ir.fis;
+    FrtFieldInfos *fis = iw->fis;
+    FrtFieldInfos *sub_fis = sr->ir.fis;
     int j;
     const int fis_size = sub_fis->size;
     bool must_map_fields = false;
@@ -6421,8 +6421,8 @@ static void iw_add_segment(IndexWriter *iw, SegmentReader *sr)
     si->doc_cnt = IR(sr)->max_doc(IR(sr));
     /* Merge FieldInfos */
     for (j = 0; j < fis_size; j++) {
-        FieldInfo *fi = sub_fis->fields[j];
-        FieldInfo *new_fi = fis_get_field(fis, fi->name);
+        FrtFieldInfo *fi = sub_fis->fields[j];
+        FrtFieldInfo *new_fi = fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
             new_fi = fi_new(fi->name, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
             new_fi->bits = fi->bits;

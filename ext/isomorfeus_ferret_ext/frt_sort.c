@@ -16,7 +16,7 @@ static SortField *sort_field_alloc(Symbol field,
     bool reverse,
     int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
     void (*get_val)(void *index_ptr, Hit *hit1, FrtComparable *comparable),
-    const FieldIndexClass *field_index_class)
+    const FrtFieldIndexClass *field_index_class)
 {
     SortField *self         = FRT_ALLOC(SortField);
     self->field             = field;
@@ -388,7 +388,7 @@ static Comparator *sorter_get_comparator(SortField *sf, IndexReader *ir)
 {
     void *index = NULL;
     if (sf->type > FRT_SORT_TYPE_DOC) {
-        FieldIndex *field_index = NULL;
+        FrtFieldIndex *field_index = NULL;
         if (sf->type == FRT_SORT_TYPE_AUTO) {
             TermEnum *te = ir_terms(ir, sf->field);
             if (te) {
@@ -572,7 +572,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         const int cmp_cnt = sorter->c_cnt;
         SortField **sort_fields = sorter->sort->sort_fields;
         Hit *hit = (Hit *)pq->heap[1];   /* save first value */
-        FieldDoc *field_doc;
+        FrtFieldDoc *field_doc;
         FrtComparable *comparables;
         Comparator **comparators = sorter->comparators;
         pq->heap[1] = pq->heap[pq->size];   /* move last to first */
@@ -580,7 +580,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         pq->size--;
         fshq_pq_down(pq);                   /* adjust heap */
 
-        field_doc = (FieldDoc *)emalloc(sizeof(FieldDoc)
+        field_doc = (FrtFieldDoc *)emalloc(sizeof(FrtFieldDoc)
                                         + sizeof(FrtComparable) * cmp_cnt);
         comparables = field_doc->comparables;
         memcpy(field_doc, hit, sizeof(Hit));
@@ -599,10 +599,10 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
 }
 
 /***************************************************************************
- * FieldDoc
+ * FrtFieldDoc
  ***************************************************************************/
 
-void fd_destroy(FieldDoc *fd)
+void fd_destroy(FrtFieldDoc *fd)
 {
     free(fd);
 }
@@ -611,7 +611,7 @@ void fd_destroy(FieldDoc *fd)
  * FieldDocSortedHitQueue
  ***************************************************************************/
 
-bool fdshq_lt(FieldDoc *fd1, FieldDoc *fd2)
+bool fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
 {
     int c = 0, i;
     FrtComparable *cmps1 = fd1->comparables;

@@ -192,19 +192,19 @@ static Range *trange_new(Symbol field, const char *lower_term,
 
 typedef struct RangeFilter
 {
-    Filter super;
+    FrtFilter super;
     Range *range;
 } RangeFilter;
 
 #define RF(filt) ((RangeFilter *)(filt))
 
-static void rfilt_destroy_i(Filter *filt)
+static void rfilt_destroy_i(FrtFilter *filt)
 {
     range_destroy(RF(filt)->range);
     filt_destroy_i(filt);
 }
 
-static char *rfilt_to_s(Filter *filt)
+static char *rfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
     char *rfstr = strfmt("RangeFilter< %s >", rstr);
@@ -212,11 +212,11 @@ static char *rfilt_to_s(Filter *filt)
     return rfstr;
 }
 
-static FrtBitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
-    FieldInfo *fi = fis_get_field(ir->fis, range->field);
+    FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
     /* the field info exists we need to add docs to the bit vector, otherwise
      * we just return an empty bit vector */
     if (fi) {
@@ -272,21 +272,21 @@ static FrtBitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
     return bv;
 }
 
-static unsigned long long rfilt_hash(Filter *filt)
+static unsigned long long rfilt_hash(FrtFilter *filt)
 {
     return range_hash(RF(filt)->range);
 }
 
-static int rfilt_eq(Filter *filt, Filter *o)
+static int rfilt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return range_eq(RF(filt)->range, RF(o)->range);
 }
 
-Filter *rfilt_new(Symbol field,
+FrtFilter *rfilt_new(Symbol field,
                   const char *lower_term, const char *upper_term,
                   bool include_lower, bool include_upper)
 {
-    Filter *filt = filt_new(RangeFilter);
+    FrtFilter *filt = filt_new(RangeFilter);
     RF(filt)->range =  range_new(field, lower_term, upper_term,
                                  include_lower, include_upper);
 
@@ -304,7 +304,7 @@ Filter *rfilt_new(Symbol field,
  *
  ***************************************************************************/
 
-static char *trfilt_to_s(Filter *filt)
+static char *trfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
     char *rfstr = strfmt("TypedRangeFilter< %s >", rstr);
@@ -339,7 +339,7 @@ do {\
 } while (te->next(te))
 
 
-static FrtBitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     Range *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
@@ -350,7 +350,7 @@ static FrtBitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
         (!ut || (sscanf(ut, "%lg%n", &unum, &len) && (int)strlen(ut) == len)))
     {
         FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
-        FieldInfo *fi = fis_get_field(ir->fis, range->field);
+        FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
         /* the field info exists we need to add docs to the bit vector,
          * otherwise we just return an empty bit vector */
         if (fi) {
@@ -419,11 +419,11 @@ static FrtBitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
     }
 }
 
-Filter *trfilt_new(Symbol field,
+FrtFilter *trfilt_new(Symbol field,
                    const char *lower_term, const char *upper_term,
                    bool include_lower, bool include_upper)
 {
-    Filter *filt = filt_new(RangeFilter);
+    FrtFilter *filt = filt_new(RangeFilter);
     RF(filt)->range =  trange_new(field, lower_term, upper_term,
                                   include_lower, include_upper);
 
@@ -496,7 +496,7 @@ static Query *rq_rewrite(Query *self, IndexReader *ir)
 {
     Query *csq;
     Range *r = RQ(self)->range;
-    Filter *filter = rfilt_new(r->field, r->lower_term, r->upper_term,
+    FrtFilter *filter = rfilt_new(r->field, r->lower_term, r->upper_term,
                                r->include_lower, r->include_upper);
     (void)ir;
     csq = csq_new_nr(filter);
@@ -638,7 +638,7 @@ static Query *trq_rewrite(Query *self, IndexReader *ir)
 {
     Query *csq;
     Range *r = RQ(self)->range;
-    Filter *filter = trfilt_new(r->field, r->lower_term, r->upper_term,
+    FrtFilter *filter = trfilt_new(r->field, r->lower_term, r->upper_term,
                                 r->include_lower, r->include_upper);
     (void)ir;
     csq = csq_new_nr(filter);

@@ -42,7 +42,7 @@ static FrtExplanation *cssc_explain(Scorer *self, int doc_num)
 static Scorer *cssc_new(Weight *weight, IndexReader *ir)
 {
     Scorer *self    = scorer_new(ConstantScoreScorer, weight->similarity);
-    Filter *filter  = CScQ(weight->query)->filter;
+    FrtFilter *filter  = CScQ(weight->query)->filter;
 
     CScSc(self)->score  = weight->value;
     CScSc(self)->bv     = filt_get_bv(filter, ir);
@@ -68,7 +68,7 @@ static char *csw_to_s(Weight *self)
 
 static FrtExplanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    Filter *filter = CScQ(self->query)->filter;
+    FrtFilter *filter = CScQ(self->query)->filter;
     FrtExplanation *expl;
     char *filter_str = filter->to_s(filter);
     FrtBitVector *bv = filt_get_bv(filter, ir);
@@ -110,7 +110,7 @@ static Weight *csw_new(Query *query, Searcher *searcher)
 
 static char *csq_to_s(Query *self, Symbol default_field)
 {
-    Filter *filter = CScQ(self)->filter;
+    FrtFilter *filter = CScQ(self)->filter;
     char *filter_str = filter->to_s(filter);
     char *buffer;
     (void)default_field;
@@ -140,7 +140,7 @@ static int csq_eq(Query *self, Query *o)
     return filt_eq(CScQ(self)->filter, CScQ(o)->filter);
 }
 
-Query *csq_new_nr(Filter *filter)
+Query *csq_new_nr(FrtFilter *filter)
 {
     Query *self = q_new(FrtConstantScoreQuery);
     CScQ(self)->filter = filter;
@@ -155,7 +155,7 @@ Query *csq_new_nr(Filter *filter)
     return self;
 }
 
-Query *csq_new(Filter *filter)
+Query *csq_new(FrtFilter *filter)
 {
     FRT_REF(filter);
     return csq_new_nr(filter);

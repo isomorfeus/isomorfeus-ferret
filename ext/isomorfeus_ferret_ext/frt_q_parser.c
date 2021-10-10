@@ -2814,7 +2814,7 @@ static Query *get_r_q(QParser *qp, Symbol field, char *from, char *to,
  */
 static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
 {
-    FieldStack *fs = FRT_ALLOC(FieldStack);
+    FrtFieldStack *fs = FRT_ALLOC(FrtFieldStack);
 
     fs->next    = self->fields_top;
     fs->fields  = fields;
@@ -2831,7 +2831,7 @@ static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
  */
 static void qp_pop_fields(QParser *self)
 {
-    FieldStack *fs = self->fields_top;
+    FrtFieldStack *fs = self->fields_top;
 
     if (fs->destroy) {
         hs_destroy(fs->fields);
