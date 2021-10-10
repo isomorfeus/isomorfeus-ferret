@@ -149,7 +149,7 @@ float fuzq_score(FrtFuzzyQuery *fuzq, const char *target)
 
 #define FzQ(query) ((FrtFuzzyQuery *)(query))
 
-static char *fuzq_to_s(Query *self, FrtSymbol curr_field)
+static char *fuzq_to_s(FrtQuery *self, FrtSymbol curr_field)
 {
     char *buffer, *bptr;
     char *term = FzQ(self)->term;
@@ -174,9 +174,9 @@ static char *fuzq_to_s(Query *self, FrtSymbol curr_field)
     return buffer;
 }
 
-static Query *fuzq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *fuzq_rewrite(FrtQuery *self, IndexReader *ir)
 {
-    Query *q;
+    FrtQuery *q;
     FrtFuzzyQuery *fuzq = FzQ(self);
 
     int pre_len = fuzq->pre_len;
@@ -228,20 +228,20 @@ static Query *fuzq_rewrite(Query *self, IndexReader *ir)
     return q;
 }
 
-static void fuzq_destroy(Query *self)
+static void fuzq_destroy(FrtQuery *self)
 {
     free(FzQ(self)->term);
     free(FzQ(self)->da);
     q_destroy_i(self);
 }
 
-static unsigned long long fuzq_hash(Query *self)
+static unsigned long long fuzq_hash(FrtQuery *self)
 {
     return str_hash(FzQ(self)->term) ^ sym_hash(FzQ(self)->field)
         ^ float2int(FzQ(self)->min_sim) ^ FzQ(self)->pre_len;
 }
 
-static int fuzq_eq(Query *self, Query *o)
+static int fuzq_eq(FrtQuery *self, FrtQuery *o)
 {
     FrtFuzzyQuery *fq1 = FzQ(self);
     FrtFuzzyQuery *fq2 = FzQ(o);
@@ -252,10 +252,10 @@ static int fuzq_eq(Query *self, Query *o)
         && (fq1->min_sim == fq2->min_sim);
 }
 
-Query *fuzq_new_conf(FrtSymbol field, const char *term,
+FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
                      float min_sim, int pre_len, int max_terms)
 {
-    Query *self = q_new(FrtFuzzyQuery);
+    FrtQuery *self = q_new(FrtFuzzyQuery);
 
     FzQ(self)->field      = field;
     FzQ(self)->term       = estrdup(term);
@@ -275,7 +275,7 @@ Query *fuzq_new_conf(FrtSymbol field, const char *term,
     return self;
 }
 
-Query *fuzq_new(FrtSymbol field, const char *term)
+FrtQuery *fuzq_new(FrtSymbol field, const char *term)
 {
     return fuzq_new_conf(field, term, 0.0f, 0, 0);
 }

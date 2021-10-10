@@ -88,7 +88,7 @@ static FrtExplanation *csw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     return expl;
 }
 
-static FrtWeight *csw_new(Query *query, FrtSearcher *searcher)
+static FrtWeight *csw_new(FrtQuery *query, FrtSearcher *searcher)
 {
     FrtWeight *self        = w_new(FrtWeight, query);
 
@@ -108,7 +108,7 @@ static FrtWeight *csw_new(Query *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-static char *csq_to_s(Query *self, FrtSymbol default_field)
+static char *csq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     FrtFilter *filter = CScQ(self)->filter;
     char *filter_str = filter->to_s(filter);
@@ -124,25 +124,25 @@ static char *csq_to_s(Query *self, FrtSymbol default_field)
     return buffer;;
 }
 
-static void csq_destroy(Query *self)
+static void csq_destroy(FrtQuery *self)
 {
     filt_deref(CScQ(self)->filter);
     q_destroy_i(self);
 }
 
-static unsigned long long csq_hash(Query *self)
+static unsigned long long csq_hash(FrtQuery *self)
 {
     return filt_hash(CScQ(self)->filter);
 }
 
-static int csq_eq(Query *self, Query *o)
+static int csq_eq(FrtQuery *self, FrtQuery *o)
 {
     return filt_eq(CScQ(self)->filter, CScQ(o)->filter);
 }
 
-Query *csq_new_nr(FrtFilter *filter)
+FrtQuery *csq_new_nr(FrtFilter *filter)
 {
-    Query *self = q_new(FrtConstantScoreQuery);
+    FrtQuery *self = q_new(FrtConstantScoreQuery);
     CScQ(self)->filter = filter;
 
     self->type              = CONSTANT_QUERY;
@@ -155,7 +155,7 @@ Query *csq_new_nr(FrtFilter *filter)
     return self;
 }
 
-Query *csq_new(FrtFilter *filter)
+FrtQuery *csq_new(FrtFilter *filter)
 {
     FRT_REF(filter);
     return csq_new_nr(filter);

@@ -5,13 +5,13 @@
 
 /****************************************************************************
  *
- * PrefixQuery
+ * FrtPrefixQuery
  *
  ****************************************************************************/
 
-#define PfxQ(query) ((PrefixQuery *)(query))
+#define PfxQ(query) ((FrtPrefixQuery *)(query))
 
-static char *prq_to_s(Query *self, FrtSymbol default_field)
+static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *prefix = PfxQ(self)->prefix;
@@ -33,10 +33,10 @@ static char *prq_to_s(Query *self, FrtSymbol default_field)
     return buffer;
 }
 
-static Query *prq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *prq_rewrite(FrtQuery *self, IndexReader *ir)
 {
     const int field_num = fis_get_field_num(ir->fis, PfxQ(self)->field);
-    Query *volatile q = multi_tq_new_conf(PfxQ(self)->field,
+    FrtQuery *volatile q = multi_tq_new_conf(PfxQ(self)->field,
                                           MTQMaxTerms(self), 0.0);
     q->boost = self->boost;        /* set the boost */
 
@@ -61,26 +61,26 @@ static Query *prq_rewrite(Query *self, IndexReader *ir)
     return q;
 }
 
-static void prq_destroy(Query *self)
+static void prq_destroy(FrtQuery *self)
 {
     free(PfxQ(self)->prefix);
     q_destroy_i(self);
 }
 
-static unsigned long long prq_hash(Query *self)
+static unsigned long long prq_hash(FrtQuery *self)
 {
     return sym_hash(PfxQ(self)->field) ^ str_hash(PfxQ(self)->prefix);
 }
 
-static int prq_eq(Query *self, Query *o)
+static int prq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(PfxQ(self)->prefix, PfxQ(o)->prefix) == 0)
         && (strcmp(PfxQ(self)->field, PfxQ(o)->field) == 0);
 }
 
-Query *prefixq_new(FrtSymbol field, const char *prefix)
+FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
 {
-    Query *self = q_new(PrefixQuery);
+    FrtQuery *self = q_new(FrtPrefixQuery);
 
     PfxQ(self)->field       = field;
     PfxQ(self)->prefix      = estrdup(prefix);

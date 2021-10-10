@@ -149,7 +149,7 @@ typedef struct MultiTermScorer
     FrtWeight               *weight;
     TermDocEnumWrapper  **tdew_a;
     int                   tdew_cnt;
-    PriorityQueue        *tdew_pq;
+    FrtPriorityQueue        *tdew_pq;
     float                 weight_value;
     float                 score_cache[SCORE_CACHE_SIZE];
     float                 total_score;
@@ -167,7 +167,7 @@ static bool multi_tsc_next(FrtScorer *self)
     float total_score = 0.0f;
     TermDocEnumWrapper *tdew;
     MultiTermScorer *mtsc = MTSc(self);
-    PriorityQueue *tdew_pq = mtsc->tdew_pq;
+    FrtPriorityQueue *tdew_pq = mtsc->tdew_pq;
     if (tdew_pq == NULL) {
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
@@ -210,7 +210,7 @@ static bool multi_tsc_next(FrtScorer *self)
 
 static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num)
 {
-    PriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
+    FrtPriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
     TermDocEnumWrapper *tdew;
     if (tdew_pq == NULL) {
         MultiTermScorer *mtsc = MTSc(self);
@@ -254,7 +254,7 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
     if (multi_tsc_advance_to(self, doc_num) &&
         (tdew = (TermDocEnumWrapper *)pq_top(mtsc->tdew_pq))->doc == doc_num) {
 
-        PriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
+        FrtPriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
         FrtExplanation *expl = expl_new(0.0f, "The sum of:");
         int curr_doc = self->doc = tdew->doc;
         float total_score = 0.0f;
@@ -338,7 +338,7 @@ static char *multi_tw_to_s(FrtWeight *self)
 static FrtScorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
 {
     FrtScorer *multi_tsc = NULL;
-    PriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
+    FrtPriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
     const int field_num = fis_get_field_num(ir->fis, MTQ(self->query)->field);
 
     if (boosted_terms->size > 0 && field_num >= 0) {
@@ -387,7 +387,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int do
     char *query_str;
     MultiTermQuery *mtq = MTQ(self->query);
     const char *field = mtq->field;
-    PriorityQueue *bt_pq = mtq->boosted_terms;
+    FrtPriorityQueue *bt_pq = mtq->boosted_terms;
     int i;
     int total_doc_freqs = 0;
     char *doc_freqs = NULL;
@@ -474,12 +474,12 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int do
     }
 }
 
-static FrtWeight *multi_tw_new(Query *query, FrtSearcher *searcher)
+static FrtWeight *multi_tw_new(FrtQuery *query, FrtSearcher *searcher)
 {
     int i;
     int doc_freq         = 0;
     FrtWeight *self         = w_new(FrtWeight, query);
-    PriorityQueue *bt_pq = MTQ(query)->boosted_terms;
+    FrtPriorityQueue *bt_pq = MTQ(query)->boosted_terms;
 
     self->scorer         = &multi_tw_scorer;
     self->explain        = &multi_tw_explain;
@@ -504,10 +504,10 @@ static FrtWeight *multi_tw_new(Query *query, FrtSearcher *searcher)
  * MultiTermQuery
  ***************************************************************************/
 
-static char *multi_tq_to_s(Query *self, FrtSymbol default_field)
+static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     int i;
-    PriorityQueue *boosted_terms = MTQ(self)->boosted_terms, *bt_pq_clone;
+    FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms, *bt_pq_clone;
     BoostedTerm *bt;
     char *buffer, *bptr;
     const char *field = MTQ(self)->field;
@@ -553,27 +553,27 @@ static char *multi_tq_to_s(Query *self, FrtSymbol default_field)
     return buffer;
 }
 
-static void multi_tq_destroy_i(Query *self)
+static void multi_tq_destroy_i(FrtQuery *self)
 {
     pq_destroy(MTQ(self)->boosted_terms);
     q_destroy_i(self);
 }
 
-static void multi_tq_extract_terms(Query *self, HashSet *terms)
+static void multi_tq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     int i;
-    PriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
+    FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
         hs_add(terms, term_new(MTQ(self)->field, bt->term));
     }
 }
 
-static unsigned long long multi_tq_hash(Query *self)
+static unsigned long long multi_tq_hash(FrtQuery *self)
 {
     int i;
     unsigned long long hash = sym_hash(MTQ(self)->field);
-    PriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
+    FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
         hash ^= str_hash(bt->term) ^ float2int(bt->boost);
@@ -581,11 +581,11 @@ static unsigned long long multi_tq_hash(Query *self)
     return hash;
 }
 
-static int multi_tq_eq(Query *self, Query *o)
+static int multi_tq_eq(FrtQuery *self, FrtQuery *o)
 {
     int i;
-    PriorityQueue *boosted_terms1 = MTQ(self)->boosted_terms;
-    PriorityQueue *boosted_terms2 = MTQ(o)->boosted_terms;
+    FrtPriorityQueue *boosted_terms1 = MTQ(self)->boosted_terms;
+    FrtPriorityQueue *boosted_terms2 = MTQ(o)->boosted_terms;
 
     if ((strcmp(MTQ(self)->field, MTQ(o)->field) != 0)
         || boosted_terms1->size != boosted_terms2->size) {
@@ -601,12 +601,12 @@ static int multi_tq_eq(Query *self, Query *o)
     return true;
 }
 
-static MatchVector *multi_tq_get_matchv_i(Query *self, MatchVector *mv,
+static MatchVector *multi_tq_get_matchv_i(FrtQuery *self, MatchVector *mv,
                                           FrtTermVector *tv)
 {
     if (strcmp(tv->field, MTQ(self)->field) == 0) {
         int i;
-        PriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
+        FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
         for (i = boosted_terms->size; i > 0; i--) {
             int j;
             BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
@@ -622,9 +622,9 @@ static MatchVector *multi_tq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-Query *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
+FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
 {
-    Query *self;
+    FrtQuery *self;
 
     if (max_terms <= 0) {
         rb_raise(rb_eArgError, ":max_terms must be greater than or equal to zero. "
@@ -651,16 +651,16 @@ Query *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
     return self;
 }
 
-Query *multi_tq_new(FrtSymbol field)
+FrtQuery *multi_tq_new(FrtSymbol field)
 {
     return multi_tq_new_conf(field, MULTI_TERM_QUERY_MAX_TERMS, 0.0f);
 }
 
-void multi_tq_add_term_boost(Query *self, const char *term, float boost)
+void multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost)
 {
     if (boost > MTQ(self)->min_boost && term && term[0]) {
         BoostedTerm *bt = boosted_term_new(term, boost);
-        PriorityQueue *bt_pq = MTQ(self)->boosted_terms;
+        FrtPriorityQueue *bt_pq = MTQ(self)->boosted_terms;
         pq_insert(bt_pq, bt);
         if (pq_full(bt_pq)) {
             MTQ(self)->min_boost = ((BoostedTerm *)pq_top(bt_pq))->boost;
@@ -668,7 +668,7 @@ void multi_tq_add_term_boost(Query *self, const char *term, float boost)
     }
 }
 
-void multi_tq_add_term(Query *self, const char *term)
+void multi_tq_add_term(FrtQuery *self, const char *term)
 {
     multi_tq_add_term_boost(self, term, 1.0f);
 }

@@ -11,7 +11,7 @@
 
 #define WCQ(query) ((FrtWildCardQuery *)(query))
 
-static char *wcq_to_s(Query *self, FrtSymbol default_field)
+static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *field_str = WCQ(self)->field;
@@ -78,9 +78,9 @@ bool wc_match(const char *pattern, const char *text)
     return false;
 }
 
-static Query *wcq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *wcq_rewrite(FrtQuery *self, IndexReader *ir)
 {
-    Query *q;
+    FrtQuery *q;
     const char *pattern = WCQ(self)->pattern;
     const char *first_star = strchr(pattern, FRT_WILD_STRING);
     const char *first_ques = strchr(pattern, FRT_WILD_CHAR);
@@ -130,26 +130,26 @@ static Query *wcq_rewrite(Query *self, IndexReader *ir)
     return q;
 }
 
-static void wcq_destroy(Query *self)
+static void wcq_destroy(FrtQuery *self)
 {
     free(WCQ(self)->pattern);
     q_destroy_i(self);
 }
 
-static unsigned long long wcq_hash(Query *self)
+static unsigned long long wcq_hash(FrtQuery *self)
 {
     return sym_hash(WCQ(self)->field) ^ str_hash(WCQ(self)->pattern);
 }
 
-static int wcq_eq(Query *self, Query *o)
+static int wcq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(WCQ(self)->pattern, WCQ(o)->pattern) == 0)
         && (strcmp(WCQ(self)->field, WCQ(o)->field) == 0);
 }
 
-Query *wcq_new(FrtSymbol field, const char *pattern)
+FrtQuery *wcq_new(FrtSymbol field, const char *pattern)
 {
-    Query *self = q_new(FrtWildCardQuery);
+    FrtQuery *self = q_new(FrtWildCardQuery);
 
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = estrdup(pattern);

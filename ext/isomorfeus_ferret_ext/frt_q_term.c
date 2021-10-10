@@ -96,7 +96,7 @@ static bool tsc_skip_to(FrtScorer *self, int doc_num)
 static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
 {
     TermScorer *ts = TSc(self);
-    Query *query = ts->weight->get_query(ts->weight);
+    FrtQuery *query = ts->weight->get_query(ts->weight);
     int tf = 0;
 
     tsc_skip_to(self, doc_num);
@@ -210,7 +210,7 @@ static char *tw_to_s(FrtWeight *self)
     return strfmt("TermWeight(%f)", self->value);
 }
 
-static FrtWeight *tw_new(Query *query, FrtSearcher *searcher)
+static FrtWeight *tw_new(FrtQuery *query, FrtSearcher *searcher)
 {
     FrtWeight *self    = w_new(FrtWeight, query);
     self->scorer    = &tw_scorer;
@@ -233,13 +233,13 @@ static FrtWeight *tw_new(Query *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-static void tq_destroy(Query *self)
+static void tq_destroy(FrtQuery *self)
 {
     free(TQ(self)->term);
     q_destroy_i(self);
 }
 
-static char *tq_to_s(Query *self, FrtSymbol default_field)
+static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     const char *field = TQ(self)->field;
     const char *term = TQ(self)->term;
@@ -262,23 +262,23 @@ static char *tq_to_s(Query *self, FrtSymbol default_field)
     return buffer;
 }
 
-static void tq_extract_terms(Query *self, HashSet *terms)
+static void tq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     hs_add(terms, term_new(TQ(self)->field, TQ(self)->term));
 }
 
-static unsigned long long tq_hash(Query *self)
+static unsigned long long tq_hash(FrtQuery *self)
 {
     return str_hash(TQ(self)->term) ^ sym_hash(TQ(self)->field);
 }
 
-static int tq_eq(Query *self, Query *o)
+static int tq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(TQ(self)->term, TQ(o)->term) == 0)
         && (strcmp(TQ(self)->field, TQ(o)->field) == 0);
 }
 
-static MatchVector *tq_get_matchv_i(Query *self, MatchVector *mv,
+static MatchVector *tq_get_matchv_i(FrtQuery *self, MatchVector *mv,
                                     FrtTermVector *tv)
 {
     if (strcmp(tv->field, TQ(self)->field) == 0) {
@@ -294,9 +294,9 @@ static MatchVector *tq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-Query *tq_new(FrtSymbol field, const char *term)
+FrtQuery *tq_new(FrtSymbol field, const char *term)
 {
-    Query *self             = q_new(FrtTermQuery);
+    FrtQuery *self             = q_new(FrtTermQuery);
 
     TQ(self)->field         = field;
     TQ(self)->term          = estrdup(term);

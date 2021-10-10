@@ -38,21 +38,6 @@
 #define Offset                  FrtOffset
 #define OutStream               FrtOutStream
 #define OutStreamMethods        FrtOutStreamMethods
-#define PerFieldAnalyzer        FrtPerFieldAnalyzer
-#define PhrasePosition          FrtPhrasePosition
-#define PhraseQuery             FrtPhraseQuery
-#define PostFilter              FrtPostFilter
-#define Posting                 FrtPosting
-#define PostingList             FrtPostingList
-#define PrefixQuery             FrtPrefixQuery
-#define PriorityQueue           FrtPriorityQueue
-#define PriorityQueueInsertEnum FrtPriorityQueueInsertEnum
-#define QParser                 FrtQParser
-#define Query                   FrtQuery
-#define QueryParser             FrtQueryParser
-#define QueryType               FrtQueryType
-#define RAMFile                 FrtRAMFile
-#define RangeQuery              FrtRangeQuery
 
 /* Functions */
 #define a_deref                                        frt_a_deref

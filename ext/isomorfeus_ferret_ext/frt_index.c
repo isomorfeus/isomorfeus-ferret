@@ -1639,7 +1639,7 @@ void fw_write_tv_index(FrtFieldsWriter *fw)
 
 void fw_add_postings(FrtFieldsWriter *fw,
                      int field_num,
-                     PostingList **plists,
+                     FrtPostingList **plists,
                      int posting_count,
                      Offset *offsets,
                      int offset_count)
@@ -1648,8 +1648,8 @@ void fw_add_postings(FrtFieldsWriter *fw,
     const char *last_term = FRT_EMPTY_STRING;
     OutStream *fdt_out = fw->fdt_out;
     off_t fdt_start_pos = os_pos(fdt_out);
-    PostingList *plist;
-    Posting *posting;
+    FrtPostingList *plist;
+    FrtPosting *posting;
     Occurence *occ;
     FrtFieldInfo *fi = fw->fis->fields[field_num];
     int store_positions = fi_store_positions(fi);
@@ -2067,7 +2067,7 @@ typedef struct MultiTermEnum
 {
     FrtTermEnum te;
     int doc_freq;
-    PriorityQueue *tew_queue;
+    FrtPriorityQueue *tew_queue;
     TermEnumWrapper *tews;
     int size;
     int **field_num_map;
@@ -3131,7 +3131,7 @@ typedef struct
     FrtTermDocEnum tde;
     int doc_num;
     int freq;
-    PriorityQueue *pq;
+    FrtPriorityQueue *pq;
     int *pos_queue;
     int pos_queue_index;
     int pos_queue_capa;
@@ -3216,7 +3216,7 @@ static bool tdpe_less_than(FrtTermDocEnum *p1, FrtTermDocEnum *p2)
 static bool mtdpe_skip_to(FrtTermDocEnum *tde, int target_doc_num)
 {
     FrtTermDocEnum *sub_tde;
-    PriorityQueue *mtdpe_pq = MTDPE(tde)->pq;
+    FrtPriorityQueue *mtdpe_pq = MTDPE(tde)->pq;
 
     while (NULL != (sub_tde = (FrtTermDocEnum *)pq_top(mtdpe_pq))
            && (target_doc_num > sub_tde->doc_num(sub_tde))) {
@@ -3259,7 +3259,7 @@ FrtTermDocEnum *mtdpe_new(IndexReader *ir, int field_num, char **terms, int t_cn
     int i;
     MultipleTermDocPosEnum *mtdpe = FRT_ALLOC_AND_ZERO(MultipleTermDocPosEnum);
     FrtTermDocEnum *tde = TDE(mtdpe);
-    PriorityQueue *pq;
+    FrtPriorityQueue *pq;
 
     pq = mtdpe->pq = pq_new(t_cnt, (lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
     mtdpe->pos_queue_capa = MTDPE_POS_QUEUE_INIT_CAPA;
@@ -4867,9 +4867,9 @@ static Occurence *occ_new(MemoryPool *mp, int pos)
  *
  ****************************************************************************/
 
-Posting *p_new(MemoryPool *mp, int doc_num, int pos)
+FrtPosting *p_new(MemoryPool *mp, int doc_num, int pos)
 {
-    Posting *p = FRT_MP_ALLOC(mp, Posting);
+    FrtPosting *p = FRT_MP_ALLOC(mp, FrtPosting);
     p->doc_num = doc_num;
     p->first_occ = occ_new(mp, pos);
     p->freq = 1;
@@ -4883,10 +4883,10 @@ Posting *p_new(MemoryPool *mp, int doc_num, int pos)
  *
  ****************************************************************************/
 
-PostingList *pl_new(MemoryPool *mp, const char *term,
-                           int term_len, Posting *p)
+FrtPostingList *pl_new(MemoryPool *mp, const char *term,
+                           int term_len, FrtPosting *p)
 {
-    PostingList *pl = FRT_MP_ALLOC(mp, PostingList);
+    FrtPostingList *pl = FRT_MP_ALLOC(mp, FrtPostingList);
     pl->term = (char *)mp_memdup(mp, term, term_len + 1);
     pl->term_len = term_len;
     pl->first = pl->last = p;
@@ -4894,19 +4894,19 @@ PostingList *pl_new(MemoryPool *mp, const char *term,
     return pl;
 }
 
-void pl_add_occ(MemoryPool *mp, PostingList *pl, int pos)
+void pl_add_occ(MemoryPool *mp, FrtPostingList *pl, int pos)
 {
     pl->last_occ = pl->last_occ->next = occ_new(mp, pos);
     pl->last->freq++;
 }
 
-static void pl_add_posting(PostingList *pl, Posting *p)
+static void pl_add_posting(FrtPostingList *pl, FrtPosting *p)
 {
     pl->last = pl->last->next = p;
     pl->last_occ = p->first_occ;
 }
 
-int pl_cmp(const PostingList **pl1, const PostingList **pl2)
+int pl_cmp(const FrtPostingList **pl1, const FrtPostingList **pl2)
 {
     return strcmp((*pl1)->term, (*pl2)->term);
 }
@@ -5019,20 +5019,20 @@ static void dw_write_norms(FrtDocWriter *dw, FrtFieldInverter *fld_inv)
 
 /* we'll use the postings Hash's table area to sort the postings as it is
  * going to be zeroset soon anyway */
-static PostingList **dw_sort_postings(Hash *plists_ht)
+static FrtPostingList **dw_sort_postings(Hash *plists_ht)
 {
     int i, j;
     HashEntry *he;
-    PostingList **plists = (PostingList **)plists_ht->table;
+    FrtPostingList **plists = (FrtPostingList **)plists_ht->table;
     const int num_entries = plists_ht->mask + 1;
     for (i = 0, j = 0; i < num_entries; i++) {
         he = &plists_ht->table[i];
         if (he->value) {
-            plists[j++] = (PostingList *)he->value;
+            plists[j++] = (FrtPostingList *)he->value;
         }
     }
 
-    qsort(plists, plists_ht->size, sizeof(PostingList *),
+    qsort(plists, plists_ht->size, sizeof(FrtPostingList *),
           (int (*)(const void *, const void *))&pl_cmp);
 
     return plists;
@@ -5055,8 +5055,8 @@ static void dw_flush(FrtDocWriter *dw)
     const int fields_count = fis->size;
     FrtFieldInverter *fld_inv;
     FrtFieldInfo *fi;
-    PostingList **pls, *pl;
-    Posting *p;
+    FrtPostingList **pls, *pl;
+    FrtPosting *p;
     Occurence *occ;
     FrtStore *store = dw->store;
     FrtTermInfosWriter *tiw = tiw_open(store, dw->si->name,
@@ -5201,23 +5201,23 @@ static void dw_add_posting(MemoryPool *mp,
 {
     HashEntry *pl_he;
     if (h_set_ext(curr_plists, text, &pl_he)) {
-        Posting *p =  p_new(mp, doc_num, pos);
+        FrtPosting *p =  p_new(mp, doc_num, pos);
         HashEntry *fld_pl_he;
-        PostingList *pl;
+        FrtPostingList *pl;
 
         if (h_set_ext(fld_plists, text, &fld_pl_he)) {
             fld_pl_he->value = pl = pl_new(mp, text, len, p);
             pl_he->key = fld_pl_he->key = (char *)pl->term;
         }
         else {
-            pl = (PostingList *)fld_pl_he->value;
+            pl = (FrtPostingList *)fld_pl_he->value;
             pl_add_posting(pl, p);
             pl_he->key = (char *)pl->term;
         }
         pl_he->value = pl;
     }
     else {
-        pl_add_occ(mp, (PostingList *)pl_he->value, pos);
+        pl_add_occ(mp, (FrtPostingList *)pl_he->value, pos);
     }
 }
 
@@ -5503,7 +5503,7 @@ typedef struct SegmentMerger {
     char *term_buf;
     int term_buf_ptr;
     int term_buf_size;
-    PriorityQueue *queue;
+    FrtPriorityQueue *queue;
     SkipBuffer *skip_buf;
     OutStream *frq_out;
     OutStream *prx_out;

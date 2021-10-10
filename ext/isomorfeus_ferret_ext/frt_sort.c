@@ -464,7 +464,7 @@ static bool fshq_lt(Sorter *sorter, Hit *hit1, Hit *hit2)
     }
 }
 
-void fshq_pq_down(PriorityQueue *pq)
+void fshq_pq_down(FrtPriorityQueue *pq)
 {
     register int i = 1;
     register int j = 2;     /* i << 1; */
@@ -489,7 +489,7 @@ void fshq_pq_down(PriorityQueue *pq)
     heap[i] = node;
 }
 
-Hit *fshq_pq_pop(PriorityQueue *pq)
+Hit *fshq_pq_pop(FrtPriorityQueue *pq)
 {
     if (pq->size > 0) {
         Hit *hit = (Hit *)pq->heap[1];   /* save first value */
@@ -503,7 +503,7 @@ Hit *fshq_pq_pop(PriorityQueue *pq)
     }
 }
 
-static void fshq_pq_up(PriorityQueue *pq)
+static void fshq_pq_up(FrtPriorityQueue *pq)
 {
     Hit **heap = (Hit **)pq->heap;
     Hit *node;
@@ -520,7 +520,7 @@ static void fshq_pq_up(PriorityQueue *pq)
     heap[i] = node;
 }
 
-void fshq_pq_insert(PriorityQueue *pq, Hit *hit)
+void fshq_pq_insert(FrtPriorityQueue *pq, Hit *hit)
 {
     if (pq->size < pq->capa) {
         Hit *new_hit = FRT_ALLOC(Hit);
@@ -539,15 +539,15 @@ void fshq_pq_insert(PriorityQueue *pq, Hit *hit)
     }
 }
 
-void fshq_pq_destroy(PriorityQueue *self)
+void fshq_pq_destroy(FrtPriorityQueue *self)
 {
     sorter_destroy((Sorter *)self->heap[0]);
     pq_destroy(self);
 }
 
-PriorityQueue *fshq_pq_new(int size, FrtSort *sort, IndexReader *ir)
+FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, IndexReader *ir)
 {
-    PriorityQueue *self = pq_new(size, &fshq_less_than, &free);
+    FrtPriorityQueue *self = pq_new(size, &fshq_less_than, &free);
     int i;
     Sorter *sorter = sorter_new(sort);
     FrtSortField *sf;
@@ -561,7 +561,7 @@ PriorityQueue *fshq_pq_new(int size, FrtSort *sort, IndexReader *ir)
     return self;
 }
 
-Hit *fshq_pq_pop_fd(PriorityQueue *pq)
+Hit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
 {
     if (pq->size <= 0) {
         return NULL;

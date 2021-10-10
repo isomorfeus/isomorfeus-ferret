@@ -91,12 +91,12 @@ int filt_eq(FrtFilter *filt, FrtFilter *o)
 typedef struct QueryFilter
 {
     FrtFilter super;
-    Query *query;
+    FrtQuery *query;
 } QueryFilter;
 
 static char *qfilt_to_s(FrtFilter *filt)
 {
-    Query *query = QF(filt)->query;
+    FrtQuery *query = QF(filt)->query;
     char *query_str = query->to_s(query, NULL);
     char *filter_str = strfmt("QueryFilter< %s >", query_str);
     free(query_str);
@@ -132,12 +132,12 @@ static int qfilt_eq(FrtFilter *filt, FrtFilter *o)
 
 static void qfilt_destroy_i(FrtFilter *filt)
 {
-    Query *query = QF(filt)->query;
+    FrtQuery *query = QF(filt)->query;
     q_deref(query);
     filt_destroy_i(filt);
 }
 
-FrtFilter *qfilt_new_nr(Query *query)
+FrtFilter *qfilt_new_nr(FrtQuery *query)
 {
     FrtFilter *filt = filt_new(QueryFilter);
 
@@ -151,7 +151,7 @@ FrtFilter *qfilt_new_nr(Query *query)
     return filt;
 }
 
-FrtFilter *qfilt_new(Query *query)
+FrtFilter *qfilt_new(FrtQuery *query)
 {
     FRT_REF(query);
     return qfilt_new_nr(query);

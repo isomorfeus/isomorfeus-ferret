@@ -79,7 +79,7 @@ static float simdef_idf_term(struct FrtSimilarity *s, FrtSymbol field, char *ter
 }
 
 static float simdef_idf_phrase(struct FrtSimilarity *s, FrtSymbol field,
-                        PhrasePosition *positions,
+                        FrtPhrasePosition *positions,
                         int pp_cnt, FrtSearcher *searcher)
 {
     float idf = 0.0f;

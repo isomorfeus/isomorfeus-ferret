@@ -384,10 +384,10 @@ static void
 frb_q_free(void *p)
 {
     object_del(p);
-    q_deref((Query *)p);
+    q_deref((FrtQuery *)p);
 }
 
-#define GET_Q() Query *q = (Query *)DATA_PTR(self)
+#define GET_Q() FrtQuery *q = (FrtQuery *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -473,8 +473,8 @@ static VALUE
 frb_q_eql(VALUE self, VALUE other)
 {
     GET_Q();
-    Query *oq;
-    Data_Get_Struct(other, Query, oq);
+    FrtQuery *oq;
+    Data_Get_Struct(other, FrtQuery, oq);
     return q->eq(q, oq) ? Qtrue : Qfalse;
 }
 
@@ -497,7 +497,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
     HashSetEntry *hse;
     GET_Q();
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
-    Query *rq = sea->rewrite(sea, q);
+    FrtQuery *rq = sea->rewrite(sea, q);
     rq->extract_terms(rq, terms);
     q_deref(rq);
 
@@ -511,7 +511,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
 
 #define MK_QUERY(klass, q) Data_Wrap_Struct(klass, NULL, &frb_q_free, q)
 VALUE
-frb_get_q(Query *q)
+frb_get_q(FrtQuery *q)
 {
     VALUE self = object_get(q);
 
@@ -603,7 +603,7 @@ frb_tq_init(VALUE self, VALUE rfield, VALUE rterm)
 {
     FrtSymbol field = frb_field(rfield);
     char *term = rs2s(rb_obj_as_string(rterm));
-    Query *q = tq_new(field, term);
+    FrtQuery *q = tq_new(field, term);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -677,7 +677,7 @@ frb_mtq_init(int argc, VALUE *argv, VALUE self)
     VALUE rfield, roptions;
     float min_score = 0.0f;
     int max_terms = FIX2INT(frb_mtq_get_dmt(self));
-    Query *q;
+    FrtQuery *q;
 
     if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
         VALUE v;
@@ -718,7 +718,7 @@ frb_mtq_add_term(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-typedef Query *(*mtq_maker_ft)(FrtSymbol field, const char *term);
+typedef FrtQuery *(*mtq_maker_ft)(FrtSymbol field, const char *term);
 
 static int
 get_max_terms(VALUE rmax_terms, int max_terms)
@@ -745,7 +745,7 @@ frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm)
     VALUE rfield, rterm, rmax_terms;
     int max_terms =
         FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
-    Query *q;
+    FrtQuery *q;
 
     if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
         max_terms = get_max_terms(rmax_terms, max_terms);
@@ -817,11 +817,11 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
     FrtBooleanClause *bc;
     VALUE rquery, roccur;
     unsigned int occur = FRT_BC_SHOULD;
-    Query *sub_q;
+    FrtQuery *sub_q;
     if (rb_scan_args(argc, argv, "11", &rquery, &roccur) == 2) {
         occur = frb_get_occur(roccur);
     }
-    Data_Get_Struct(rquery, Query, sub_q);
+    Data_Get_Struct(rquery, FrtQuery, sub_q);
     FRT_REF(sub_q);
     bc = bc_new(sub_q, occur);
     Frt_Wrap_Struct(self, &frb_bc_mark, &frb_bc_free, bc);
@@ -853,7 +853,7 @@ static VALUE
 frb_bc_set_query(VALUE self, VALUE rquery)
 {
     GET_BC();
-    Data_Get_Struct(rquery, Query, bc->query);
+    Data_Get_Struct(rquery, FrtQuery, bc->query);
     return rquery;
 }
 
@@ -949,7 +949,7 @@ static void
 frb_bq_mark(void *p)
 {
     int i;
-    Query *q = (Query *)p;
+    FrtQuery *q = (FrtQuery *)p;
     FrtBooleanQuery *bq = (FrtBooleanQuery *)q;
     for (i = 0; i < bq->clause_cnt; i++) {
         frb_gc_mark(bq->clauses[i]);
@@ -971,7 +971,7 @@ frb_bq_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rcoord_disabled;
     bool coord_disabled = false;
-    Query *q;
+    FrtQuery *q;
     if (rb_scan_args(argc, argv, "01", &rcoord_disabled)) {
         coord_disabled = RTEST(rcoord_disabled);
     }
@@ -1008,7 +1008,7 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
     GET_Q();
     VALUE rquery, roccur;
     FrtBCType occur = FRT_BC_SHOULD;
-    Query *sub_q;
+    FrtQuery *sub_q;
     VALUE klass;
 
     if (rb_scan_args(argc, argv, "11", &rquery, &roccur) == 2) {
@@ -1024,7 +1024,7 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
         bq_add_clause(q, bc);
         return rquery;
     } else if (TYPE(rquery) == T_DATA) {
-        Data_Get_Struct(rquery, Query, sub_q);
+        Data_Get_Struct(rquery, FrtQuery, sub_q);
         return frb_bc_wrap(bq_add_query(q, sub_q, occur));
     } else {
         rb_raise(rb_eArgError, "Cannot add %s to a BooleanQuery",
@@ -1123,7 +1123,7 @@ get_range_params(VALUE roptions, char **lterm, char **uterm,
 static VALUE
 frb_rq_init(VALUE self, VALUE rfield, VALUE roptions)
 {
-    Query *q;
+    FrtQuery *q;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
@@ -1175,7 +1175,7 @@ frb_rq_init(VALUE self, VALUE rfield, VALUE roptions)
 static VALUE
 frb_trq_init(VALUE self, VALUE rfield, VALUE roptions)
 {
-    Query *q;
+    FrtQuery *q;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
@@ -1207,11 +1207,11 @@ static VALUE
 frb_phq_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rfield, rslop;
-    Query *q;
+    FrtQuery *q;
     rb_scan_args(argc, argv, "11", &rfield, &rslop);
     q = phq_new(frb_field(rfield));
     if (argc == 2) {
-        ((PhraseQuery *)q)->slop = FIX2INT(rslop);
+        ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
     }
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -1285,7 +1285,7 @@ static VALUE
 frb_phq_get_slop(VALUE self)
 {
     GET_Q();
-    return INT2FIX(((PhraseQuery *)q)->slop);
+    return INT2FIX(((FrtPhraseQuery *)q)->slop);
 }
 
 /*
@@ -1299,7 +1299,7 @@ static VALUE
 frb_phq_set_slop(VALUE self, VALUE rslop)
 {
     GET_Q();
-    ((PhraseQuery *)q)->slop = FIX2INT(rslop);
+    ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
     return self;
 }
 
@@ -1410,7 +1410,7 @@ frb_wcq_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_fq_init(int argc, VALUE *argv, VALUE self)
 {
-    Query *q;
+    FrtQuery *q;
     VALUE rfield, rterm, roptions;
     float min_sim =
         (float)NUM2DBL(rb_cvar_get(cFuzzyQuery, id_default_min_similarity));
@@ -1560,7 +1560,7 @@ frb_fq_set_dpl(VALUE self, VALUE val)
 static VALUE
 frb_maq_alloc(VALUE klass)
 {
-    Query *q = maq_new();
+    FrtQuery *q = maq_new();
     VALUE self = Data_Wrap_Struct(klass, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1594,7 +1594,7 @@ frb_maq_init(VALUE self)
 static VALUE
 frb_csq_init(VALUE self, VALUE rfilter)
 {
-    Query *q;
+    FrtQuery *q;
     FrtFilter *filter;
     Data_Get_Struct(rfilter, FrtFilter, filter);
     q = csq_new(filter);
@@ -1627,9 +1627,9 @@ frb_fqq_mark(void *p)
 static VALUE
 frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
 {
-    Query *sq, *q;
+    FrtQuery *sq, *q;
     FrtFilter *f;
-    Data_Get_Struct(rquery, Query, sq);
+    Data_Get_Struct(rquery, FrtQuery, sq);
     Data_Get_Struct(rfilter, FrtFilter, f);
     q = fq_new(sq, f);
     FRT_REF(sq);
@@ -1655,7 +1655,7 @@ frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
 static VALUE
 frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm)
 {
-    Query *q = spantq_new(frb_field(rfield), StringValuePtr(rterm));
+    FrtQuery *q = spantq_new(frb_field(rfield), StringValuePtr(rterm));
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1677,7 +1677,7 @@ frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms)
 {
-    Query *q = spanmtq_new(frb_field(rfield));
+    FrtQuery *q = spanmtq_new(frb_field(rfield));
     int i;
     for (i = RARRAY_LEN(rterms) - 1; i >= 0; i--) {
         spanmtq_add_term(q, StringValuePtr(RARRAY_PTR(rterms)[i]));
@@ -1705,7 +1705,7 @@ frb_spanprq_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rfield, rprefix, rmax_terms;
     int max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
-    Query *q;
+    FrtQuery *q;
     if (rb_scan_args(argc, argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
         max_terms = FIX2INT(rmax_terms);
     }
@@ -1733,9 +1733,9 @@ frb_spanprq_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend)
 {
-    Query *q;
-    Query *match;
-    Data_Get_Struct(rmatch, Query, match);
+    FrtQuery *q;
+    FrtQuery *match;
+    Data_Get_Struct(rmatch, FrtQuery, match);
     q = spanfq_new(match, FIX2INT(rend));
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -1783,7 +1783,7 @@ frb_spannq_mark(void *p)
 static VALUE
 frb_spannq_init(int argc, VALUE *argv, VALUE self)
 {
-    Query *q;
+    FrtQuery *q;
     VALUE roptions;
     int slop = 0;
     bool in_order = false;
@@ -1802,10 +1802,10 @@ frb_spannq_init(int argc, VALUE *argv, VALUE self)
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_clauses))) {
             int i;
-            Query *clause;
+            FrtQuery *clause;
             Check_Type(v, T_ARRAY);
             for (i = 0; i < RARRAY_LEN(v); i++) {
-                Data_Get_Struct(RARRAY_PTR(v)[i], Query, clause);
+                Data_Get_Struct(RARRAY_PTR(v)[i], FrtQuery, clause);
                 spannq_add_clause(q, clause);
             }
         }
@@ -1829,8 +1829,8 @@ static VALUE
 frb_spannq_add(VALUE self, VALUE rclause)
 {
     GET_Q();
-    Query *clause;
-    Data_Get_Struct(rclause, Query, clause);
+    FrtQuery *clause;
+    Data_Get_Struct(rclause, FrtQuery, clause);
     spannq_add_clause(q, clause);
     return self;
 }
@@ -1862,16 +1862,16 @@ frb_spanoq_mark(void *p)
 static VALUE
 frb_spanoq_init(int argc, VALUE *argv, VALUE self)
 {
-    Query *q;
+    FrtQuery *q;
     VALUE rclauses;
 
     q = spanoq_new();
     if (rb_scan_args(argc, argv, "01", &rclauses) > 0) {
         int i;
-        Query *clause;
+        FrtQuery *clause;
         Check_Type(rclauses, T_ARRAY);
         for (i = 0; i < RARRAY_LEN(rclauses); i++) {
-            Data_Get_Struct(RARRAY_PTR(rclauses)[i], Query, clause);
+            Data_Get_Struct(RARRAY_PTR(rclauses)[i], FrtQuery, clause);
             spanoq_add_clause(q, clause);
         }
     }
@@ -1892,8 +1892,8 @@ static VALUE
 frb_spanoq_add(VALUE self, VALUE rclause)
 {
     GET_Q();
-    Query *clause;
-    Data_Get_Struct(rclause, Query, clause);
+    FrtQuery *clause;
+    Data_Get_Struct(rclause, FrtQuery, clause);
     spanoq_add_clause(q, clause);
     return self;
 }
@@ -1922,7 +1922,7 @@ frb_spanxq_mark(void *p)
 static VALUE
 frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc)
 {
-    Query *q;
+    FrtQuery *q;
     Check_Type(rinc, T_DATA);
     Check_Type(rexc, T_DATA);
     q = spanxq_new(DATA_PTR(rinc), DATA_PTR(rexc));
@@ -2093,9 +2093,9 @@ frb_trf_init(VALUE self, VALUE rfield, VALUE roptions)
 static VALUE
 frb_qf_init(VALUE self, VALUE rquery)
 {
-    Query *q;
+    FrtQuery *q;
     FrtFilter *f;
-    Data_Get_Struct(rquery, Query, q);
+    Data_Get_Struct(rquery, FrtQuery, q);
     f = qfilt_new(q);
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
@@ -2630,7 +2630,7 @@ frb_get_cwrapped_filter(VALUE rval)
 }
 
 static FrtTopDocs *
-frb_sea_search_internal(Query *query, VALUE roptions, FrtSearcher *sea)
+frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
 {
     VALUE rval;
     int offset = 0, limit = 10;
@@ -2638,8 +2638,8 @@ frb_sea_search_internal(Query *query, VALUE roptions, FrtSearcher *sea)
     FrtSort *sort = NULL;
     FrtTopDocs *td;
 
-    PostFilter post_filter_holder;
-    PostFilter *post_filter = NULL;
+    FrtPostFilter post_filter_holder;
+    FrtPostFilter *post_filter = NULL;
 
     if (Qnil != roptions) {
         if (Qnil != (rval = rb_hash_aref(roptions, sym_offset))) {
@@ -2739,9 +2739,9 @@ frb_sea_search(int argc, VALUE *argv, VALUE self)
 {
     GET_SEA();
     VALUE rquery, roptions;
-    Query *query;
+    FrtQuery *query;
     rb_scan_args(argc, argv, "11", &rquery, &roptions);
-    Data_Get_Struct(rquery, Query, query);
+    Data_Get_Struct(rquery, FrtQuery, query);
     FrtTopDocs *td = frb_sea_search_internal(query, roptions, sea);
     return frb_get_td(td, self);
 }
@@ -2791,7 +2791,7 @@ static VALUE
 frb_sea_search_each(int argc, VALUE *argv, VALUE self)
 {
     int i;
-    Query *q;
+    FrtQuery *q;
     float max_score;
     FrtTopDocs *td;
     VALUE rquery, roptions, rtotal_hits;
@@ -2799,7 +2799,7 @@ frb_sea_search_each(int argc, VALUE *argv, VALUE self)
 
     rb_scan_args(argc, argv, "11", &rquery, &roptions);
 
-    Data_Get_Struct(rquery, Query, q);
+    Data_Get_Struct(rquery, FrtQuery, q);
     td = frb_sea_search_internal(q, roptions, sea);
 
     max_score = (td->max_score > 1.0f) ? td->max_score : 1.0f;
@@ -2858,7 +2858,7 @@ frb_sea_search_each(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_sea_scan(int argc, VALUE *argv, VALUE self)
 {
-    Query *q;
+    FrtQuery *q;
     int i, count;
     VALUE rval, rquery, roptions;
     int *doc_array;
@@ -2866,7 +2866,7 @@ frb_sea_scan(int argc, VALUE *argv, VALUE self)
     int start_doc = 0, limit = 50;
     GET_SEA();
     rb_scan_args(argc, argv, "11", &rquery, &roptions);
-    Data_Get_Struct(rquery, Query, q);
+    Data_Get_Struct(rquery, FrtQuery, q);
 
     if (Qnil != roptions) {
         Check_Type(roptions, T_HASH);
@@ -2920,9 +2920,9 @@ static VALUE
 frb_sea_explain(VALUE self, VALUE rquery, VALUE rdoc_id)
 {
     GET_SEA();
-    Query *query;
+    FrtQuery *query;
     FrtExplanation *expl;
-    Data_Get_Struct(rquery, Query, query);
+    Data_Get_Struct(rquery, FrtQuery, query);
     expl = sea->explain(sea, query, FIX2INT(rdoc_id));
     return Data_Wrap_Struct(cExplanation, NULL, &expl_destroy, expl);
 }
@@ -2954,7 +2954,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
 {
     GET_SEA();
     VALUE rquery, rdoc_id, rfield, roptions, v;
-    Query *query;
+    FrtQuery *query;
     int excerpt_length = 150;
     int num_excerpts = 2;
     const char *pre_tag = "<b>";
@@ -2963,7 +2963,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
     char **excerpts;
 
     rb_scan_args(argc, argv, "31", &rquery, &rdoc_id, &rfield, &roptions);
-    Data_Get_Struct(rquery, Query, query);
+    Data_Get_Struct(rquery, FrtQuery, query);
     if (argc > 3) {
         if (TYPE(roptions) != T_HASH) {
            rb_raise(rb_eArgError, "The fourth argument to Searcher#highlight must be a hash");

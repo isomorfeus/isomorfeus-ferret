@@ -102,7 +102,7 @@ typedef struct Phrase {
     int             size;
     int             capa;
     int             pos_inc;
-    PhrasePosition *positions;
+    FrtPhrasePosition *positions;
 } Phrase;
 
 #define BCA_INIT_CAPA 4
@@ -139,7 +139,7 @@ int qp_default_fuzzy_pre_len = 0;
 typedef union YYSTYPE
 #line 113 "src/q_parser.y"
 {
-    Query *query;
+    FrtQuery *query;
     FrtBooleanClause *bcls;
     BCArray *bclss;
     HashSet *hashset;
@@ -159,41 +159,41 @@ typedef union YYSTYPE
 /* Copy the second part of user declarations.  */
 #line 121 "src/q_parser.y"
 
-static int yylex(YYSTYPE *lvalp, QParser *qp);
-static int yyerror(QParser *qp, char const *msg);
+static int yylex(YYSTYPE *lvalp, FrtQParser *qp);
+static int yyerror(FrtQParser *qp, char const *msg);
 
 #define PHRASE_INIT_CAPA 4
-static Query *get_bool_q(BCArray *bca);
+static FrtQuery *get_bool_q(BCArray *bca);
 
 static BCArray *first_cls(FrtBooleanClause *boolean_clause);
 static BCArray *add_and_cls(BCArray *bca, FrtBooleanClause *clause);
 static BCArray *add_or_cls(BCArray *bca, FrtBooleanClause *clause);
-static BCArray *add_default_cls(QParser *qp, BCArray *bca,
+static BCArray *add_default_cls(FrtQParser *qp, BCArray *bca,
                                 FrtBooleanClause *clause);
 static void bca_destroy(BCArray *bca);
 
-static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur);
+static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
-static Query *get_term_q(QParser *qp, FrtSymbol field, char *word);
-static Query *get_fuzzy_q(QParser *qp, FrtSymbol field, char *word,
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word);
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
                           char *slop);
-static Query *get_wild_q(QParser *qp, FrtSymbol field, char *pattern);
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
 
-static HashSet *first_field(QParser *qp, const char *field);
-static HashSet *add_field(QParser *qp, const char *field);
+static HashSet *first_field(FrtQParser *qp, const char *field);
+static HashSet *add_field(FrtQParser *qp, const char *field);
 
-static Query *get_phrase_q(QParser *qp, Phrase *phrase, char *slop);
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop);
 
 static Phrase *ph_first_word(char *word);
 static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static Query *get_r_q(QParser *qp, FrtSymbol field, char *from, char *to,
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
                       bool inc_lower, bool inc_upper);
 
-static void qp_push_fields(QParser *self, HashSet *fields, bool destroy);
-static void qp_pop_fields(QParser *self);
+static void qp_push_fields(FrtQParser *self, HashSet *fields, bool destroy);
+static void qp_pop_fields(FrtQParser *self);
 
 /**
  * +FLDS+ calls +func+ for all fields on top of the field stack. +func+
@@ -211,7 +211,7 @@ static void qp_pop_fields(QParser *self);
             field = (FrtSymbol)qp->fields->first->elem;\
             q = func;\
         } else {\
-            Query *volatile sq; HashSetEntry *volatile hse;\
+            FrtQuery *volatile sq; HashSetEntry *volatile hse;\
             q = bq_new_max(false, qp->max_clauses);\
             for (hse = qp->fields->first; hse; hse = hse->next) {\
                 field = (FrtSymbol)hse->elem;\
@@ -824,14 +824,14 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, QParser *qp)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FrtQParser *qp)
 #else
 static void
 yy_symbol_value_print (yyoutput, yytype, yyvaluep, qp)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
-    QParser *qp;
+    FrtQParser *qp;
 #endif
 {
   if (!yyvaluep)
@@ -858,14 +858,14 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, qp)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, QParser *qp)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FrtQParser *qp)
 #else
 static void
 yy_symbol_print (yyoutput, yytype, yyvaluep, qp)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
-    QParser *qp;
+    FrtQParser *qp;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -913,13 +913,13 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, QParser *qp)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, FrtQParser *qp)
 #else
 static void
 yy_reduce_print (yyvsp, yyrule, qp)
     YYSTYPE *yyvsp;
     int yyrule;
-    QParser *qp;
+    FrtQParser *qp;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -1192,14 +1192,14 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, QParser *qp)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, FrtQParser *qp)
 #else
 static void
 yydestruct (yymsg, yytype, yyvaluep, qp)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
-    QParser *qp;
+    FrtQParser *qp;
 #endif
 {
   YYUSE (yyvaluep);
@@ -1283,7 +1283,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (QParser *qp);
+int yyparse (FrtQParser *qp);
 #else
 int yyparse ();
 #endif
@@ -1312,11 +1312,11 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (QParser *qp)
+yyparse (FrtQParser *qp)
 #else
 int
 yyparse (qp)
-    QParser *qp;
+    FrtQParser *qp;
 #endif
 #endif
 {
@@ -2024,7 +2024,7 @@ static const char *not_word =   " \t()[]{}!\"~^|<>=";
  * Note that +get_word+ is also responsible for returning field names and
  * matching the special tokens 'AND', 'NOT', 'REQ' and 'OR'.
  */
-static int get_word(YYSTYPE *lvalp, QParser *qp)
+static int get_word(YYSTYPE *lvalp, FrtQParser *qp)
 {
     bool is_wild = false;
     int len;
@@ -2128,7 +2128,7 @@ get_word_done:
  * If no special characters or tokens are found then yylex delegates to
  * +get_word+ which will fetch the next query-word.
  */
-static int yylex(YYSTYPE *lvalp, QParser *qp)
+static int yylex(YYSTYPE *lvalp, FrtQParser *qp)
 {
     char c, nc;
 
@@ -2171,7 +2171,7 @@ static int yylex(YYSTYPE *lvalp, QParser *qp)
  * It is responsible for clearing any memory that was allocated during the
  * parsing process.
  */
-static int yyerror(QParser *qp, char const *msg)
+static int yyerror(FrtQParser *qp, char const *msg)
 {
     qp->destruct = true;
     if (!qp->handle_parse_errors) {
@@ -2202,7 +2202,7 @@ static int yyerror(QParser *qp, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static FrtTokenStream *get_cached_ts(QParser *qp, FrtSymbol field, char *text)
+static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text)
 {
     FrtTokenStream *ts;
     if (hs_exists(qp->tokenized_fields, field)) {
@@ -2227,9 +2227,9 @@ static FrtTokenStream *get_cached_ts(QParser *qp, FrtSymbol field, char *text)
  * if 0 or 1 clauses are present to NULL or the actual query in the clause
  * respectively.
  */
-static Query *get_bool_q(BCArray *bca)
+static FrtQuery *get_bool_q(BCArray *bca)
 {
-    Query *q;
+    FrtQuery *q;
     const int clause_count = bca->size;
 
     if (clause_count == 0) {
@@ -2328,7 +2328,7 @@ static BCArray *add_or_cls(BCArray *bca, FrtBooleanClause *clause)
  * Add AND or OR clause to the BooleanClause array, depending on the default
  * clause type.
  */
-static BCArray *add_default_cls(QParser *qp, BCArray *bca,
+static BCArray *add_default_cls(FrtQParser *qp, BCArray *bca,
                                 FrtBooleanClause *clause)
 {
     if (qp->or_default) {
@@ -2356,7 +2356,7 @@ static void bca_destroy(BCArray *bca)
 /**
  * Turn a query into a BooleanClause for addition to a BooleanQuery.
  */
-static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur)
+static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur)
 {
     if (q) {
         return bc_new(q, occur);
@@ -2374,9 +2374,9 @@ static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur)
  * what we want as it will match any documents containing the same email
  * address and tokenized with the same tokenizer.
  */
-static Query *get_term_q(QParser *qp, FrtSymbol field, char *word)
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
 {
-    Query *q;
+    FrtQuery *q;
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
@@ -2388,7 +2388,7 @@ static Query *get_term_q(QParser *qp, FrtSymbol field, char *word)
         if ((token = ts_next(stream)) != NULL) {
             /* Less likely case, destroy the term query and create a
              * phrase query instead */
-            Query *phq = phq_new(field);
+            FrtQuery *phq = phq_new(field);
             phq_add_term(phq, ((FrtTermQuery *)q)->term, 0);
             q->destroy_i(q);
             q = phq;
@@ -2396,7 +2396,7 @@ static Query *get_term_q(QParser *qp, FrtSymbol field, char *word)
                 if (token->pos_inc) {
                     phq_add_term(q, token->text, token->pos_inc);
                     /* add some slop since single term  was expected */
-                    ((PhraseQuery *)q)->slop++;
+                    ((FrtPhraseQuery *)q)->slop++;
                 }
                 else {
                     phq_append_multi_term(q, token->text);
@@ -2412,10 +2412,10 @@ static Query *get_term_q(QParser *qp, FrtSymbol field, char *word)
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static Query *get_fuzzy_q(QParser *qp, FrtSymbol field, char *word,
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
                           char *slop_str)
 {
-    Query *q;
+    FrtQuery *q;
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
@@ -2472,9 +2472,9 @@ static char *lower_str(char *str)
  * optimized to a MatchAllQuery if the pattern is '*' or a PrefixQuery if the
  * only wild char (*, ?) in the pattern is a '*' at the end of the pattern.
  */
-static Query *get_wild_q(QParser *qp, FrtSymbol field, char *pattern)
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
 {
-    Query *q;
+    FrtQuery *q;
     bool is_prefix = false;
     char *p;
     int len = (int)strlen(pattern);
@@ -2516,7 +2516,7 @@ static Query *get_wild_q(QParser *qp, FrtSymbol field, char *pattern)
 /**
  * Adds another field to the top of the FieldStack.
  */
-static HashSet *add_field(QParser *qp, const char *field_name)
+static HashSet *add_field(FrtQParser *qp, const char *field_name)
 {
     if (qp->allow_any_fields || hs_exists(qp->all_fields, field_name)) {
         hs_add(qp->fields, (FrtSymbol)strdup(field_name));
@@ -2529,7 +2529,7 @@ static HashSet *add_field(QParser *qp, const char *field_name)
  * will push a new FieldStack object onto the stack and add +field+ to its
  * fields set.
  */
-static HashSet *first_field(QParser *qp, const char *field)
+static HashSet *first_field(FrtQParser *qp, const char *field)
 {
     qp_push_fields(qp, hs_new_str(NULL), true);
     return add_field(qp, field);
@@ -2556,7 +2556,7 @@ static Phrase *ph_new()
 {
   Phrase *self = FRT_ALLOC_AND_ZERO(Phrase);
   self->capa = PHRASE_INIT_CAPA;
-  self->positions = FRT_ALLOC_AND_ZERO_N(PhrasePosition, PHRASE_INIT_CAPA);
+  self->positions = FRT_ALLOC_AND_ZERO_N(FrtPhrasePosition, PHRASE_INIT_CAPA);
   return self;
 }
 
@@ -2582,10 +2582,10 @@ static Phrase *ph_add_word(Phrase *self, char *word)
 {
     if (word) {
         const int index = self->size;
-        PhrasePosition *pp = self->positions;
+        FrtPhrasePosition *pp = self->positions;
         if (index >= self->capa) {
             self->capa <<= 1;
-            FRT_REALLOC_N(pp, PhrasePosition, self->capa);
+            FRT_REALLOC_N(pp, FrtPhrasePosition, self->capa);
             self->positions = pp;
         }
         pp[index].pos = self->pos_inc;
@@ -2607,7 +2607,7 @@ static Phrase *ph_add_word(Phrase *self, char *word)
 static Phrase *ph_add_multi_word(Phrase *self, char *word)
 {
     const int index = self->size - 1;
-    PhrasePosition *pp = self->positions;
+    FrtPhrasePosition *pp = self->positions;
 
     if (word) {
         ary_push(pp[index].terms, estrdup(word));
@@ -2643,11 +2643,11 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static Query *get_phrase_query(QParser *qp, FrtSymbol field,
+static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                                Phrase *phrase, char *slop_str)
 {
     const int pos_cnt = phrase->size;
-    Query *q = NULL;
+    FrtQuery *q = NULL;
 
     if (pos_cnt == 1) {
         char **words = phrase->positions[0].terms;
@@ -2702,14 +2702,14 @@ static Query *get_phrase_query(QParser *qp, FrtSymbol field,
         if (slop_str) {
             int slop;
             sscanf(slop_str,"%d",&slop);
-            ((PhraseQuery *)q)->slop = slop;
+            ((FrtPhraseQuery *)q)->slop = slop;
         }
 
         for (i = 0; i < pos_cnt; i++) {
             char **words = phrase->positions[i].terms;
             const int word_count = ary_size(words);
             if (pos_inc) {
-                ((PhraseQuery *)q)->slop++;
+                ((FrtPhraseQuery *)q)->slop++;
             }
             pos_inc += phrase->positions[i].pos + 1; /* Actually holds pos_inc*/
 
@@ -2722,7 +2722,7 @@ static Query *get_phrase_query(QParser *qp, FrtSymbol field,
                     }
                     else {
                         phq_append_multi_term(q, token->text);
-                        ((PhraseQuery *)q)->slop++;
+                        ((FrtPhraseQuery *)q)->slop++;
                     }
                     pos_inc = 0;
                 }
@@ -2755,9 +2755,9 @@ static Query *get_phrase_query(QParser *qp, FrtSymbol field,
  * the query parser as the all PhraseQuery didn't work well for this. Once the
  * PhraseQuery has been built the Phrase object needs to be destroyed.
  */
-static Query *get_phrase_q(QParser *qp, Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str)
 {
-    Query *volatile q = NULL;
+    FrtQuery *volatile q = NULL;
     FLDS(q, get_phrase_query(qp, field, phrase, slop_str));
     ph_destroy(phrase);
     return q;
@@ -2769,10 +2769,10 @@ static Query *get_phrase_q(QParser *qp, Phrase *phrase, char *slop_str)
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static Query *get_r_q(QParser *qp, FrtSymbol field, char *from, char *to,
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
                       bool inc_lower, bool inc_upper)
 {
-    Query *rq;
+    FrtQuery *rq;
     if (qp->wild_lower
         && (!qp->tokenized_fields || hs_exists(qp->tokenized_fields, field))) {
         if (from) {
@@ -2812,7 +2812,7 @@ static Query *get_r_q(QParser *qp, FrtSymbol field, char *from, char *to,
  * the bottom of the stack (ie the very first set of fields pushed onto the
  * stack).
  */
-static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
+static void qp_push_fields(FrtQParser *self, HashSet *fields, bool destroy)
 {
     FrtFieldStack *fs = FRT_ALLOC(FrtFieldStack);
 
@@ -2829,7 +2829,7 @@ static void qp_push_fields(QParser *self, HashSet *fields, bool destroy)
  * get called when query modified by a field modifier ("field1|field2:") has
  * been fully parsed and the field specifier no longer applies.
  */
-static void qp_pop_fields(QParser *self)
+static void qp_pop_fields(FrtQParser *self)
 {
     FrtFieldStack *fs = self->fields_top;
 
@@ -2846,7 +2846,7 @@ static void qp_pop_fields(QParser *self)
 /**
  * Free all memory allocated by the QueryParser.
  */
-void qp_destroy(QParser *self)
+void qp_destroy(FrtQParser *self)
 {
     if (self->tokenized_fields != self->all_fields) {
         hs_destroy(self->tokenized_fields);
@@ -2871,9 +2871,9 @@ void qp_destroy(QParser *self)
  * Not also that this method ensures that all fields that exist in
  * +def_fields+ must also exist in +all_fields+. This should make sense.
  */
-QParser *qp_new(FrtAnalyzer *analyzer)
+FrtQParser *qp_new(FrtAnalyzer *analyzer)
 {
-    QParser *self = FRT_ALLOC(QParser);
+    FrtQParser *self = FRT_ALLOC(FrtQParser);
     self->or_default = true;
     self->wild_lower = true;
     self->clean_str = false;
@@ -2900,7 +2900,7 @@ QParser *qp_new(FrtAnalyzer *analyzer)
     return self;
 }
 
-void qp_add_field(QParser *self,
+void qp_add_field(FrtQParser *self,
                   FrtSymbol field,
                   bool is_default,
                   bool is_tokenized)
@@ -3034,9 +3034,9 @@ char *qp_clean_str(char *str)
  * analyzer. It then turns these tokens (if any) into a boolean query. If it
  * fails to find any tokens, this method will return NULL.
  */
-static Query *qp_get_bad_query(QParser *qp, char *str)
+static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
 {
-    Query *volatile q = NULL;
+    FrtQuery *volatile q = NULL;
     qp->recovering = true;
     assert(qp->fields_top->next == NULL);
     FLDS(q, get_term_q(qp, field, str));
@@ -3053,9 +3053,9 @@ static Query *qp_get_bad_query(QParser *qp, char *str)
 
 extern VALUE cQueryParseException;
 
-Query *qp_parse(QParser *self, char *qstr)
+FrtQuery *qp_parse(FrtQParser *self, char *qstr)
 {
-    Query *result = NULL;
+    FrtQuery *result = NULL;
     mutex_lock(&self->mutex);
     /* if qp->fields_top->next is not NULL we have a left over field-stack
      * object that was not popped during the last query parse */

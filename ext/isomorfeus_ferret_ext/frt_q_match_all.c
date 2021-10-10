@@ -91,7 +91,7 @@ static FrtExplanation *maw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     return expl;
 }
 
-static FrtWeight *maw_new(Query *query, FrtSearcher *searcher)
+static FrtWeight *maw_new(FrtQuery *query, FrtSearcher *searcher)
 {
     FrtWeight *self        = w_new(FrtWeight, query);
 
@@ -111,7 +111,7 @@ static FrtWeight *maw_new(Query *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-static char *maq_to_s(Query *self, FrtSymbol default_field)
+static char *maq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     (void)default_field;
     if (self->boost == 1.0) {
@@ -121,21 +121,21 @@ static char *maq_to_s(Query *self, FrtSymbol default_field)
     }
 }
 
-static unsigned long long maq_hash(Query *self)
+static unsigned long long maq_hash(FrtQuery *self)
 {
     (void)self;
     return 0;
 }
 
-static int maq_eq(Query *self, Query *o)
+static int maq_eq(FrtQuery *self, FrtQuery *o)
 {
     (void)self; (void)o;
     return true;
 }
 
-Query *maq_new()
+FrtQuery *maq_new()
 {
-    Query *self = q_new(Query);
+    FrtQuery *self = q_new(FrtQuery);
 
     self->type = MATCH_ALL_QUERY;
     self->to_s = &maq_to_s;

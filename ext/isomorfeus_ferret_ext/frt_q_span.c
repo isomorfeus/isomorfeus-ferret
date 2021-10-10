@@ -15,17 +15,17 @@
 
 #define SpQ(query) ((FrtSpanQuery *)(query))
 
-static unsigned long long spanq_hash(Query *self)
+static unsigned long long spanq_hash(FrtQuery *self)
 {
     return SpQ(self)->field ? sym_hash(SpQ(self)->field) : 0;
 }
 
-static int spanq_eq(Query *self, Query *o)
+static int spanq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(SpQ(self)->field, SpQ(o)->field) == 0);
 }
 
-static void spanq_destroy_i(Query *self)
+static void spanq_destroy_i(FrtQuery *self)
 {
     q_destroy_i(self);
 }
@@ -144,7 +144,7 @@ static FrtTermDocEnum *spanq_ir_term_positions(IndexReader *ir)
     return tde;
 }
 
-static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
+static MatchVector *spanq_get_matchv_i(FrtQuery *self, MatchVector *mv,
                                        FrtTermVector *tv)
 {
     if (strcmp(SpQ(self)->field, tv->field) == 0) {
@@ -286,7 +286,7 @@ static FrtScorer *spansc_new(FrtWeight *weight, IndexReader *ir)
     FrtScorer *self = NULL;
     const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
     if (field_num >= 0) {
-        Query *spanq = weight->query;
+        FrtQuery *spanq = weight->query;
         self = scorer_new(SpanScorer, weight->similarity);
 
         SpSc(self)->first_time  = true;
@@ -418,7 +418,7 @@ static void spante_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spante_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spante_new(FrtQuery *query, IndexReader *ir)
 {
     char *term = SpTQ(query)->term;
     FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanTermEnum);
@@ -510,7 +510,7 @@ static TermPosEnumWrapper *tpew_new(const char *term, FrtTermDocEnum *tpe)
 typedef struct SpanMultiTermEnum
 {
     FrtSpanEnum             super;
-    PriorityQueue       *tpew_pq;
+    FrtPriorityQueue       *tpew_pq;
     TermPosEnumWrapper **tpews;
     int                  tpew_cnt;
     int                  pos;
@@ -522,7 +522,7 @@ static bool spanmte_next(FrtSpanEnum *self)
     int curr_doc, curr_pos;
     TermPosEnumWrapper *tpew;
     SpanMultiTermEnum *mte = SpMTEn(self);
-    PriorityQueue *tpew_pq = mte->tpew_pq;
+    FrtPriorityQueue *tpew_pq = mte->tpew_pq;
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
@@ -558,7 +558,7 @@ static bool spanmte_next(FrtSpanEnum *self)
 static bool spanmte_skip_to(FrtSpanEnum *self, int target)
 {
     SpanMultiTermEnum *mte = SpMTEn(self);
-    PriorityQueue *tpew_pq = mte->tpew_pq;
+    FrtPriorityQueue *tpew_pq = mte->tpew_pq;
     TermPosEnumWrapper *tpew;
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
@@ -613,7 +613,7 @@ static void spanmte_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanmte_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanmte_new(FrtQuery *query, IndexReader *ir)
 {
     FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanMultiTermEnum);
     SpanMultiTermEnum *smte = SpMTEn(self);
@@ -720,7 +720,7 @@ static void spanfe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanfe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanfe_new(FrtQuery *query, IndexReader *ir)
 {
     FrtSpanEnum *self          = (FrtSpanEnum *)FRT_ALLOC(SpanFirstEnum);
     FrtSpanFirstQuery *sfq     = SpFQ(query);
@@ -750,7 +750,7 @@ static FrtSpanEnum *spanfe_new(Query *query, IndexReader *ir)
 typedef struct SpanOrEnum
 {
     FrtSpanEnum        super;
-    PriorityQueue  *queue;
+    FrtPriorityQueue  *queue;
     FrtSpanEnum      **span_enums;
     int             s_cnt;
     bool            first_time : 1;
@@ -897,9 +897,9 @@ static void spanoe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanoe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanoe_new(FrtQuery *query, IndexReader *ir)
 {
-    Query *clause;
+    FrtQuery *clause;
     FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanOrEnum);
     FrtSpanOrQuery *soq    = SpOQ(query);
     int i;
@@ -1203,10 +1203,10 @@ static void spanne_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanne_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanne_new(FrtQuery *query, IndexReader *ir)
 {
     int i;
-    Query *clause;
+    FrtQuery *clause;
     FrtSpanEnum *self          = (FrtSpanEnum *)FRT_ALLOC(SpanNearEnum);
     FrtSpanNearQuery *snq      = SpNQ(query);
 
@@ -1350,7 +1350,7 @@ static void spanxe_destroy(FrtSpanEnum *self)
     free(self);
 }
 
-static FrtSpanEnum *spanxe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanxe_new(FrtQuery *query, IndexReader *ir)
 {
     FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanNotEnum);
     SpanNotEnum *sxe    = SpXEn(self);
@@ -1499,7 +1499,7 @@ static void spanw_destroy(FrtWeight *self)
     w_destroy(self);
 }
 
-static FrtWeight *spanw_new(Query *query, FrtSearcher *searcher)
+static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)
 {
     HashSetEntry *hse;
     FrtWeight *self        = w_new(SpanWeight, query);
@@ -1527,7 +1527,7 @@ static FrtWeight *spanw_new(Query *query, FrtSearcher *searcher)
  * FrtSpanTermQuery
  *****************************************************************************/
 
-static char *spantq_to_s(Query *self, FrtSymbol default_field)
+static char *spantq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     if (default_field && (strcmp(default_field, SpQ(self)->field) == 0)) {
         return strfmt("span_terms(%s)", SpTQ(self)->term);
@@ -1537,37 +1537,37 @@ static char *spantq_to_s(Query *self, FrtSymbol default_field)
     }
 }
 
-static void spantq_destroy_i(Query *self)
+static void spantq_destroy_i(FrtQuery *self)
 {
     free(SpTQ(self)->term);
     spanq_destroy_i(self);
 }
 
-static void spantq_extract_terms(Query *self, HashSet *terms)
+static void spantq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     hs_add(terms, term_new(SpQ(self)->field, SpTQ(self)->term));
 }
 
-static HashSet *spantq_get_terms(Query *self)
+static HashSet *spantq_get_terms(FrtQuery *self)
 {
     HashSet *terms = hs_new_str(&free);
     hs_add(terms, estrdup(SpTQ(self)->term));
     return terms;
 }
 
-static unsigned long long spantq_hash(Query *self)
+static unsigned long long spantq_hash(FrtQuery *self)
 {
     return spanq_hash(self) ^ str_hash(SpTQ(self)->term);
 }
 
-static int spantq_eq(Query *self, Query *o)
+static int spantq_eq(FrtQuery *self, FrtQuery *o)
 {
     return spanq_eq(self, o) && strcmp(SpTQ(self)->term, SpTQ(o)->term) == 0;
 }
 
-Query *spantq_new(FrtSymbol field, const char *term)
+FrtQuery *spantq_new(FrtSymbol field, const char *term)
 {
-    Query *self             = q_new(FrtSpanTermQuery);
+    FrtQuery *self             = q_new(FrtSpanTermQuery);
 
     SpTQ(self)->term        = estrdup(term);
     SpQ(self)->field        = field;
@@ -1589,7 +1589,7 @@ Query *spantq_new(FrtSymbol field, const char *term)
  * SpanMultiTermQuery
  *****************************************************************************/
 
-static char *spanmtq_to_s(Query *self, FrtSymbol field)
+static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field)
 {
     char *terms = NULL, *p;
     int len = 3, i;
@@ -1617,7 +1617,7 @@ static char *spanmtq_to_s(Query *self, FrtSymbol field)
     return p;
 }
 
-static void spanmtq_destroy_i(Query *self)
+static void spanmtq_destroy_i(FrtQuery *self)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
@@ -1628,7 +1628,7 @@ static void spanmtq_destroy_i(Query *self)
     spanq_destroy_i(self);
 }
 
-static void spanmtq_extract_terms(Query *self, HashSet *terms)
+static void spanmtq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
@@ -1637,7 +1637,7 @@ static void spanmtq_extract_terms(Query *self, HashSet *terms)
     }
 }
 
-static HashSet *spanmtq_get_terms(Query *self)
+static HashSet *spanmtq_get_terms(FrtQuery *self)
 {
     HashSet *terms = hs_new_str(&free);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
@@ -1648,7 +1648,7 @@ static HashSet *spanmtq_get_terms(Query *self)
     return terms;
 }
 
-static unsigned long long spanmtq_hash(Query *self)
+static unsigned long long spanmtq_hash(FrtQuery *self)
 {
     unsigned long long hash = spanq_hash(self);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
@@ -1659,7 +1659,7 @@ static unsigned long long spanmtq_hash(Query *self)
     return hash;
 }
 
-static int spanmtq_eq(Query *self, Query *o)
+static int spanmtq_eq(FrtQuery *self, FrtQuery *o)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     FrtSpanMultiTermQuery *smtqo = SpMTQ(o);
@@ -1672,9 +1672,9 @@ static int spanmtq_eq(Query *self, Query *o)
     return true;;
 }
 
-Query *spanmtq_new_conf(FrtSymbol field, int max_terms)
+FrtQuery *spanmtq_new_conf(FrtSymbol field, int max_terms)
 {
-    Query *self             = q_new(FrtSpanMultiTermQuery);
+    FrtQuery *self             = q_new(FrtSpanMultiTermQuery);
 
     SpMTQ(self)->terms      = FRT_ALLOC_N(char *, max_terms);
     SpMTQ(self)->term_cnt   = 0;
@@ -1696,12 +1696,12 @@ Query *spanmtq_new_conf(FrtSymbol field, int max_terms)
     return self;
 }
 
-Query *spanmtq_new(FrtSymbol field)
+FrtQuery *spanmtq_new(FrtSymbol field)
 {
     return spanmtq_new_conf(field, SPAN_MULTI_TERM_QUERY_CAPA);
 }
 
-void spanmtq_add_term(Query *self, const char *term)
+void spanmtq_add_term(FrtQuery *self, const char *term)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     if (smtq->term_cnt < smtq->term_capa) {
@@ -1715,29 +1715,29 @@ void spanmtq_add_term(Query *self, const char *term)
  *
  *****************************************************************************/
 
-static char *spanfq_to_s(Query *self, FrtSymbol field)
+static char *spanfq_to_s(FrtQuery *self, FrtSymbol field)
 {
-    Query *match = SpFQ(self)->match;
+    FrtQuery *match = SpFQ(self)->match;
     char *q_str = match->to_s(match, field);
     char *res = strfmt("span_first(%s, %d)", q_str, SpFQ(self)->end);
     free(q_str);
     return res;
 }
 
-static void spanfq_extract_terms(Query *self, HashSet *terms)
+static void spanfq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     SpFQ(self)->match->extract_terms(SpFQ(self)->match, terms);
 }
 
-static HashSet *spanfq_get_terms(Query *self)
+static HashSet *spanfq_get_terms(FrtQuery *self)
 {
     FrtSpanFirstQuery *sfq = SpFQ(self);
     return SpQ(sfq->match)->get_terms(sfq->match);
 }
 
-static Query *spanfq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *spanfq_rewrite(FrtQuery *self, IndexReader *ir)
 {
-    Query *q, *rq;
+    FrtQuery *q, *rq;
 
     q = SpFQ(self)->match;
     rq = q->rewrite(q, ir);
@@ -1748,19 +1748,19 @@ static Query *spanfq_rewrite(Query *self, IndexReader *ir)
     return self;                    /* no clauses rewrote */
 }
 
-static void spanfq_destroy_i(Query *self)
+static void spanfq_destroy_i(FrtQuery *self)
 {
     q_deref(SpFQ(self)->match);
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanfq_hash(Query *self)
+static unsigned long long spanfq_hash(FrtQuery *self)
 {
     return spanq_hash(self) ^ SpFQ(self)->match->hash(SpFQ(self)->match)
         ^ SpFQ(self)->end;
 }
 
-static int spanfq_eq(Query *self, Query *o)
+static int spanfq_eq(FrtQuery *self, FrtQuery *o)
 {
     FrtSpanFirstQuery *sfq1 = SpFQ(self);
     FrtSpanFirstQuery *sfq2 = SpFQ(o);
@@ -1768,9 +1768,9 @@ static int spanfq_eq(Query *self, Query *o)
         && (sfq1->end == sfq2->end);
 }
 
-Query *spanfq_new_nr(Query *match, int end)
+FrtQuery *spanfq_new_nr(FrtQuery *match, int end)
 {
-    Query *self = q_new(FrtSpanFirstQuery);
+    FrtQuery *self = q_new(FrtSpanFirstQuery);
 
     SpFQ(self)->match       = match;
     SpFQ(self)->end         = end;
@@ -1792,7 +1792,7 @@ Query *spanfq_new_nr(Query *match, int end)
     return self;
 }
 
-Query *spanfq_new(Query *match, int end)
+FrtQuery *spanfq_new(FrtQuery *match, int end)
 {
     FRT_REF(match);
     return spanfq_new_nr(match, end);
@@ -1804,7 +1804,7 @@ Query *spanfq_new(Query *match, int end)
  *
  *****************************************************************************/
 
-static char *spanoq_to_s(Query *self, FrtSymbol field)
+static char *spanoq_to_s(FrtQuery *self, FrtSymbol field)
 {
     int i;
     FrtSpanOrQuery *soq = SpOQ(self);
@@ -1812,7 +1812,7 @@ static char *spanoq_to_s(Query *self, FrtSymbol field)
     char **q_strs = FRT_ALLOC_N(char *, soq->c_cnt);
     int len = 50;
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *clause = soq->clauses[i];
+        FrtQuery *clause = soq->clauses[i];
         q_strs[i] = clause->to_s(clause, field);
         len += strlen(q_strs[i])  + 2;
     }
@@ -1831,23 +1831,23 @@ static char *spanoq_to_s(Query *self, FrtSymbol field)
     return res;
 }
 
-static void spanoq_extract_terms(Query *self, HashSet *terms)
+static void spanoq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *clause = soq->clauses[i];
+        FrtQuery *clause = soq->clauses[i];
         clause->extract_terms(clause, terms);
     }
 }
 
-static HashSet *spanoq_get_terms(Query *self)
+static HashSet *spanoq_get_terms(FrtQuery *self)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     HashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *clause = soq->clauses[i];
+        FrtQuery *clause = soq->clauses[i];
         HashSet *sub_terms = SpQ(clause)->get_terms(clause);
         hs_merge(terms, sub_terms);
     }
@@ -1855,26 +1855,26 @@ static HashSet *spanoq_get_terms(Query *self)
     return terms;
 }
 
-static FrtSpanEnum *spanoq_get_spans(Query *self, IndexReader *ir)
+static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, IndexReader *ir)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     if (soq->c_cnt == 1) {
-        Query *q = soq->clauses[0];
+        FrtQuery *q = soq->clauses[0];
         return SpQ(q)->get_spans(q, ir);
     }
 
     return spanoe_new(self, ir);
 }
 
-static Query *spanoq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *spanoq_rewrite(FrtQuery *self, IndexReader *ir)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
 
     /* replace clauses with their rewritten queries */
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *clause = soq->clauses[i];
-        Query *rewritten = clause->rewrite(clause, ir);
+        FrtQuery *clause = soq->clauses[i];
+        FrtQuery *rewritten = clause->rewrite(clause, ir);
         q_deref(clause);
         soq->clauses[i] = rewritten;
     }
@@ -1883,13 +1883,13 @@ static Query *spanoq_rewrite(Query *self, IndexReader *ir)
     return self;
 }
 
-static void spanoq_destroy_i(Query *self)
+static void spanoq_destroy_i(FrtQuery *self)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
 
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *clause = soq->clauses[i];
+        FrtQuery *clause = soq->clauses[i];
         q_deref(clause);
     }
     free(soq->clauses);
@@ -1897,23 +1897,23 @@ static void spanoq_destroy_i(Query *self)
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanoq_hash(Query *self)
+static unsigned long long spanoq_hash(FrtQuery *self)
 {
     int i;
     unsigned long long hash = spanq_hash(self);
     FrtSpanOrQuery *soq = SpOQ(self);
 
     for (i = 0; i < soq->c_cnt; i++) {
-        Query *q = soq->clauses[i];
+        FrtQuery *q = soq->clauses[i];
         hash ^= q->hash(q);
     }
     return hash;
 }
 
-static int spanoq_eq(Query *self, Query *o)
+static int spanoq_eq(FrtQuery *self, FrtQuery *o)
 {
     int i;
-    Query *q1, *q2;
+    FrtQuery *q1, *q2;
     FrtSpanOrQuery *soq1 = SpOQ(self);
     FrtSpanOrQuery *soq2 = SpOQ(o);
 
@@ -1930,10 +1930,10 @@ static int spanoq_eq(Query *self, Query *o)
     return true;
 }
 
-Query *spanoq_new()
+FrtQuery *spanoq_new()
 {
-    Query *self             = q_new(FrtSpanOrQuery);
-    SpOQ(self)->clauses     = FRT_ALLOC_N(Query *, CLAUSE_INIT_CAPA);
+    FrtQuery *self             = q_new(FrtSpanOrQuery);
+    SpOQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpOQ(self)->c_capa      = CLAUSE_INIT_CAPA;
 
     SpQ(self)->field        = NULL;
@@ -1953,7 +1953,7 @@ Query *spanoq_new()
     return self;
 }
 
-Query *spanoq_add_clause_nr(Query *self, Query *clause)
+FrtQuery *spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
 {
     const int curr_index = SpOQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
@@ -1970,13 +1970,13 @@ Query *spanoq_add_clause_nr(Query *self, Query *clause)
     }
     if (curr_index >= SpOQ(self)->c_capa) {
         SpOQ(self)->c_capa <<= 1;
-        FRT_REALLOC_N(SpOQ(self)->clauses, Query *, SpOQ(self)->c_capa);
+        FRT_REALLOC_N(SpOQ(self)->clauses, FrtQuery *, SpOQ(self)->c_capa);
     }
     SpOQ(self)->clauses[curr_index] = clause;
     return clause;
 }
 
-Query *spanoq_add_clause(Query *self, Query *clause)
+FrtQuery *spanoq_add_clause(FrtQuery *self, FrtQuery *clause)
 {
     FRT_REF(clause);
     return spanoq_add_clause_nr(self, clause);
@@ -1988,7 +1988,7 @@ Query *spanoq_add_clause(Query *self, Query *clause)
  *
  *****************************************************************************/
 
-static char *spannq_to_s(Query *self, FrtSymbol field)
+static char *spannq_to_s(FrtQuery *self, FrtSymbol field)
 {
     int i;
     FrtSpanNearQuery *snq = SpNQ(self);
@@ -1996,7 +1996,7 @@ static char *spannq_to_s(Query *self, FrtSymbol field)
     char **q_strs = FRT_ALLOC_N(char *, snq->c_cnt);
     int len = 50;
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *clause = snq->clauses[i];
+        FrtQuery *clause = snq->clauses[i];
         q_strs[i] = clause->to_s(clause, field);
         len += strlen(q_strs[i]);
     }
@@ -2015,23 +2015,23 @@ static char *spannq_to_s(Query *self, FrtSymbol field)
     return res;
 }
 
-static void spannq_extract_terms(Query *self, HashSet *terms)
+static void spannq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *clause = snq->clauses[i];
+        FrtQuery *clause = snq->clauses[i];
         clause->extract_terms(clause, terms);
     }
 }
 
-static HashSet *spannq_get_terms(Query *self)
+static HashSet *spannq_get_terms(FrtQuery *self)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
     HashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *clause = snq->clauses[i];
+        FrtQuery *clause = snq->clauses[i];
         HashSet *sub_terms = SpQ(clause)->get_terms(clause);
         hs_merge(terms, sub_terms);
     }
@@ -2039,25 +2039,25 @@ static HashSet *spannq_get_terms(Query *self)
     return terms;
 }
 
-static FrtSpanEnum *spannq_get_spans(Query *self, IndexReader *ir)
+static FrtSpanEnum *spannq_get_spans(FrtQuery *self, IndexReader *ir)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
 
     if (snq->c_cnt == 1) {
-        Query *q = snq->clauses[0];
+        FrtQuery *q = snq->clauses[0];
         return SpQ(q)->get_spans(q, ir);
     }
 
     return spanne_new(self, ir);
 }
 
-static Query *spannq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *spannq_rewrite(FrtQuery *self, IndexReader *ir)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *clause = snq->clauses[i];
-        Query *rewritten = clause->rewrite(clause, ir);
+        FrtQuery *clause = snq->clauses[i];
+        FrtQuery *rewritten = clause->rewrite(clause, ir);
         q_deref(clause);
         snq->clauses[i] = rewritten;
     }
@@ -2066,13 +2066,13 @@ static Query *spannq_rewrite(Query *self, IndexReader *ir)
     return self;
 }
 
-static void spannq_destroy(Query *self)
+static void spannq_destroy(FrtQuery *self)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
 
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *clause = snq->clauses[i];
+        FrtQuery *clause = snq->clauses[i];
         q_deref(clause);
     }
     free(snq->clauses);
@@ -2080,23 +2080,23 @@ static void spannq_destroy(Query *self)
     spanq_destroy_i(self);
 }
 
-static unsigned long long spannq_hash(Query *self)
+static unsigned long long spannq_hash(FrtQuery *self)
 {
     int i;
     unsigned long long hash = spanq_hash(self);
     FrtSpanNearQuery *snq = SpNQ(self);
 
     for (i = 0; i < snq->c_cnt; i++) {
-        Query *q = snq->clauses[i];
+        FrtQuery *q = snq->clauses[i];
         hash ^= q->hash(q);
     }
     return ((hash ^ snq->slop) << 1) | snq->in_order;
 }
 
-static int spannq_eq(Query *self, Query *o)
+static int spannq_eq(FrtQuery *self, FrtQuery *o)
 {
     int i;
-    Query *q1, *q2;
+    FrtQuery *q1, *q2;
     FrtSpanNearQuery *snq1 = SpNQ(self);
     FrtSpanNearQuery *snq2 = SpNQ(o);
     if (! spanq_eq(self, o)
@@ -2117,11 +2117,11 @@ static int spannq_eq(Query *self, Query *o)
     return true;
 }
 
-Query *spannq_new(int slop, bool in_order)
+FrtQuery *spannq_new(int slop, bool in_order)
 {
-    Query *self             = q_new(FrtSpanNearQuery);
+    FrtQuery *self             = q_new(FrtSpanNearQuery);
 
-    SpNQ(self)->clauses     = FRT_ALLOC_N(Query *, CLAUSE_INIT_CAPA);
+    SpNQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpNQ(self)->c_capa      = CLAUSE_INIT_CAPA;
     SpNQ(self)->slop        = slop;
     SpNQ(self)->in_order    = in_order;
@@ -2143,7 +2143,7 @@ Query *spannq_new(int slop, bool in_order)
     return self;
 }
 
-Query *spannq_add_clause_nr(Query *self, Query *clause)
+FrtQuery *spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
 {
     const int curr_index = SpNQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
@@ -2160,13 +2160,13 @@ Query *spannq_add_clause_nr(Query *self, Query *clause)
     }
     if (curr_index >= SpNQ(self)->c_capa) {
         SpNQ(self)->c_capa <<= 1;
-        FRT_REALLOC_N(SpNQ(self)->clauses, Query *, SpNQ(self)->c_capa);
+        FRT_REALLOC_N(SpNQ(self)->clauses, FrtQuery *, SpNQ(self)->c_capa);
     }
     SpNQ(self)->clauses[curr_index] = clause;
     return clause;
 }
 
-Query *spannq_add_clause(Query *self, Query *clause)
+FrtQuery *spannq_add_clause(FrtQuery *self, FrtQuery *clause)
 {
     FRT_REF(clause);
     return spannq_add_clause_nr(self, clause);
@@ -2178,7 +2178,7 @@ Query *spannq_add_clause(Query *self, Query *clause)
  *
  *****************************************************************************/
 
-static char *spanxq_to_s(Query *self, FrtSymbol field)
+static char *spanxq_to_s(FrtQuery *self, FrtSymbol field)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
     char *inc_s = sxq->inc->to_s(sxq->inc, field);
@@ -2190,20 +2190,20 @@ static char *spanxq_to_s(Query *self, FrtSymbol field)
     return res;
 }
 
-static void spanxq_extract_terms(Query *self, HashSet *terms)
+static void spanxq_extract_terms(FrtQuery *self, HashSet *terms)
 {
     SpXQ(self)->inc->extract_terms(SpXQ(self)->inc, terms);
 }
 
-static HashSet *spanxq_get_terms(Query *self)
+static HashSet *spanxq_get_terms(FrtQuery *self)
 {
     return SpQ(SpXQ(self)->inc)->get_terms(SpXQ(self)->inc);
 }
 
-static Query *spanxq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *spanxq_rewrite(FrtQuery *self, IndexReader *ir)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
-    Query *q, *rq;
+    FrtQuery *q, *rq;
 
     /* rewrite inclusive query */
     q = sxq->inc;
@@ -2221,7 +2221,7 @@ static Query *spanxq_rewrite(Query *self, IndexReader *ir)
     return self;
 }
 
-static void spanxq_destroy(Query *self)
+static void spanxq_destroy(FrtQuery *self)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
 
@@ -2231,14 +2231,14 @@ static void spanxq_destroy(Query *self)
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanxq_hash(Query *self)
+static unsigned long long spanxq_hash(FrtQuery *self)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
     return spanq_hash(self) ^ sxq->inc->hash(sxq->inc)
         ^ sxq->exc->hash(sxq->exc);
 }
 
-static int spanxq_eq(Query *self, Query *o)
+static int spanxq_eq(FrtQuery *self, FrtQuery *o)
 {
     FrtSpanNotQuery *sxq1 = SpXQ(self);
     FrtSpanNotQuery *sxq2 = SpXQ(o);
@@ -2247,9 +2247,9 @@ static int spanxq_eq(Query *self, Query *o)
 }
 
 
-Query *spanxq_new_nr(Query *inc, Query *exc)
+FrtQuery *spanxq_new_nr(FrtQuery *inc, FrtQuery *exc)
 {
-    Query *self;
+    FrtQuery *self;
     if (strcmp(SpQ(inc)->field, SpQ(exc)->field) != 0) {
         rb_raise(rb_eArgError, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" along with a "
@@ -2278,7 +2278,7 @@ Query *spanxq_new_nr(Query *inc, Query *exc)
     return self;
 }
 
-Query *spanxq_new(Query *inc, Query *exc)
+FrtQuery *spanxq_new(FrtQuery *inc, FrtQuery *exc)
 {
     FRT_REF(inc);
     FRT_REF(exc);
@@ -2300,7 +2300,7 @@ Query *spanxq_new(Query *inc, Query *exc)
 
 #define SpPfxQ(query) ((FrtSpanPrefixQuery *)(query))
 
-static char *spanprq_to_s(Query *self, FrtSymbol default_field)
+static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *prefix = SpPfxQ(self)->prefix;
@@ -2323,10 +2323,10 @@ static char *spanprq_to_s(Query *self, FrtSymbol default_field)
     return buffer;
 }
 
-static Query *spanprq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *spanprq_rewrite(FrtQuery *self, IndexReader *ir)
 {
     const int field_num = fis_get_field_num(ir->fis, SpQ(self)->field);
-    Query *volatile q = spanmtq_new_conf(SpQ(self)->field, SpPfxQ(self)->max_terms);
+    FrtQuery *volatile q = spanmtq_new_conf(SpQ(self)->field, SpPfxQ(self)->max_terms);
     q->boost = self->boost;        /* set the boost */
 
     if (field_num >= 0) {
@@ -2350,26 +2350,26 @@ static Query *spanprq_rewrite(Query *self, IndexReader *ir)
     return q;
 }
 
-static void spanprq_destroy(Query *self)
+static void spanprq_destroy(FrtQuery *self)
 {
     free(SpPfxQ(self)->prefix);
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanprq_hash(Query *self)
+static unsigned long long spanprq_hash(FrtQuery *self)
 {
     return sym_hash(SpQ(self)->field) ^ str_hash(SpPfxQ(self)->prefix);
 }
 
-static int spanprq_eq(Query *self, Query *o)
+static int spanprq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(SpPfxQ(self)->prefix, SpPfxQ(o)->prefix) == 0)
         && (strcmp(SpQ(self)->field, SpQ(o)->field) == 0);
 }
 
-Query *spanprq_new(FrtSymbol field, const char *prefix)
+FrtQuery *spanprq_new(FrtSymbol field, const char *prefix)
 {
-    Query *self = q_new(FrtSpanPrefixQuery);
+    FrtQuery *self = q_new(FrtSpanPrefixQuery);
 
     SpQ(self)->field        = field;
     SpPfxQ(self)->prefix    = estrdup(prefix);

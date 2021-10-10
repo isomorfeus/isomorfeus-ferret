@@ -1677,7 +1677,7 @@ void pfa_add_field(FrtAnalyzer *self,
 
 FrtAnalyzer *per_field_analyzer_new(FrtAnalyzer *default_a)
 {
-    FrtAnalyzer *a = (FrtAnalyzer *)ecalloc(sizeof(PerFieldAnalyzer));
+    FrtAnalyzer *a = (FrtAnalyzer *)ecalloc(sizeof(FrtPerFieldAnalyzer));
 
     PFA(a)->default_a = default_a;
     PFA(a)->dict = h_new_str(NULL, &pfa_sub_a_destroy_i);

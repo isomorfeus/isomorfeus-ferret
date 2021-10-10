@@ -441,25 +441,25 @@ FrtFilter *trfilt_new(FrtSymbol field,
  *
  *****************************************************************************/
 
-#define RQ(query) ((RangeQuery *)(query))
-typedef struct RangeQuery
+#define RQ(query) ((FrtRangeQuery *)(query))
+typedef struct FrtRangeQuery
 {
-    Query f;
+    FrtQuery f;
     Range *range;
-} RangeQuery;
+} FrtRangeQuery;
 
-static char *rq_to_s(Query *self, FrtSymbol field)
+static char *rq_to_s(FrtQuery *self, FrtSymbol field)
 {
     return range_to_s(RQ(self)->range, field, self->boost);
 }
 
-static void rq_destroy(Query *self)
+static void rq_destroy(FrtQuery *self)
 {
     range_destroy(RQ(self)->range);
     q_destroy_i(self);
 }
 
-static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
+static MatchVector *rq_get_matchv_i(FrtQuery *self, MatchVector *mv,
                                     FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
@@ -492,9 +492,9 @@ static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-static Query *rq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *rq_rewrite(FrtQuery *self, IndexReader *ir)
 {
-    Query *csq;
+    FrtQuery *csq;
     Range *r = RQ(self)->range;
     FrtFilter *filter = rfilt_new(r->field, r->lower_term, r->upper_term,
                                r->include_lower, r->include_upper);
@@ -502,38 +502,38 @@ static Query *rq_rewrite(Query *self, IndexReader *ir)
     csq = csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &rq_get_matchv_i;
-    return (Query *)csq;
+    return (FrtQuery *)csq;
 }
 
-static unsigned long long rq_hash(Query *self)
+static unsigned long long rq_hash(FrtQuery *self)
 {
     return range_hash(RQ(self)->range);
 }
 
-static int rq_eq(Query *self, Query *o)
+static int rq_eq(FrtQuery *self, FrtQuery *o)
 {
     return range_eq(RQ(self)->range, RQ(o)->range);
 }
 
-Query *rq_new_less(FrtSymbol field, const char *upper_term,
+FrtQuery *rq_new_less(FrtSymbol field, const char *upper_term,
                    bool include_upper)
 {
     return rq_new(field, NULL, upper_term, false, include_upper);
 }
 
-Query *rq_new_more(FrtSymbol field, const char *lower_term,
+FrtQuery *rq_new_more(FrtSymbol field, const char *lower_term,
                    bool include_lower)
 {
     return rq_new(field, lower_term, NULL, include_lower, false);
 }
 
-Query *rq_new(FrtSymbol field, const char *lower_term,
+FrtQuery *rq_new(FrtSymbol field, const char *lower_term,
               const char *upper_term, bool include_lower, bool include_upper)
 {
-    Query *self;
+    FrtQuery *self;
     Range *range            = range_new(field, lower_term, upper_term,
                                         include_lower, include_upper);
-    self                    = q_new(RangeQuery);
+    self                    = q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 
     self->type              = RANGE_QUERY;
@@ -569,7 +569,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
     }\
 }\
 
-static MatchVector *trq_get_matchv_i(Query *self, MatchVector *mv,
+static MatchVector *trq_get_matchv_i(FrtQuery *self, MatchVector *mv,
                                      FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
@@ -634,9 +634,9 @@ static MatchVector *trq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-static Query *trq_rewrite(Query *self, IndexReader *ir)
+static FrtQuery *trq_rewrite(FrtQuery *self, IndexReader *ir)
 {
-    Query *csq;
+    FrtQuery *csq;
     Range *r = RQ(self)->range;
     FrtFilter *filter = trfilt_new(r->field, r->lower_term, r->upper_term,
                                 r->include_lower, r->include_upper);
@@ -644,28 +644,28 @@ static Query *trq_rewrite(Query *self, IndexReader *ir)
     csq = csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &trq_get_matchv_i;
-    return (Query *)csq;
+    return (FrtQuery *)csq;
 }
 
-Query *trq_new_less(FrtSymbol field, const char *upper_term,
+FrtQuery *trq_new_less(FrtSymbol field, const char *upper_term,
                     bool include_upper)
 {
     return trq_new(field, NULL, upper_term, false, include_upper);
 }
 
-Query *trq_new_more(FrtSymbol field, const char *lower_term,
+FrtQuery *trq_new_more(FrtSymbol field, const char *lower_term,
                     bool include_lower)
 {
     return trq_new(field, lower_term, NULL, include_lower, false);
 }
 
-Query *trq_new(FrtSymbol field, const char *lower_term,
+FrtQuery *trq_new(FrtSymbol field, const char *lower_term,
                const char *upper_term, bool include_lower, bool include_upper)
 {
-    Query *self;
+    FrtQuery *self;
     Range *range            = trange_new(field, lower_term, upper_term,
                                          include_lower, include_upper);
-    self                    = q_new(RangeQuery);
+    self                    = q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 
     self->type              = TYPED_RANGE_QUERY;

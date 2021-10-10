@@ -20,9 +20,9 @@ static VALUE sym_use_keywords;
 static VALUE sym_use_typed_range_query;
 
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
-extern VALUE frb_get_q(Query *q);
+extern VALUE frb_get_q(FrtQuery *q);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
-extern Query *qp_parse(QParser *self, char *qstr);
+extern FrtQuery *qp_parse(FrtQParser *self, char *qstr);
 
 /****************************************************************************
  *
@@ -34,13 +34,13 @@ static void
 frb_qp_free(void *p)
 {
     object_del(p);
-    qp_destroy((QParser *)p);
+    qp_destroy((FrtQParser *)p);
 }
 
 static void
 frb_qp_mark(void *p)
 {
-    frb_gc_mark(((QParser *)p)->analyzer);
+    frb_gc_mark(((FrtQParser *)p)->analyzer);
 }
 
 static HashSet *
@@ -157,7 +157,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
     HashSet *def_fields = NULL;
     HashSet *all_fields = NULL;
     HashSet *tkz_fields = NULL;
-    QParser *qp;
+    FrtQParser *qp;
 
     if (rb_scan_args(argc, argv, "01", &roptions) > 0) {
         if (TYPE(roptions) == T_HASH) {
@@ -236,7 +236,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-#define GET_QP QParser *qp = (QParser *)DATA_PTR(self)
+#define GET_QP FrtQParser *qp = (FrtQParser *)DATA_PTR(self)
 /*
  *  call-seq:
  *     query_parser.parse(query_string) -> Query
@@ -250,7 +250,7 @@ frb_qp_parse(VALUE self, VALUE rstr)
     const char *volatile msg = NULL;
     volatile VALUE rq;
     GET_QP;
-    Query *q;
+    FrtQuery *q;
     rstr = rb_obj_as_string(rstr);
     FRT_TRY
         q = qp_parse(qp, rs2s(rstr));

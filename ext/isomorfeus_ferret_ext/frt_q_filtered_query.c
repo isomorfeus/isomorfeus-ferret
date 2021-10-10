@@ -137,7 +137,7 @@ static void fqw_destroy(FrtWeight *self)
     w_destroy(self);
 }
 
-static FrtWeight *fqw_new(Query *query, FrtWeight *sub_weight, FrtSimilarity *sim)
+static FrtWeight *fqw_new(FrtQuery *query, FrtWeight *sub_weight, FrtSimilarity *sim)
 {
     FrtWeight *self = w_new(FilteredQueryWeight, query);
 
@@ -164,7 +164,7 @@ static FrtWeight *fqw_new(Query *query, FrtWeight *sub_weight, FrtSimilarity *si
  *
  ***************************************************************************/
 
-static char *fq_to_s(Query *self, FrtSymbol default_field)
+static char *fq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     FrtFilteredQuery *fq = FQQ(self);
     char *filter_str = fq->filter->to_s(fq->filter);
@@ -182,23 +182,23 @@ static char *fq_to_s(Query *self, FrtSymbol default_field)
     return buffer;;
 }
 
-static void fq_destroy(Query *self)
+static void fq_destroy(FrtQuery *self)
 {
     filt_deref(FQQ(self)->filter);
     q_deref(FQQ(self)->query);
     q_destroy_i(self);
 }
 
-static FrtWeight *fq_new_weight(Query *self, FrtSearcher *searcher)
+static FrtWeight *fq_new_weight(FrtQuery *self, FrtSearcher *searcher)
 {
-    Query *sub_query = FQQ(self)->query;
+    FrtQuery *sub_query = FQQ(self)->query;
     return fqw_new(self, q_weight(sub_query, searcher),
                       searcher->similarity);
 }
 
-Query *fq_new(Query *query, FrtFilter *filter)
+FrtQuery *fq_new(FrtQuery *query, FrtFilter *filter)
 {
-    Query *self = q_new(FrtFilteredQuery);
+    FrtQuery *self = q_new(FrtFilteredQuery);
 
     FQQ(self)->query        = query;
     FQQ(self)->filter       = filter;

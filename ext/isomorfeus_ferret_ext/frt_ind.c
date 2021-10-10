@@ -202,7 +202,7 @@ bool index_is_deleted(Index *self, int doc_num)
 static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
                                             HashSet *key)
 {
-    Query *q;
+    FrtQuery *q;
     FrtTopDocs *td;
     FrtDocField *df;
     HashSetEntry *hse;
@@ -276,7 +276,7 @@ void index_add_array(Index *self, char **fields)
     doc_destroy(doc);
 }
 
-Query *index_get_query(Index *self, char *qstr)
+FrtQuery *index_get_query(Index *self, char *qstr)
 {
     int i;
     FrtFieldInfos *fis;
@@ -290,9 +290,9 @@ Query *index_get_query(Index *self, char *qstr)
 
 FrtTopDocs *index_search_str(Index *self, char *qstr, int first_doc,
                           int num_docs, FrtFilter *filter, FrtSort *sort,
-                          PostFilter *post_filter)
+                          FrtPostFilter *post_filter)
 {
-    Query *query;
+    FrtQuery *query;
     FrtTopDocs *td;
     query = index_get_query(self, qstr); /* will ensure_searcher is open */
     td = searcher_search(self->sea, query, first_doc, num_docs,
@@ -401,8 +401,8 @@ static void index_qdel_i(FrtSearcher *sea, int doc_num, float score, void *arg)
     ir_delete_doc(((IndexSearcher *)sea)->ir, doc_num);
 }
 
-void index_delete_query(Index *self, Query *q, FrtFilter *f,
-                        PostFilter *post_filter)
+void index_delete_query(Index *self, FrtQuery *q, FrtFilter *f,
+                        FrtPostFilter *post_filter)
 {
     mutex_lock(&self->mutex);
     {
@@ -414,14 +414,14 @@ void index_delete_query(Index *self, Query *q, FrtFilter *f,
 }
 
 void index_delete_query_str(Index *self, char *qstr, FrtFilter *f,
-                            PostFilter *post_filter)
+                            FrtPostFilter *post_filter)
 {
-    Query *q = index_get_query(self, qstr);
+    FrtQuery *q = index_get_query(self, qstr);
     index_delete_query(self, q, f, post_filter);
     q_deref(q);
 }
 
-FrtExplanation *index_explain(Index *self, Query *q, int doc_num)
+FrtExplanation *index_explain(Index *self, FrtQuery *q, int doc_num)
 {
     FrtExplanation *expl;
     mutex_lock(&self->mutex);

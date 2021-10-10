@@ -5,9 +5,9 @@
 
 extern VALUE cFileNotFoundError;
 
-static RAMFile *rf_new(const char *name)
+static FrtRAMFile *rf_new(const char *name)
 {
-    RAMFile *rf = FRT_ALLOC(RAMFile);
+    FrtRAMFile *rf = FRT_ALLOC(FrtRAMFile);
     rf->buffers = FRT_ALLOC(uchar *);
     rf->buffers[0] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
     rf->name = estrdup(name);
@@ -17,7 +17,7 @@ static RAMFile *rf_new(const char *name)
     return rf;
 }
 
-static void rf_extend_if_necessary(RAMFile *rf, int buf_num)
+static void rf_extend_if_necessary(FrtRAMFile *rf, int buf_num)
 {
     while (rf->bufcnt <= buf_num) {
         FRT_REALLOC_N(rf->buffers, uchar *, (rf->bufcnt + 1));
@@ -28,7 +28,7 @@ static void rf_extend_if_necessary(RAMFile *rf, int buf_num)
 static void rf_close(void *p)
 {
     int i;
-    RAMFile *rf = (RAMFile *)p;
+    FrtRAMFile *rf = (FrtRAMFile *)p;
     if (rf->ref_cnt > 0) {
         return;
     }
@@ -59,7 +59,7 @@ static int ram_exists(FrtStore *store, const char *filename)
 
 static int ram_remove(FrtStore *store, const char *filename)
 {
-    RAMFile *rf = (RAMFile *)h_rem(store->dir.ht, filename, false);
+    FrtRAMFile *rf = (FrtRAMFile *)h_rem(store->dir.ht, filename, false);
     if (rf != NULL) {
         FRT_DEREF(rf);
         rf_close(rf);
@@ -72,8 +72,8 @@ static int ram_remove(FrtStore *store, const char *filename)
 
 static void ram_rename(FrtStore *store, const char *from, const char *to)
 {
-    RAMFile *rf = (RAMFile *)h_rem(store->dir.ht, from, false);
-    RAMFile *tmp;
+    FrtRAMFile *rf = (FrtRAMFile *)h_rem(store->dir.ht, from, false);
+    FrtRAMFile *tmp;
 
     if (rf == NULL) {
         rb_raise(rb_eIOError, "couldn't rename \"%s\" to \"%s\". \"%s\""
@@ -85,7 +85,7 @@ static void ram_rename(FrtStore *store, const char *from, const char *to)
     rf->name = estrdup(to);
 
     /* clean up the file we are overwriting */
-    tmp = (RAMFile *)h_get(store->dir.ht, to);
+    tmp = (FrtRAMFile *)h_get(store->dir.ht, to);
     if (tmp != NULL) {
         FRT_DEREF(tmp);
     }
@@ -104,7 +104,7 @@ static void ram_each(FrtStore *store,
     Hash *ht = store->dir.ht;
     int i;
     for (i = 0; i <= ht->mask; i++) {
-        RAMFile *rf = (RAMFile *)ht->table[i].value;
+        FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf) {
             if (strncmp(rf->name, FRT_LOCK_PREFIX, strlen(FRT_LOCK_PREFIX)) == 0) {
                 continue;
@@ -119,7 +119,7 @@ static void ram_close_i(FrtStore *store)
     Hash *ht = store->dir.ht;
     int i;
     for (i = 0; i <= ht->mask; i++) {
-        RAMFile *rf = (RAMFile *)ht->table[i].value;
+        FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf) {
             FRT_DEREF(rf);
         }
@@ -136,7 +136,7 @@ static void ram_clear(FrtStore *store)
     int i;
     Hash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
-        RAMFile *rf = (RAMFile *)ht->table[i].value;
+        FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && !file_is_lock(rf->name)) {
             FRT_DEREF(rf);
             h_del(ht, rf->name);
@@ -149,7 +149,7 @@ static void ram_clear_locks(FrtStore *store)
     int i;
     Hash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
-        RAMFile *rf = (RAMFile *)ht->table[i].value;
+        FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && file_is_lock(rf->name)) {
             FRT_DEREF(rf);
             h_del(ht, rf->name);
@@ -162,7 +162,7 @@ static void ram_clear_all(FrtStore *store)
     int i;
     Hash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
-        RAMFile *rf = (RAMFile *)ht->table[i].value;
+        FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf) {
             FRT_DEREF(rf);
             h_del(ht, rf->name);
@@ -172,7 +172,7 @@ static void ram_clear_all(FrtStore *store)
 
 static off_t ram_length(FrtStore *store, const char *filename)
 {
-    RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
     if (rf != NULL) {
         return rf->len;
     }
@@ -189,7 +189,7 @@ off_t ramo_length(OutStream *os)
 static void ramo_flush_i(OutStream *os, const uchar *src, int len)
 {
     uchar *buffer;
-    RAMFile *rf = os->file.rf;
+    FrtRAMFile *rf = os->file.rf;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
     int src_offset;
     off_t pointer = os->pointer;
@@ -233,7 +233,7 @@ void ramo_reset(OutStream *os)
 
 static void ramo_close_i(OutStream *os)
 {
-    RAMFile *rf = os->file.rf;
+    FrtRAMFile *rf = os->file.rf;
     FRT_DEREF(rf);
     rf_close(rf);
 }
@@ -241,7 +241,7 @@ static void ramo_close_i(OutStream *os)
 void ramo_write_to(OutStream *os, OutStream *other_o)
 {
     int i, len;
-    RAMFile *rf = os->file.rf;
+    FrtRAMFile *rf = os->file.rf;
     int last_buffer_number;
     int last_buffer_offset;
 
@@ -262,7 +262,7 @@ static const struct OutStreamMethods RAM_OUT_STREAM_METHODS = {
 
 OutStream *ram_new_buffer()
 {
-    RAMFile *rf = rf_new("");
+    FrtRAMFile *rf = rf_new("");
     OutStream *os = os_new();
 
     FRT_DEREF(rf);
@@ -280,7 +280,7 @@ void ram_destroy_buffer(OutStream *os)
 
 static OutStream *ram_new_output(FrtStore *store, const char *filename)
 {
-    RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
     OutStream *os = os_new();
 
     if (rf == NULL) {
@@ -296,7 +296,7 @@ static OutStream *ram_new_output(FrtStore *store, const char *filename)
 
 static void rami_read_i(InStream *is, uchar *b, int len)
 {
-    RAMFile *rf = is->file.rf;
+    FrtRAMFile *rf = is->file.rf;
 
     int offset = 0;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
@@ -337,7 +337,7 @@ static void rami_seek_i(InStream *is, off_t pos)
 
 static void rami_close_i(InStream *is)
 {
-    RAMFile *rf = is->file.rf;
+    FrtRAMFile *rf = is->file.rf;
     FRT_DEREF(rf);
     rf_close(rf);
 }
@@ -351,7 +351,7 @@ static const struct InStreamMethods RAM_IN_STREAM_METHODS = {
 
 static InStream *ram_open_input(FrtStore *store, const char *filename)
 {
-    RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
     InStream *is = NULL;
 
     if (rf == NULL) {
