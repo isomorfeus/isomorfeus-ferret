@@ -36,8 +36,8 @@ const FrtConfig default_config = {
     true            /* use compound file by default */
 };
 
-static void ste_reset(TermEnum *te);
-static char *ste_next(TermEnum *te);
+static void ste_reset(FrtTermEnum *te);
+static char *ste_next(FrtTermEnum *te);
 
 #define FORMAT 0
 #define SEGMENTS_GEN_FILE_NAME "segments"
@@ -280,7 +280,7 @@ static void fi_check_params(int store, int index, int term_vector)
 FrtFieldInfo *fi_new(Symbol name,
                   StoreValue store,
                   IndexValue index,
-                  TermVectorValue term_vector)
+                  FrtTermVectorValue term_vector)
 {
     FrtFieldInfo *fi = FRT_ALLOC(FrtFieldInfo);
     assert(NULL != name);
@@ -330,7 +330,7 @@ char *fi_to_s(FrtFieldInfo *fi)
  ****************************************************************************/
 
 FrtFieldInfos *fis_new(StoreValue store, IndexValue index,
-                    TermVectorValue term_vector)
+                    FrtTermVectorValue term_vector)
 {
     FrtFieldInfos *fis = FRT_ALLOC(FrtFieldInfos);
     fi_check_params(store, index, term_vector);
@@ -399,13 +399,13 @@ FrtFieldInfos *fis_read(InStream *is)
         do {
             StoreValue store_val;
             IndexValue index_val;
-            TermVectorValue term_vector_val;
+            FrtTermVectorValue term_vector_val;
             volatile int i;
             union { u32 i; float f; } tmp;
             FrtFieldInfo *volatile fi;
             store_val = (StoreValue)is_read_vint(is);
             index_val = (IndexValue)is_read_vint(is);
-            term_vector_val = (TermVectorValue)is_read_vint(is);
+            term_vector_val = (FrtTermVectorValue)is_read_vint(is);
             fis = fis_new(store_val, index_val, term_vector_val);
             for (i = is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
@@ -1410,9 +1410,9 @@ LazyDoc *fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     return lazy_doc;
 }
 
-static TermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
+static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
 {
-    TermVector *tv = FRT_ALLOC_AND_ZERO(TermVector);
+    FrtTermVector *tv = FRT_ALLOC_AND_ZERO(FrtTermVector);
     InStream *fdt_in = fr->fdt_in;
     FrtFieldInfo *fi = fr->fis->fields[field_num];
     const int num_terms = is_read_vint(fdt_in);
@@ -1425,10 +1425,10 @@ static TermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
         int store_positions = fi_store_positions(fi);
         int store_offsets = fi_store_offsets(fi);
         uchar buffer[FRT_MAX_WORD_SIZE];
-        TVTerm *term;
+        FrtTVTerm *term;
 
         tv->term_cnt = num_terms;
-        tv->terms = FRT_ALLOC_AND_ZERO_N(TVTerm, num_terms);
+        tv->terms = FRT_ALLOC_AND_ZERO_N(FrtTVTerm, num_terms);
 
         for (i = 0; i < num_terms; i++) {
             term = &(tv->terms[i]);
@@ -1501,7 +1501,7 @@ Hash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
         is_seek(fdt_in, data_ptr);
 
         for (i = 0; i < field_cnt; i++) {
-            TermVector *tv = fr_read_term_vector(fr, field_nums[i]);
+            FrtTermVector *tv = fr_read_term_vector(fr, field_nums[i]);
             h_set(term_vectors, tv->field, tv);
         }
         free(field_nums);
@@ -1509,9 +1509,9 @@ Hash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
     return term_vectors;
 }
 
-TermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
+FrtTermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
 {
-    TermVector *tv = NULL;
+    FrtTermVector *tv = NULL;
 
     if (doc_num >= 0 && doc_num < fr->size) {
         int i, fnum = -1;
@@ -1567,7 +1567,7 @@ FrtFieldsWriter *fw_open(Store *store, const char *segment, FrtFieldInfos *fis)
     fw->buffer = ram_new_buffer();
 
     fw->fis = fis;
-    fw->tv_fields = ary_new_type_capa(TVField, FRT_TV_FIELD_INIT_CAPA);
+    fw->tv_fields = ary_new_type_capa(FrtTVField, FRT_TV_FIELD_INIT_CAPA);
 
     return fw;
 }
@@ -1705,20 +1705,20 @@ void fw_add_postings(FrtFieldsWriter *fw,
  *
  ****************************************************************************/
 
-#define TE(ste) ((TermEnum *)ste)
+#define TE(ste) ((FrtTermEnum *)ste)
 
-char *te_get_term(TermEnum *te)
+char *te_get_term(FrtTermEnum *te)
 {
     return (char *)memcpy(FRT_ALLOC_N(char, te->curr_term_len + 1),
                           te->curr_term, te->curr_term_len + 1);
 }
 
-TermInfo *te_get_ti(TermEnum *te)
+FrtTermInfo *te_get_ti(FrtTermEnum *te)
 {
-    return (TermInfo*)memcpy(FRT_ALLOC(TermInfo), &(te->curr_ti), sizeof(TermInfo));
+    return (FrtTermInfo*)memcpy(FRT_ALLOC(FrtTermInfo), &(te->curr_ti), sizeof(FrtTermInfo));
 }
 
-static char *te_skip_to(TermEnum *te, const char *term)
+static char *te_skip_to(FrtTermEnum *te, const char *term)
 {
     char *curr_term = te->curr_term;
     if (strcmp(curr_term, term) < 0) {
@@ -1758,7 +1758,7 @@ static void sti_destroy(SegmentTermIndex *sti)
 }
 
 static void sti_ensure_index_is_read(SegmentTermIndex *sti,
-                                     TermEnum *index_te)
+                                     FrtTermEnum *index_te)
 {
     if (NULL == sti->index_terms) {
         int i;
@@ -1770,7 +1770,7 @@ static void sti_ensure_index_is_read(SegmentTermIndex *sti,
 
         sti->index_terms = FRT_ALLOC_N(char *, index_cnt);
         sti->index_term_lens = FRT_ALLOC_N(int, index_cnt);
-        sti->index_term_infos = FRT_ALLOC_N(TermInfo, index_cnt);
+        sti->index_term_infos = FRT_ALLOC_N(FrtTermInfo, index_cnt);
         sti->index_ptrs = FRT_ALLOC_N(off_t, index_cnt);
 
         for (i = 0; NULL != ste_next(index_te); i++) {
@@ -1879,9 +1879,9 @@ static int term_read(char *buf, InStream *is)
     return total_length;
 }
 
-static char *ste_next(TermEnum *te)
+static char *ste_next(FrtTermEnum *te)
 {
-    TermInfo *ti;
+    FrtTermInfo *ti;
     InStream *is = STE(te)->is;
 
     STE(te)->pos++;
@@ -1905,15 +1905,15 @@ static char *ste_next(TermEnum *te)
     return te->curr_term;
 }
 
-static void ste_reset(TermEnum *te)
+static void ste_reset(FrtTermEnum *te)
 {
     STE(te)->pos = -1;
     te->curr_term[0] = '\0';
     te->curr_term_len = 0;
-    FRT_ZEROSET(&(te->curr_ti), TermInfo);
+    FRT_ZEROSET(&(te->curr_ti), FrtTermInfo);
 }
 
-static TermEnum *ste_set_field(TermEnum *te, int field_num)
+static FrtTermEnum *ste_set_field(FrtTermEnum *te, int field_num)
 {
     SegmentTermIndex *sti
         = (SegmentTermIndex *)h_get_int(STE(te)->sfi->field_dict, field_num);
@@ -1929,7 +1929,7 @@ static TermEnum *ste_set_field(TermEnum *te, int field_num)
     return te;
 }
 
-static void ste_index_seek(TermEnum *te, SegmentTermIndex *sti, int idx_offset)
+static void ste_index_seek(FrtTermEnum *te, SegmentTermIndex *sti, int idx_offset)
 {
     int term_len = sti->index_term_lens[idx_offset];
     is_seek(STE(te)->is, sti->index_ptrs[idx_offset]);
@@ -1941,7 +1941,7 @@ static void ste_index_seek(TermEnum *te, SegmentTermIndex *sti, int idx_offset)
     te->curr_ti = sti->index_term_infos[idx_offset];
 }
 
-static char *ste_scan_to(TermEnum *te, const char *term)
+static char *ste_scan_to(FrtTermEnum *te, const char *term)
 {
     SegmentFieldIndex *sfi = STE(te)->sfi;
     SegmentTermIndex *sti
@@ -1981,7 +1981,7 @@ static SegmentTermEnum *ste_allocate()
     return ste;
 }
 
-TermEnum *ste_clone(TermEnum *other_te)
+FrtTermEnum *ste_clone(FrtTermEnum *other_te)
 {
     SegmentTermEnum *ste = ste_allocate();
 
@@ -1990,7 +1990,7 @@ TermEnum *ste_clone(TermEnum *other_te)
     return TE(ste);
 }
 
-void ste_close(TermEnum *te)
+void ste_close(FrtTermEnum *te)
 {
     is_close(STE(te)->is);
     free(te);
@@ -2002,7 +2002,7 @@ static TermInfo *ste_scan_for_term_info(SegmentTermEnum *ste, const char *term)
     ste_scan_to(ste, term);
 
     if (0 == strcmp(TE(ste)->curr_term, term)) {
-        return te_get_ti((TermEnum *)ste);
+        return te_get_ti((FrtTermEnum *)ste);
     }
     else {
         return NULL;
@@ -2010,7 +2010,7 @@ static TermInfo *ste_scan_for_term_info(SegmentTermEnum *ste, const char *term)
 }
 */
 
-static char *ste_get_term(TermEnum *te, int pos)
+static char *ste_get_term(FrtTermEnum *te, int pos)
 {
     SegmentTermEnum *ste = STE(te);
     if (pos >= ste->size) {
@@ -2034,7 +2034,7 @@ static char *ste_get_term(TermEnum *te, int pos)
     return te->curr_term;
 }
 
-TermEnum *ste_new(InStream *is, SegmentFieldIndex *sfi)
+FrtTermEnum *ste_new(InStream *is, SegmentFieldIndex *sfi)
 {
     SegmentTermEnum *ste = ste_allocate();
 
@@ -2057,7 +2057,7 @@ TermEnum *ste_new(InStream *is, SegmentFieldIndex *sfi)
 typedef struct TermEnumWrapper
 {
     int index;
-    TermEnum *te;
+    FrtTermEnum *te;
     int *doc_map;
     IndexReader *ir;
     char *term;
@@ -2065,14 +2065,14 @@ typedef struct TermEnumWrapper
 
 typedef struct MultiTermEnum
 {
-    TermEnum te;
+    FrtTermEnum te;
     int doc_freq;
     PriorityQueue *tew_queue;
     TermEnumWrapper *tews;
     int size;
     int **field_num_map;
     int ti_cnt;
-    TermInfo *tis;
+    FrtTermInfo *tis;
     int *ti_indexes;
 } MultiTermEnum;
 
@@ -2124,7 +2124,7 @@ static void tew_destroy(TermEnumWrapper *tew)
     tew->te->close(tew->te);
 }
 
-static TermEnumWrapper *tew_setup(TermEnumWrapper *tew, int index, TermEnum *te,
+static TermEnumWrapper *tew_setup(TermEnumWrapper *tew, int index, FrtTermEnum *te,
                                   IndexReader *ir)
 {
     tew->index = index;
@@ -2136,7 +2136,7 @@ static TermEnumWrapper *tew_setup(TermEnumWrapper *tew, int index, TermEnum *te,
 }
 
 
-static char *mte_next(TermEnum *te)
+static char *mte_next(FrtTermEnum *te)
 {
     TermEnumWrapper *top =
         (TermEnumWrapper *)pq_top(MTE(te)->tew_queue);
@@ -2167,7 +2167,7 @@ static char *mte_next(TermEnum *te)
     return te->curr_term;
 }
 
-static TermEnum *mte_set_field(TermEnum *te, int field_num)
+static FrtTermEnum *mte_set_field(FrtTermEnum *te, int field_num)
 {
     MultiTermEnum *mte = MTE(te);
     int i;
@@ -2176,7 +2176,7 @@ static TermEnum *mte_set_field(TermEnum *te, int field_num)
     mte->tew_queue->size = 0;
     for (i = 0; i < size; i++) {
         TermEnumWrapper *tew = &(mte->tews[i]);
-        TermEnum *sub_te = tew->te;
+        FrtTermEnum *sub_te = tew->te;
         int fnum = mte->field_num_map
             ? mte->field_num_map[i][field_num]
             : field_num;
@@ -2196,7 +2196,7 @@ static TermEnum *mte_set_field(TermEnum *te, int field_num)
     return te;
 }
 
-static char *mte_skip_to(TermEnum *te, const char *term)
+static char *mte_skip_to(FrtTermEnum *te, const char *term)
 {
     MultiTermEnum *mte = MTE(te);
     int i;
@@ -2213,7 +2213,7 @@ static char *mte_skip_to(TermEnum *te, const char *term)
     return mte_next(te);
 }
 
-static void mte_close(TermEnum *te)
+static void mte_close(FrtTermEnum *te)
 {
     int i;
     const int size = MTE(te)->size;
@@ -2227,7 +2227,7 @@ static void mte_close(TermEnum *te)
     free(te);
 }
 
-TermEnum *mte_new(MultiReader *mr, int field_num, const char *term)
+FrtTermEnum *mte_new(MultiReader *mr, int field_num, const char *term)
 {
     IndexReader **readers   = mr->sub_readers;
     int r_cnt               = mr->r_cnt;
@@ -2242,7 +2242,7 @@ TermEnum *mte_new(MultiReader *mr, int field_num, const char *term)
     TE(mte)->close      = &mte_close;
 
     mte->size           = r_cnt;
-    mte->tis            = FRT_ALLOC_AND_ZERO_N(TermInfo, r_cnt);
+    mte->tis            = FRT_ALLOC_AND_ZERO_N(FrtTermInfo, r_cnt);
     mte->ti_indexes     = FRT_ALLOC_AND_ZERO_N(int, r_cnt);
     mte->tews           = FRT_ALLOC_AND_ZERO_N(TermEnumWrapper, r_cnt);
     mte->tew_queue      = pq_new(r_cnt, (lt_ft)&tew_lt, (free_ft)NULL);
@@ -2250,7 +2250,7 @@ TermEnum *mte_new(MultiReader *mr, int field_num, const char *term)
 
     for (i = 0; i < r_cnt; i++) {
         int fnum = mr_get_field_num(mr, i, field_num);
-        TermEnum *sub_te;
+        FrtTermEnum *sub_te;
         reader = readers[i];
 
         if (fnum >= 0) {
@@ -2291,10 +2291,10 @@ TermEnum *mte_new(MultiReader *mr, int field_num, const char *term)
  *
  ****************************************************************************/
 
-TermInfosReader *tir_open(Store *store,
+FrtTermInfosReader *tir_open(Store *store,
                           SegmentFieldIndex *sfi, const char *segment)
 {
-    TermInfosReader *tir = FRT_ALLOC(TermInfosReader);
+    FrtTermInfosReader *tir = FRT_ALLOC(FrtTermInfosReader);
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     sprintf(file_name, "%s.tis", segment);
@@ -2306,10 +2306,10 @@ TermInfosReader *tir_open(Store *store,
     return tir;
 }
 
-static TermEnum *tir_enum(TermInfosReader *tir)
+static FrtTermEnum *tir_enum(FrtTermInfosReader *tir)
 {
-    TermEnum *te;
-    if (NULL == (te = (TermEnum *)thread_getspecific(tir->thread_te))) {
+    FrtTermEnum *te;
+    if (NULL == (te = (FrtTermEnum *)thread_getspecific(tir->thread_te))) {
         te = ste_clone(tir->orig_te);
         ste_set_field(te, tir->field_num);
         ary_push(tir->te_bucket, te);
@@ -2318,7 +2318,7 @@ static TermEnum *tir_enum(TermInfosReader *tir)
     return te;
 }
 
-TermInfosReader *tir_set_field(TermInfosReader *tir, int field_num)
+FrtTermInfosReader *tir_set_field(FrtTermInfosReader *tir, int field_num)
 {
     if (field_num != tir->field_num) {
         ste_set_field(tir_enum(tir), field_num);
@@ -2327,9 +2327,9 @@ TermInfosReader *tir_set_field(TermInfosReader *tir, int field_num)
     return tir;
 }
 
-TermInfo *tir_get_ti(TermInfosReader *tir, const char *term)
+FrtTermInfo *tir_get_ti(FrtTermInfosReader *tir, const char *term)
 {
-    TermEnum *te = tir_enum(tir);
+    FrtTermEnum *te = tir_enum(tir);
     char *match;
 
     if (NULL != (match = ste_scan_to(te, term))
@@ -2339,10 +2339,10 @@ TermInfo *tir_get_ti(TermInfosReader *tir, const char *term)
     return NULL;
 }
 
-static TermInfo *tir_get_ti_field(TermInfosReader *tir, int field_num,
+static FrtTermInfo *tir_get_ti_field(FrtTermInfosReader *tir, int field_num,
                                   const char *term)
 {
-    TermEnum *te = tir_enum(tir);
+    FrtTermEnum *te = tir_enum(tir);
     char *match;
 
     if (field_num != tir->field_num) {
@@ -2357,7 +2357,7 @@ static TermInfo *tir_get_ti_field(TermInfosReader *tir, int field_num,
     return NULL;
 }
 
-char *tir_get_term(TermInfosReader *tir, int pos)
+char *tir_get_term(FrtTermInfosReader *tir, int pos)
 {
     if (pos < 0) {
         return NULL;
@@ -2367,7 +2367,7 @@ char *tir_get_term(TermInfosReader *tir, int pos)
     }
 }
 
-void tir_close(TermInfosReader *tir)
+void tir_close(FrtTermInfosReader *tir)
 {
     ary_destroy(tir->te_bucket, (free_ft)&ste_close);
     ste_close(tir->orig_te);
@@ -2385,27 +2385,27 @@ void tir_close(TermInfosReader *tir)
  *
  ****************************************************************************/
 
-static TermWriter *tw_new(Store *store, char *file_name)
+static FrtTermWriter *tw_new(Store *store, char *file_name)
 {
-    TermWriter *tw = FRT_ALLOC_AND_ZERO(TermWriter);
+    FrtTermWriter *tw = FRT_ALLOC_AND_ZERO(FrtTermWriter);
     tw->os = store->new_output(store, file_name);
     tw->last_term = FRT_EMPTY_STRING;
     return tw;
 }
 
-static void tw_close(TermWriter *tw)
+static void tw_close(FrtTermWriter *tw)
 {
     os_close(tw->os);
     free(tw);
 }
 
-TermInfosWriter *tiw_open(Store *store,
+FrtTermInfosWriter *tiw_open(Store *store,
                           const char *segment,
                           int index_interval,
                           int skip_interval)
 {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
-    TermInfosWriter *tiw = FRT_ALLOC(TermInfosWriter);
+    FrtTermInfosWriter *tiw = FRT_ALLOC(FrtTermInfosWriter);
     size_t segment_len = strlen(segment);
 
     memcpy(file_name, segment, segment_len);
@@ -2432,7 +2432,7 @@ TermInfosWriter *tiw_open(Store *store,
     return tiw;
 }
 
-static void tw_write_term(TermWriter *tw,
+static void tw_write_term(FrtTermWriter *tw,
                                  OutStream *os,
                                  const char *term,
                                  int term_len)
@@ -2447,10 +2447,10 @@ static void tw_write_term(TermWriter *tw,
     tw->last_term = term;
 }
 
-static void tw_add(TermWriter *tw,
+static void tw_add(FrtTermWriter *tw,
                    const char *term,
                    int term_len,
-                   TermInfo *ti,
+                   FrtTermInfo *ti,
                    int skip_interval)
 {
     OutStream *os = tw->os;
@@ -2482,10 +2482,10 @@ static void tw_add(TermWriter *tw,
     tw->counter++;
 }
 
-void tiw_add(TermInfosWriter *tiw,
+void tiw_add(FrtTermInfosWriter *tiw,
              const char *term,
              int term_len,
-             TermInfo *ti)
+             FrtTermInfo *ti)
 {
     off_t tis_pos;
 
@@ -2508,14 +2508,14 @@ void tiw_add(TermInfosWriter *tiw,
     tw_add(tiw->tis_writer, term, term_len, ti, tiw->skip_interval);
 }
 
-static void tw_reset(TermWriter *tw)
+static void tw_reset(FrtTermWriter *tw)
 {
     tw->counter = 0;
     tw->last_term = FRT_EMPTY_STRING;
-    FRT_ZEROSET(&(tw->last_term_info), TermInfo);
+    FRT_ZEROSET(&(tw->last_term_info), FrtTermInfo);
 }
 
-void tiw_start_field(TermInfosWriter *tiw, int field_num)
+void tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
 {
     OutStream *tfx_out = tiw->tfx_out;
     os_write_vint(tfx_out, tiw->tix_writer->counter);    /* write tix size */
@@ -2529,7 +2529,7 @@ void tiw_start_field(TermInfosWriter *tiw, int field_num)
     tiw->field_count++;
 }
 
-void tiw_close(TermInfosWriter *tiw)
+void tiw_close(FrtTermInfosWriter *tiw)
 {
     OutStream *tfx_out = tiw->tfx_out;
     os_write_vint(tfx_out, tiw->tix_writer->counter);
@@ -2555,7 +2555,7 @@ void tiw_close(TermInfosWriter *tiw)
  ****************************************************************************/
 
 #define STDE(tde) ((SegmentTermDocEnum *)(tde))
-#define TDE(stde) ((TermDocEnum *)(stde))
+#define TDE(stde) ((FrtTermDocEnum *)(stde))
 
 #define CHECK_STATE(method) do {\
     if (0 == STDE(tde)->count) {\
@@ -2564,7 +2564,7 @@ void tiw_close(TermInfosWriter *tiw)
     }\
 } while (0)
 
-static void stde_seek_ti(SegmentTermDocEnum *stde, TermInfo *ti)
+static void stde_seek_ti(SegmentTermDocEnum *stde, FrtTermInfo *ti)
 {
     if (NULL == ti) {
         stde->doc_freq = 0;
@@ -2584,13 +2584,13 @@ static void stde_seek_ti(SegmentTermDocEnum *stde, TermInfo *ti)
     }
 }
 
-static void stde_seek(TermDocEnum *tde, int field_num, const char *term)
+static void stde_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
-    TermInfo *ti = tir_get_ti_field(STDE(tde)->tir, field_num, term);
+    FrtTermInfo *ti = tir_get_ti_field(STDE(tde)->tir, field_num, term);
     stde_seek_ti(STDE(tde), ti);
 }
 
-static void stde_seek_te(TermDocEnum *tde, TermEnum *te)
+static void stde_seek_te(FrtTermDocEnum *tde, FrtTermEnum *te)
 {
 #ifdef DEBUG
     if (te->set_field != &ste_set_field) {
@@ -2600,19 +2600,19 @@ static void stde_seek_te(TermDocEnum *tde, TermEnum *te)
     stde_seek_ti(STDE(tde), &(te->curr_ti));
 }
 
-static int stde_doc_num(TermDocEnum *tde)
+static int stde_doc_num(FrtTermDocEnum *tde)
 {
     CHECK_STATE("doc_num");
     return STDE(tde)->doc_num;
 }
 
-static int stde_freq(TermDocEnum *tde)
+static int stde_freq(FrtTermDocEnum *tde)
 {
     CHECK_STATE("freq");
     return STDE(tde)->freq;
 }
 
-static bool stde_next(TermDocEnum *tde)
+static bool stde_next(FrtTermDocEnum *tde)
 {
     int doc_code;
     SegmentTermDocEnum *stde = STDE(tde);
@@ -2643,7 +2643,7 @@ static bool stde_next(TermDocEnum *tde)
     return true;
 }
 
-static int stde_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
+static int stde_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     SegmentTermDocEnum *stde = STDE(tde);
     int i = 0;
@@ -2672,7 +2672,7 @@ static int stde_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
     return i;
 }
 
-static bool stde_skip_to(TermDocEnum *tde, int target_doc_num)
+static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
 {
     SegmentTermDocEnum *stde = STDE(tde);
 
@@ -2740,7 +2740,7 @@ static bool stde_skip_to(TermDocEnum *tde, int target_doc_num)
     return true;
 }
 
-static void stde_close(TermDocEnum *tde)
+static void stde_close(FrtTermDocEnum *tde)
 {
     is_close(STDE(tde)->frq_in);
 
@@ -2763,13 +2763,13 @@ static void stde_seek_prox(SegmentTermDocEnum *stde, off_t prx_ptr)
 }
 
 
-TermDocEnum *stde_new(TermInfosReader *tir,
+FrtTermDocEnum *stde_new(FrtTermInfosReader *tir,
                       InStream *frq_in,
                       FrtBitVector *deleted_docs,
                       int skip_interval)
 {
     SegmentTermDocEnum *stde = FRT_ALLOC_AND_ZERO(SegmentTermDocEnum);
-    TermDocEnum *tde         = (TermDocEnum *)stde;
+    FrtTermDocEnum *tde         = (FrtTermDocEnum *)stde;
 
     /* TermDocEnum methods */
     tde->seek                = &stde_seek;
@@ -2799,7 +2799,7 @@ TermDocEnum *stde_new(TermInfosReader *tir,
  * SegmentTermPosEnum
  ****************************************************************************/
 
-static void stpe_seek_ti(SegmentTermDocEnum *stde, TermInfo *ti)
+static void stpe_seek_ti(SegmentTermDocEnum *stde, FrtTermInfo *ti)
 {
     if (NULL == ti) {
         stde->doc_freq = 0;
@@ -2810,15 +2810,15 @@ static void stpe_seek_ti(SegmentTermDocEnum *stde, TermInfo *ti)
     }
 }
 
-static void stpe_seek(TermDocEnum *tde, int field_num, const char *term)
+static void stpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
     SegmentTermDocEnum *stde = STDE(tde);
-    TermInfo *ti = tir_get_ti_field(stde->tir, field_num, term);
+    FrtTermInfo *ti = tir_get_ti_field(stde->tir, field_num, term);
     stpe_seek_ti(stde, ti);
     stde->prx_cnt = 0;
 }
 
-static bool stpe_next(TermDocEnum *tde)
+static bool stpe_next(FrtTermDocEnum *tde)
 {
     SegmentTermDocEnum *stde = STDE(tde);
     is_skip_vints(stde->prx_in, stde->prx_cnt);
@@ -2835,7 +2835,7 @@ static bool stpe_next(TermDocEnum *tde)
     }
 }
 
-static int stpe_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
+static int stpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     (void)tde; (void)docs; (void)freqs; (void)req_num;
     rb_raise(rb_eArgError, "TermPosEnum does not handle processing multiple documents"
@@ -2843,14 +2843,14 @@ static int stpe_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
     return -1;
 }
 
-static int stpe_next_position(TermDocEnum *tde)
+static int stpe_next_position(FrtTermDocEnum *tde)
 {
     SegmentTermDocEnum *stde = STDE(tde);
     return (stde->prx_cnt-- > 0) ? stde->position += is_read_vint(stde->prx_in)
                                  : -1;
 }
 
-static void stpe_close(TermDocEnum *tde)
+static void stpe_close(FrtTermDocEnum *tde)
 {
     is_close(STDE(tde)->prx_in);
     STDE(tde)->prx_in = NULL;
@@ -2868,13 +2868,13 @@ static void stpe_seek_prox(SegmentTermDocEnum *stde, off_t prx_ptr)
     stde->prx_cnt = 0;
 }
 
-TermDocEnum *stpe_new(TermInfosReader *tir,
+FrtTermDocEnum *stpe_new(FrtTermInfosReader *tir,
                       InStream *frq_in,
                       InStream *prx_in,
                       FrtBitVector *del_docs,
                       int skip_interval)
 {
-    TermDocEnum *tde         = stde_new(tir, frq_in, del_docs, skip_interval);
+    FrtTermDocEnum *tde         = stde_new(tir, frq_in, del_docs, skip_interval);
     SegmentTermDocEnum *stde = STDE(tde);
 
     /* TermDocEnum methods */
@@ -2904,19 +2904,19 @@ TermDocEnum *stpe_new(TermInfosReader *tir,
 
 typedef struct MultiTermDocEnum
 {
-    TermDocEnum tde;
+    FrtTermDocEnum tde;
     int *starts;
     int base;
     int ptr;
     int ir_cnt;
     char *state;
-    TermEnum *te;
+    FrtTermEnum *te;
     IndexReader **irs;
-    TermDocEnum **irs_tde;
-    TermDocEnum *curr_tde;
+    FrtTermDocEnum **irs_tde;
+    FrtTermDocEnum *curr_tde;
 } MultiTermDocEnum;
 
-static TermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
+static FrtTermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
 {
     mtde->ptr++;
     while (mtde->ptr < mtde->ir_cnt && !mtde->state[mtde->ptr]) {
@@ -2926,7 +2926,7 @@ static TermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
         return mtde->curr_tde = NULL;
     }
     else {
-        TermDocEnum *tde = mtde->irs_tde[mtde->ptr];
+        FrtTermDocEnum *tde = mtde->irs_tde[mtde->ptr];
         mtde->base = mtde->starts[mtde->ptr];
         return mtde->curr_tde = tde;
     }
@@ -2939,14 +2939,14 @@ static TermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
     }\
 } while (0)
 
-static void mtde_seek_te(TermDocEnum *tde, TermEnum *te)
+static void mtde_seek_te(FrtTermDocEnum *tde, FrtTermEnum *te)
 {
     int i;
     MultiTermDocEnum *mtde = MTDE(tde);
     memset(mtde->state, 0, mtde->ir_cnt);
     for (i = MTE(te)->ti_cnt - 1; i >= 0; i--) {
         int index = MTE(te)->ti_indexes[i];
-        TermDocEnum *tde = mtde->irs_tde[index];
+        FrtTermDocEnum *tde = mtde->irs_tde[index];
         mtde->state[index] = 1;
         if (tde->close == stde_close) {
             stde_seek_ti(STDE(tde), MTE(te)->tis + i);
@@ -2963,10 +2963,10 @@ static void mtde_seek_te(TermDocEnum *tde, TermEnum *te)
     mtde_next_tde(mtde);
 }
 
-static void mtde_seek(TermDocEnum *tde, int field_num, const char *term)
+static void mtde_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
     MultiTermDocEnum *mtde = MTDE(tde);
-    TermEnum *te = mtde->te;
+    FrtTermEnum *te = mtde->te;
     char *t;
     te->set_field(te, field_num);
     if (NULL != (t = te->skip_to(te, term)) && 0 == strcmp(term, t)) {
@@ -2977,19 +2977,19 @@ static void mtde_seek(TermDocEnum *tde, int field_num, const char *term)
     }
 }
 
-static int mtde_doc_num(TermDocEnum *tde)
+static int mtde_doc_num(FrtTermDocEnum *tde)
 {
     CHECK_CURR_TDE("doc_num");
     return MTDE(tde)->base + MTDE(tde)->curr_tde->doc_num(MTDE(tde)->curr_tde);
 }
 
-static int mtde_freq(TermDocEnum *tde)
+static int mtde_freq(FrtTermDocEnum *tde)
 {
     CHECK_CURR_TDE("freq");
     return MTDE(tde)->curr_tde->freq(MTDE(tde)->curr_tde);
 }
 
-static bool mtde_next(TermDocEnum *tde)
+static bool mtde_next(FrtTermDocEnum *tde)
 {
     MultiTermDocEnum *mtde = MTDE(tde);
     if (NULL != mtde->curr_tde && mtde->curr_tde->next(mtde->curr_tde)) {
@@ -3003,7 +3003,7 @@ static bool mtde_next(TermDocEnum *tde)
     }
 }
 
-static int mtde_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
+static int mtde_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     int i, end = 0, last_end = 0, b;
     MultiTermDocEnum *mtde = MTDE(tde);
@@ -3029,10 +3029,10 @@ static int mtde_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
     }
 }
 
-static bool mtde_skip_to(TermDocEnum *tde, int target_doc_num)
+static bool mtde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
 {
     MultiTermDocEnum *mtde = MTDE(tde);
-    TermDocEnum *curr_tde;
+    FrtTermDocEnum *curr_tde;
     while (NULL != (curr_tde = mtde->curr_tde)) {
         if (target_doc_num < mtde->starts[mtde->ptr + 1] &&
             (curr_tde->skip_to(curr_tde, target_doc_num - mtde->base))) {
@@ -3044,10 +3044,10 @@ static bool mtde_skip_to(TermDocEnum *tde, int target_doc_num)
     return false;
 }
 
-static void mtde_close(TermDocEnum *tde)
+static void mtde_close(FrtTermDocEnum *tde)
 {
     MultiTermDocEnum *mtde = MTDE(tde);
-    TermDocEnum *tmp_tde;
+    FrtTermDocEnum *tmp_tde;
     int i = mtde->ir_cnt;
     mtde->te->close(mtde->te);
     while (i > 0) {
@@ -3060,10 +3060,10 @@ static void mtde_close(TermDocEnum *tde)
     free(tde);
 }
 
-static TermDocEnum *mtxe_new(MultiReader *mr)
+static FrtTermDocEnum *mtxe_new(MultiReader *mr)
 {
     MultiTermDocEnum *mtde  = FRT_ALLOC_AND_ZERO(MultiTermDocEnum);
-    TermDocEnum *tde        = TDE(mtde);
+    FrtTermDocEnum *tde        = TDE(mtde);
     tde->seek               = &mtde_seek;
     tde->seek_te            = &mtde_seek_te;
     tde->doc_num            = &mtde_doc_num;
@@ -3078,15 +3078,15 @@ static TermDocEnum *mtxe_new(MultiReader *mr)
     mtde->starts            = mr->starts;
     mtde->ir_cnt            = mr->r_cnt;
     mtde->irs               = mr->sub_readers;
-    mtde->irs_tde           = FRT_ALLOC_AND_ZERO_N(TermDocEnum *, mr->r_cnt);
+    mtde->irs_tde           = FRT_ALLOC_AND_ZERO_N(FrtTermDocEnum *, mr->r_cnt);
 
     return tde;
 }
 
-static TermDocEnum *mtde_new(MultiReader *mr)
+static FrtTermDocEnum *mtde_new(MultiReader *mr)
 {
     int i;
-    TermDocEnum *tde        = mtxe_new(mr);
+    FrtTermDocEnum *tde        = mtxe_new(mr);
     tde->next_position      = NULL;
     for (i = mr->r_cnt - 1; i >= 0; i--) {
         IndexReader *ir = mr->sub_readers[i];
@@ -3099,16 +3099,16 @@ static TermDocEnum *mtde_new(MultiReader *mr)
  * MultiTermPosEnum
  ****************************************************************************/
 
-static int mtpe_next_position(TermDocEnum *tde)
+static int mtpe_next_position(FrtTermDocEnum *tde)
 {
     CHECK_CURR_TDE("next_position");
     return MTDE(tde)->curr_tde->next_position(MTDE(tde)->curr_tde);
 }
 
-static TermDocEnum *mtpe_new(MultiReader *mr)
+static FrtTermDocEnum *mtpe_new(MultiReader *mr)
 {
     int i;
-    TermDocEnum *tde        = mtxe_new(mr);
+    FrtTermDocEnum *tde        = mtxe_new(mr);
     tde->next_position      = &mtpe_next_position;
     for (i = mr->r_cnt - 1; i >= 0; i--) {
         IndexReader *ir = mr->sub_readers[i];
@@ -3128,7 +3128,7 @@ static TermDocEnum *mtpe_new(MultiReader *mr)
 
 typedef struct
 {
-    TermDocEnum tde;
+    FrtTermDocEnum tde;
     int doc_num;
     int freq;
     PriorityQueue *pq;
@@ -3138,11 +3138,11 @@ typedef struct
     int field_num;
 } MultipleTermDocPosEnum;
 
-static void tde_destroy(TermDocEnum *tde) {
+static void tde_destroy(FrtTermDocEnum *tde) {
     tde->close(tde);
 }
 
-static void mtdpe_seek(TermDocEnum *tde, int field_num, const char *term)
+static void mtdpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
     (void)tde;
     (void)field_num;
@@ -3151,19 +3151,19 @@ static void mtdpe_seek(TermDocEnum *tde, int field_num, const char *term)
           " the #seek operation");
 }
 
-static int mtdpe_doc_num(TermDocEnum *tde)
+static int mtdpe_doc_num(FrtTermDocEnum *tde)
 {
     return MTDPE(tde)->doc_num;
 }
 
-static int mtdpe_freq(TermDocEnum *tde)
+static int mtdpe_freq(FrtTermDocEnum *tde)
 {
     return MTDPE(tde)->freq;
 }
 
-static bool mtdpe_next(TermDocEnum *tde)
+static bool mtdpe_next(FrtTermDocEnum *tde)
 {
-    TermDocEnum *sub_tde;
+    FrtTermDocEnum *sub_tde;
     int pos = 0, freq = 0;
     int doc;
     MultipleTermDocPosEnum *mtdpe = MTDPE(tde);
@@ -3172,7 +3172,7 @@ static bool mtdpe_next(TermDocEnum *tde)
         return false;
     }
 
-    sub_tde = (TermDocEnum *)pq_top(mtdpe->pq);
+    sub_tde = (FrtTermDocEnum *)pq_top(mtdpe->pq);
     doc = sub_tde->doc_num(sub_tde);
 
     do {
@@ -3193,10 +3193,10 @@ static bool mtdpe_next(TermDocEnum *tde)
             pq_down(mtdpe->pq);
         }
         else {
-            sub_tde = (TermDocEnum *)pq_pop(mtdpe->pq);
+            sub_tde = (FrtTermDocEnum *)pq_pop(mtdpe->pq);
             sub_tde->close(sub_tde);
         }
-        sub_tde = (TermDocEnum *)pq_top(mtdpe->pq);
+        sub_tde = (FrtTermDocEnum *)pq_top(mtdpe->pq);
     } while ((mtdpe->pq->size > 0) && (sub_tde->doc_num(sub_tde) == doc));
 
     qsort(mtdpe->pos_queue, freq, sizeof(int), &icmp_risky);
@@ -3208,30 +3208,30 @@ static bool mtdpe_next(TermDocEnum *tde)
     return true;
 }
 
-static bool tdpe_less_than(TermDocEnum *p1, TermDocEnum *p2)
+static bool tdpe_less_than(FrtTermDocEnum *p1, FrtTermDocEnum *p2)
 {
     return p1->doc_num(p1) < p2->doc_num(p2);
 }
 
-static bool mtdpe_skip_to(TermDocEnum *tde, int target_doc_num)
+static bool mtdpe_skip_to(FrtTermDocEnum *tde, int target_doc_num)
 {
-    TermDocEnum *sub_tde;
+    FrtTermDocEnum *sub_tde;
     PriorityQueue *mtdpe_pq = MTDPE(tde)->pq;
 
-    while (NULL != (sub_tde = (TermDocEnum *)pq_top(mtdpe_pq))
+    while (NULL != (sub_tde = (FrtTermDocEnum *)pq_top(mtdpe_pq))
            && (target_doc_num > sub_tde->doc_num(sub_tde))) {
         if (sub_tde->skip_to(sub_tde, target_doc_num)) {
             pq_down(mtdpe_pq);
         }
         else {
-            sub_tde = (TermDocEnum *)pq_pop(mtdpe_pq);
+            sub_tde = (FrtTermDocEnum *)pq_pop(mtdpe_pq);
             sub_tde->close(sub_tde);
         }
     }
     return tde->next(tde);
 }
 
-static int mtdpe_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
+static int mtdpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     (void)tde;
     (void)docs;
@@ -3241,12 +3241,12 @@ static int mtdpe_read(TermDocEnum *tde, int *docs, int *freqs, int req_num)
     return req_num;
 }
 
-static int mtdpe_next_position(TermDocEnum *tde)
+static int mtdpe_next_position(FrtTermDocEnum *tde)
 {
     return MTDPE(tde)->pos_queue[MTDPE(tde)->pos_queue_index++];
 }
 
-static void mtdpe_close(TermDocEnum *tde)
+static void mtdpe_close(FrtTermDocEnum *tde)
 {
     pq_clear(MTDPE(tde)->pq);
     pq_destroy(MTDPE(tde)->pq);
@@ -3254,11 +3254,11 @@ static void mtdpe_close(TermDocEnum *tde)
     free(tde);
 }
 
-TermDocEnum *mtdpe_new(IndexReader *ir, int field_num, char **terms, int t_cnt)
+FrtTermDocEnum *mtdpe_new(IndexReader *ir, int field_num, char **terms, int t_cnt)
 {
     int i;
     MultipleTermDocPosEnum *mtdpe = FRT_ALLOC_AND_ZERO(MultipleTermDocPosEnum);
-    TermDocEnum *tde = TDE(mtdpe);
+    FrtTermDocEnum *tde = TDE(mtdpe);
     PriorityQueue *pq;
 
     pq = mtdpe->pq = pq_new(t_cnt, (lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
@@ -3266,7 +3266,7 @@ TermDocEnum *mtdpe_new(IndexReader *ir, int field_num, char **terms, int t_cnt)
     mtdpe->pos_queue = FRT_ALLOC_N(int, MTDPE_POS_QUEUE_INIT_CAPA);
     mtdpe->field_num = field_num;
     for (i = 0; i < t_cnt; i++) {
-        TermDocEnum *tpe = ir->term_positions(ir);
+        FrtTermDocEnum *tpe = ir->term_positions(ir);
         tpe->seek(tpe, field_num, terms[i]);
         if (tpe->next(tpe)) {
             pq_push(pq, tpe);
@@ -3718,7 +3718,7 @@ void ir_delete_doc(IndexReader *ir, int doc_num)
 FrtDocument *ir_get_doc_with_term(IndexReader *ir, Symbol field,
                                const char *term)
 {
-    TermDocEnum *tde = ir_term_docs_for(ir, field, term);
+    FrtTermDocEnum *tde = ir_term_docs_for(ir, field, term);
     FrtDocument *doc = NULL;
 
     if (tde) {
@@ -3730,9 +3730,9 @@ FrtDocument *ir_get_doc_with_term(IndexReader *ir, Symbol field,
     return doc;
 }
 
-TermEnum *ir_terms(IndexReader *ir, Symbol field)
+FrtTermEnum *ir_terms(IndexReader *ir, Symbol field)
 {
-    TermEnum *te = NULL;
+    FrtTermEnum *te = NULL;
     int field_num = fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         te = ir->terms(ir, field_num);
@@ -3740,10 +3740,10 @@ TermEnum *ir_terms(IndexReader *ir, Symbol field)
     return te;
 }
 
-TermEnum *ir_terms_from(IndexReader *ir, Symbol field,
+FrtTermEnum *ir_terms_from(IndexReader *ir, Symbol field,
                            const char *term)
 {
-    TermEnum *te = NULL;
+    FrtTermEnum *te = NULL;
     int field_num = fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         te = ir->terms_from(ir, field_num, term);
@@ -3751,22 +3751,22 @@ TermEnum *ir_terms_from(IndexReader *ir, Symbol field,
     return te;
 }
 
-TermDocEnum *ir_term_docs_for(IndexReader *ir, Symbol field,
+FrtTermDocEnum *ir_term_docs_for(IndexReader *ir, Symbol field,
                               const char *term)
 {
     int field_num = fis_get_field_num(ir->fis, field);
-    TermDocEnum *tde = ir->term_docs(ir);
+    FrtTermDocEnum *tde = ir->term_docs(ir);
     if (field_num >= 0) {
         tde->seek(tde, field_num, term);
     }
     return tde;
 }
 
-TermDocEnum *ir_term_positions_for(IndexReader *ir, Symbol field,
+FrtTermDocEnum *ir_term_positions_for(IndexReader *ir, Symbol field,
                                    const char *term)
 {
     int field_num = fis_get_field_num(ir->fis, field);
-    TermDocEnum *tde = ir->term_positions(ir);
+    FrtTermDocEnum *tde = ir->term_positions(ir);
     if (field_num >= 0) {
         tde->seek(tde, field_num, term);
     }
@@ -3926,7 +3926,7 @@ typedef struct SegmentReader {
     InStream *frq_in;
     InStream *prx_in;
     SegmentFieldIndex *sfi;
-    TermInfosReader *tir;
+    FrtTermInfosReader *tir;
     thread_key_t thread_fr;
     void **fr_bucket;
     Hash *norms;
@@ -4192,16 +4192,16 @@ static uchar *sr_get_norms_into(IndexReader *ir, int field_num,
     return buf;
 }
 
-static TermEnum *sr_terms(IndexReader *ir, int field_num)
+static FrtTermEnum *sr_terms(IndexReader *ir, int field_num)
 {
-    TermEnum *te = SR(ir)->tir->orig_te;
+    FrtTermEnum *te = SR(ir)->tir->orig_te;
     te = ste_clone(te);
     return ste_set_field(te, field_num);
 }
 
-static TermEnum *sr_terms_from(IndexReader *ir, int field_num, const char *term)
+static FrtTermEnum *sr_terms_from(IndexReader *ir, int field_num, const char *term)
 {
-    TermEnum *te = SR(ir)->tir->orig_te;
+    FrtTermEnum *te = SR(ir)->tir->orig_te;
     te = ste_clone(te);
     ste_set_field(te, field_num);
     ste_scan_to(te, term);
@@ -4210,24 +4210,24 @@ static TermEnum *sr_terms_from(IndexReader *ir, int field_num, const char *term)
 
 static int sr_doc_freq(IndexReader *ir, int field_num, const char *term)
 {
-    TermInfo *ti = tir_get_ti(tir_set_field(SR(ir)->tir, field_num), term);
+    FrtTermInfo *ti = tir_get_ti(tir_set_field(SR(ir)->tir, field_num), term);
     return ti ? ti->doc_freq : 0;
 }
 
-static TermDocEnum *sr_term_docs(IndexReader *ir)
+static FrtTermDocEnum *sr_term_docs(IndexReader *ir)
 {
     return stde_new(SR(ir)->tir, SR(ir)->frq_in, SR(ir)->deleted_docs,
                     STE(SR(ir)->tir->orig_te)->skip_interval);
 }
 
-static TermDocEnum *sr_term_positions(IndexReader *ir)
+static FrtTermDocEnum *sr_term_positions(IndexReader *ir)
 {
     SegmentReader *sr = SR(ir);
     return stpe_new(sr->tir, sr->frq_in, sr->prx_in, sr->deleted_docs,
                     STE(sr->tir->orig_te)->skip_interval);
 }
 
-static TermVector *sr_term_vector(IndexReader *ir, int doc_num,
+static FrtTermVector *sr_term_vector(IndexReader *ir, int doc_num,
                                   Symbol field)
 {
     FrtFieldInfo *fi = (FrtFieldInfo *)h_get(ir->fis->field_dict, field);
@@ -4494,12 +4494,12 @@ static uchar *mr_get_norms_into(IndexReader *ir, int field_num, uchar *buf)
     return buf;
 }
 
-static TermEnum *mr_terms(IndexReader *ir, int field_num)
+static FrtTermEnum *mr_terms(IndexReader *ir, int field_num)
 {
     return mte_new(MR(ir), field_num, NULL);
 }
 
-static TermEnum *mr_terms_from(IndexReader *ir, int field_num, const char *term)
+static FrtTermEnum *mr_terms_from(IndexReader *ir, int field_num, const char *term)
 {
     return mte_new(MR(ir), field_num, term);
 }
@@ -4518,17 +4518,17 @@ static int mr_doc_freq(IndexReader *ir, int field_num, const char *t)
     return total;
 }
 
-static TermDocEnum *mr_term_docs(IndexReader *ir)
+static FrtTermDocEnum *mr_term_docs(IndexReader *ir)
 {
     return mtde_new(MR(ir));
 }
 
-static TermDocEnum *mr_term_positions(IndexReader *ir)
+static FrtTermDocEnum *mr_term_positions(IndexReader *ir)
 {
     return mtpe_new(MR(ir));
 }
 
-static TermVector *mr_term_vector(IndexReader *ir, int doc_num,
+static FrtTermVector *mr_term_vector(IndexReader *ir, int doc_num,
                                   Symbol field)
 {
     GET_READER();
@@ -5059,9 +5059,9 @@ static void dw_flush(FrtDocWriter *dw)
     Posting *p;
     Occurence *occ;
     Store *store = dw->store;
-    TermInfosWriter *tiw = tiw_open(store, dw->si->name,
+    FrtTermInfosWriter *tiw = tiw_open(store, dw->si->name,
                                     dw->index_interval, skip_interval);
-    TermInfo ti;
+    FrtTermInfo ti;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *frq_out, *prx_out;
     SkipBuffer *skip_buf;
@@ -5251,11 +5251,11 @@ Hash *dw_invert_field(FrtDocWriter *dw,
     off_t start_offset = 0;
 
     if (fld_inv->is_tokenized) {
-        Token *tk;
+        FrtToken *tk;
         int pos = -1, num_terms = 0;
 
         for (i = 0; i < df_size; i++) {
-            TokenStream *ts = a_get_ts(a, df->name, df->data[i]);
+            FrtTokenStream *ts = a_get_ts(a, df->name, df->data[i]);
             /* ts->reset(ts, df->data[i]); no longer being called */
             if (store_offsets) {
                 while (NULL != (tk = ts->next(ts))) {
@@ -5381,8 +5381,8 @@ typedef struct SegmentMergeInfo {
     Store *orig_store;
     FrtBitVector *deleted_docs;
     SegmentFieldIndex *sfi;
-    TermEnum *te;
-    TermDocEnum *tde;
+    FrtTermEnum *te;
+    FrtTermDocEnum *tde;
     char *term;
     int *doc_map;
     InStream *frq_in;
@@ -5491,7 +5491,7 @@ static char *smi_next(SegmentMergeInfo *smi)
  ****************************************************************************/
 
 typedef struct SegmentMerger {
-    TermInfo ti;
+    FrtTermInfo ti;
     Store *store;
     FrtFieldInfos *fis;
     SegmentInfo *si;
@@ -5499,7 +5499,7 @@ typedef struct SegmentMerger {
     int seg_cnt;
     int doc_cnt;
     FrtConfig *config;
-    TermInfosWriter *tiw;
+    FrtTermInfosWriter *tiw;
     char *term_buf;
     int term_buf_ptr;
     int term_buf_size;
@@ -5601,7 +5601,7 @@ static int sm_append_postings(SegmentMerger *sm, SegmentMergeInfo **matches,
     int skip_interval = sm->config->skip_interval;
     int *doc_map = NULL;
     int df = 0;            /* number of docs w/ term */
-    TermDocEnum *tde;
+    FrtTermDocEnum *tde;
     SegmentMergeInfo *smi;
     SkipBuffer *skip_buf = sm->skip_buf;
     skip_buf_reset(skip_buf);
@@ -6045,7 +6045,7 @@ void iw_delete_term(IndexWriter *iw, Symbol field, const char *term)
             bool did_delete = false;
             for (i = 0; i < seg_cnt; i++) {
                 IndexReader *ir = sr_open(sis, iw->fis, i, false);
-                TermDocEnum *tde = ir->term_docs(ir);
+                FrtTermDocEnum *tde = ir->term_docs(ir);
                 ir->deleter = iw->deleter;
                 stde_seek(tde, field_num, term);
                 while (tde->next(tde)) {
@@ -6080,7 +6080,7 @@ void iw_delete_terms(IndexWriter *iw, Symbol field,
             bool did_delete = false;
             for (i = 0; i < seg_cnt; i++) {
                 IndexReader *ir = sr_open(sis, iw->fis, i, false);
-                TermDocEnum *tde = ir->term_docs(ir);
+                FrtTermDocEnum *tde = ir->term_docs(ir);
                 int j;
                 for (j = 0 ; j < term_cnt; j++) {
                     const char *term = terms[j];

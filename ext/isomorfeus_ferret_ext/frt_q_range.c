@@ -226,8 +226,8 @@ static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
         const bool include_upper = range->include_upper;
         const int field_num = fi->number;
         char *term;
-        TermEnum* te;
-        TermDocEnum *tde;
+        FrtTermEnum* te;
+        FrtTermDocEnum *tde;
         bool check_lower;
 
         te = ir->terms(ir, field_num);
@@ -357,8 +357,8 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
             const int field_num = fi->number;
             char *term;
             double num;
-            TermEnum* te;
-            TermDocEnum *tde;
+            FrtTermEnum* te;
+            FrtTermDocEnum *tde;
             TypedRangeCheck check = TRC_NONE;
 
             te = ir->terms(ir, field_num);
@@ -460,7 +460,7 @@ static void rq_destroy(Query *self)
 }
 
 static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
-                                    TermVector *tv)
+                                    FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (strcmp(tv->field, range->field) == 0) {
@@ -477,7 +477,7 @@ static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
         }
 
         for (; i < term_cnt; i++) {
-            TVTerm *tv_term = &(tv->terms[i]);
+            FrtTVTerm *tv_term = &(tv->terms[i]);
             char *text = tv_term->text;
             const int tv_term_freq = tv_term->freq;
             if (upper_text && strcmp(text, upper_text) >= upper_limit) {
@@ -554,7 +554,7 @@ Query *rq_new(Symbol field, const char *lower_term,
 
 #define SET_TERMS(cond)\
 for (i = tv->term_cnt - 1; i >= 0; i--) {\
-    TVTerm *tv_term = &(tv->terms[i]);\
+    FrtTVTerm *tv_term = &(tv->terms[i]);\
     char *text = tv_term->text;\
     double num;\
     sscanf(text, "%lg%n", &num, &len);\
@@ -570,7 +570,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
 }\
 
 static MatchVector *trq_get_matchv_i(Query *self, MatchVector *mv,
-                                     TermVector *tv)
+                                     FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (strcmp(tv->field, range->field) == 0) {

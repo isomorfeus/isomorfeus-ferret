@@ -390,7 +390,7 @@ static Comparator *sorter_get_comparator(SortField *sf, IndexReader *ir)
     if (sf->type > FRT_SORT_TYPE_DOC) {
         FrtFieldIndex *field_index = NULL;
         if (sf->type == FRT_SORT_TYPE_AUTO) {
-            TermEnum *te = ir_terms(ir, sf->field);
+            FrtTermEnum *te = ir_terms(ir, sf->field);
             if (te) {
                 if (!te->next(te) && (ir->num_docs(ir) > 0)) {
                     rb_raise(rb_eArgError,

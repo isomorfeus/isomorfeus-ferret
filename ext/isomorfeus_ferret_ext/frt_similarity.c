@@ -15,15 +15,15 @@
  *
  ****************************************************************************/
 
-Term *term_new(Symbol field, const char *text)
+FrtTerm *term_new(Symbol field, const char *text)
 {
-    Term *t = FRT_ALLOC(Term);
+    FrtTerm *t = FRT_ALLOC(FrtTerm);
     t->field = field;
     t->text = estrdup(text);
     return t;
 }
 
-void term_destroy(Term *self)
+void term_destroy(FrtTerm *self)
 {
     free(self->text);
     free(self);
@@ -31,13 +31,13 @@ void term_destroy(Term *self)
 
 int term_eq(const void *t1, const void *t2)
 {
-    return ((strcmp(((Term *)t1)->text, ((Term *)t2)->text) == 0) &&
-        (strcmp(((Term *)t1)->field, ((Term *)t2)->field) == 0));
+    return ((strcmp(((FrtTerm *)t1)->text, ((FrtTerm *)t2)->text) == 0) &&
+        (strcmp(((FrtTerm *)t1)->field, ((FrtTerm *)t2)->field) == 0));
 }
 
 unsigned long long term_hash(const void *t)
 {
-    return str_hash(((Term *)t)->text) * sym_hash(((Term *)t)->field);
+    return str_hash(((FrtTerm *)t)->text) * sym_hash(((FrtTerm *)t)->field);
 }
 
 /****************************************************************************

@@ -1319,7 +1319,7 @@ FrtBooleanClause *bc_new(Query *query, FrtBCType occur)
  ***************************************************************************/
 
 static MatchVector *bq_get_matchv_i(Query *self, MatchVector *mv,
-                                    TermVector *tv)
+                                    FrtTermVector *tv)
 {
     int i;
     for (i = BQ(self)->clause_cnt - 1; i >= 0; i--) {

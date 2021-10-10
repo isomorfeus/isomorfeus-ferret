@@ -14,7 +14,7 @@
  *
  ****************************************************************************/
 
-Token *tk_set(Token *tk,
+FrtToken *tk_set(FrtToken *tk,
                      char *text, int tlen, off_t start, off_t end, int pos_inc)
 {
     if (tlen >= FRT_MAX_WORD_SIZE) {
@@ -29,20 +29,20 @@ Token *tk_set(Token *tk,
     return tk;
 }
 
-static Token *tk_set_ts(Token *tk, char *start, char *end,
+static FrtToken *tk_set_ts(FrtToken *tk, char *start, char *end,
                                char *text, int pos_inc)
 {
     return tk_set(tk, start, (int)(end - start),
                   (off_t)(start - text), (off_t)(end - text), pos_inc);
 }
 
-Token *tk_set_no_len(Token *tk,
+FrtToken *tk_set_no_len(FrtToken *tk,
                             char *text, off_t start, off_t end, int pos_inc)
 {
     return tk_set(tk, text, (int)strlen(text), start, end, pos_inc);
 }
 
-static Token *w_tk_set(Token *tk, wchar_t *text, off_t start,
+static FrtToken *w_tk_set(FrtToken *tk, wchar_t *text, off_t start,
                               off_t end, int pos_inc)
 {
     int len = wcstombs(tk->text, text, FRT_MAX_WORD_SIZE - 1);
@@ -54,14 +54,14 @@ static Token *w_tk_set(Token *tk, wchar_t *text, off_t start,
     return tk;
 }
 
-int tk_eq(Token *tk1, Token *tk2)
+int tk_eq(FrtToken *tk1, FrtToken *tk2)
 {
     return (strcmp((char *)tk1->text, (char *)tk2->text) == 0 &&
             tk1->start == tk2->start && tk1->end == tk2->end &&
             tk1->pos_inc == tk2->pos_inc);
 }
 
-int tk_cmp(Token *tk1, Token *tk2)
+int tk_cmp(FrtToken *tk1, FrtToken *tk2)
 {
     int cmp;
     if (tk1->start > tk2->start) {
@@ -89,9 +89,9 @@ void tk_destroy(void *p)
     free(p);
 }
 
-Token *tk_new()
+FrtToken *tk_new()
 {
-    return FRT_ALLOC(Token);
+    return FRT_ALLOC(FrtToken);
 }
 
 /****************************************************************************
@@ -100,32 +100,32 @@ Token *tk_new()
  *
  ****************************************************************************/
 
-void ts_deref(TokenStream *ts)
+void ts_deref(FrtTokenStream *ts)
 {
     if (--ts->ref_cnt <= 0) {
         ts->destroy_i(ts);
     }
 }
 
-static TokenStream *ts_reset(TokenStream *ts, char *text)
+static FrtTokenStream *ts_reset(FrtTokenStream *ts, char *text)
 {
     ts->t = ts->text = text;
     return ts;
 }
 
-TokenStream *ts_clone_size(TokenStream *orig_ts, size_t size)
+FrtTokenStream *ts_clone_size(FrtTokenStream *orig_ts, size_t size)
 {
-    TokenStream *ts = (TokenStream *)ecalloc(size);
+    FrtTokenStream *ts = (FrtTokenStream *)ecalloc(size);
     memcpy(ts, orig_ts, size);
     ts->ref_cnt = 1;
     return ts;
 }
 
-TokenStream *ts_new_i(size_t size)
+FrtTokenStream *ts_new_i(size_t size)
 {
-    TokenStream *ts = (TokenStream *)ecalloc(size);
+    FrtTokenStream *ts = (FrtTokenStream *)ecalloc(size);
 
-    ts->destroy_i = (void (*)(TokenStream *))&free;
+    ts->destroy_i = (void (*)(FrtTokenStream *))&free;
     ts->reset = &ts_reset;
     ts->ref_cnt = 1;
 
@@ -138,14 +138,14 @@ TokenStream *ts_new_i(size_t size)
 
 #define CTS(token_stream) ((FrtCachedTokenStream *)(token_stream))
 
-static TokenStream *cts_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *cts_clone_i(FrtTokenStream *orig_ts)
 {
     return ts_clone_size(orig_ts, sizeof(FrtCachedTokenStream));
 }
 
-static TokenStream *cts_new()
+static FrtTokenStream *cts_new()
 {
-    TokenStream *ts = ts_new(FrtCachedTokenStream);
+    FrtTokenStream *ts = ts_new(FrtCachedTokenStream);
     ts->clone_i = &cts_clone_i;
     return ts;
 }
@@ -170,21 +170,21 @@ static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
     return num_bytes;
 }
 
-static TokenStream *mb_ts_reset(TokenStream *ts, char *text)
+static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text)
 {
     FRT_ZEROSET(&(MBTS(ts)->state), mbstate_t);
     ts_reset(ts, text);
     return ts;
 }
 
-static TokenStream *mb_ts_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *mb_ts_clone_i(FrtTokenStream *orig_ts)
 {
     return ts_clone_size(orig_ts, sizeof(MultiByteTokenStream));
 }
 
-static TokenStream *mb_ts_new()
+static FrtTokenStream *mb_ts_new()
 {
-    TokenStream *ts = ts_new(MultiByteTokenStream);
+    FrtTokenStream *ts = ts_new(MultiByteTokenStream);
     ts->reset = &mb_ts_reset;
     ts->clone_i = &mb_ts_clone_i;
     ts->ref_cnt = 1;
@@ -212,19 +212,19 @@ static void a_standard_destroy_i(FrtAnalyzer *a)
     free(a);
 }
 
-static TokenStream *a_standard_get_ts(FrtAnalyzer *a,
+static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a,
                                       Symbol field,
                                       char *text)
 {
-    TokenStream *ts;
+    FrtTokenStream *ts;
     (void)field;
     ts = ts_clone(a->current_ts);
     return ts->reset(ts, text);
 }
 
-FrtAnalyzer *analyzer_new(TokenStream *ts,
+FrtAnalyzer *analyzer_new(FrtTokenStream *ts,
                        void (*destroy_i)(FrtAnalyzer *a),
-                       TokenStream *(*get_ts)(FrtAnalyzer *a,
+                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a,
                                               Symbol field,
                                               char *text))
 {
@@ -245,7 +245,7 @@ FrtAnalyzer *analyzer_new(TokenStream *ts,
 /*
  * NonTokenizer
  */
-static Token *nt_next(TokenStream *ts)
+static FrtToken *nt_next(FrtTokenStream *ts)
 {
     if (ts->t) {
         size_t len = strlen(ts->t);
@@ -258,9 +258,9 @@ static Token *nt_next(TokenStream *ts)
     }
 }
 
-TokenStream *non_tokenizer_new()
+FrtTokenStream *non_tokenizer_new()
 {
-    TokenStream *ts = cts_new();
+    FrtTokenStream *ts = cts_new();
     ts->next = &nt_next;
     return ts;
 }
@@ -282,7 +282,7 @@ FrtAnalyzer *non_analyzer_new()
 /*
  * WhitespaceTokenizer
  */
-static Token *wst_next(TokenStream *ts)
+static FrtToken *wst_next(FrtTokenStream *ts)
 {
     char *t = ts->t;
     char *start;
@@ -304,9 +304,9 @@ static Token *wst_next(TokenStream *ts)
     return tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
 
-TokenStream *whitespace_tokenizer_new()
+FrtTokenStream *whitespace_tokenizer_new()
 {
-    TokenStream *ts = cts_new();
+    FrtTokenStream *ts = cts_new();
     ts->next = &wst_next;
     return ts;
 }
@@ -314,7 +314,7 @@ TokenStream *whitespace_tokenizer_new()
 /*
  * Multi-byte WhitespaceTokenizer
  */
-static Token *mb_wst_next(TokenStream *ts)
+static FrtToken *mb_wst_next(FrtTokenStream *ts)
 {
     int i;
     char *start;
@@ -345,7 +345,7 @@ static Token *mb_wst_next(TokenStream *ts)
 /*
  * Lowercasing Multi-byte WhitespaceTokenizer
  */
-static Token *mb_wst_next_lc(TokenStream *ts)
+static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
 {
     int i;
     char *start;
@@ -383,9 +383,9 @@ static Token *mb_wst_next_lc(TokenStream *ts)
                     (off_t)(t - ts->text), 1);
 }
 
-TokenStream *mb_whitespace_tokenizer_new(bool lowercase)
+FrtTokenStream *mb_whitespace_tokenizer_new(bool lowercase)
 {
-    TokenStream *ts = mb_ts_new();
+    FrtTokenStream *ts = mb_ts_new();
     ts->next = lowercase ? &mb_wst_next_lc : &mb_wst_next;
     return ts;
 }
@@ -395,7 +395,7 @@ TokenStream *mb_whitespace_tokenizer_new(bool lowercase)
  */
 FrtAnalyzer *whitespace_analyzer_new(bool lowercase)
 {
-    TokenStream *ts;
+    FrtTokenStream *ts;
     if (lowercase) {
         ts = lowercase_filter_new(whitespace_tokenizer_new());
     }
@@ -419,7 +419,7 @@ FrtAnalyzer *mb_whitespace_analyzer_new(bool lowercase)
 /*
  * LetterTokenizer
  */
-static Token *lt_next(TokenStream *ts)
+static FrtToken *lt_next(FrtTokenStream *ts)
 {
     char *start;
     char *t = ts->t;
@@ -441,9 +441,9 @@ static Token *lt_next(TokenStream *ts)
     return tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
 
-TokenStream *letter_tokenizer_new()
+FrtTokenStream *letter_tokenizer_new()
 {
-    TokenStream *ts = cts_new();
+    FrtTokenStream *ts = cts_new();
     ts->next = &lt_next;
     return ts;
 }
@@ -451,7 +451,7 @@ TokenStream *letter_tokenizer_new()
 /*
  * Multi-byte LetterTokenizer
  */
-static Token *mb_lt_next(TokenStream *ts)
+static FrtToken *mb_lt_next(FrtTokenStream *ts)
 {
     int i;
     char *start;
@@ -483,7 +483,7 @@ static Token *mb_lt_next(TokenStream *ts)
 /*
  * Lowercasing Multi-byte LetterTokenizer
  */
-static Token *mb_lt_next_lc(TokenStream *ts)
+static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 {
     int i;
     char *start;
@@ -521,9 +521,9 @@ static Token *mb_lt_next_lc(TokenStream *ts)
                     (off_t)(t - ts->text), 1);
 }
 
-TokenStream *mb_letter_tokenizer_new(bool lowercase)
+FrtTokenStream *mb_letter_tokenizer_new(bool lowercase)
 {
-    TokenStream *ts = mb_ts_new();
+    FrtTokenStream *ts = mb_ts_new();
     ts->next = lowercase ? &mb_lt_next_lc : &mb_lt_next;
     return ts;
 }
@@ -533,7 +533,7 @@ TokenStream *mb_letter_tokenizer_new(bool lowercase)
  */
 FrtAnalyzer *letter_analyzer_new(bool lowercase)
 {
-    TokenStream *ts;
+    FrtTokenStream *ts;
     if (lowercase) {
         ts = lowercase_filter_new(letter_tokenizer_new());
     }
@@ -559,13 +559,13 @@ FrtAnalyzer *mb_letter_analyzer_new(bool lowercase)
 /*
  * StandardTokenizer
  */
-static Token *std_next(TokenStream *ts)
+static FrtToken *std_next(FrtTokenStream *ts)
 {
     StandardTokenizer *std_tz = STDTS(ts);
     const char *start = NULL;
     const char *end = NULL;
     int len;
-    Token *tk = &(CTS(ts)->token);
+    FrtToken *tk = &(CTS(ts)->token);
 
     switch (std_tz->type) {
         case FRT_STT_ASCII:
@@ -593,14 +593,14 @@ static Token *std_next(TokenStream *ts)
     return &(CTS(ts)->token);
 }
 
-static TokenStream *std_ts_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
 {
     return ts_clone_size(orig_ts, sizeof(StandardTokenizer));
 }
 
-static TokenStream *std_ts_new()
+static FrtTokenStream *std_ts_new()
 {
-    TokenStream *ts = ts_new(StandardTokenizer);
+    FrtTokenStream *ts = ts_new(StandardTokenizer);
 
     ts->clone_i     = &std_ts_clone_i;
     ts->next        = &std_next;
@@ -608,23 +608,23 @@ static TokenStream *std_ts_new()
     return ts;
 }
 
-TokenStream *standard_tokenizer_new()
+FrtTokenStream *standard_tokenizer_new()
 {
-    TokenStream *ts = std_ts_new();
+    FrtTokenStream *ts = std_ts_new();
     STDTS(ts)->type = FRT_STT_ASCII;
     return ts;
 }
 
-TokenStream *mb_standard_tokenizer_new()
+FrtTokenStream *mb_standard_tokenizer_new()
 {
-    TokenStream *ts = std_ts_new();
+    FrtTokenStream *ts = std_ts_new();
     STDTS(ts)->type = FRT_STT_MB;
     return ts;
 }
 
-TokenStream *utf8_standard_tokenizer_new()
+FrtTokenStream *utf8_standard_tokenizer_new()
 {
-    TokenStream *ts = std_ts_new();
+    FrtTokenStream *ts = std_ts_new();
     STDTS(ts)->type = FRT_STT_UTF8;
     return ts;
 }
@@ -640,7 +640,7 @@ TokenStream *utf8_standard_tokenizer_new()
 /*
  * LegacyStandardTokenizer
  */
-static int legacy_std_get_alpha(TokenStream *ts, char *token)
+static int legacy_std_get_alpha(FrtTokenStream *ts, char *token)
 {
     int i = 0;
     char *t = ts->t;
@@ -653,7 +653,7 @@ static int legacy_std_get_alpha(TokenStream *ts, char *token)
     return i;
 }
 
-static int mb_legacy_std_get_alpha(TokenStream *ts, char *token)
+static int mb_legacy_std_get_alpha(FrtTokenStream *ts, char *token)
 {
     char *t = ts->t;
     wchar_t wchr;
@@ -849,7 +849,7 @@ static int legacy_std_get_company_name(char *input)
     return i;
 }
 
-static bool legacy_std_advance_to_start(TokenStream *ts)
+static bool legacy_std_advance_to_start(FrtTokenStream *ts)
 {
     char *t = ts->t;
     while (*t != '\0' && !isalnum(*t)) {
@@ -862,7 +862,7 @@ static bool legacy_std_advance_to_start(TokenStream *ts)
     return (*t != '\0');
 }
 
-static bool mb_legacy_std_advance_to_start(TokenStream *ts)
+static bool mb_legacy_std_advance_to_start(FrtTokenStream *ts)
 {
     int i;
     wchar_t wchr;
@@ -879,7 +879,7 @@ static bool mb_legacy_std_advance_to_start(TokenStream *ts)
     return (wchr != 0);
 }
 
-static Token *legacy_std_next(TokenStream *ts)
+static FrtToken *legacy_std_next(FrtTokenStream *ts)
 {
     LegacyStandardTokenizer *std_tz = LSTDTS(ts);
     char *s;
@@ -1029,14 +1029,14 @@ static Token *legacy_std_next(TokenStream *ts)
     return &(CTS(ts)->token);
 }
 
-static TokenStream *legacy_std_ts_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *legacy_std_ts_clone_i(FrtTokenStream *orig_ts)
 {
     return ts_clone_size(orig_ts, sizeof(LegacyStandardTokenizer));
 }
 
-static TokenStream *legacy_std_ts_new()
+static FrtTokenStream *legacy_std_ts_new()
 {
-    TokenStream *ts = ts_new(LegacyStandardTokenizer);
+    FrtTokenStream *ts = ts_new(LegacyStandardTokenizer);
 
     ts->clone_i     = &legacy_std_ts_clone_i;
     ts->next        = &legacy_std_next;
@@ -1044,9 +1044,9 @@ static TokenStream *legacy_std_ts_new()
     return ts;
 }
 
-TokenStream *legacy_standard_tokenizer_new()
+FrtTokenStream *legacy_standard_tokenizer_new()
 {
-    TokenStream *ts = legacy_std_ts_new();
+    FrtTokenStream *ts = legacy_std_ts_new();
 
     LSTDTS(ts)->advance_to_start = &legacy_std_advance_to_start;
     LSTDTS(ts)->get_alpha        = &legacy_std_get_alpha;
@@ -1056,9 +1056,9 @@ TokenStream *legacy_standard_tokenizer_new()
     return ts;
 }
 
-TokenStream *mb_legacy_standard_tokenizer_new()
+FrtTokenStream *mb_legacy_standard_tokenizer_new()
 {
-    TokenStream *ts = legacy_std_ts_new();
+    FrtTokenStream *ts = legacy_std_ts_new();
 
     LSTDTS(ts)->advance_to_start = &mb_legacy_std_advance_to_start;
     LSTDTS(ts)->get_alpha        = &mb_legacy_std_get_alpha;
@@ -1074,35 +1074,35 @@ TokenStream *mb_legacy_standard_tokenizer_new()
  *
  ****************************************************************************/
 
-#define TkFilt(filter) ((TokenFilter *)(filter))
+#define TkFilt(filter) ((FrtTokenFilter *)(filter))
 
-TokenStream *filter_clone_size(TokenStream *ts, size_t size)
+FrtTokenStream *filter_clone_size(FrtTokenStream *ts, size_t size)
 {
-    TokenStream *ts_new = ts_clone_size(ts, size);
+    FrtTokenStream *ts_new = ts_clone_size(ts, size);
     TkFilt(ts_new)->sub_ts = TkFilt(ts)->sub_ts->clone_i(TkFilt(ts)->sub_ts);
     return ts_new;
 }
 
-static TokenStream *filter_clone_i(TokenStream *ts)
+static FrtTokenStream *filter_clone_i(FrtTokenStream *ts)
 {
-    return filter_clone_size(ts, sizeof(TokenFilter));
+    return filter_clone_size(ts, sizeof(FrtTokenFilter));
 }
 
-static TokenStream *filter_reset(TokenStream *ts, char *text)
+static FrtTokenStream *filter_reset(FrtTokenStream *ts, char *text)
 {
     TkFilt(ts)->sub_ts->reset(TkFilt(ts)->sub_ts, text);
     return ts;
 }
 
-static void filter_destroy_i(TokenStream *ts)
+static void filter_destroy_i(FrtTokenStream *ts)
 {
     ts_deref(TkFilt(ts)->sub_ts);
     free(ts);
 }
 
-TokenStream *tf_new_i(size_t size, TokenStream *sub_ts)
+FrtTokenStream *tf_new_i(size_t size, FrtTokenStream *sub_ts)
 {
-    TokenStream *ts     = (TokenStream *)ecalloc(size);
+    FrtTokenStream *ts     = (FrtTokenStream *)ecalloc(size);
 
     TkFilt(ts)->sub_ts  = sub_ts;
 
@@ -1120,25 +1120,25 @@ TokenStream *tf_new_i(size_t size, TokenStream *sub_ts)
 
 #define StopFilt(filter) ((StopFilter *)(filter))
 
-static void sf_destroy_i(TokenStream *ts)
+static void sf_destroy_i(FrtTokenStream *ts)
 {
     h_destroy(StopFilt(ts)->words);
     filter_destroy_i(ts);
 }
 
-static TokenStream *sf_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *sf_clone_i(FrtTokenStream *orig_ts)
 {
-    TokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
+    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
     FRT_REF(StopFilt(new_ts)->words);
     return new_ts;
 }
 
-static Token *sf_next(TokenStream *ts)
+static FrtToken *sf_next(FrtTokenStream *ts)
 {
     int pos_inc = 0;
     Hash *words = StopFilt(ts)->words;
-    TokenFilter *tf = TkFilt(ts);
-    Token *tk = tf->sub_ts->next(tf->sub_ts);
+    FrtTokenFilter *tf = TkFilt(ts);
+    FrtToken *tk = tf->sub_ts->next(tf->sub_ts);
 
     while ((tk != NULL) && (h_get(words, tk->text) != NULL)) {
         pos_inc += tk->pos_inc;
@@ -1152,13 +1152,13 @@ static Token *sf_next(TokenStream *ts)
     return tk;
 }
 
-TokenStream *stop_filter_new_with_words_len(TokenStream *sub_ts,
+FrtTokenStream *stop_filter_new_with_words_len(FrtTokenStream *sub_ts,
                                             const char **words, int len)
 {
     int i;
     char *word;
     Hash *word_table = h_new_str(&free, (free_ft) NULL);
-    TokenStream *ts = tf_new(StopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(StopFilter, sub_ts);
 
     for (i = 0; i < len; i++) {
         word = estrdup(words[i]);
@@ -1171,12 +1171,12 @@ TokenStream *stop_filter_new_with_words_len(TokenStream *sub_ts,
     return ts;
 }
 
-TokenStream *stop_filter_new_with_words(TokenStream *sub_ts,
+FrtTokenStream *stop_filter_new_with_words(FrtTokenStream *sub_ts,
                                         const char **words)
 {
     char *word;
     Hash *word_table = h_new_str(&free, (free_ft) NULL);
-    TokenStream *ts = tf_new(StopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(StopFilter, sub_ts);
 
     while (*words) {
         word = estrdup(*words);
@@ -1191,7 +1191,7 @@ TokenStream *stop_filter_new_with_words(TokenStream *sub_ts,
     return ts;
 }
 
-TokenStream *stop_filter_new(TokenStream *ts)
+FrtTokenStream *stop_filter_new(FrtTokenStream *ts)
 {
     return stop_filter_new_with_words(ts, FRT_FULL_ENGLISH_STOP_WORDS);
 }
@@ -1202,25 +1202,25 @@ TokenStream *stop_filter_new(TokenStream *ts)
 
 #define MFilt(filter) ((MappingFilter *)(filter))
 
-static void mf_destroy_i(TokenStream *ts)
+static void mf_destroy_i(FrtTokenStream *ts)
 {
     mulmap_destroy(MFilt(ts)->mapper);
     filter_destroy_i(ts);
 }
 
-static TokenStream *mf_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *mf_clone_i(FrtTokenStream *orig_ts)
 {
-    TokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
+    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(MappingFilter));
     FRT_REF(MFilt(new_ts)->mapper);
     return new_ts;
 }
 
-static Token *mf_next(TokenStream *ts)
+static FrtToken *mf_next(FrtTokenStream *ts)
 {
     char buf[FRT_MAX_WORD_SIZE + 1];
     MultiMapper *mapper = MFilt(ts)->mapper;
-    TokenFilter *tf = TkFilt(ts);
-    Token *tk = tf->sub_ts->next(tf->sub_ts);
+    FrtTokenFilter *tf = TkFilt(ts);
+    FrtToken *tk = tf->sub_ts->next(tf->sub_ts);
     if (tk != NULL) {
         tk->len = mulmap_map_len(mapper, buf, tk->text, FRT_MAX_WORD_SIZE);
         memcpy(tk->text, buf, tk->len + 1);
@@ -1228,7 +1228,7 @@ static Token *mf_next(TokenStream *ts)
     return tk;
 }
 
-static TokenStream *mf_reset(TokenStream *ts, char *text)
+static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text)
 {
     MultiMapper *mm = MFilt(ts)->mapper;
     if (mm->d_size == 0) {
@@ -1238,9 +1238,9 @@ static TokenStream *mf_reset(TokenStream *ts, char *text)
     return ts;
 }
 
-TokenStream *mapping_filter_new(TokenStream *sub_ts)
+FrtTokenStream *mapping_filter_new(FrtTokenStream *sub_ts)
 {
-    TokenStream *ts   = tf_new(MappingFilter, sub_ts);
+    FrtTokenStream *ts   = tf_new(MappingFilter, sub_ts);
     MFilt(ts)->mapper = mulmap_new();
     ts->next          = &mf_next;
     ts->destroy_i     = &mf_destroy_i;
@@ -1249,7 +1249,7 @@ TokenStream *mapping_filter_new(TokenStream *sub_ts)
     return ts;
 }
 
-TokenStream *mapping_filter_add(TokenStream *ts, const char *pattern,
+FrtTokenStream *mapping_filter_add(FrtTokenStream *ts, const char *pattern,
                                 const char *replacement)
 {
     mulmap_add_mapping(MFilt(ts)->mapper, pattern, replacement);
@@ -1262,17 +1262,17 @@ TokenStream *mapping_filter_add(TokenStream *ts, const char *pattern,
 
 #define HyphenFilt(filter) ((HyphenFilter *)(filter))
 
-static TokenStream *hf_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *hf_clone_i(FrtTokenStream *orig_ts)
 {
-    TokenStream *new_ts = filter_clone_size(orig_ts, sizeof(HyphenFilter));
+    FrtTokenStream *new_ts = filter_clone_size(orig_ts, sizeof(HyphenFilter));
     return new_ts;
 }
 
-static Token *hf_next(TokenStream *ts)
+static FrtToken *hf_next(FrtTokenStream *ts)
 {
     HyphenFilter *hf = HyphenFilt(ts);
-    TokenFilter *tf = TkFilt(ts);
-    Token *tk = hf->tk;
+    FrtTokenFilter *tf = TkFilt(ts);
+    FrtToken *tk = hf->tk;
 
     if (hf->pos < hf->len) {
         const int pos = hf->pos;
@@ -1327,9 +1327,9 @@ static Token *hf_next(TokenStream *ts)
     return tk;
 }
 
-TokenStream *hyphen_filter_new(TokenStream *sub_ts)
+FrtTokenStream *hyphen_filter_new(FrtTokenStream *sub_ts)
 {
-    TokenStream *ts = tf_new(HyphenFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(HyphenFilter, sub_ts);
     ts->next        = &hf_next;
     ts->clone_i     = &hf_clone_i;
     return ts;
@@ -1340,10 +1340,10 @@ TokenStream *hyphen_filter_new(TokenStream *sub_ts)
  ****************************************************************************/
 
 
-static Token *mb_lcf_next(TokenStream *ts)
+static FrtToken *mb_lcf_next(FrtTokenStream *ts)
 {
     wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *wchr;
-    Token *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
+    FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
     int x;
     wbuf[FRT_MAX_WORD_SIZE] = 0;
 
@@ -1366,17 +1366,17 @@ static Token *mb_lcf_next(TokenStream *ts)
     return tk;
 }
 
-TokenStream *mb_lowercase_filter_new(TokenStream *sub_ts)
+FrtTokenStream *mb_lowercase_filter_new(FrtTokenStream *sub_ts)
 {
-    TokenStream *ts = tf_new(TokenFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts);
     ts->next = &mb_lcf_next;
     return ts;
 }
 
-static Token *lcf_next(TokenStream *ts)
+static FrtToken *lcf_next(FrtTokenStream *ts)
 {
     int i = 0;
-    Token *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
+    FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
     if (tk == NULL) {
         return tk;
     }
@@ -1387,9 +1387,9 @@ static Token *lcf_next(TokenStream *ts)
     return tk;
 }
 
-TokenStream *lowercase_filter_new(TokenStream *sub_ts)
+FrtTokenStream *lowercase_filter_new(FrtTokenStream *sub_ts)
 {
-    TokenStream *ts = tf_new(TokenFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts);
     ts->next = &lcf_next;
     return ts;
 }
@@ -1400,7 +1400,7 @@ TokenStream *lowercase_filter_new(TokenStream *sub_ts)
 
 #define StemFilt(filter) ((StemFilter *)(filter))
 
-static void stemf_destroy_i(TokenStream *ts)
+static void stemf_destroy_i(FrtTokenStream *ts)
 {
     sb_stemmer_delete(StemFilt(ts)->stemmer);
     free(StemFilt(ts)->algorithm);
@@ -1408,13 +1408,13 @@ static void stemf_destroy_i(TokenStream *ts)
     filter_destroy_i(ts);
 }
 
-static Token *stemf_next(TokenStream *ts)
+static FrtToken *stemf_next(FrtTokenStream *ts)
 {
     int len;
     const sb_symbol *stemmed;
     struct sb_stemmer *stemmer = StemFilt(ts)->stemmer;
-    TokenFilter *tf = TkFilt(ts);
-    Token *tk = tf->sub_ts->next(tf->sub_ts);
+    FrtTokenFilter *tf = TkFilt(ts);
+    FrtToken *tk = tf->sub_ts->next(tf->sub_ts);
     if (tk == NULL) {
         return tk;
     }
@@ -1430,9 +1430,9 @@ static Token *stemf_next(TokenStream *ts)
     return tk;
 }
 
-static TokenStream *stemf_clone_i(TokenStream *orig_ts)
+static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts)
 {
-    TokenStream *new_ts      = filter_clone_size(orig_ts, sizeof(StemFilter));
+    FrtTokenStream *new_ts      = filter_clone_size(orig_ts, sizeof(StemFilter));
     StemFilter *stemf        = StemFilt(new_ts);
     StemFilter *orig_stemf   = StemFilt(orig_ts);
     stemf->stemmer =
@@ -1444,10 +1444,10 @@ static TokenStream *stemf_clone_i(TokenStream *orig_ts)
     return new_ts;
 }
 
-TokenStream *stem_filter_new(TokenStream *ts, const char *algorithm,
+FrtTokenStream *stem_filter_new(FrtTokenStream *ts, const char *algorithm,
                              const char *charenc)
 {
-    TokenStream *tf = tf_new(StemFilter, ts);
+    FrtTokenStream *tf = tf_new(StemFilter, ts);
     char *my_algorithm = NULL;
     char *my_charenc   = NULL;
     char *s = NULL;
@@ -1497,7 +1497,7 @@ TokenStream *stem_filter_new(TokenStream *ts, const char *algorithm,
 FrtAnalyzer *standard_analyzer_new_with_words_len(const char **words, int len,
                                                bool lowercase)
 {
-    TokenStream *ts = standard_tokenizer_new();
+    FrtTokenStream *ts = standard_tokenizer_new();
     if (lowercase) {
         ts = lowercase_filter_new(ts);
     }
@@ -1508,7 +1508,7 @@ FrtAnalyzer *standard_analyzer_new_with_words_len(const char **words, int len,
 FrtAnalyzer *standard_analyzer_new_with_words(const char **words,
                                            bool lowercase)
 {
-    TokenStream *ts = standard_tokenizer_new();
+    FrtTokenStream *ts = standard_tokenizer_new();
     if (lowercase) {
         ts = lowercase_filter_new(ts);
     }
@@ -1519,7 +1519,7 @@ FrtAnalyzer *standard_analyzer_new_with_words(const char **words,
 FrtAnalyzer *mb_standard_analyzer_new_with_words_len(const char **words,
                                                   int len, bool lowercase)
 {
-    TokenStream *ts = mb_standard_tokenizer_new();
+    FrtTokenStream *ts = mb_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1530,7 +1530,7 @@ FrtAnalyzer *mb_standard_analyzer_new_with_words_len(const char **words,
 FrtAnalyzer *mb_standard_analyzer_new_with_words(const char **words,
                                               bool lowercase)
 {
-    TokenStream *ts = mb_standard_tokenizer_new();
+    FrtTokenStream *ts = mb_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1541,7 +1541,7 @@ FrtAnalyzer *mb_standard_analyzer_new_with_words(const char **words,
 FrtAnalyzer *utf8_standard_analyzer_new_with_words_len(const char **words,
                                                   int len, bool lowercase)
 {
-    TokenStream *ts = utf8_standard_tokenizer_new();
+    FrtTokenStream *ts = utf8_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1552,7 +1552,7 @@ FrtAnalyzer *utf8_standard_analyzer_new_with_words_len(const char **words,
 FrtAnalyzer *utf8_standard_analyzer_new_with_words(const char **words,
                                               bool lowercase)
 {
-    TokenStream *ts = utf8_standard_tokenizer_new();
+    FrtTokenStream *ts = utf8_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1585,7 +1585,7 @@ FrtAnalyzer *utf8_standard_analyzer_new(bool lowercase)
 FrtAnalyzer *legacy_standard_analyzer_new_with_words_len(const char **words, int len,
                                                       bool lowercase)
 {
-    TokenStream *ts = legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = legacy_standard_tokenizer_new();
     if (lowercase) {
         ts = lowercase_filter_new(ts);
     }
@@ -1596,7 +1596,7 @@ FrtAnalyzer *legacy_standard_analyzer_new_with_words_len(const char **words, int
 FrtAnalyzer *legacy_standard_analyzer_new_with_words(const char **words,
                                                   bool lowercase)
 {
-    TokenStream *ts = legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = legacy_standard_tokenizer_new();
     if (lowercase) {
         ts = lowercase_filter_new(ts);
     }
@@ -1607,7 +1607,7 @@ FrtAnalyzer *legacy_standard_analyzer_new_with_words(const char **words,
 FrtAnalyzer *mb_legacy_standard_analyzer_new_with_words_len(const char **words,
                                                          int len, bool lowercase)
 {
-    TokenStream *ts = mb_legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = mb_legacy_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1618,7 +1618,7 @@ FrtAnalyzer *mb_legacy_standard_analyzer_new_with_words_len(const char **words,
 FrtAnalyzer *mb_legacy_standard_analyzer_new_with_words(const char **words,
                                                      bool lowercase)
 {
-    TokenStream *ts = mb_legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = mb_legacy_standard_tokenizer_new();
     if (lowercase) {
         ts = mb_lowercase_filter_new(ts);
     }
@@ -1652,7 +1652,7 @@ static void pfa_destroy_i(FrtAnalyzer *self)
     free(self);
 }
 
-static TokenStream *pfa_get_ts(FrtAnalyzer *self,
+static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self,
                                Symbol field, char *text)
 {
     FrtAnalyzer *a = (FrtAnalyzer *)h_get(PFA(self)->dict, field);
@@ -1688,23 +1688,3 @@ FrtAnalyzer *per_field_analyzer_new(FrtAnalyzer *default_a)
 
     return a;
 }
-
-#ifdef TOKENIZE
-int main(int argc, char **argv)
-{
-    char buf[10000];
-    FrtAnalyzer *a = standard_analyzer_new(true);
-    TokenStream *ts;
-    Token *tk;
-    (void)argc; (void)argv;
-    while (fgets(buf, 9999, stdin) != NULL) {
-        ts = a_get_ts(a, "hello", buf);
-        while ((tk = ts->next(ts)) != NULL) {
-            printf("<%s:%ld:%ld> ", tk->text, tk->start, tk->end);
-        }
-        printf("\n");
-        ts_deref(ts);
-    }
-    return 0;
-}
-#endif

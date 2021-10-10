@@ -203,7 +203,7 @@ static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
                                             HashSet *key)
 {
     Query *q;
-    TopDocs *td;
+    FrtTopDocs *td;
     FrtDocField *df;
     HashSetEntry *hse;
 
@@ -288,12 +288,12 @@ Query *index_get_query(Index *self, char *qstr)
     return qp_parse(self->qp, qstr);
 }
 
-TopDocs *index_search_str(Index *self, char *qstr, int first_doc,
+FrtTopDocs *index_search_str(Index *self, char *qstr, int first_doc,
                           int num_docs, FrtFilter *filter, Sort *sort,
                           PostFilter *post_filter)
 {
     Query *query;
-    TopDocs *td;
+    FrtTopDocs *td;
     query = index_get_query(self, qstr); /* will ensure_searcher is open */
     td = searcher_search(self->sea, query, first_doc, num_docs,
                          filter, sort, post_filter);
@@ -322,7 +322,7 @@ FrtDocument *index_get_doc_ts(Index *self, int doc_num)
 
 int index_term_id(Index *self, Symbol field, const char *term)
 {
-    TermDocEnum *tde;
+    FrtTermDocEnum *tde;
     int doc_num = -1;
     ensure_reader_open(self);
     tde = ir_term_docs_for(self->ir, field, term);
@@ -337,7 +337,7 @@ FrtDocument *index_get_doc_term(Index *self, Symbol field,
                              const char *term)
 {
     FrtDocument *doc = NULL;
-    TermDocEnum *tde;
+    FrtTermDocEnum *tde;
     mutex_lock(&self->mutex);
     {
         ensure_reader_open(self);
@@ -369,7 +369,7 @@ void index_delete(Index *self, int doc_num)
 
 void index_delete_term(Index *self, Symbol field, const char *term)
 {
-    TermDocEnum *tde;
+    FrtTermDocEnum *tde;
     mutex_lock(&self->mutex);
     {
         if (self->ir) {

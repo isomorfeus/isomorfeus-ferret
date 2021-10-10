@@ -185,9 +185,9 @@ static void hit_pq_multi_insert(PriorityQueue *pq, Hit *hit)
  *
  ***************************************************************************/
 
-TopDocs *td_new(int total_hits, int size, Hit **hits, float max_score)
+FrtTopDocs *td_new(int total_hits, int size, Hit **hits, float max_score)
 {
-    TopDocs *td = FRT_ALLOC(TopDocs);
+    FrtTopDocs *td = FRT_ALLOC(FrtTopDocs);
     td->total_hits = total_hits;
     td->size = size;
     td->hits = hits;
@@ -195,7 +195,7 @@ TopDocs *td_new(int total_hits, int size, Hit **hits, float max_score)
     return td;
 }
 
-void td_destroy(TopDocs *td)
+void td_destroy(FrtTopDocs *td)
 {
     int i;
 
@@ -206,7 +206,7 @@ void td_destroy(TopDocs *td)
     free(td);
 }
 
-char *td_to_s(TopDocs *td)
+char *td_to_s(FrtTopDocs *td)
 {
     int i;
     Hit *hit;
@@ -428,7 +428,7 @@ int q_eq(Query *self, Query *o)
             && self->eq(self, o));
 }
 
-static MatchVector *q_get_matchv_i(Query *self, MatchVector *mv, TermVector *tv)
+static MatchVector *q_get_matchv_i(Query *self, MatchVector *mv, FrtTermVector *tv)
 {
     /* be default we don't add any matches */
     (void)self; (void)tv;
@@ -624,7 +624,7 @@ MatchVector *searcher_get_match_vector(Searcher *self,
 {
     MatchVector *mv = matchv_new();
     bool rewrite = query->get_matchv_i == q_get_matchv_i;
-    TermVector *tv = self->get_term_vector(self, doc_num, field);
+    FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
     if (rewrite) {
         query = self->rewrite(self, query);
     }
@@ -691,7 +691,7 @@ static Excerpt *excerpt_recalc_score(Excerpt *e, MatchVector *mv)
 }
 
 /* expand an excerpt to it's largest possible size */
-static Excerpt *excerpt_expand(Excerpt *e, const int len, TermVector *tv)
+static Excerpt *excerpt_expand(Excerpt *e, const int len, FrtTermVector *tv)
 {
     Offset *offsets = tv->offsets;
     int offset_cnt = tv->offset_cnt;
@@ -783,7 +783,7 @@ static char *excerpt_get_str(Excerpt *e, MatchVector *mv,
 
 static char *highlight_field(MatchVector *mv,
                              LazyDocField *lazy_df,
-                             TermVector *tv,
+                             FrtTermVector *tv,
                              const char *pre_tag,
                              const char *post_tag)
 {
@@ -840,7 +840,7 @@ char **searcher_highlight(Searcher *self,
                           const char *ellipsis)
 {
     char **excerpt_strs = NULL;
-    TermVector *tv = self->get_term_vector(self, doc_num, field);
+    FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
     LazyDoc *lazy_doc = self->get_lazy_doc(self, doc_num);
     LazyDocField *lazy_df = NULL;
     if (lazy_doc) {
@@ -1020,7 +1020,7 @@ static int isea_max_doc(Searcher *self)
           post_filter->filter_func(scorer->doc, scorer->score(scorer),\
                                    searcher, post_filter->arg))))
 
-static TopDocs *isea_search_w(Searcher *self,
+static FrtTopDocs *isea_search_w(Searcher *self,
                               FrtWeight *weight,
                               int first_doc,
                               int num_docs,
@@ -1109,7 +1109,7 @@ static TopDocs *isea_search_w(Searcher *self,
     return td_new(total_hits, num_docs, score_docs, max_score);
 }
 
-static TopDocs *isea_search(Searcher *self,
+static FrtTopDocs *isea_search(Searcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
@@ -1118,7 +1118,7 @@ static TopDocs *isea_search(Searcher *self,
                             PostFilter *post_filter,
                             bool load_fields)
 {
-    TopDocs *td;
+    FrtTopDocs *td;
     FrtWeight *weight = q_weight(query, self);
     td = isea_search_w(self, weight, first_doc, num_docs, filter, sort, post_filter, load_fields);
     weight->destroy(weight);
@@ -1236,7 +1236,7 @@ static FrtExplanation *isea_explain_w(Searcher *self, FrtWeight *w, int doc_num)
     return w->explain(w, ISEA(self)->ir, doc_num);
 }
 
-static TermVector *isea_get_term_vector(Searcher *self,
+static FrtTermVector *isea_get_term_vector(Searcher *self,
                                           const int doc_num,
                                           Symbol field)
 {
@@ -1297,7 +1297,7 @@ typedef struct CachedDFSearcher
 
 static int cdfsea_doc_freq(Searcher *self, Symbol field, const char *text)
 {
-    Term term;
+    FrtTerm term;
     int *df;
     term.field = field;
     term.text = (char *)text;
@@ -1325,7 +1325,7 @@ static FrtWeight *cdfsea_create_weight(Searcher *self, Query *query)
     return NULL;
 }
 
-static TopDocs *cdfsea_search_w(Searcher *self, FrtWeight *w, int fd, int nd,
+static FrtTopDocs *cdfsea_search_w(Searcher *self, FrtWeight *w, int fd, int nd,
                                 FrtFilter *f, Sort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)w; (void)fd; (void)nd;
@@ -1334,7 +1334,7 @@ static TopDocs *cdfsea_search_w(Searcher *self, FrtWeight *w, int fd, int nd,
     return NULL;
 }
 
-static TopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
+static FrtTopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
                               FrtFilter *f, Sort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)q; (void)fd; (void)nd;
@@ -1382,7 +1382,7 @@ static FrtExplanation *cdfsea_explain_w(Searcher *self, FrtWeight *w, int doc_nu
     return NULL;
 }
 
-static TermVector *cdfsea_get_term_vector(Searcher *self, const int doc_num,
+static FrtTermVector *cdfsea_get_term_vector(Searcher *self, const int doc_num,
                                           Symbol field)
 {
     (void)self; (void)doc_num; (void)field;
@@ -1500,7 +1500,7 @@ static int *msea_get_doc_freqs(Searcher *self, HashSet *terms)
     HashSetEntry *hse;
     int *doc_freqs = FRT_ALLOC_N(int, terms->size);
     for (i = 0, hse = terms->first; hse; ++i, hse = hse->next) {
-        Term *t = (Term *)hse->elem;
+        FrtTerm *t = (FrtTerm *)hse->elem;
         doc_freqs[i] = msea_doc_freq(self, t->field, t->text);
     }
     return doc_freqs;
@@ -1653,7 +1653,7 @@ static void msea_search_i(Searcher *self, int doc_num, float score, void *arg)
 }
 */
 
-static TopDocs *msea_search_w(Searcher *self,
+static FrtTopDocs *msea_search_w(Searcher *self,
                               FrtWeight *weight,
                               int first_doc,
                               int num_docs,
@@ -1690,7 +1690,7 @@ static TopDocs *msea_search_w(Searcher *self,
     /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
     for (i = 0; i < MSEA(self)->s_cnt; i++) {
         Searcher *s = MSEA(self)->searchers[i];
-        TopDocs *td = s->search_w(s, weight, 0, max_size,
+        FrtTopDocs *td = s->search_w(s, weight, 0, max_size,
                                   filter, sort, post_filter, true);
         /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
         if (td->size > 0) {
@@ -1731,7 +1731,7 @@ static TopDocs *msea_search_w(Searcher *self,
     return td_new(total_hits, num_docs, score_docs, max_score);
 }
 
-static TopDocs *msea_search(Searcher *self,
+static FrtTopDocs *msea_search(Searcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
@@ -1740,7 +1740,7 @@ static TopDocs *msea_search(Searcher *self,
                             PostFilter *post_filter,
                             bool load_fields)
 {
-    TopDocs *td;
+    FrtTopDocs *td;
     FrtWeight *weight = q_weight(query, self);
     td = msea_search_w(self, weight, first_doc, num_docs, filter,
                        sort, post_filter, load_fields);
@@ -1788,7 +1788,7 @@ static FrtExplanation *msea_explain_w(Searcher *self, FrtWeight *w, int doc_num)
     return e;
 }
 
-static TermVector *msea_get_term_vector(Searcher *self, const int doc_num,
+static FrtTermVector *msea_get_term_vector(Searcher *self, const int doc_num,
                                         Symbol field)
 {
     MultiSearcher *msea = MSEA(self);

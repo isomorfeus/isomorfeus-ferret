@@ -82,22 +82,6 @@
 #define StoreValue              FrtStoreValue
 #define StringIndex             FrtStringIndex
 #define Symbol                  FrtSymbol
-#define TVField                 FrtTVField
-#define TVTerm                  FrtTVTerm
-#define Term                    FrtTerm
-#define TermDocEnum             FrtTermDocEnum
-#define TermEnum                FrtTermEnum
-#define TermInfo                FrtTermInfo
-#define TermInfosReader         FrtTermInfosReader
-#define TermInfosWriter         FrtTermInfosWriter
-#define TermQuery               FrtTermQuery
-#define TermVector              FrtTermVector
-#define TermVectorValue         FrtTermVectorValue
-#define TermWriter              FrtTermWriter
-#define Token                   FrtToken
-#define TokenFilter             FrtTokenFilter
-#define TokenStream             FrtTokenStream
-#define TopDocs                 FrtTopDocs
 
 /* Functions */
 #define a_deref                                        frt_a_deref

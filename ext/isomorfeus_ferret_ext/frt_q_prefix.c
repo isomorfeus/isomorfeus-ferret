@@ -42,7 +42,7 @@ static Query *prq_rewrite(Query *self, IndexReader *ir)
 
     if (field_num >= 0) {
         const char *prefix = PfxQ(self)->prefix;
-        TermEnum *te = ir->terms_from(ir, field_num, prefix);
+        FrtTermEnum *te = ir->terms_from(ir, field_num, prefix);
         const char *term = te->curr_term;
         size_t prefix_len = strlen(prefix);
 

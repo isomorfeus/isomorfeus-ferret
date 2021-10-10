@@ -42,7 +42,7 @@ static int phrase_pos_cmp(const void *p1, const void *p2)
 #define PP(p) ((PhPos *)(p))
 typedef struct PhPos
 {
-    TermDocEnum *tpe;
+    FrtTermDocEnum *tpe;
     int offset;
     int count;
     int doc;
@@ -51,7 +51,7 @@ typedef struct PhPos
 
 static bool pp_next(PhPos *self)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
     assert(tpe);
 
     if (!tpe->next(tpe)) {
@@ -67,7 +67,7 @@ static bool pp_next(PhPos *self)
 
 static bool pp_skip_to(PhPos *self, int doc_num)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
     assert(tpe);
 
     if (!tpe->skip_to(tpe, doc_num)) {
@@ -83,7 +83,7 @@ static bool pp_skip_to(PhPos *self, int doc_num)
 
 static bool pp_next_position(PhPos *self)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
     self->count--;
     if (self->count >= 0) {         /* read subsequent pos's */
         self->position = tpe->next_position(tpe) - self->offset;
@@ -96,7 +96,7 @@ static bool pp_next_position(PhPos *self)
 
 static bool pp_first_position(PhPos *self)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
     self->count = tpe->freq(tpe);   /* read first pos */
     return pp_next_position(self);
 }
@@ -143,7 +143,7 @@ static void pp_destroy(PhPos *pp)
     free(pp);
 }
 
-static PhPos *pp_new(TermDocEnum *tpe, int offset)
+static PhPos *pp_new(FrtTermDocEnum *tpe, int offset)
 {
     PhPos *self = FRT_ALLOC(PhPos);
 
@@ -298,7 +298,7 @@ static void phsc_destroy(Scorer *self)
 }
 
 static Scorer *phsc_new(FrtWeight *weight,
-                        TermDocEnum **term_pos_enum,
+                        FrtTermDocEnum **term_pos_enum,
                         PhrasePosition *positions, int pos_cnt,
                         Similarity *similarity,
                         uchar *norms,
@@ -399,7 +399,7 @@ static float ephsc_phrase_freq(Scorer *self)
 }
 
 static Scorer *exact_phrase_scorer_new(FrtWeight *weight,
-                                       TermDocEnum **term_pos_enum,
+                                       FrtTermDocEnum **term_pos_enum,
                                        PhrasePosition *positions, int pp_cnt,
                                        Similarity *similarity, uchar *norms)
 {
@@ -508,7 +508,7 @@ return_freq:
 }
 
 static Scorer *sloppy_phrase_scorer_new(FrtWeight *weight,
-                                        TermDocEnum **term_pos_enum,
+                                        FrtTermDocEnum **term_pos_enum,
                                         PhrasePosition *positions,
                                         int pp_cnt, Similarity *similarity,
                                         int slop, uchar *norms)
@@ -541,7 +541,7 @@ static Scorer *phw_scorer(FrtWeight *self, IndexReader *ir)
     int i;
     Scorer *phsc = NULL;
     PhraseQuery *phq = PhQ(self->query);
-    TermDocEnum **tps, *tpe;
+    FrtTermDocEnum **tps, *tpe;
     PhrasePosition *positions = phq->positions;
     const int pos_cnt = phq->pos_cnt;
     const int field_num = fis_get_field_num(ir->fis, phq->field);
@@ -550,7 +550,7 @@ static Scorer *phw_scorer(FrtWeight *self, IndexReader *ir)
         return NULL;
     }
 
-    tps = FRT_ALLOC_N(TermDocEnum *, pos_cnt);
+    tps = FRT_ALLOC_N(FrtTermDocEnum *, pos_cnt);
 
     for (i = 0; i < pos_cnt; i++) {
         char **terms = positions[i].terms;
@@ -764,7 +764,7 @@ static TVPosEnum *tvpe_new(int *positions, int size, int offset)
     return self;
 }
 
-static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, TermVector *tv,
+static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
                                  int offset)
 {
     int i, total_positions = 0;
@@ -772,7 +772,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, TermVector *tv,
     TVPosEnum *self = NULL;
 
     for (i = 0; i < t_cnt; i++) {
-        TVTerm *tv_term = tv_get_tv_term(tv, terms[i]);
+        FrtTVTerm *tv_term = tv_get_tv_term(tv, terms[i]);
         if (tv_term) {
             TVPosEnum *tvpe = tvpe_new(tv_term->positions, tv_term->freq, 0);
             /* got tv_term so tvpe_next should always return true once here */
@@ -809,11 +809,11 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, TermVector *tv,
     return self;
 }
 
-static TVPosEnum *get_tvpe(TermVector *tv, char **terms, int t_cnt, int offset)
+static TVPosEnum *get_tvpe(FrtTermVector *tv, char **terms, int t_cnt, int offset)
 {
     TVPosEnum *tvpe = NULL;
     if (t_cnt == 1) {
-        TVTerm *tv_term = tv_get_tv_term(tv, terms[0]);
+        FrtTVTerm *tv_term = tv_get_tv_term(tv, terms[0]);
         if (tv_term) {
             tvpe = tvpe_new(tv_term->positions, tv_term->freq, offset);
         }
@@ -825,7 +825,7 @@ static TVPosEnum *get_tvpe(TermVector *tv, char **terms, int t_cnt, int offset)
 }
 
 static MatchVector *phq_get_matchv_i(Query *self, MatchVector *mv,
-                                     TermVector *tv)
+                                     FrtTermVector *tv)
 {
     if (strcmp(tv->field, PhQ(self)->field) == 0) {
         const int pos_cnt = PhQ(self)->pos_cnt;

@@ -183,7 +183,7 @@ static Query *fuzq_rewrite(Query *self, IndexReader *ir)
     char *prefix = NULL;
     const char *term = fuzq->term;
     const int field_num = fis_get_field_num(ir->fis, fuzq->field);
-    TermEnum *te;
+    FrtTermEnum *te;
 
     if (field_num < 0) {
         return bq_new(true);

@@ -35,12 +35,12 @@ static void spanq_destroy_i(Query *self)
 }
 
 static MatchVector *mv_to_term_mv(MatchVector *term_mv, MatchVector *full_mv,
-                                  HashSet *terms, TermVector *tv)
+                                  HashSet *terms, FrtTermVector *tv)
 {
     HashSetEntry *hse;
     for (hse = terms->first; hse; hse = hse->next) {
         char *term = (char *)hse->elem;
-        TVTerm *tv_term = tv_get_tv_term(tv, term);
+        FrtTVTerm *tv_term = tv_get_tv_term(tv, term);
         if (tv_term) {
             int i, m_idx = 0;
             for (i = 0; i < tv_term->freq; i++) {
@@ -69,18 +69,18 @@ static MatchVector *mv_to_term_mv(MatchVector *term_mv, MatchVector *full_mv,
 
 typedef struct TVTermDocEnum
 {
-    TermDocEnum super;
+    FrtTermDocEnum super;
     int         doc;
     int         index;
     int         freq;
     int        *positions;
-    TermVector *tv;
+    FrtTermVector *tv;
 } TVTermDocEnum;
 
-static void tv_tde_seek(TermDocEnum *tde, int field_num, const char *term)
+static void tv_tde_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
     TVTermDocEnum *tv_tde = TV_TDE(tde);
-    TVTerm *tv_term = tv_get_tv_term(tv_tde->tv, term);
+    FrtTVTerm *tv_term = tv_get_tv_term(tv_tde->tv, term);
     (void)field_num;
     if (tv_term) {
         tv_tde->doc = -1;
@@ -93,7 +93,7 @@ static void tv_tde_seek(TermDocEnum *tde, int field_num, const char *term)
     }
 }
 
-static bool tv_tde_next(TermDocEnum *tde)
+static bool tv_tde_next(FrtTermDocEnum *tde)
 {
     if (TV_TDE(tde)->doc == -1) {
         TV_TDE(tde)->doc = 0;
@@ -105,7 +105,7 @@ static bool tv_tde_next(TermDocEnum *tde)
     }
 }
 
-static bool tv_tde_skip_to(TermDocEnum *tde, int doc_num)
+static bool tv_tde_skip_to(FrtTermDocEnum *tde, int doc_num)
 {
     if (doc_num == 0) {
         TV_TDE(tde)->doc = 0;
@@ -117,39 +117,39 @@ static bool tv_tde_skip_to(TermDocEnum *tde, int doc_num)
     }
 }
 
-static int tv_tde_next_position(TermDocEnum *tde)
+static int tv_tde_next_position(FrtTermDocEnum *tde)
 {
     return TV_TDE(tde)->positions[TV_TDE(tde)->index++];
 }
 
-static int tv_tde_freq(TermDocEnum *tde)
+static int tv_tde_freq(FrtTermDocEnum *tde)
 {
     return TV_TDE(tde)->freq;
 }
 
-static int tv_tde_doc_num(TermDocEnum *tde)
+static int tv_tde_doc_num(FrtTermDocEnum *tde)
 {
     return TV_TDE(tde)->doc;
 }
 
-static TermDocEnum *spanq_ir_term_positions(IndexReader *ir)
+static FrtTermDocEnum *spanq_ir_term_positions(IndexReader *ir)
 {
     TVTermDocEnum *tv_tde = FRT_ALLOC(TVTermDocEnum);
-    TermDocEnum *tde      = (TermDocEnum *)tv_tde;
-    tv_tde->tv            = (TermVector *)ir->store;
+    FrtTermDocEnum *tde      = (FrtTermDocEnum *)tv_tde;
+    tv_tde->tv            = (FrtTermVector *)ir->store;
     tde->seek             = &tv_tde_seek;
     tde->doc_num          = &tv_tde_doc_num;
     tde->freq             = &tv_tde_freq;
     tde->next             = &tv_tde_next;
     tde->skip_to          = &tv_tde_skip_to;
     tde->next_position    = &tv_tde_next_position;
-    tde->close            = (void (*)(TermDocEnum *tde))&free;
+    tde->close            = (void (*)(FrtTermDocEnum *tde))&free;
 
     return tde;
 }
 
 static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
-                                       TermVector *tv)
+                                       FrtTermVector *tv)
 {
     if (strcmp(SpQ(self)->field, tv->field) == 0) {
         SpanEnum *sp_enum;
@@ -321,7 +321,7 @@ static Scorer *spansc_new(FrtWeight *weight, IndexReader *ir)
 typedef struct SpanTermEnum
 {
     SpanEnum     super;
-    TermDocEnum *positions;
+    FrtTermDocEnum *positions;
     int          position;
     int          doc;
     int          count;
@@ -332,7 +332,7 @@ typedef struct SpanTermEnum
 static bool spante_next(SpanEnum *self)
 {
     SpanTermEnum *ste = SpTEn(self);
-    TermDocEnum *tde = ste->positions;
+    FrtTermDocEnum *tde = ste->positions;
 
     if (ste->count == ste->freq) {
         if (! tde->next(tde)) {
@@ -351,7 +351,7 @@ static bool spante_next(SpanEnum *self)
 static bool spante_skip_to(SpanEnum *self, int target)
 {
     SpanTermEnum *ste = SpTEn(self);
-    TermDocEnum *tde = ste->positions;
+    FrtTermDocEnum *tde = ste->positions;
 
     /* are we already at the correct position? */
     /* FIXME: perhaps this the the better solution but currently it ->skip_to
@@ -417,7 +417,7 @@ static char *spante_to_s(SpanEnum *self)
 
 static void spante_destroy(SpanEnum *self)
 {
-    TermDocEnum *tde = SpTEn(self)->positions;
+    FrtTermDocEnum *tde = SpTEn(self)->positions;
     tde->close(tde);
     free(self);
 }
@@ -456,7 +456,7 @@ static SpanEnum *spante_new(Query *query, IndexReader *ir)
 typedef struct TermPosEnumWrapper
 {
     const char  *term;
-    TermDocEnum *tpe;
+    FrtTermDocEnum *tpe;
     int          doc;
     int          pos;
 } TermPosEnumWrapper;
@@ -470,7 +470,7 @@ static bool tpew_less_than(const TermPosEnumWrapper *tpew1,
 
 static bool tpew_next(TermPosEnumWrapper *self)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
     if (0 > (self->pos = tpe->next_position(tpe))) {
         if (!tpe->next(tpe)) return false;
         self->doc = tpe->doc_num(tpe);
@@ -481,7 +481,7 @@ static bool tpew_next(TermPosEnumWrapper *self)
 
 static bool tpew_skip_to(TermPosEnumWrapper *self, int doc_num)
 {
-    TermDocEnum *tpe = self->tpe;
+    FrtTermDocEnum *tpe = self->tpe;
 
     if (tpe->skip_to(tpe, doc_num)) {
         self->doc = tpe->doc_num(tpe);
@@ -499,7 +499,7 @@ static void tpew_destroy(TermPosEnumWrapper *self)
     free(self);
 }
 
-static TermPosEnumWrapper *tpew_new(const char *term, TermDocEnum *tpe)
+static TermPosEnumWrapper *tpew_new(const char *term, FrtTermDocEnum *tpe)
 {
     TermPosEnumWrapper *self = FRT_ALLOC_AND_ZERO(TermPosEnumWrapper);
     self->term = term;
@@ -2335,7 +2335,7 @@ static Query *spanprq_rewrite(Query *self, IndexReader *ir)
 
     if (field_num >= 0) {
         const char *prefix = SpPfxQ(self)->prefix;
-        TermEnum *te = ir->terms_from(ir, field_num, prefix);
+        FrtTermEnum *te = ir->terms_from(ir, field_num, prefix);
         const char *term = te->curr_term;
         size_t prefix_len = strlen(prefix);
 

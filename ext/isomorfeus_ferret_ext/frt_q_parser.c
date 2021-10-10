@@ -718,11 +718,11 @@ static const yytype_uint8 yystos[] =
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)					\
+#define YYBACKUP(FrtToken, Value)					\
 do								\
   if (yychar == YYEMPTY && yylen == 1)				\
     {								\
-      yychar = (Token);						\
+      yychar = (FrtToken);						\
       yylval = (Value);						\
       yytoken = YYTRANSLATE (yychar);				\
       YYPOPSTACK (1);						\
@@ -2202,11 +2202,11 @@ static int yyerror(QParser *qp, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static TokenStream *get_cached_ts(QParser *qp, Symbol field, char *text)
+static FrtTokenStream *get_cached_ts(QParser *qp, Symbol field, char *text)
 {
-    TokenStream *ts;
+    FrtTokenStream *ts;
     if (hs_exists(qp->tokenized_fields, field)) {
-        ts = (TokenStream *)h_get(qp->ts_cache, field);
+        ts = (FrtTokenStream *)h_get(qp->ts_cache, field);
         if (!ts) {
             ts = a_get_ts(qp->analyzer, field, text);
             h_set(qp->ts_cache, field, ts);
@@ -2377,8 +2377,8 @@ static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur)
 static Query *get_term_q(QParser *qp, Symbol field, char *word)
 {
     Query *q;
-    Token *token;
-    TokenStream *stream = get_cached_ts(qp, field, word);
+    FrtToken *token;
+    FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
     if ((token = ts_next(stream)) == NULL) {
         q = NULL;
@@ -2389,7 +2389,7 @@ static Query *get_term_q(QParser *qp, Symbol field, char *word)
             /* Less likely case, destroy the term query and create a
              * phrase query instead */
             Query *phq = phq_new(field);
-            phq_add_term(phq, ((TermQuery *)q)->term, 0);
+            phq_add_term(phq, ((FrtTermQuery *)q)->term, 0);
             q->destroy_i(q);
             q = phq;
             do {
@@ -2416,8 +2416,8 @@ static Query *get_fuzzy_q(QParser *qp, Symbol field, char *word,
                           char *slop_str)
 {
     Query *q;
-    Token *token;
-    TokenStream *stream = get_cached_ts(qp, field, word);
+    FrtToken *token;
+    FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
     if ((token = ts_next(stream)) == NULL) {
         q = NULL;
@@ -2658,7 +2658,7 @@ static Query *get_phrase_query(QParser *qp, Symbol field,
         else {
             int i;
             int term_cnt = 0;
-            Token *token;
+            FrtToken *token;
             char *last_word = NULL;
 
             for (i = 0; i < word_count; i++) {
@@ -2694,8 +2694,8 @@ static Query *get_phrase_query(QParser *qp, Symbol field,
         }
     }
     else if (pos_cnt > 1) {
-        Token *token;
-        TokenStream *stream;
+        FrtToken *token;
+        FrtTokenStream *stream;
         int i, j;
         int pos_inc = 0;
         q = phq_new(field);
@@ -2787,13 +2787,13 @@ static Query *get_r_q(QParser *qp, Symbol field, char *from, char *to,
  * range queries.
 
     if (from) {
-        TokenStream *stream = get_cached_ts(qp, field, from);
-        Token *token = ts_next(stream);
+        FrtTokenStream *stream = get_cached_ts(qp, field, from);
+        FrtToken *token = ts_next(stream);
         from = token ? estrdup(token->text) : NULL;
     }
     if (to) {
-        TokenStream *stream = get_cached_ts(qp, field, to);
-        Token *token = ts_next(stream);
+        FrtTokenStream *stream = get_cached_ts(qp, field, to);
+        FrtToken *token = ts_next(stream);
         to = token ? estrdup(token->text) : NULL;
     }
 */

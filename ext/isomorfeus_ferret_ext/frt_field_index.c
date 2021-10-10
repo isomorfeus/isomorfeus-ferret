@@ -36,8 +36,8 @@ FrtFieldIndex *field_index_get(IndexReader *ir, Symbol field,
                             const FrtFieldIndexClass *klass)
 {
     int length = 0;
-    TermEnum *volatile te = NULL;
-    TermDocEnum *volatile tde = NULL;
+    FrtTermEnum *volatile te = NULL;
+    FrtTermDocEnum *volatile tde = NULL;
     FrtFieldInfo *fi = fis_get_field(ir->fis, field);
     const volatile int field_num = fi ? fi->number : -1;
     FrtFieldIndex *volatile self = NULL;
@@ -98,7 +98,7 @@ FrtFieldIndex *field_index_get(IndexReader *ir, Symbol field,
  * column's value.
  ******************************************************************************/
 static void byte_handle_term(void *index_ptr,
-                             TermDocEnum *tde,
+                             FrtTermDocEnum *tde,
                              const char *text)
 {
     long *index = (long *)index_ptr;
@@ -138,7 +138,7 @@ static void *integer_create_index(int size)
 }
 
 static void integer_handle_term(void *index_ptr,
-                                TermDocEnum *tde,
+                                FrtTermDocEnum *tde,
                                 const char *text)
 {
     long *index = (long *)index_ptr;
@@ -175,7 +175,7 @@ static void *float_create_index(int size)
 }
 
 static void float_handle_term(void *index_ptr,
-                              TermDocEnum *tde,
+                              FrtTermDocEnum *tde,
                               const char *text)
 {
     float *index = (float *)index_ptr;
@@ -229,7 +229,7 @@ static void string_destroy_index(void *p)
 }
 
 static void string_handle_term(void *index_ptr,
-                               TermDocEnum *tde,
+                               FrtTermDocEnum *tde,
                                const char *text)
 {
     StringIndex *index = (StringIndex *)index_ptr;

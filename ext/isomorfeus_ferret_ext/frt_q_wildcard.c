@@ -94,7 +94,7 @@ static Query *wcq_rewrite(Query *self, IndexReader *ir)
         q = multi_tq_new_conf(WCQ(self)->field, MTQMaxTerms(self), 0.0);
 
         if (field_num >= 0) {
-            TermEnum *te;
+            FrtTermEnum *te;
             char prefix[FRT_MAX_WORD_SIZE] = "";
             int prefix_len;
 

@@ -57,7 +57,7 @@ static ID id_fld_num_map;
 static ID id_field_num;
 static ID id_boost;
 
-extern void frb_set_term(VALUE rterm, Term *t);
+extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 
@@ -78,7 +78,7 @@ static void
 frb_fi_get_params(VALUE roptions,
                   StoreValue *store,
                   IndexValue *index,
-                  TermVectorValue *term_vector,
+                  FrtTermVectorValue *term_vector,
                   float *boost)
 {
     VALUE v;
@@ -179,7 +179,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     FrtFieldInfo *fi;
     StoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
-    TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
@@ -407,7 +407,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     FrtFieldInfos *fis;
     StoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
-    TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
 
     rb_scan_args(argc, argv, "01", &roptions);
@@ -517,7 +517,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
     FrtFieldInfo *fi;
     StoreValue store = fis->store;
     IndexValue index = fis->index;
-    TermVectorValue term_vector = fis->term_vector;
+    FrtTermVectorValue term_vector = fis->term_vector;
     float boost = 1.0f;
     VALUE rname, roptions;
 
@@ -655,21 +655,21 @@ frb_fis_get_tk_fields(VALUE self)
 static void
 frb_te_free(void *p)
 {
-    TermEnum *te = (TermEnum *)p;
+    FrtTermEnum *te = (FrtTermEnum *)p;
     te->close(te);
 }
 
 static VALUE
 frb_te_get_set_term(VALUE self, const char *term)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     VALUE str = term ? rb_str_new(term, te->curr_term_len) : Qnil;
     rb_ivar_set(self, id_term, str);
     return str;
 }
 
 static VALUE
-frb_get_te(VALUE rir, TermEnum *te)
+frb_get_te(VALUE rir, FrtTermEnum *te)
 {
     VALUE self = Qnil;
     if (te != NULL) {
@@ -689,7 +689,7 @@ frb_get_te(VALUE rir, TermEnum *te)
 static VALUE
 frb_te_next(VALUE self)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return frb_te_get_set_term(self, te->next(te));
 }
 
@@ -717,7 +717,7 @@ frb_te_term(VALUE self)
 static VALUE
 frb_te_doc_freq(VALUE self)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return INT2FIX(te->curr_ti.doc_freq);
 }
 
@@ -735,7 +735,7 @@ frb_te_doc_freq(VALUE self)
 static VALUE
 frb_te_skip_to(VALUE self, VALUE rterm)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return frb_te_get_set_term(self, te->skip_to(te, rs2s(rterm)));
 }
 
@@ -749,7 +749,7 @@ frb_te_skip_to(VALUE self, VALUE rterm)
 static VALUE
 frb_te_each(VALUE self)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     char *term;
     int term_cnt = 0;
     VALUE vals = rb_ary_new2(2);
@@ -783,7 +783,7 @@ frb_te_each(VALUE self)
 static VALUE
 frb_te_set_field(VALUE self, VALUE rfield)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     int field_num = 0;
     VALUE rfnum_map = rb_ivar_get(self, id_fld_num_map);
     VALUE rfnum = rb_hash_aref(rfnum_map, rfield);
@@ -825,7 +825,7 @@ frb_te_set_field(VALUE self, VALUE rfield)
 static VALUE
 frb_te_to_json(int argc, VALUE *argv, VALUE self)
 {
-    TermEnum *te = (TermEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     VALUE rjson;
     char *json, *jp;
     char *term;
@@ -889,12 +889,12 @@ frb_te_to_json(int argc, VALUE *argv, VALUE self)
 static void
 frb_tde_free(void *p)
 {
-    TermDocEnum *tde = (TermDocEnum *)p;
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)p;
     tde->close(tde);
 }
 
 static VALUE
-frb_get_tde(VALUE rir, TermDocEnum *tde)
+frb_get_tde(VALUE rir, FrtTermDocEnum *tde)
 {
     VALUE self = Data_Wrap_Struct(cTermDocEnum, NULL, &frb_tde_free, tde);
     rb_ivar_set(self, id_fld_num_map, rb_ivar_get(rir, id_fld_num_map));
@@ -912,7 +912,7 @@ frb_get_tde(VALUE rir, TermDocEnum *tde)
 static VALUE
 frb_tde_seek(VALUE self, VALUE rfield, VALUE rterm)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     char *term;
     VALUE rfnum_map = rb_ivar_get(self, id_fld_num_map);
     VALUE rfnum = rb_hash_aref(rfnum_map, rfield);
@@ -943,8 +943,8 @@ frb_tde_seek(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_tde_seek_te(VALUE self, VALUE rterm_enum)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
-    TermEnum *te = (TermEnum *)frb_rb_data_ptr(rterm_enum);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
+    FrtTermEnum *te = (FrtTermEnum *)frb_rb_data_ptr(rterm_enum);
     tde->seek_te(tde, te);
     return self;
 }
@@ -958,7 +958,7 @@ frb_tde_seek_te(VALUE self, VALUE rterm_enum)
 static VALUE
 frb_tde_doc(VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     return INT2FIX(tde->doc_num(tde));
 }
 
@@ -972,7 +972,7 @@ frb_tde_doc(VALUE self)
 static VALUE
 frb_tde_freq(VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     return INT2FIX(tde->freq(tde));
 }
 
@@ -986,7 +986,7 @@ frb_tde_freq(VALUE self)
 static VALUE
 frb_tde_next(VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     return tde->next(tde) ? Qtrue : Qfalse;
 }
 
@@ -1000,7 +1000,7 @@ frb_tde_next(VALUE self)
 static VALUE
 frb_tde_next_position(VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     int pos;
     if (tde->next_position == NULL) {
         rb_raise(rb_eNotImpError, "to scan through positions you must create "
@@ -1025,7 +1025,7 @@ static VALUE
 frb_tde_each(VALUE self)
 {
     int doc_cnt = 0;
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     VALUE vals = rb_ary_new2(2);
     rb_ary_store(vals, 0, Qnil);
     rb_ary_store(vals, 1, Qnil);
@@ -1068,7 +1068,7 @@ frb_tde_each(VALUE self)
 static VALUE
 frb_tde_to_json(int argc, VALUE *argv, VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     VALUE rjson;
     char *json, *jp;
     int capa = 65536;
@@ -1142,7 +1142,7 @@ frb_tde_to_json(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_tde_each_position(VALUE self)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     int pos;
     if (tde->next_position == NULL) {
         rb_raise(rb_eNotImpError, "to scan through positions you must create "
@@ -1165,7 +1165,7 @@ frb_tde_each_position(VALUE self)
 static VALUE
 frb_tde_skip_to(VALUE self, VALUE rtarget)
 {
-    TermDocEnum *tde = (TermDocEnum *)DATA_PTR(self);
+    FrtTermDocEnum *tde = (FrtTermDocEnum *)DATA_PTR(self);
     return tde->skip_to(tde, FIX2INT(rtarget)) ? Qtrue : Qfalse;
 }
 
@@ -1191,7 +1191,7 @@ frb_get_tv_offsets(Offset *offset)
  ****************************************************************************/
 
 static VALUE
-frb_get_tv_term(TVTerm *tv_term)
+frb_get_tv_term(FrtTVTerm *tv_term)
 {
     int i;
     const int freq = tv_term->freq;
@@ -1215,10 +1215,10 @@ frb_get_tv_term(TVTerm *tv_term)
  ****************************************************************************/
 
 static VALUE
-frb_get_tv(TermVector *tv)
+frb_get_tv(FrtTermVector *tv)
 {
     int i;
-    TVTerm *terms = tv->terms;
+    FrtTVTerm *terms = tv->terms;
     const int t_cnt = tv->term_cnt;
     const int o_cnt = tv->offset_cnt;
     VALUE rfield, rterms;
@@ -2426,7 +2426,7 @@ static VALUE
 frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
 {
     IndexReader *ir = (IndexReader *)DATA_PTR(self);
-    TermVector *tv;
+    FrtTermVector *tv;
     VALUE rtv;
     tv = ir->term_vector(ir, FIX2INT(rdoc_id), frb_field(rfield));
     if (tv) {
@@ -2584,7 +2584,7 @@ static VALUE
 frb_ir_term_count(VALUE self, VALUE rfield)
 {
     IndexReader *ir = (IndexReader *)DATA_PTR(self);
-    TermEnum *te = ir_terms(ir, frb_field(rfield));
+    FrtTermEnum *te = ir_terms(ir, frb_field(rfield));
     int count = 0;
     while (te->next(te)) {
         count++;

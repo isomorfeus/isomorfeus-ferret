@@ -59,7 +59,7 @@ static BoostedTerm *boosted_term_new(const char *term, float boost)
 typedef struct TermDocEnumWrapper
 {
     const char  *term;
-    TermDocEnum *tde;
+    FrtTermDocEnum *tde;
     float        boost;
     int          doc;
     int          freq;
@@ -95,7 +95,7 @@ static bool tdew_next(TermDocEnumWrapper *self)
 
 static bool tdew_skip_to(TermDocEnumWrapper *self, int doc_num)
 {
-    TermDocEnum *tde = self->tde;
+    FrtTermDocEnum *tde = self->tde;
 
     while (++(self->pointer) < self->pointer_max) {
         if (self->docs[self->pointer] >= doc_num) {
@@ -123,7 +123,7 @@ static void tdew_destroy(TermDocEnumWrapper *self)
     free(self);
 }
 
-static TermDocEnumWrapper *tdew_new(const char *term, TermDocEnum *tde,
+static TermDocEnumWrapper *tdew_new(const char *term, FrtTermDocEnum *tde,
                                     float boost)
 {
     TermDocEnumWrapper *self = FRT_ALLOC_AND_ZERO(TermDocEnumWrapper);
@@ -343,8 +343,8 @@ static Scorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
 
     if (boosted_terms->size > 0 && field_num >= 0) {
         int i;
-        TermDocEnum *tde;
-        TermEnum *te = ir->terms(ir, field_num);
+        FrtTermDocEnum *tde;
+        FrtTermEnum *te = ir->terms(ir, field_num);
         TermDocEnumWrapper **tdew_a = FRT_ALLOC_N(TermDocEnumWrapper *,
                                              boosted_terms->size);
         int tdew_cnt = 0;
@@ -602,7 +602,7 @@ static int multi_tq_eq(Query *self, Query *o)
 }
 
 static MatchVector *multi_tq_get_matchv_i(Query *self, MatchVector *mv,
-                                          TermVector *tv)
+                                          FrtTermVector *tv)
 {
     if (strcmp(tv->field, MTQ(self)->field) == 0) {
         int i;
@@ -610,7 +610,7 @@ static MatchVector *multi_tq_get_matchv_i(Query *self, MatchVector *mv,
         for (i = boosted_terms->size; i > 0; i--) {
             int j;
             BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-            TVTerm *tv_term = tv_get_tv_term(tv, bt->term);
+            FrtTVTerm *tv_term = tv_get_tv_term(tv, bt->term);
             if (tv_term) {
                 for (j = 0; j < tv_term->freq; j++) {
                     int pos = tv_term->positions[j];

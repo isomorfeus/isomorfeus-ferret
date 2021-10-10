@@ -131,7 +131,7 @@ extern VALUE cIndexReader;
 extern void frb_ir_free(void *p);
 extern void frb_ir_mark(void *p);
 
-extern void frb_set_term(VALUE rterm, Term *t);
+extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern HashSet *frb_get_fields(VALUE rfields);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
@@ -159,7 +159,7 @@ frb_get_hit(Hit *hit)
  ****************************************************************************/
 
 static VALUE
-frb_get_td(TopDocs *td, VALUE rsearcher)
+frb_get_td(FrtTopDocs *td, VALUE rsearcher)
 {
     int i;
     VALUE rtop_docs;
@@ -502,7 +502,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
     q_deref(rq);
 
     for (hse = terms->first; hse; hse = hse->next) {
-        Term *term = (Term *)hse->elem;
+        FrtTerm *term = (FrtTerm *)hse->elem;
         rb_ary_push(rterms, frb_get_term(term->field, term->text));
     }
     hs_destroy(terms);
@@ -2629,14 +2629,14 @@ frb_get_cwrapped_filter(VALUE rval)
     return filter;
 }
 
-static TopDocs *
+static FrtTopDocs *
 frb_sea_search_internal(Query *query, VALUE roptions, Searcher *sea)
 {
     VALUE rval;
     int offset = 0, limit = 10;
     FrtFilter *filter = NULL;
     Sort *sort = NULL;
-    TopDocs *td;
+    FrtTopDocs *td;
 
     PostFilter post_filter_holder;
     PostFilter *post_filter = NULL;
@@ -2742,7 +2742,7 @@ frb_sea_search(int argc, VALUE *argv, VALUE self)
     Query *query;
     rb_scan_args(argc, argv, "11", &rquery, &roptions);
     Data_Get_Struct(rquery, Query, query);
-    TopDocs *td = frb_sea_search_internal(query, roptions, sea);
+    FrtTopDocs *td = frb_sea_search_internal(query, roptions, sea);
     return frb_get_td(td, self);
 }
 
@@ -2793,7 +2793,7 @@ frb_sea_search_each(int argc, VALUE *argv, VALUE self)
     int i;
     Query *q;
     float max_score;
-    TopDocs *td;
+    FrtTopDocs *td;
     VALUE rquery, roptions, rtotal_hits;
     GET_SEA();
 

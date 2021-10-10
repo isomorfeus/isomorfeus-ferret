@@ -3,7 +3,7 @@
 #include "frt_search.h"
 #include "frt_internal.h"
 
-#define TQ(query) ((TermQuery *)(query))
+#define TQ(query) ((FrtTermQuery *)(query))
 #define TSc(scorer) ((TermScorer *)(scorer))
 
 /***************************************************************************
@@ -24,7 +24,7 @@ typedef struct TermScorer
     int             pointer_max;
     float           score_cache[SCORE_CACHE_SIZE];
     FrtWeight         *weight;
-    TermDocEnum    *tde;
+    FrtTermDocEnum    *tde;
     uchar          *norms;
     float           weight_value;
 } TermScorer;
@@ -70,7 +70,7 @@ static bool tsc_next(Scorer *self)
 static bool tsc_skip_to(Scorer *self, int doc_num)
 {
     TermScorer *ts = TSc(self);
-    TermDocEnum *tde = ts->tde;
+    FrtTermDocEnum *tde = ts->tde;
 
     /* first scan in cache */
     while (++(ts->pointer) < ts->pointer_max) {
@@ -114,7 +114,7 @@ static void tsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *tsc_new(FrtWeight *weight, TermDocEnum *tde, uchar *norms)
+static Scorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
 {
     int i;
     Scorer *self            = scorer_new(TermScorer, weight->similarity);
@@ -144,8 +144,8 @@ static Scorer *tsc_new(FrtWeight *weight, TermDocEnum *tde, uchar *norms)
 
 static Scorer *tw_scorer(FrtWeight *self, IndexReader *ir)
 {
-    TermQuery *tq = TQ(self->query);
-    TermDocEnum *tde = ir_term_docs_for(ir, tq->field, tq->term);
+    FrtTermQuery *tq = TQ(self->query);
+    FrtTermDocEnum *tde = ir_term_docs_for(ir, tq->field, tq->term);
     /* ir_term_docs_for should always return a TermDocEnum */
     assert(NULL != tde);
 
@@ -162,7 +162,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
     float field_norm;
     FrtExplanation *field_norm_expl;
     char *query_str = self->query->to_s(self->query, NULL);
-    TermQuery *tq = TQ(self->query);
+    FrtTermQuery *tq = TQ(self->query);
     char *term = tq->term;
     FrtExplanation *expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
     /* We need two of these as it's included in both the query explanation
@@ -279,11 +279,11 @@ static int tq_eq(Query *self, Query *o)
 }
 
 static MatchVector *tq_get_matchv_i(Query *self, MatchVector *mv,
-                                    TermVector *tv)
+                                    FrtTermVector *tv)
 {
     if (strcmp(tv->field, TQ(self)->field) == 0) {
         int i;
-        TVTerm *tv_term = tv_get_tv_term(tv, TQ(self)->term);
+        FrtTVTerm *tv_term = tv_get_tv_term(tv, TQ(self)->term);
         if (tv_term) {
             for (i = 0; i < tv_term->freq; i++) {
                 int pos = tv_term->positions[i];
@@ -296,7 +296,7 @@ static MatchVector *tq_get_matchv_i(Query *self, MatchVector *mv,
 
 Query *tq_new(Symbol field, const char *term)
 {
-    Query *self             = q_new(TermQuery);
+    Query *self             = q_new(FrtTermQuery);
 
     TQ(self)->field         = field;
     TQ(self)->term          = estrdup(term);
