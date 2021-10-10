@@ -39,7 +39,7 @@ static FrtExplanation *cssc_explain(Scorer *self, int doc_num)
     return expl_new(1.0, "ConstantScoreScorer");
 }
 
-static Scorer *cssc_new(Weight *weight, IndexReader *ir)
+static Scorer *cssc_new(FrtWeight *weight, IndexReader *ir)
 {
     Scorer *self    = scorer_new(ConstantScoreScorer, weight->similarity);
     FrtFilter *filter  = CScQ(weight->query)->filter;
@@ -61,12 +61,12 @@ static Scorer *cssc_new(Weight *weight, IndexReader *ir)
  *
  ***************************************************************************/
 
-static char *csw_to_s(Weight *self)
+static char *csw_to_s(FrtWeight *self)
 {
     return strfmt("ConstantScoreWeight(%f)", self->value);
 }
 
-static FrtExplanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *csw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtFilter *filter = CScQ(self->query)->filter;
     FrtExplanation *expl;
@@ -88,9 +88,9 @@ static FrtExplanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
     return expl;
 }
 
-static Weight *csw_new(Query *query, Searcher *searcher)
+static FrtWeight *csw_new(Query *query, Searcher *searcher)
 {
-    Weight *self        = w_new(Weight, query);
+    FrtWeight *self        = w_new(FrtWeight, query);
 
     self->scorer        = &cssc_new;
     self->explain       = &csw_explain;

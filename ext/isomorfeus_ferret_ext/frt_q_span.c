@@ -195,7 +195,7 @@ typedef struct SpanScorer
     SpanEnum       *spans;
     Similarity     *sim;
     uchar          *norms;
-    Weight         *weight;
+    FrtWeight         *weight;
     float           value;
     float           freq;
     bool            first_time : 1;
@@ -285,7 +285,7 @@ static void spansc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *spansc_new(Weight *weight, IndexReader *ir)
+static Scorer *spansc_new(FrtWeight *weight, IndexReader *ir)
 {
     Scorer *self = NULL;
     const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
@@ -1386,11 +1386,11 @@ static SpanEnum *spanxe_new(Query *query, IndexReader *ir)
 #define SpW(weight) ((SpanWeight *)(weight))
 typedef struct SpanWeight
 {
-    Weight      super;
+    FrtWeight      super;
     HashSet    *terms;
 } SpanWeight;
 
-static FrtExplanation *spanw_explain(Weight *self, IndexReader *ir, int target)
+static FrtExplanation *spanw_explain(FrtWeight *self, IndexReader *ir, int target)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -1492,21 +1492,21 @@ static FrtExplanation *spanw_explain(Weight *self, IndexReader *ir, int target)
     }
 }
 
-static char *spanw_to_s(Weight *self)
+static char *spanw_to_s(FrtWeight *self)
 {
     return strfmt("SpanWeight(%f)", self->value);
 }
 
-static void spanw_destroy(Weight *self)
+static void spanw_destroy(FrtWeight *self)
 {
     hs_destroy(SpW(self)->terms);
     w_destroy(self);
 }
 
-static Weight *spanw_new(Query *query, Searcher *searcher)
+static FrtWeight *spanw_new(Query *query, Searcher *searcher)
 {
     HashSetEntry *hse;
-    Weight *self        = w_new(SpanWeight, query);
+    FrtWeight *self        = w_new(SpanWeight, query);
     HashSet *terms      = SpQ(query)->get_terms(query);
 
     SpW(self)->terms    = terms;

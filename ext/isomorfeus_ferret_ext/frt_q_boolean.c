@@ -1099,13 +1099,13 @@ static Scorer *bsc_new(Similarity *similarity)
 
 typedef struct BooleanWeight
 {
-    Weight w;
-    Weight **weights;
+    FrtWeight w;
+    FrtWeight **weights;
     int w_cnt;
 } BooleanWeight;
 
 
-static float bw_sum_of_squared_weights(Weight *self)
+static float bw_sum_of_squared_weights(FrtWeight *self)
 {
     FrtBooleanQuery *bq = BQ(self->query);
     float sum = 0.0f;
@@ -1113,7 +1113,7 @@ static float bw_sum_of_squared_weights(Weight *self)
 
     for (i = 0; i < BW(self)->w_cnt; i++) {
         if (! bq->clauses[i]->is_prohibited) {
-            Weight *weight = BW(self)->weights[i];
+            FrtWeight *weight = BW(self)->weights[i];
             /* sum sub-weights */
             sum += weight->sum_of_squared_weights(weight);
         }
@@ -1124,7 +1124,7 @@ static float bw_sum_of_squared_weights(Weight *self)
     return sum;
 }
 
-static void bw_normalize(Weight *self, float normalization_factor)
+static void bw_normalize(FrtWeight *self, float normalization_factor)
 {
     FrtBooleanQuery *bq = BQ(self->query);
     int i;
@@ -1133,14 +1133,14 @@ static void bw_normalize(Weight *self, float normalization_factor)
 
     for (i = 0; i < BW(self)->w_cnt; i++) {
         if (! bq->clauses[i]->is_prohibited) {
-            Weight *weight = BW(self)->weights[i];
+            FrtWeight *weight = BW(self)->weights[i];
             /* sum sub-weights */
             weight->normalize(weight, normalization_factor);
         }
     }
 }
 
-static Scorer *bw_scorer(Weight *self, IndexReader *ir)
+static Scorer *bw_scorer(FrtWeight *self, IndexReader *ir)
 {
     Scorer *bsc = bsc_new(self->similarity);
     FrtBooleanQuery *bq = BQ(self->query);
@@ -1148,7 +1148,7 @@ static Scorer *bw_scorer(Weight *self, IndexReader *ir)
 
     for (i = 0; i < BW(self)->w_cnt; i++) {
         FrtBooleanClause *clause = bq->clauses[i];
-        Weight *weight = BW(self)->weights[i];
+        FrtWeight *weight = BW(self)->weights[i];
         Scorer *sub_scorer = weight->scorer(weight, ir);
         if (sub_scorer) {
             bsc_add_scorer(bsc, sub_scorer, clause->occur);
@@ -1162,12 +1162,12 @@ static Scorer *bw_scorer(Weight *self, IndexReader *ir)
     return bsc;
 }
 
-static char *bw_to_s(Weight *self)
+static char *bw_to_s(FrtWeight *self)
 {
     return strfmt("BooleanWeight(%f)", self->value);
 }
 
-static void bw_destroy(Weight *self)
+static void bw_destroy(FrtWeight *self)
 {
     int i;
 
@@ -1179,7 +1179,7 @@ static void bw_destroy(Weight *self)
     w_destroy(self);
 }
 
-static FrtExplanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *bw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtBooleanQuery *bq = BQ(self->query);
     FrtExplanation *sum_expl = expl_new(0.0f, "sum of:");
@@ -1190,7 +1190,7 @@ static FrtExplanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
     float sum = 0.0f;
     int i;
     for (i = 0; i < BW(self)->w_cnt; i++) {
-        Weight *weight = BW(self)->weights[i];
+        FrtWeight *weight = BW(self)->weights[i];
         FrtBooleanClause *clause = bq->clauses[i];
         explanation = weight->explain(weight, ir, doc_num);
         if (!clause->is_prohibited) {
@@ -1233,13 +1233,13 @@ static FrtExplanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
     }
 }
 
-static Weight *bw_new(Query *query, Searcher *searcher)
+static FrtWeight *bw_new(Query *query, Searcher *searcher)
 {
     int i;
-    Weight *self = w_new(BooleanWeight, query);
+    FrtWeight *self = w_new(BooleanWeight, query);
 
     BW(self)->w_cnt = BQ(query)->clause_cnt;
-    BW(self)->weights = FRT_ALLOC_N(Weight *, BW(self)->w_cnt);
+    BW(self)->weights = FRT_ALLOC_N(FrtWeight *, BW(self)->w_cnt);
     for (i = 0; i < BW(self)->w_cnt; i++) {
         BW(self)->weights[i] = q_weight(BQ(query)->clauses[i]->query, searcher);
     }

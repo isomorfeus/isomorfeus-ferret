@@ -107,7 +107,7 @@ static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Searcher *sea = isea_new(ir);
-    Weight *weight = q_weight(QF(filt)->query, sea);
+    FrtWeight *weight = q_weight(QF(filt)->query, sea);
     Scorer *scorer = weight->scorer(weight, ir);
     if (scorer) {
         while (scorer->next(scorer)) {

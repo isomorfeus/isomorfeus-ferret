@@ -146,7 +146,7 @@ typedef struct MultiTermScorer
     Scorer                super;
     Symbol                field;
     uchar                *norms;
-    Weight               *weight;
+    FrtWeight               *weight;
     TermDocEnumWrapper  **tdew_a;
     int                   tdew_cnt;
     PriorityQueue        *tdew_pq;
@@ -299,7 +299,7 @@ static void multi_tsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *multi_tsc_new(Weight *weight, Symbol field,
+static Scorer *multi_tsc_new(FrtWeight *weight, Symbol field,
                              TermDocEnumWrapper **tdew_a, int tdew_cnt,
                              uchar *norms)
 {
@@ -330,12 +330,12 @@ static Scorer *multi_tsc_new(Weight *weight, Symbol field,
  * MultiTermWeight
  ***************************************************************************/
 
-static char *multi_tw_to_s(Weight *self)
+static char *multi_tw_to_s(FrtWeight *self)
 {
     return strfmt("MultiTermWeight(%f)", self->value);
 }
 
-static Scorer *multi_tw_scorer(Weight *self, IndexReader *ir)
+static Scorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
 {
     Scorer *multi_tsc = NULL;
     PriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
@@ -370,7 +370,7 @@ static Scorer *multi_tw_scorer(Weight *self, IndexReader *ir)
     return multi_tsc;
 }
 
-static FrtExplanation *multi_tw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -474,11 +474,11 @@ static FrtExplanation *multi_tw_explain(Weight *self, IndexReader *ir, int doc_n
     }
 }
 
-static Weight *multi_tw_new(Query *query, Searcher *searcher)
+static FrtWeight *multi_tw_new(Query *query, Searcher *searcher)
 {
     int i;
     int doc_freq         = 0;
-    Weight *self         = w_new(Weight, query);
+    FrtWeight *self         = w_new(FrtWeight, query);
     PriorityQueue *bt_pq = MTQ(query)->boosted_terms;
 
     self->scorer         = &multi_tw_scorer;

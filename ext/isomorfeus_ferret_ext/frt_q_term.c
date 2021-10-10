@@ -23,7 +23,7 @@ typedef struct TermScorer
     int             pointer;
     int             pointer_max;
     float           score_cache[SCORE_CACHE_SIZE];
-    Weight         *weight;
+    FrtWeight         *weight;
     TermDocEnum    *tde;
     uchar          *norms;
     float           weight_value;
@@ -114,7 +114,7 @@ static void tsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *tsc_new(Weight *weight, TermDocEnum *tde, uchar *norms)
+static Scorer *tsc_new(FrtWeight *weight, TermDocEnum *tde, uchar *norms)
 {
     int i;
     Scorer *self            = scorer_new(TermScorer, weight->similarity);
@@ -142,7 +142,7 @@ static Scorer *tsc_new(Weight *weight, TermDocEnum *tde, uchar *norms)
  *
  ***************************************************************************/
 
-static Scorer *tw_scorer(Weight *self, IndexReader *ir)
+static Scorer *tw_scorer(FrtWeight *self, IndexReader *ir)
 {
     TermQuery *tq = TQ(self->query);
     TermDocEnum *tde = ir_term_docs_for(ir, tq->field, tq->term);
@@ -152,7 +152,7 @@ static Scorer *tw_scorer(Weight *self, IndexReader *ir)
     return tsc_new(self, tde, ir_get_norms(ir, tq->field));
 }
 
-static FrtExplanation *tw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
@@ -205,14 +205,14 @@ static FrtExplanation *tw_explain(Weight *self, IndexReader *ir, int doc_num)
     }
 }
 
-static char *tw_to_s(Weight *self)
+static char *tw_to_s(FrtWeight *self)
 {
     return strfmt("TermWeight(%f)", self->value);
 }
 
-static Weight *tw_new(Query *query, Searcher *searcher)
+static FrtWeight *tw_new(Query *query, Searcher *searcher)
 {
-    Weight *self    = w_new(Weight, query);
+    FrtWeight *self    = w_new(FrtWeight, query);
     self->scorer    = &tw_scorer;
     self->explain   = &tw_explain;
     self->to_s      = &tw_to_s;

@@ -81,65 +81,65 @@ static Scorer *fqsc_new(Scorer *scorer, FrtBitVector *bv, Similarity *sim)
 
 /***************************************************************************
  *
- * Weight
+ * FrtWeight
  *
  ***************************************************************************/
 
 #define FQW(weight) ((FilteredQueryWeight *)(weight))
 typedef struct FilteredQueryWeight
 {
-    Weight  super;
-    Weight *sub_weight;
+    FrtWeight  super;
+    FrtWeight *sub_weight;
 } FilteredQueryWeight;
 
-static char *fqw_to_s(Weight *self)
+static char *fqw_to_s(FrtWeight *self)
 {
     return strfmt("FilteredQueryWeight(%f)", self->value);
 }
 
-static float fqw_sum_of_squared_weights(Weight *self)
+static float fqw_sum_of_squared_weights(FrtWeight *self)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     return sub_weight->sum_of_squared_weights(sub_weight);
 }
 
-static void fqw_normalize(Weight *self, float normalization_factor)
+static void fqw_normalize(FrtWeight *self, float normalization_factor)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     sub_weight->normalize(sub_weight, normalization_factor);
 }
 
-static float fqw_get_value(Weight *self)
+static float fqw_get_value(FrtWeight *self)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     return sub_weight->get_value(sub_weight);
 }
 
-static FrtExplanation *fqw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *fqw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     return sub_weight->explain(sub_weight, ir, doc_num);
 }
 
-static Scorer *fqw_scorer(Weight *self, IndexReader *ir)
+static Scorer *fqw_scorer(FrtWeight *self, IndexReader *ir)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     Scorer *scorer = sub_weight->scorer(sub_weight, ir);
     FrtFilter *filter = FQQ(self->query)->filter;
 
     return fqsc_new(scorer, filt_get_bv(filter, ir), self->similarity);
 }
 
-static void fqw_destroy(Weight *self)
+static void fqw_destroy(FrtWeight *self)
 {
-    Weight *sub_weight = FQW(self)->sub_weight;
+    FrtWeight *sub_weight = FQW(self)->sub_weight;
     sub_weight->destroy(sub_weight);
     w_destroy(self);
 }
 
-static Weight *fqw_new(Query *query, Weight *sub_weight, Similarity *sim)
+static FrtWeight *fqw_new(Query *query, FrtWeight *sub_weight, Similarity *sim)
 {
-    Weight *self = w_new(FilteredQueryWeight, query);
+    FrtWeight *self = w_new(FilteredQueryWeight, query);
 
     FQW(self)->sub_weight           = sub_weight;
 
@@ -189,7 +189,7 @@ static void fq_destroy(Query *self)
     q_destroy_i(self);
 }
 
-static Weight *fq_new_weight(Query *self, Searcher *searcher)
+static FrtWeight *fq_new_weight(Query *self, Searcher *searcher)
 {
     Query *sub_query = FQQ(self)->query;
     return fqw_new(self, q_weight(sub_query, searcher),

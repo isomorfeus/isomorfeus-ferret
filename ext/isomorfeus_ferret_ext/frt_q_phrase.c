@@ -167,7 +167,7 @@ typedef struct PhraseScorer
     float   freq;
     uchar  *norms;
     float   value;
-    Weight *weight;
+    FrtWeight *weight;
     PhPos **phrase_pos;
     int     pp_first_idx;
     int     pp_cnt;
@@ -297,7 +297,7 @@ static void phsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *phsc_new(Weight *weight,
+static Scorer *phsc_new(FrtWeight *weight,
                         TermDocEnum **term_pos_enum,
                         PhrasePosition *positions, int pos_cnt,
                         Similarity *similarity,
@@ -398,7 +398,7 @@ static float ephsc_phrase_freq(Scorer *self)
     return freq;
 }
 
-static Scorer *exact_phrase_scorer_new(Weight *weight,
+static Scorer *exact_phrase_scorer_new(FrtWeight *weight,
                                        TermDocEnum **term_pos_enum,
                                        PhrasePosition *positions, int pp_cnt,
                                        Similarity *similarity, uchar *norms)
@@ -507,7 +507,7 @@ return_freq:
     return freq;
 }
 
-static Scorer *sloppy_phrase_scorer_new(Weight *weight,
+static Scorer *sloppy_phrase_scorer_new(FrtWeight *weight,
                                         TermDocEnum **term_pos_enum,
                                         PhrasePosition *positions,
                                         int pp_cnt, Similarity *similarity,
@@ -531,12 +531,12 @@ static Scorer *sloppy_phrase_scorer_new(Weight *weight,
  *
  ***************************************************************************/
 
-static char *phw_to_s(Weight *self)
+static char *phw_to_s(FrtWeight *self)
 {
     return strfmt("PhraseWeight(%f)", self->value);
 }
 
-static Scorer *phw_scorer(Weight *self, IndexReader *ir)
+static Scorer *phw_scorer(FrtWeight *self, IndexReader *ir)
 {
     int i;
     Scorer *phsc = NULL;
@@ -580,7 +580,7 @@ static Scorer *phw_scorer(Weight *self, IndexReader *ir)
     return phsc;
 }
 
-static FrtExplanation *phw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *phw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     FrtExplanation *idf_expl1;
@@ -686,9 +686,9 @@ static FrtExplanation *phw_explain(Weight *self, IndexReader *ir, int doc_num)
     }
 }
 
-static Weight *phw_new(Query *query, Searcher *searcher)
+static FrtWeight *phw_new(Query *query, Searcher *searcher)
 {
-    Weight *self        = w_new(Weight, query);
+    FrtWeight *self        = w_new(FrtWeight, query);
 
     self->scorer        = &phw_scorer;
     self->explain       = &phw_explain;

@@ -47,7 +47,7 @@ static FrtExplanation *masc_explain(Scorer *self, int doc_num)
     return expl_new(1.0, "MatchAllScorer");
 }
 
-static Scorer *masc_new(Weight *weight, IndexReader *ir)
+static Scorer *masc_new(FrtWeight *weight, IndexReader *ir)
 {
     Scorer *self        = scorer_new(MatchAllScorer, weight->similarity);
 
@@ -67,16 +67,16 @@ static Scorer *masc_new(Weight *weight, IndexReader *ir)
 
 /***************************************************************************
  *
- * Weight
+ * FrtWeight
  *
  ***************************************************************************/
 
-static char *maw_to_s(Weight *self)
+static char *maw_to_s(FrtWeight *self)
 {
     return strfmt("MatchAllWeight(%f)", self->value);
 }
 
-static FrtExplanation *maw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *maw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtExplanation *expl;
     if (!ir->is_deleted(ir, doc_num)) {
@@ -91,9 +91,9 @@ static FrtExplanation *maw_explain(Weight *self, IndexReader *ir, int doc_num)
     return expl;
 }
 
-static Weight *maw_new(Query *query, Searcher *searcher)
+static FrtWeight *maw_new(Query *query, Searcher *searcher)
 {
-    Weight *self        = w_new(Weight, query);
+    FrtWeight *self        = w_new(FrtWeight, query);
 
     self->scorer        = &masc_new;
     self->explain       = &maw_explain;

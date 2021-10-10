@@ -5,11 +5,11 @@
 
 /****************************************************************************
  *
- * WildCardQuery
+ * FrtWildCardQuery
  *
  ****************************************************************************/
 
-#define WCQ(query) ((WildCardQuery *)(query))
+#define WCQ(query) ((FrtWildCardQuery *)(query))
 
 static char *wcq_to_s(Query *self, Symbol default_field)
 {
@@ -149,7 +149,7 @@ static int wcq_eq(Query *self, Query *o)
 
 Query *wcq_new(Symbol field, const char *pattern)
 {
-    Query *self = q_new(WildCardQuery);
+    Query *self = q_new(FrtWildCardQuery);
 
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = estrdup(pattern);

@@ -98,9 +98,6 @@
 #define TokenFilter             FrtTokenFilter
 #define TokenStream             FrtTokenStream
 #define TopDocs                 FrtTopDocs
-#define TypedRangeQuery         FrtTypedRangeQuery
-#define Weight                  FrtWeight
-#define WildCardQuery           FrtWildCardQuery
 
 /* Functions */
 #define a_deref                                        frt_a_deref
