@@ -281,7 +281,7 @@ char *get_stacktrace()
     do {
         offset += FRT_BUFFER_SIZE;
         FRT_REALLOC_N(stack, char, offset + FRT_BUFFER_SIZE);
-        ZEROSET_N(stack + offset, char, FRT_BUFFER_SIZE);
+        FRT_ZEROSET_N(stack + offset, char, FRT_BUFFER_SIZE);
     } while(fread(stack + offset, 1, FRT_BUFFER_SIZE, stream) == FRT_BUFFER_SIZE);
 
     pclose(stream);
@@ -392,7 +392,7 @@ static const char *signal_to_string(int signum)
 static void sighandler_crash(int signum)
 {
     print_stacktrace();
-    XEXIT("Signal", "Exiting on signal %s (%d)",
+    FRT_XEXIT("Signal", "Exiting on signal %s (%d)",
              signal_to_string(signum), signum);
 }
 

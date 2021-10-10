@@ -486,7 +486,7 @@ char *is_read_string_safe(InStream *is)
     char *str = FRT_ALLOC_N(char, length + 1);
     str[length] = '\0';
 
-    TRY
+    FRT_TRY
         if (is->buf.pos > (is->buf.len - length)) {
             register int i;
             for (i = 0; i < length; i++) {
@@ -497,9 +497,9 @@ char *is_read_string_safe(InStream *is)
             memcpy(str, is->buf.buf + is->buf.pos, length);
             is->buf.pos += length;
         }
-    XCATCHALL
+    FRT_XCATCHALL
         free(str);
-    XENDTRY
+    FRT_XENDTRY
 
     return str;
 }

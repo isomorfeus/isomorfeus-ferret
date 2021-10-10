@@ -334,8 +334,6 @@ extern FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *t
  *
  ****************************************************************************/
 
-#define FRT_TE_BUCKET_INIT_CAPA 1
-
 typedef struct FrtTermInfosReader
 {
     frt_thread_key_t thread_te;

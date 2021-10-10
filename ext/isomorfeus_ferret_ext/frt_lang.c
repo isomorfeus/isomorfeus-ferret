@@ -102,7 +102,7 @@ void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
 void xexit(const char *file, int line_num, const char *func,
               const char *err_type, const char *fmt, ...)
 # else
-void XEXIT(const char *err_type, const char *fmt, ...)
+void FRT_XEXIT(const char *err_type, const char *fmt, ...)
 # endif
 {
     va_list args;

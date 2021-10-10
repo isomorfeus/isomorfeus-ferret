@@ -20,13 +20,13 @@ static const char *const ERROR_TYPES[] = {
     "Lock Error"
 };
 
-const char *const UNSUPPORTED_ERROR_MSG = "Unsupported operation";
+const char *const FRT_UNSUPPORTED_ERROR_MSG = "Unsupported operation";
 const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
-char xmsg_buffer[XMSG_BUFFER_SIZE];
-char xmsg_buffer_final[XMSG_BUFFER_SIZE];
+char xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
+char xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
 
 static thread_key_t exception_stack_key;
-static thread_once_t exception_stack_key_once = THREAD_ONCE_INIT;
+static thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
 
 static void exception_stack_alloc(void)
 {
@@ -61,7 +61,7 @@ void frt_xraise(int excode, const char *const msg)
     top_context = (xcontext_t *)thread_getspecific(exception_stack_key);
 
     if (!top_context) {
-        XEXIT(ERROR_TYPES[excode], msg);
+        FRT_XEXIT(ERROR_TYPES[excode], msg);
     }
     else if (!top_context->in_finally) {
         frt_xraise_context(top_context, excode, msg);
@@ -85,7 +85,7 @@ void frt_xpop_context()
             frt_xraise_context(context, top_cxt->excode, top_cxt->msg);
         }
         else {
-            XEXIT(ERROR_TYPES[top_cxt->excode], top_cxt->msg);
+            FRT_XEXIT(ERROR_TYPES[top_cxt->excode], top_cxt->msg);
         }
     }
 }

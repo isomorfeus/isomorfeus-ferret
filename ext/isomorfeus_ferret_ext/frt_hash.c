@@ -226,7 +226,7 @@ void h_clear(Hash *self)
             he->key = NULL;
         }
     }
-    ZEROSET_N(self->table, HashEntry, self->mask + 1);
+    FRT_ZEROSET_N(self->table, HashEntry, self->mask + 1);
     self->size = 0;
     self->fill = 0;
 }

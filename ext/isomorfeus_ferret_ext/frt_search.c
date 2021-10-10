@@ -1308,7 +1308,7 @@ static int cdfsea_doc_freq(Searcher *self, Symbol field, const char *text)
 static Document *cdfsea_get_doc(Searcher *self, int doc_num)
 {
     (void)self; (void)doc_num;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1321,7 +1321,7 @@ static int cdfsea_max_doc(Searcher *self)
 static Weight *cdfsea_create_weight(Searcher *self, Query *query)
 {
     (void)self; (void)query;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1330,7 +1330,7 @@ static TopDocs *cdfsea_search_w(Searcher *self, Weight *w, int fd, int nd,
 {
     (void)self; (void)w; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1339,7 +1339,7 @@ static TopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
 {
     (void)self; (void)q; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1349,7 +1349,7 @@ static void cdfsea_search_each(Searcher *self, Query *query, Filter *filter,
                                void *arg)
 {
     (void)self; (void)query; (void)filter; (void)pf; (void)fn; (void)arg;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static void cdfsea_search_each_w(Searcher *self, Weight *w, Filter *filter,
@@ -1358,7 +1358,7 @@ static void cdfsea_search_each_w(Searcher *self, Weight *w, Filter *filter,
                                  void *arg)
 {
     (void)self; (void)w; (void)filter; (void)pf; (void)fn; (void)arg;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static Query *cdfsea_rewrite(Searcher *self, Query *original)
@@ -1371,14 +1371,14 @@ static Query *cdfsea_rewrite(Searcher *self, Query *original)
 static Explanation *cdfsea_explain(Searcher *self, Query *query, int doc_num)
 {
     (void)self; (void)query; (void)doc_num;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static Explanation *cdfsea_explain_w(Searcher *self, Weight *w, int doc_num)
 {
     (void)self; (void)w; (void)doc_num;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1386,7 +1386,7 @@ static TermVector *cdfsea_get_term_vector(Searcher *self, const int doc_num,
                                           Symbol field)
 {
     (void)self; (void)doc_num; (void)field;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 

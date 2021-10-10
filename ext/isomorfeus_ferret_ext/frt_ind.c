@@ -68,7 +68,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
 
     if (create) {
         FieldInfos *fis = fis_new(STORE_YES, FRT_INDEX_YES,
-                                  TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                                  FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         index_create(self->store, fis);
         fis_deref(fis);
     }
@@ -374,14 +374,14 @@ void index_delete_term(Index *self, Symbol field, const char *term)
     {
         if (self->ir) {
             tde = ir_term_docs_for(self->ir, field, term);
-            TRY
+            FRT_TRY
                 while (tde->next(tde)) {
                     ir_delete_doc(self->ir, tde->doc_num(tde));
                     AUTOFLUSH_IR(self);
                 }
-            XFINALLY
+            FRT_XFINALLY
                 tde->close(tde);
-            XENDTRY
+            FRT_XENDTRY
         } else {
             ensure_writer_open(self);
             iw_delete_term(self->iw, field, term);

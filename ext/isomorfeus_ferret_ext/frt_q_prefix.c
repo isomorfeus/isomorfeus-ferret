@@ -46,16 +46,16 @@ static Query *prq_rewrite(Query *self, IndexReader *ir)
         const char *term = te->curr_term;
         size_t prefix_len = strlen(prefix);
 
-        TRY
+        FRT_TRY
             do {
                 if (strncmp(term, prefix, prefix_len) != 0) {
                     break;
                 }
                 multi_tq_add_term(q, term);       /* found a match */
             } while (te->next(te));
-        XFINALLY
+        FRT_XFINALLY
             te->close(te);
-        XENDTRY
+        FRT_XENDTRY
     }
 
     return q;

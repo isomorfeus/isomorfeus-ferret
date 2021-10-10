@@ -67,7 +67,7 @@ FieldIndex *field_index_get(IndexReader *ir, Symbol field,
 
         length = ir->max_doc(ir);
         if (length > 0) {
-            TRY
+            FRT_TRY
             {
                 void *index;
                 tde = ir->term_docs(ir);
@@ -78,10 +78,10 @@ FieldIndex *field_index_get(IndexReader *ir, Symbol field,
                     klass->handle_term(index, tde, te->curr_term);
                 }
             }
-            XFINALLY
+            FRT_XFINALLY
                 tde->close(tde);
                 te->close(te);
-            XENDTRY
+            FRT_XENDTRY
         }
         h_set(ir->field_index_cache, self, self);
     }

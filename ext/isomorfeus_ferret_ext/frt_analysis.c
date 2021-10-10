@@ -161,7 +161,7 @@ static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
         const char *t = s;
         do {
             t++;
-            ZEROSET(state, mbstate_t);
+            FRT_ZEROSET(state, mbstate_t);
             num_bytes = (int)mbrtowc(wchr, t, MB_CUR_MAX, state);
         } while ((num_bytes < 0) && (*t != 0));
         num_bytes = t - s;
@@ -172,7 +172,7 @@ static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
 
 static TokenStream *mb_ts_reset(TokenStream *ts, char *text)
 {
-    ZEROSET(&(MBTS(ts)->state), mbstate_t);
+    FRT_ZEROSET(&(MBTS(ts)->state), mbstate_t);
     ts_reset(ts, text);
     return ts;
 }
@@ -658,7 +658,7 @@ static int mb_legacy_std_get_alpha(TokenStream *ts, char *token)
     char *t = ts->t;
     wchar_t wchr;
     int i;
-    mbstate_t state; ZEROSET(&state, mbstate_t);
+    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
 
     i = mb_next_char(&wchr, t, &state);
 
@@ -723,7 +723,7 @@ static bool legacy_std_is_tok_char(char *c)
 static bool mb_legacy_std_is_tok_char(char *t)
 {
     wchar_t c;
-    mbstate_t state; ZEROSET(&state, mbstate_t);
+    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
 
     if (((int)mbrtowc(&c, t, MB_CUR_MAX, &state)) < 0) {
         /* error which we can handle next time round. For now just return
@@ -797,7 +797,7 @@ static int mb_legacy_std_get_apostrophe(char *input)
     char *t = input;
     wchar_t wchr;
     int i;
-    mbstate_t state; ZEROSET(&state, mbstate_t);
+    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
 
     i = mb_next_char(&wchr, t, &state);
 
@@ -866,7 +866,7 @@ static bool mb_legacy_std_advance_to_start(TokenStream *ts)
 {
     int i;
     wchar_t wchr;
-    mbstate_t state; ZEROSET(&state, mbstate_t);
+    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
 
     i = mb_next_char(&wchr, ts->t, &state);
 

@@ -43,7 +43,7 @@ bool wc_match(const char *pattern, const char *text)
         /* end of text so make sure end of pattern doesn't matter */
         if (*t == '\0') {
             while (*p) {
-                if (*p != WILD_STRING) {
+                if (*p != FRT_WILD_STRING) {
                     return false;
                 }
                 p++;
@@ -57,11 +57,11 @@ bool wc_match(const char *pattern, const char *text)
         }
 
         /* Match a single character, so continue. */
-        if (*p == WILD_CHAR) {
+        if (*p == FRT_WILD_CHAR) {
             continue;
         }
 
-        if (*p == WILD_STRING) {
+        if (*p == FRT_WILD_STRING) {
             /* Look at the character beyond the '*'. */
             p++;
             /* Examine the string, starting at the last character. */
@@ -82,8 +82,8 @@ static Query *wcq_rewrite(Query *self, IndexReader *ir)
 {
     Query *q;
     const char *pattern = WCQ(self)->pattern;
-    const char *first_star = strchr(pattern, WILD_STRING);
-    const char *first_ques = strchr(pattern, WILD_CHAR);
+    const char *first_star = strchr(pattern, FRT_WILD_STRING);
+    const char *first_ques = strchr(pattern, FRT_WILD_CHAR);
 
     if (NULL == first_star && NULL == first_ques) {
         q = tq_new(WCQ(self)->field, pattern);
@@ -153,7 +153,7 @@ Query *wcq_new(Symbol field, const char *pattern)
 
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = estrdup(pattern);
-    MTQMaxTerms(self)       = WILD_CARD_QUERY_MAX_TERMS;
+    MTQMaxTerms(self)       = FRT_WILD_CARD_QUERY_MAX_TERMS;
 
     self->type              = WILD_CARD_QUERY;
     self->rewrite           = &wcq_rewrite;

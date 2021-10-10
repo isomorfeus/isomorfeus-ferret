@@ -127,15 +127,15 @@ frb_fi_get_params(VALUE roptions,
     v = rb_hash_aref(roptions, sym_term_vector);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *term_vector = TERM_VECTOR_NO;
+        *term_vector = FRT_TERM_VECTOR_NO;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
-        *term_vector = TERM_VECTOR_YES;
+        *term_vector = FRT_TERM_VECTOR_YES;
     } else if (v == sym_with_positions) {
-        *term_vector = TERM_VECTOR_WITH_POSITIONS;
+        *term_vector = FRT_TERM_VECTOR_WITH_POSITIONS;
     } else if (v == sym_with_offsets) {
-        *term_vector = TERM_VECTOR_WITH_OFFSETS;
+        *term_vector = FRT_TERM_VECTOR_WITH_OFFSETS;
     } else if (v == sym_with_positions_offsets) {
-        *term_vector = TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+        *term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
@@ -179,7 +179,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     FieldInfo *fi;
     StoreValue store = STORE_YES;
     IndexValue index = FRT_INDEX_YES;
-    TermVectorValue term_vector = TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
@@ -407,7 +407,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     FieldInfos *fis;
     StoreValue store = STORE_YES;
     IndexValue index = FRT_INDEX_YES;
-    TermVectorValue term_vector = TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    TermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
 
     rb_scan_args(argc, argv, "01", &roptions);
@@ -1370,7 +1370,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
             index_create(store, fis);
         } else {
             fis = fis_new(STORE_YES, FRT_INDEX_YES,
-                          TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                          FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
             index_create(store, fis);
             fis_deref(fis);
         }
@@ -3218,7 +3218,7 @@ Init_IndexWriter(void)
     rb_define_const(cIndexWriter, "WRITE_LOCK_TIMEOUT", INT2FIX(1));
     rb_define_const(cIndexWriter, "COMMIT_LOCK_TIMEOUT", INT2FIX(10));
     rb_define_const(cIndexWriter, "WRITE_LOCK_NAME",
-                    rb_str_new2(WRITE_LOCK_NAME));
+                    rb_str_new2(FRT_WRITE_LOCK_NAME));
     rb_define_const(cIndexWriter, "COMMIT_LOCK_NAME",
                     rb_str_new2(FRT_COMMIT_LOCK_NAME));
     rb_define_const(cIndexWriter, "DEFAULT_CHUNK_SIZE",

@@ -218,11 +218,11 @@ static void fs_clear_all(Store *store)
  */
 static void fs_destroy(Store *store)
 {
-    TRY
+    FRT_TRY
         fs_clear_locks(store);
-    XCATCHALL
+    FRT_XCATCHALL
         FRT_HANDLED();
-    XENDTRY
+    FRT_XENDTRY
     free(store->dir.path);
     store_destroy(store);
 }

@@ -203,7 +203,7 @@ static void qp_pop_fields(QParser *self);
  * return value of +func+ is assigned to +q+ directly.
  */
 #define FLDS(q, func) do {\
-    TRY {\
+    FRT_TRY {\
         Symbol field;\
         if (qp->fields->size == 0) {\
             q = NULL;\
@@ -216,31 +216,31 @@ static void qp_pop_fields(QParser *self);
             for (hse = qp->fields->first; hse; hse = hse->next) {\
                 field = (Symbol)hse->elem;\
                 sq = func;\
-                TRY\
+                FRT_TRY\
                   if (sq) bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
-                XCATCHALL\
+                FRT_XCATCHALL\
                   if (sq) q_deref(sq);\
-                XENDTRY\
+                FRT_XENDTRY\
             }\
             if (((BooleanQuery *)q)->clause_cnt == 0) {\
                 q_deref(q);\
                 q = NULL;\
             }\
         }\
-    } XCATCHALL\
+    } FRT_XCATCHALL\
         qp->destruct = true;\
         FRT_HANDLED();\
-    XENDTRY\
+    FRT_XENDTRY\
     if (qp->destruct && !qp->recovering && q) {q_deref(q); q = NULL;}\
 } while (0)
 
 #define Y if (qp->destruct) goto yyerrorlab;
-#define T TRY
+#define T FRT_TRY
 #define E\
-  XCATCHALL\
+  FRT_XCATCHALL\
     qp->destruct = true;\
     FRT_HANDLED();\
-  XENDTRY\
+  FRT_XENDTRY\
   if (qp->destruct) Y;
 
 
@@ -2182,7 +2182,7 @@ static int yyerror(QParser *qp, char const *msg)
             free(qp->qstr);
         }
         mutex_unlock(&qp->mutex);
-        snprintf(xmsg_buffer, XMSG_BUFFER_SIZE,
+        snprintf(xmsg_buffer, FRT_XMSG_BUFFER_SIZE,
                  "couldn't parse query ``%s''. Error message "
                  " was %s", buf, (char *)msg);
     }

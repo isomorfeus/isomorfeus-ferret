@@ -33,24 +33,24 @@ static int fuzq_calculate_max_distance(FuzzyQuery *fuzq, int m)
 /**
  * The max-distance formula gets used a lot - it needs to be calculated for
  * every possible match in the index - so we cache the results for all
- * lengths up to the TYPICAL_LONGEST_WORD limit. For words longer than this we
+ * lengths up to the FRT_TYPICAL_LONGEST_WORD limit. For words longer than this we
  * calculate the value live.
  */
 static void fuzq_initialize_max_distances(FuzzyQuery *fuzq)
 {
     int i;
-    for (i = 0; i < TYPICAL_LONGEST_WORD; i++) {
+    for (i = 0; i < FRT_TYPICAL_LONGEST_WORD; i++) {
         fuzq->max_distances[i] = fuzq_calculate_max_distance(fuzq, i);
     }
 }
 
 /**
  * Return the cached max-distance value if the word is within the
- * TYPICAL_LONGEST_WORD limit.
+ * FRT_TYPICAL_LONGEST_WORD limit.
  */
 static int fuzq_get_max_distance(FuzzyQuery *fuzq, int m)
 {
-    if (m < TYPICAL_LONGEST_WORD)
+    if (m < FRT_TYPICAL_LONGEST_WORD)
         return fuzq->max_distances[m];
     return fuzq_calculate_max_distance(fuzq, m);
 }

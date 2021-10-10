@@ -157,9 +157,9 @@ static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
         MatchVector *full_mv = matchv_new();
         HashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
-        ir->fis = fis_new(STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO);
+        ir->fis = fis_new(STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
         fis_add_field(ir->fis,
-                      fi_new(tv->field, STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO));
+                      fi_new(tv->field, STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
         ir->store = (Store *)tv;
         ir->term_positions = &spanq_ir_term_positions;
         sp_enum = SpQ(self)->get_spans(self, ir);
@@ -2339,16 +2339,16 @@ static Query *spanprq_rewrite(Query *self, IndexReader *ir)
         const char *term = te->curr_term;
         size_t prefix_len = strlen(prefix);
 
-        TRY
+        FRT_TRY
             do {
                 if (strncmp(term, prefix, prefix_len) != 0) {
                     break;
                 }
                 spanmtq_add_term(q, term);       /* found a match */
             } while (te->next(te));
-        XFINALLY
+        FRT_XFINALLY
             te->close(te);
-        XENDTRY
+        FRT_XENDTRY
     }
 
     return q;

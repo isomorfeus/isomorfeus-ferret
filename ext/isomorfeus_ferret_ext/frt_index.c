@@ -250,18 +250,18 @@ static void fi_set_index(FieldInfo *fi, int index)
 static void fi_set_term_vector(FieldInfo *fi, int term_vector)
 {
     switch (term_vector) {
-        case TERM_VECTOR_NO:
+        case FRT_TERM_VECTOR_NO:
             break;
-        case TERM_VECTOR_YES:
+        case FRT_TERM_VECTOR_YES:
             fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM;
             break;
-        case TERM_VECTOR_WITH_POSITIONS:
+        case FRT_TERM_VECTOR_WITH_POSITIONS:
             fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM;
             break;
-        case TERM_VECTOR_WITH_OFFSETS:
+        case FRT_TERM_VECTOR_WITH_OFFSETS:
             fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM;
             break;
-        case TERM_VECTOR_WITH_POSITIONS_OFFSETS:
+        case FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS:
             fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM |
                 FRT_FI_STORE_OFFSETS_BM;
             break;
@@ -271,7 +271,7 @@ static void fi_set_term_vector(FieldInfo *fi, int term_vector)
 static void fi_check_params(int store, int index, int term_vector)
 {
     (void)store;
-    if ((index == FRT_INDEX_NO) && (term_vector != TERM_VECTOR_NO)) {
+    if ((index == FRT_INDEX_NO) && (term_vector != FRT_TERM_VECTOR_NO)) {
         rb_raise(rb_eArgError,
               "You can't store the term vectors of an unindexed field");
     }
@@ -395,7 +395,7 @@ FieldInfo *fis_by_number(FieldInfos *fis, int num)
 FieldInfos *fis_read(InStream *is)
 {
     FieldInfos *volatile fis = NULL;
-    TRY
+    FRT_TRY
         do {
             StoreValue store_val;
             IndexValue index_val;
@@ -409,21 +409,21 @@ FieldInfos *fis_read(InStream *is)
             fis = fis_new(store_val, index_val, term_vector_val);
             for (i = is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FieldInfo);
-                TRY
+                FRT_TRY
                     fi->name = is_read_string_safe(is);
                     tmp.i = is_read_u32(is);
                     fi->boost = tmp.f;
                     fi->bits = is_read_vint(is);
-                XCATCHALL
+                FRT_XCATCHALL
                     free(fi);
-                XENDTRY
+                FRT_XENDTRY
                 fis_add_field(fis, fi);
                 fi->ref_cnt = 1;
             }
         } while (0);
-    XCATCHALL
+    FRT_XCATCHALL
         fis_deref(fis);
-    XENDTRY
+    FRT_XENDTRY
     return fis;
 }
 
@@ -568,7 +568,7 @@ SegmentInfo *si_new(char *name, int doc_cnt, Store *store)
 static SegmentInfo *si_read(Store *store, InStream *is)
 {
     SegmentInfo *volatile si = FRT_ALLOC_AND_ZERO(SegmentInfo);
-    TRY
+    FRT_TRY
         si->store = store;
         si->name = is_read_string_safe(is);
         si->doc_cnt = is_read_vint(is);
@@ -583,10 +583,10 @@ static SegmentInfo *si_read(Store *store, InStream *is)
             }
         }
         si->use_compound_file = (bool)is_read_byte(is);
-    XCATCHALL
+    FRT_XCATCHALL
         free(si->name);
         free(si);
-    XENDTRY
+    FRT_XENDTRY
     return si;
 }
 
@@ -857,24 +857,24 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             for (i = 0; i < GEN_FILE_RETRY_COUNT; i++) {
                 InStream *gen_is;
                 gen_is = NULL;
-                TRY
+                FRT_TRY
                     gen_is = store->open_input(store, SEGMENTS_GEN_FILE_NAME);
-                XCATCHALL
+                FRT_XCATCHALL
                     FRT_HANDLED();
                     /* TODO:LOG "segments open: FRT_IO_ERROR"*/
-                XENDTRY
+                FRT_XENDTRY
 
                 if (NULL != gen_is) {
                     volatile i64 gen0 = -1, gen1 = -1;
 
-                    TRY
+                    FRT_TRY
                         gen0 = is_read_u64(gen_is);
                         gen1 = is_read_u64(gen_is);
-                    XFINALLY
+                    FRT_XFINALLY
                         /* if there is an error well simply try again */
                         FRT_HANDLED();
                         is_close(gen_is);
-                    XENDTRY
+                    FRT_XENDTRY
                     /* TODO:LOG "fallback check: " + gen0 + "; " + gen1 */
                     if (gen0 == gen1 && gen0 > gen) {
                         /* The file is consistent. */
@@ -924,7 +924,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
             retry = false;
         }
         last_gen = gen;
-        TRY
+        FRT_TRY
             fsf->generation = gen;
             run(store, fsf);
             FRT_RETURN_EARLY();
@@ -943,12 +943,12 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                 fprintf(stderr, "%s\n>>>\n%s", xcontext.msg, sl);
                 free(sl);
                 while (!done) {
-                    TRY
+                    FRT_TRY
                         sis_put(sis_read(store), stderr);
                         done = true;
-                    XCATCHALL
+                    FRT_XCATCHALL
                         FRT_HANDLED();
-                    XENDTRY
+                    FRT_XENDTRY
                 }
             }
 
@@ -970,7 +970,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                 if (store->exists(store, prev_seg_file_name)) {
                     /* TODO:LOG "fallback to prior segment file '" +
                      * prevSegmentFileName + "'" */
-                    TRY
+                    FRT_TRY
                         fsf->generation = gen - 1;
                         run(store, fsf);
                         /* TODO:LOG "success on fallback " +
@@ -984,10 +984,10 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                         FRT_HANDLED();
                         /* TODO:LOG "secondary Exception on '" +
                          * prev_seg_file_name + "': " + err2 + "'; will retry"*/
-                    XENDTRY
+                    FRT_XENDTRY
                 }
             }
-        XENDTRY
+        FRT_XENDTRY
     }
 }
 
@@ -1075,7 +1075,7 @@ static void sis_read_i(Store *store, FindSegmentsFile *fsf)
     SegmentInfos *volatile sis = FRT_ALLOC_AND_ZERO(SegmentInfos);
     segfn_for_generation(seg_file_name, fsf->generation);
     fsf->ret.sis = NULL;
-    TRY
+    FRT_TRY
         is = store->open_input(store, seg_file_name);
         sis->store = store;
         sis->generation = fsf->generation;
@@ -1092,12 +1092,12 @@ static void sis_read_i(Store *store, FindSegmentsFile *fsf)
         }
         sis->fis = fis_read(is);
         success = true;
-    XFINALLY
+    FRT_XFINALLY
         if (is) is_close(is);
         if (!success) {
             sis_destroy(sis);
         }
-    XENDTRY
+    FRT_XENDTRY
     fsf->ret.sis = sis;
 }
 
@@ -1115,7 +1115,7 @@ void sis_write(SegmentInfos *sis, Store *store, Deleter *deleter)
     const int sis_size = sis->size;
     char buf[SEGMENT_NAME_MAX_LENGTH];
     sis->generation++;
-    TRY
+    FRT_TRY
         os = store->new_output(store, segfn_for_generation(buf, sis->generation));
         os_write_u32(os, FORMAT);
         os_write_u64(os, ++(sis->version)); /* every write changes the index */
@@ -1125,20 +1125,20 @@ void sis_write(SegmentInfos *sis, Store *store, Deleter *deleter)
             si_write(sis->segs[i], os);
         }
         fis_write(sis->fis, os);
-    XFINALLY
+    FRT_XFINALLY
         os_close(os);
-    XENDTRY
+    FRT_XENDTRY
 
-    TRY
+    FRT_TRY
         os = store->new_output(store, SEGMENTS_GEN_FILE_NAME);
         os_write_u64(os, sis->generation);
         os_write_u64(os, sis->generation);
-    XFINALLY
+    FRT_XFINALLY
         /* It's OK if we fail to write this file since it's
          * used only as one of the retry fallbacks. */
         FRT_HANDLED();
         os_close(os);
-    XENDTRY
+    FRT_XENDTRY
     if (deleter && sis->generation > 0) {
         deleter_delete_file(deleter, segfn_for_generation(buf, sis->generation - 1));
     }
@@ -1154,12 +1154,12 @@ static void sis_read_ver_i(Store *store, FindSegmentsFile *fsf)
     is = store->open_input(store, seg_file_name);
     version = 0;
 
-    TRY
+    FRT_TRY
         is_read_u32(is); // format
         version = is_read_u64(is);
-    XFINALLY
+    FRT_XFINALLY
         is_close(is);
-    XENDTRY
+    FRT_XENDTRY
 
     fsf->ret.uint64 = version;
 }
@@ -1567,7 +1567,7 @@ FieldsWriter *fw_open(Store *store, const char *segment, FieldInfos *fis)
     fw->buffer = ram_new_buffer();
 
     fw->fis = fis;
-    fw->tv_fields = ary_new_type_capa(TVField, TV_FIELD_INIT_CAPA);
+    fw->tv_fields = ary_new_type_capa(TVField, FRT_TV_FIELD_INIT_CAPA);
 
     return fw;
 }
@@ -1910,7 +1910,7 @@ static void ste_reset(TermEnum *te)
     STE(te)->pos = -1;
     te->curr_term[0] = '\0';
     te->curr_term_len = 0;
-    ZEROSET(&(te->curr_ti), TermInfo);
+    FRT_ZEROSET(&(te->curr_ti), TermInfo);
 }
 
 static TermEnum *ste_set_field(TermEnum *te, int field_num)
@@ -2512,7 +2512,7 @@ static void tw_reset(TermWriter *tw)
 {
     tw->counter = 0;
     tw->last_term = FRT_EMPTY_STRING;
-    ZEROSET(&(tw->last_term_info), TermInfo);
+    FRT_ZEROSET(&(tw->last_term_info), TermInfo);
 }
 
 void tiw_start_field(TermInfosWriter *tiw, int field_num)
@@ -3384,14 +3384,14 @@ static void deleter_queue_file(Deleter *dlr, const char *file_name)
 void deleter_delete_file(Deleter *dlr, char *file_name)
 {
     Store *store = dlr->store;
-    TRY
+    FRT_TRY
         if (store->exists(store, file_name)) {
             store->remove(store, file_name);
         }
         hs_del(dlr->pending, file_name);
-    XCATCHALL
+    FRT_XCATCHALL
         hs_add(dlr->pending, estrdup(file_name));
-    XENDTRY
+    FRT_XENDTRY
 }
 
 static void deleter_commit_pending_deletions(Deleter *dlr)
@@ -3565,7 +3565,7 @@ static void ir_acquire_write_lock(IndexReader *ir)
     }
 
     if (NULL == ir->write_lock) {
-        ir->write_lock = open_lock(ir->store, WRITE_LOCK_NAME);
+        ir->write_lock = open_lock(ir->store, FRT_WRITE_LOCK_NAME);
         if (!ir->write_lock->obtain(ir->write_lock)) {/* obtain write lock */
             rb_raise(cLockError, "Could not obtain write lock when trying to "
                               "write changes to the index. Check that there "
@@ -4052,16 +4052,16 @@ static BitVector *bv_read(Store *store, char *name)
     bv->capa = (bv->size >> 5) + 1;
     bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
     bv->ref_cnt = 1;
-    TRY
+    FRT_TRY
         for (i = ((bv->size-1) >> 5); i >= 0; i--) {
             bv->bits[i] = is_read_u32(is);
         }
         bv_recount(bv);
         success = true;
-    XFINALLY
+    FRT_XFINALLY
         is_close(is);
         if (!success && bv) bv_destroy(bv);
-    XENDTRY
+    FRT_XENDTRY
     return bv;
 }
 
@@ -4317,7 +4317,7 @@ static IndexReader *sr_setup_i(SegmentReader *sr)
 
     sr->cfs_store   = NULL;
 
-    TRY
+    FRT_TRY
         if (sr->si->use_compound_file) {
             sprintf(file_name, "%s.cfs", sr_segment);
             sr->cfs_store = open_cmpd_store(store, file_name);
@@ -4346,10 +4346,10 @@ static IndexReader *sr_setup_i(SegmentReader *sr)
             thread_key_create(&sr->thread_fr, NULL);
             sr->fr_bucket = ary_new();
         }
-    XCATCHALL
+    FRT_XCATCHALL
         ir->sis = NULL;
         ir_close(ir);
-    XENDTRY
+    FRT_XENDTRY
 
     return ir;
 }
@@ -4716,7 +4716,7 @@ IndexReader *mr_open(IndexReader **sub_readers, const int r_cnt)
     IndexReader *ir = mr_new(sub_readers, r_cnt);
     MultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FieldInfos *fis = fis_new(STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO);
+    FieldInfos *fis = fis_new(STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
@@ -4780,7 +4780,7 @@ static void ir_open_i(Store *store, FindSegmentsFile *fsf)
     volatile bool success = false;
     IndexReader *volatile ir = NULL;
     SegmentInfos *volatile sis = NULL;
-    TRY
+    FRT_TRY
     do {
         FieldInfos *fis;
         mutex_lock(&store->mutex);
@@ -4795,21 +4795,21 @@ static void ir_open_i(Store *store, FindSegmentsFile *fsf)
             IndexReader **readers = FRT_ALLOC_N(IndexReader *, sis->size);
             int num_segments = sis->size;
             for (i = num_segments - 1; i >= 0; i--) {
-                TRY
+                FRT_TRY
                     readers[i] = sr_open(sis, fis, i, false);
-                XCATCHALL
+                FRT_XCATCHALL
                     for (i++; i < num_segments; i++) {
                         ir_close(readers[i]);
                     }
                     free(readers);
-                XENDTRY
+                FRT_XENDTRY
             }
             ir = mr_open_i(store, sis, fis, readers, sis->size);
         }
         fsf->ret.ir = ir;
         success = true;
     } while (0);
-    XFINALLY
+    FRT_XFINALLY
         if (!success) {
             if (ir) {
                 ir_close(ir);
@@ -4819,7 +4819,7 @@ static void ir_open_i(Store *store, FindSegmentsFile *fsf)
             }
         }
         mutex_unlock(&store->mutex);
-    XENDTRY
+    FRT_XENDTRY
 }
 
 /**
@@ -5229,7 +5229,7 @@ static void dw_add_offsets(DocWriter *dw, int pos, off_t start, off_t end)
             dw->offsets_capa <<= 1;
         }
         FRT_REALLOC_N(dw->offsets, Offset, dw->offsets_capa);
-        ZEROSET_N(dw->offsets + old_capa, Offset, dw->offsets_capa - old_capa);
+        FRT_ZEROSET_N(dw->offsets + old_capa, Offset, dw->offsets_capa - old_capa);
     }
     dw->offsets[pos].start = start;
     dw->offsets[pos].end = end;
@@ -5315,7 +5315,7 @@ Hash *dw_invert_field(DocWriter *dw,
 
 void dw_reset_postings(Hash *postings)
 {
-    ZEROSET_N(postings->table, HashEntry, postings->mask + 1);
+    FRT_ZEROSET_N(postings->table, HashEntry, postings->mask + 1);
     postings->fill = postings->size = 0;
 }
 
@@ -5355,7 +5355,7 @@ void dw_add_doc(DocWriter *dw, Document *doc)
         }
         dw_reset_postings(postings);
         if (dw->offsets_size > 0) {
-            ZEROSET_N(dw->offsets, Offset, dw->offsets_size);
+            FRT_ZEROSET_N(dw->offsets, Offset, dw->offsets_size);
             dw->offsets_size = 0;
         }
     }
@@ -5848,7 +5848,7 @@ void index_create(Store *store, FieldInfos *fis)
 
 bool index_is_locked(Store *store)
 {
-    Lock *write_lock = open_lock(store, WRITE_LOCK_NAME);
+    Lock *write_lock = open_lock(store, FRT_WRITE_LOCK_NAME);
     bool is_locked = write_lock->is_locked(write_lock);
     close_lock(write_lock);
     return is_locked;
@@ -6159,8 +6159,8 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
     }
     iw->config = *config;
 
-    TRY
-        iw->write_lock = open_lock(store, WRITE_LOCK_NAME);
+    FRT_TRY
+        iw->write_lock = open_lock(store, FRT_WRITE_LOCK_NAME);
         if (!iw->write_lock->obtain(iw->write_lock)) {
             rb_raise(cLockError,
                   "Couldn't obtain write lock when opening IndexWriter");
@@ -6169,7 +6169,7 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
         iw->sis = sis_read(store);
         iw->fis = iw->sis->fis;
         FRT_REF(iw->fis);
-    XCATCHALL
+    FRT_XCATCHALL
         if (iw->write_lock) {
             iw->write_lock->release(iw->write_lock);
             close_lock(iw->write_lock);
@@ -6178,7 +6178,7 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
         if (iw->sis) sis_destroy(iw->sis);
         if (analyzer) a_deref((Analyzer *)analyzer);
         free(iw);
-    XENDTRY
+    FRT_XENDTRY
 
     iw->similarity = sim_create_default();
     iw->analyzer = analyzer ? (Analyzer *)analyzer
@@ -6424,7 +6424,7 @@ static void iw_add_segment(IndexWriter *iw, SegmentReader *sr)
         FieldInfo *fi = sub_fis->fields[j];
         FieldInfo *new_fi = fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
-            new_fi = fi_new(fi->name, STORE_NO, FRT_INDEX_NO, TERM_VECTOR_NO);
+            new_fi = fi_new(fi->name, STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
             new_fi->bits = fi->bits;
             fis_add_field(fis, new_fi);
         }

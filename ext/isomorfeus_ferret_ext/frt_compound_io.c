@@ -34,26 +34,20 @@ static int cmpd_exists(Store *store, const char *file_name)
     }
 }
 
-/**
- * @throws UNSUPPORTED_ERROR
- */
 static int cmpd_remove(Store *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return 0;
 }
 
-/**
- * @throws UNSUPPORTED_ERROR
- */
 static void cmpd_rename(Store *store, const char *from, const char *to)
 {
     (void)store;
     (void)from;
     (void)to;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static int cmpd_count(Store *store)
@@ -75,13 +69,10 @@ static void cmpd_each(Store *store,
 }
 
 
-/**
- * @throws UNSUPPORTED_ERROR
- */
 static void cmpd_clear(Store *store)
 {
     (void)store;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static void cmpd_close_i(Store *store)
@@ -194,7 +185,7 @@ static OutStream *cmpd_new_output(Store *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -202,14 +193,14 @@ static Lock *cmpd_open_lock_i(Store *store, const char *lock_name)
 {
     (void)store;
     (void)lock_name;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static void cmpd_close_lock_i(Lock *lock)
 {
     (void)lock;
-    rb_raise(rb_eNotImpError, "%s", UNSUPPORTED_ERROR_MSG);
+    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 Store *open_cmpd_store(Store *store, const char *name)
@@ -222,7 +213,7 @@ Store *open_cmpd_store(Store *store, const char *name)
     CompoundStore *volatile cmpd = NULL;
     InStream *volatile is = NULL;
 
-    TRY
+    FRT_TRY
         cmpd = FRT_ALLOC_AND_ZERO(CompoundStore);
 
         cmpd->store       = store;
@@ -246,11 +237,11 @@ Store *open_cmpd_store(Store *store, const char *name)
             entry->offset = offset;
             h_set(cmpd->entries, fname, entry);
         }
-    XCATCHALL
+    FRT_XCATCHALL
         if (is) is_close(is);
         if (cmpd->entries) h_destroy(cmpd->entries);
         free(cmpd);
-    XENDTRY
+    FRT_XENDTRY
 
     /* set the length of the final entry */
     if (entry != NULL) {

@@ -252,14 +252,14 @@ frb_qp_parse(VALUE self, VALUE rstr)
     GET_QP;
     Query *q;
     rstr = rb_obj_as_string(rstr);
-    TRY
+    FRT_TRY
         q = qp_parse(qp, rs2s(rstr));
         rq = frb_get_q(q);
         break;
     default:
         msg = xcontext.msg;
         FRT_HANDLED();
-    XENDTRY
+    FRT_XENDTRY
     if (msg) {
         rb_raise(cQueryParseException, "%s", msg);
     }

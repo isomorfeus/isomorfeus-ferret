@@ -56,7 +56,7 @@ static int mb_next_char(unsigned int *wchr, const char *s, mbstate_t *state)
         const char *t = s;
         do {
             t++;
-            ZEROSET(state, mbstate_t);
+            FRT_ZEROSET(state, mbstate_t);
             num_bytes = (int)mbrtowc((wchar_t*)wchr, t, MB_CUR_MAX, state);
         } while ((num_bytes < 0) && (*t != 0));
         num_bytes = t - s;
@@ -98,7 +98,7 @@ static void mb_to_wc(const char *in,
     mbstate_t state;
     const char *in_p     = in;
     unsigned int *out_p = out;
-    ZEROSET(&state, mbstate_t);
+    FRT_ZEROSET(&state, mbstate_t);
 
     while (*in_p && out_p < (out + out_size/sizeof(*out)))
     {
@@ -122,7 +122,7 @@ static void wc_to_mb(char *out, size_t out_size, int *token_size,
     mbstate_t state;
     char *out_p = out;
     const unsigned int *in_wc_p = in_wc;
-    ZEROSET(&state, mbstate_t);
+    FRT_ZEROSET(&state, mbstate_t);
     *token_size = 0;
 
     while (out_p < (out + out_size) && in_wc_p < (in_wc + in_wc_size))

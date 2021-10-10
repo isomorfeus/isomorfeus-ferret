@@ -11,7 +11,7 @@ BitVector *bv_new_capa(int capa)
 
     /* The capacity passed by the user is number of bits allowed, however we
      * store capacity as the number of words (U32) allocated. */
-    bv->capa = FRT_MAX(TO_WORD(capa), 4);
+    bv->capa = FRT_MAX(FRT_TO_WORD(capa), 4);
     bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
     bv->curr_bit = -1;
     bv->ref_cnt = 1;
@@ -59,7 +59,7 @@ int bv_eq(BitVector *bv1, BitVector *bv2)
     bits = bv1->bits;
     bits2 = bv2->bits;
     min_size = FRT_MIN(bv1->size, bv2->size);
-    word_size = TO_WORD(min_size);
+    word_size = FRT_TO_WORD(min_size);
 
     for (i = 0; i < word_size; i++) {
         if (bits[i] != bits2[i]) {
@@ -68,11 +68,11 @@ int bv_eq(BitVector *bv1, BitVector *bv2)
     }
     if (bv1->size > min_size) {
         bits = bv1->bits;
-        ext_word_size = TO_WORD(bv1->size);
+        ext_word_size = FRT_TO_WORD(bv1->size);
     }
     else if (bv2->size > min_size) {
         bits = bv2->bits;
-        ext_word_size = TO_WORD(bv2->size);
+        ext_word_size = FRT_TO_WORD(bv2->size);
     }
     if (ext_word_size) {
         const u32 expected = (bv1->extends_as_ones ? 0xFFFFFFFF : 0);
@@ -90,7 +90,7 @@ unsigned long long bv_hash(BitVector *bv)
     unsigned long long hash = 0;
     const u32 empty_word = bv->extends_as_ones ? 0xFFFFFFFF : 0;
     int i;
-    for (i = TO_WORD(bv->size) - 1; i >= 0; i--) {
+    for (i = FRT_TO_WORD(bv->size) - 1; i >= 0; i--) {
         const u32 word = bv->bits[i];
         if (word != empty_word)
             hash = (hash << 1) ^ word;
