@@ -7,18 +7,18 @@
 
 /***************************************************************************
  *
- * SortField
+ * FrtSortField
  *
  ***************************************************************************/
 
-static SortField *sort_field_alloc(Symbol field,
+static FrtSortField *sort_field_alloc(FrtSymbol field,
     SortType type,
     bool reverse,
     int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
     void (*get_val)(void *index_ptr, Hit *hit1, FrtComparable *comparable),
     const FrtFieldIndexClass *field_index_class)
 {
-    SortField *self         = FRT_ALLOC(SortField);
+    FrtSortField *self         = FRT_ALLOC(FrtSortField);
     self->field             = field;
     self->type              = type;
     self->reverse           = reverse;
@@ -28,9 +28,9 @@ static SortField *sort_field_alloc(Symbol field,
     return self;
 }
 
-SortField *sort_field_new(Symbol field, SortType type, bool reverse)
+FrtSortField *sort_field_new(FrtSymbol field, SortType type, bool reverse)
 {
-    SortField *sf = NULL;
+    FrtSortField *sf = NULL;
     switch (type) {
         case FRT_SORT_TYPE_SCORE:
             sf = sort_field_score_new(reverse);
@@ -65,7 +65,7 @@ void sort_field_destroy(void *p)
 /*
  * field:<type>!
  */
-char *sort_field_to_s(SortField *self)
+char *sort_field_to_s(FrtSortField *self)
 {
     char *str;
     const char *type = NULL;
@@ -124,13 +124,13 @@ static int sf_score_compare(void *index_ptr, Hit *hit2, Hit *hit1)
     else return 0;
 }
 
-SortField *sort_field_score_new(bool reverse)
+FrtSortField *sort_field_score_new(bool reverse)
 {
     return sort_field_alloc(NULL, FRT_SORT_TYPE_SCORE, reverse,
                             &sf_score_compare, &sf_score_get_val, NULL);
 }
 
-const SortField FRT_SORT_FIELD_SCORE = {
+const FrtSortField FRT_SORT_FIELD_SCORE = {
     NULL,               /* field_index_class */
     NULL,               /* field */
     FRT_SORT_TYPE_SCORE,    /* type */
@@ -139,7 +139,7 @@ const SortField FRT_SORT_FIELD_SCORE = {
     &sf_score_get_val,  /* get_val */
 };
 
-const SortField FRT_SORT_FIELD_SCORE_REV = {
+const FrtSortField FRT_SORT_FIELD_SCORE_REV = {
     NULL,               /* field_index_class */
     NULL,               /* field */
     FRT_SORT_TYPE_SCORE,    /* type */
@@ -169,13 +169,13 @@ static int sf_doc_compare(void *index_ptr, Hit *hit1, Hit *hit2)
     else return 0;
 }
 
-SortField *sort_field_doc_new(bool reverse)
+FrtSortField *sort_field_doc_new(bool reverse)
 {
     return sort_field_alloc(NULL, FRT_SORT_TYPE_DOC, reverse,
                             &sf_doc_compare, &sf_doc_get_val, NULL);
 }
 
-const SortField FRT_SORT_FIELD_DOC = {
+const FrtSortField FRT_SORT_FIELD_DOC = {
     NULL,               /* field_index_class */
     NULL,               /* field */
     FRT_SORT_TYPE_DOC,      /* type */
@@ -184,7 +184,7 @@ const SortField FRT_SORT_FIELD_DOC = {
     &sf_doc_get_val,    /* get_val */
 };
 
-const SortField FRT_SORT_FIELD_DOC_REV = {
+const FrtSortField FRT_SORT_FIELD_DOC_REV = {
     NULL,               /* field_index_class */
     NULL,               /* field */
     FRT_SORT_TYPE_DOC,      /* type */
@@ -211,7 +211,7 @@ static int sf_byte_compare(void *index, Hit *hit1, Hit *hit2)
     else return 0;
 }
 
-SortField *sort_field_byte_new(Symbol field, bool reverse)
+FrtSortField *sort_field_byte_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_BYTE, reverse,
                             &sf_byte_compare, &sf_byte_get_val,
@@ -236,7 +236,7 @@ static int sf_int_compare(void *index, Hit *hit1, Hit *hit2)
     else return 0;
 }
 
-SortField *sort_field_int_new(Symbol field, bool reverse)
+FrtSortField *sort_field_int_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_INTEGER, reverse,
                             &sf_int_compare, &sf_int_get_val,
@@ -261,7 +261,7 @@ static int sf_float_compare(void *index, Hit *hit1, Hit *hit2)
     else return 0;
 }
 
-SortField *sort_field_float_new(Symbol field, bool reverse)
+FrtSortField *sort_field_float_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_FLOAT, reverse,
                             &sf_float_compare, &sf_float_get_val,
@@ -275,16 +275,16 @@ SortField *sort_field_float_new(Symbol field, bool reverse)
 static void sf_string_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     comparable->val.s
-        = ((StringIndex *)index)->values[
-        ((StringIndex *)index)->index[hit->doc]];
+        = ((FrtStringIndex *)index)->values[
+        ((FrtStringIndex *)index)->index[hit->doc]];
 }
 
 static int sf_string_compare(void *index, Hit *hit1, Hit *hit2)
 {
-    char *s1 = ((StringIndex *)index)->values[
-        ((StringIndex *)index)->index[hit1->doc]];
-    char *s2 = ((StringIndex *)index)->values[
-        ((StringIndex *)index)->index[hit2->doc]];
+    char *s1 = ((FrtStringIndex *)index)->values[
+        ((FrtStringIndex *)index)->index[hit1->doc]];
+    char *s2 = ((FrtStringIndex *)index)->values[
+        ((FrtStringIndex *)index)->index[hit2->doc]];
 
     if (s1 == NULL) return s2 ? 1 : 0;
     if (s2 == NULL) return -1;
@@ -306,7 +306,7 @@ static int sf_string_compare(void *index, Hit *hit1, Hit *hit2)
     */
 }
 
-SortField *sort_field_string_new(Symbol field, bool reverse)
+FrtSortField *sort_field_string_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_STRING, reverse,
                             &sf_string_compare, &sf_string_get_val,
@@ -317,7 +317,7 @@ SortField *sort_field_string_new(Symbol field, bool reverse)
  * AutoSortField
  ***************************************************************************/
 
-SortField *sort_field_auto_new(Symbol field, bool reverse)
+FrtSortField *sort_field_auto_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
 }
@@ -355,7 +355,7 @@ static Comparator *comparator_new(void *index, bool reverse,
 typedef struct Sorter {
     Comparator **comparators;
     int c_cnt;
-    Sort *sort;
+    FrtSort *sort;
 } Sorter;
 
 #define SET_AUTO(upper_type, lower_type) \
@@ -364,7 +364,7 @@ typedef struct Sorter {
     sf->compare = sf_ ## lower_type ## _compare;\
     sf->get_val = sf_ ## lower_type ## _get_val
 
-static void sort_field_auto_evaluate(SortField *sf, char *text)
+static void sort_field_auto_evaluate(FrtSortField *sf, char *text)
 {
     int int_val;
     float float_val;
@@ -384,7 +384,7 @@ static void sort_field_auto_evaluate(SortField *sf, char *text)
     }
 }
 
-static Comparator *sorter_get_comparator(SortField *sf, IndexReader *ir)
+static Comparator *sorter_get_comparator(FrtSortField *sf, IndexReader *ir)
 {
     void *index = NULL;
     if (sf->type > FRT_SORT_TYPE_DOC) {
@@ -420,7 +420,7 @@ static void sorter_destroy(Sorter *self)
     free(self);
 }
 
-static Sorter *sorter_new(Sort *sort)
+static Sorter *sorter_new(FrtSort *sort)
 {
     Sorter *self = FRT_ALLOC(Sorter);
     self->c_cnt = sort->size;
@@ -545,12 +545,12 @@ void fshq_pq_destroy(PriorityQueue *self)
     pq_destroy(self);
 }
 
-PriorityQueue *fshq_pq_new(int size, Sort *sort, IndexReader *ir)
+PriorityQueue *fshq_pq_new(int size, FrtSort *sort, IndexReader *ir)
 {
     PriorityQueue *self = pq_new(size, &fshq_less_than, &free);
     int i;
     Sorter *sorter = sorter_new(sort);
-    SortField *sf;
+    FrtSortField *sf;
 
     for (i = 0; i < sort->size; i++) {
         sf = sort->sort_fields[i];
@@ -570,7 +570,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         int j;
         Sorter *sorter = (Sorter *)pq->heap[0];
         const int cmp_cnt = sorter->c_cnt;
-        SortField **sort_fields = sorter->sort->sort_fields;
+        FrtSortField **sort_fields = sorter->sort->sort_fields;
         Hit *hit = (Hit *)pq->heap[1];   /* save first value */
         FrtFieldDoc *field_doc;
         FrtComparable *comparables;
@@ -587,7 +587,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         field_doc->size = cmp_cnt;
 
         for (j = 0; j < cmp_cnt; j++) {
-            SortField *sf = sort_fields[j];
+            FrtSortField *sf = sort_fields[j];
             Comparator *comparator = comparators[j];
             sf->get_val(comparator->index, hit, &(comparables[j]));
             comparables[j].type = sf->type;
@@ -677,19 +677,19 @@ bool fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
 
 #define SORT_INIT_SIZE 4
 
-Sort *sort_new()
+FrtSort *sort_new()
 {
-    Sort *self = FRT_ALLOC(Sort);
+    FrtSort *self = FRT_ALLOC(FrtSort);
     self->size = 0;
     self->capa = SORT_INIT_SIZE;
-    self->sort_fields = FRT_ALLOC_N(SortField *, SORT_INIT_SIZE);
+    self->sort_fields = FRT_ALLOC_N(FrtSortField *, SORT_INIT_SIZE);
     self->destroy_all = true;
     self->start = 0;
 
     return self;
 }
 
-void sort_clear(Sort *self)
+void sort_clear(FrtSort *self)
 {
     int i;
     if (self->destroy_all) {
@@ -702,24 +702,24 @@ void sort_clear(Sort *self)
 
 void sort_destroy(void *p)
 {
-    Sort *self = (Sort *)p;
+    FrtSort *self = (FrtSort *)p;
     sort_clear(self);
     free(self->sort_fields);
     free(self);
 }
 
-void sort_add_sort_field(Sort *self, SortField *sf)
+void sort_add_sort_field(FrtSort *self, FrtSortField *sf)
 {
     if (self->size == self->capa) {
         self->capa <<= 1;
-        FRT_REALLOC_N(self->sort_fields, SortField *, self->capa);
+        FRT_REALLOC_N(self->sort_fields, FrtSortField *, self->capa);
     }
 
     self->sort_fields[self->size] = sf;
     self->size++;
 }
 
-char *sort_to_s(Sort *self)
+char *sort_to_s(FrtSort *self)
 {
     int i, len = 20;
     char *s;

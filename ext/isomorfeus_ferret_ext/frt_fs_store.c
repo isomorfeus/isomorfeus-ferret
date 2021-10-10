@@ -46,7 +46,7 @@ static char *join_path(char *buf, const char *base, const char *filename)
   return buf;
 }
 
-static void fs_touch(Store *store, const char *filename)
+static void fs_touch(FrtStore *store, const char *filename)
 {
     int f;
     char path[FRT_MAX_FILE_PATH];
@@ -58,7 +58,7 @@ static void fs_touch(Store *store, const char *filename)
     close(f);
 }
 
-static int fs_exists(Store *store, const char *filename)
+static int fs_exists(FrtStore *store, const char *filename)
 {
     int fd;
     char path[FRT_MAX_FILE_PATH];
@@ -75,13 +75,13 @@ static int fs_exists(Store *store, const char *filename)
     return true;
 }
 
-static int fs_remove(Store *store, const char *filename)
+static int fs_remove(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
     return remove(join_path(path, store->dir.path, filename));
 }
 
-static void fs_rename(Store *store, const char *from, const char *to)
+static void fs_rename(FrtStore *store, const char *from, const char *to)
 {
     char path1[FRT_MAX_FILE_PATH], path2[FRT_MAX_FILE_PATH];
 
@@ -96,7 +96,7 @@ static void fs_rename(Store *store, const char *from, const char *to)
     }
 }
 
-static int fs_count(Store *store)
+static int fs_count(FrtStore *store)
 {
     int cnt = 0;
     struct dirent *de;
@@ -117,7 +117,7 @@ static int fs_count(Store *store)
     return cnt;
 }
 
-static void fs_each(Store *store, void (*func)(const char *fname, void *arg), void *arg)
+static void fs_each(FrtStore *store, void (*func)(const char *fname, void *arg), void *arg)
 {
     struct dirent *de;
     DIR *d = opendir(store->dir.path);
@@ -136,7 +136,7 @@ static void fs_each(Store *store, void (*func)(const char *fname, void *arg), vo
     closedir(d);
 }
 
-static void fs_clear_locks(Store *store)
+static void fs_clear_locks(FrtStore *store)
 {
     struct dirent *de;
     DIR *d = opendir(store->dir.path);
@@ -169,7 +169,7 @@ static void remove_if_index_file(const char *base_path, const char *file_name)
     }
 }
 
-static void fs_clear(Store *store)
+static void fs_clear(FrtStore *store)
 {
     struct dirent *de;
     DIR *d = opendir(store->dir.path);
@@ -192,7 +192,7 @@ static void fs_clear(Store *store)
  * Clear all files which belong to the index. Use fs_clear to clear the
  * directory regardless of the files origin.
  */
-static void fs_clear_all(Store *store)
+static void fs_clear_all(FrtStore *store)
 {
     struct dirent *de;
     DIR *d = opendir(store->dir.path);
@@ -216,7 +216,7 @@ static void fs_clear_all(Store *store)
  * @param p the store to destroy
  * @rb_raise rb_eIOError if there is an error deleting the locks
  */
-static void fs_destroy(Store *store)
+static void fs_destroy(FrtStore *store)
 {
     FRT_TRY
         fs_clear_locks(store);
@@ -227,7 +227,7 @@ static void fs_destroy(Store *store)
     store_destroy(store);
 }
 
-static off_t fs_length(Store *store, const char *filename)
+static off_t fs_length(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
     struct stat stt;
@@ -269,7 +269,7 @@ static const struct OutStreamMethods FS_OUT_STREAM_METHODS = {
     fso_close_i
 };
 
-static OutStream *fs_new_output(Store *store, const char *filename)
+static OutStream *fs_new_output(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename),
@@ -334,7 +334,7 @@ static const struct InStreamMethods FS_IN_STREAM_METHODS = {
     fsi_close_i
 };
 
-static InStream *fs_open_input(Store *store, const char *filename)
+static InStream *fs_open_input(FrtStore *store, const char *filename)
 {
     InStream *is;
     char path[FRT_MAX_FILE_PATH];
@@ -394,7 +394,7 @@ static void fs_lock_release(Lock *lock)
     remove(lock->name);
 }
 
-static Lock *fs_open_lock_i(Store *store, const char *lockname)
+static Lock *fs_open_lock_i(FrtStore *store, const char *lockname)
 {
     Lock *lock = FRT_ALLOC(Lock);
     char lname[100];
@@ -421,16 +421,16 @@ static Hash *stores = NULL;
 static mutex_t stores_mutex = FRT_MUTEX_INITIALIZER;
 #endif
 
-static void fs_close_i(Store *store)
+static void fs_close_i(FrtStore *store)
 {
     mutex_lock(&stores_mutex);
     h_del(stores, store->dir.path);
     mutex_unlock(&stores_mutex);
 }
 
-static Store *fs_store_new(const char *pathname)
+static FrtStore *fs_store_new(const char *pathname)
 {
-    Store *new_store = store_new();
+    FrtStore *new_store = store_new();
 
     new_store->file_mode = S_IRUSR | S_IWUSR;
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
@@ -477,9 +477,9 @@ static Store *fs_store_new(const char *pathname)
     return new_store;
 }
 
-Store *open_fs_store(const char *pathname)
+FrtStore *open_fs_store(const char *pathname)
 {
-    Store *store = NULL;
+    FrtStore *store = NULL;
 
     if (!stores) {
         stores = h_new_str(NULL, (free_ft)fs_destroy);
@@ -487,7 +487,7 @@ Store *open_fs_store(const char *pathname)
     }
 
     mutex_lock(&stores_mutex);
-    store = (Store *)h_get(stores, pathname);
+    store = (FrtStore *)h_get(stores, pathname);
     if (store) {
         mutex_lock(&store->mutex);
         store->ref_cnt++;

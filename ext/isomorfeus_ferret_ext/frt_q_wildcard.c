@@ -11,7 +11,7 @@
 
 #define WCQ(query) ((FrtWildCardQuery *)(query))
 
-static char *wcq_to_s(Query *self, Symbol default_field)
+static char *wcq_to_s(Query *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *field_str = WCQ(self)->field;
@@ -147,7 +147,7 @@ static int wcq_eq(Query *self, Query *o)
         && (strcmp(WCQ(self)->field, WCQ(o)->field) == 0);
 }
 
-Query *wcq_new(Symbol field, const char *pattern)
+Query *wcq_new(FrtSymbol field, const char *pattern)
 {
     Query *self = q_new(FrtWildCardQuery);
 

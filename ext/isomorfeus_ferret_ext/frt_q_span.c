@@ -13,11 +13,7 @@
  *
  *****************************************************************************/
 
-/***************************************************************************
- * SpanQuery
- ***************************************************************************/
-
-#define SpQ(query) ((SpanQuery *)(query))
+#define SpQ(query) ((FrtSpanQuery *)(query))
 
 static unsigned long long spanq_hash(Query *self)
 {
@@ -152,7 +148,7 @@ static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
                                        FrtTermVector *tv)
 {
     if (strcmp(SpQ(self)->field, tv->field) == 0) {
-        SpanEnum *sp_enum;
+        FrtSpanEnum *sp_enum;
         IndexReader *ir = FRT_ALLOC(IndexReader);
         MatchVector *full_mv = matchv_new();
         HashSet *terms = SpQ(self)->get_terms(self);
@@ -160,7 +156,7 @@ static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
         ir->fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
         fis_add_field(ir->fis,
                       fi_new(tv->field, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-        ir->store = (Store *)tv;
+        ir->store = (FrtStore *)tv;
         ir->term_positions = &spanq_ir_term_positions;
         sp_enum = SpQ(self)->get_spans(self, ir);
         while (sp_enum->next(sp_enum)) {
@@ -190,10 +186,10 @@ static MatchVector *spanq_get_matchv_i(Query *self, MatchVector *mv,
 #define SpSc(scorer) ((SpanScorer *)(scorer))
 typedef struct SpanScorer
 {
-    Scorer          super;
+    FrtScorer          super;
     IndexReader    *ir;
-    SpanEnum       *spans;
-    Similarity     *sim;
+    FrtSpanEnum       *spans;
+    FrtSimilarity     *sim;
     uchar          *norms;
     FrtWeight         *weight;
     float           value;
@@ -202,7 +198,7 @@ typedef struct SpanScorer
     bool            more : 1;
 } SpanScorer;
 
-static float spansc_score(Scorer *self)
+static float spansc_score(FrtScorer *self)
 {
     SpanScorer *spansc = SpSc(self);
     float raw = sim_tf(spansc->sim, spansc->freq) * spansc->value;
@@ -211,10 +207,10 @@ static float spansc_score(Scorer *self)
     return raw * sim_decode_norm(self->similarity, spansc->norms[self->doc]);
 }
 
-static bool spansc_next(Scorer *self)
+static bool spansc_next(FrtScorer *self)
 {
     SpanScorer *spansc = SpSc(self);
-    SpanEnum *se = spansc->spans;
+    FrtSpanEnum *se = spansc->spans;
     int match_length;
 
     if (spansc->first_time) {
@@ -238,10 +234,10 @@ static bool spansc_next(Scorer *self)
     return (spansc->more || (spansc->freq != 0.0));
 }
 
-static bool spansc_skip_to(Scorer *self, int target)
+static bool spansc_skip_to(FrtScorer *self, int target)
 {
     SpanScorer *spansc = SpSc(self);
-    SpanEnum *se = spansc->spans;
+    FrtSpanEnum *se = spansc->spans;
 
     spansc->more = se->skip_to(se, target);
     if (!spansc->more) {
@@ -262,7 +258,7 @@ static bool spansc_skip_to(Scorer *self, int target)
     return (spansc->more || (spansc->freq != 0.0));
 }
 
-static FrtExplanation *spansc_explain(Scorer *self, int target)
+static FrtExplanation *spansc_explain(FrtScorer *self, int target)
 {
     FrtExplanation *tf_explanation;
     SpanScorer *spansc = SpSc(self);
@@ -276,7 +272,7 @@ static FrtExplanation *spansc_explain(Scorer *self, int target)
     return tf_explanation;
 }
 
-static void spansc_destroy(Scorer *self)
+static void spansc_destroy(FrtScorer *self)
 {
     SpanScorer *spansc = SpSc(self);
     if (spansc->spans) {
@@ -285,9 +281,9 @@ static void spansc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *spansc_new(FrtWeight *weight, IndexReader *ir)
+static FrtScorer *spansc_new(FrtWeight *weight, IndexReader *ir)
 {
-    Scorer *self = NULL;
+    FrtScorer *self = NULL;
     const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
     if (field_num >= 0) {
         Query *spanq = weight->query;
@@ -316,11 +312,11 @@ static Scorer *spansc_new(FrtWeight *weight, IndexReader *ir)
  *****************************************************************************/
 
 #define SpTEn(span_enum) ((SpanTermEnum *)(span_enum))
-#define SpTQ(query) ((SpanTermQuery *)(query))
+#define SpTQ(query) ((FrtSpanTermQuery *)(query))
 
 typedef struct SpanTermEnum
 {
-    SpanEnum     super;
+    FrtSpanEnum     super;
     FrtTermDocEnum *positions;
     int          position;
     int          doc;
@@ -329,7 +325,7 @@ typedef struct SpanTermEnum
 } SpanTermEnum;
 
 
-static bool spante_next(SpanEnum *self)
+static bool spante_next(FrtSpanEnum *self)
 {
     SpanTermEnum *ste = SpTEn(self);
     FrtTermDocEnum *tde = ste->positions;
@@ -348,7 +344,7 @@ static bool spante_next(SpanEnum *self)
     return true;
 }
 
-static bool spante_skip_to(SpanEnum *self, int target)
+static bool spante_skip_to(FrtSpanEnum *self, int target)
 {
     SpanTermEnum *ste = SpTEn(self);
     FrtTermDocEnum *tde = ste->positions;
@@ -375,22 +371,22 @@ static bool spante_skip_to(SpanEnum *self, int target)
     return true;
 }
 
-static int spante_doc(SpanEnum *self)
+static int spante_doc(FrtSpanEnum *self)
 {
     return SpTEn(self)->doc;
 }
 
-static int spante_start(SpanEnum *self)
+static int spante_start(FrtSpanEnum *self)
 {
     return SpTEn(self)->position;
 }
 
-static int spante_end(SpanEnum *self)
+static int spante_end(FrtSpanEnum *self)
 {
     return SpTEn(self)->position + 1;
 }
 
-static char *spante_to_s(SpanEnum *self)
+static char *spante_to_s(FrtSpanEnum *self)
 {
     char *query_str = self->query->to_s(self->query, NULL);
     char pos_str[20];
@@ -415,17 +411,17 @@ static char *spante_to_s(SpanEnum *self)
     return str;
 }
 
-static void spante_destroy(SpanEnum *self)
+static void spante_destroy(FrtSpanEnum *self)
 {
     FrtTermDocEnum *tde = SpTEn(self)->positions;
     tde->close(tde);
     free(self);
 }
 
-static SpanEnum *spante_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spante_new(Query *query, IndexReader *ir)
 {
     char *term = SpTQ(query)->term;
-    SpanEnum *self = (SpanEnum *)FRT_ALLOC(SpanTermEnum);
+    FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanTermEnum);
 
     SpTEn(self)->positions  = ir_term_positions_for(ir, SpQ(query)->field,
                                                     term);
@@ -509,11 +505,11 @@ static TermPosEnumWrapper *tpew_new(const char *term, FrtTermDocEnum *tpe)
     return self;
 }
 #define SpMTEn(span_enum) ((SpanMultiTermEnum *)(span_enum))
-#define SpMTQ(query) ((SpanMultiTermQuery *)(query))
+#define SpMTQ(query) ((FrtSpanMultiTermQuery *)(query))
 
 typedef struct SpanMultiTermEnum
 {
-    SpanEnum             super;
+    FrtSpanEnum             super;
     PriorityQueue       *tpew_pq;
     TermPosEnumWrapper **tpews;
     int                  tpew_cnt;
@@ -521,7 +517,7 @@ typedef struct SpanMultiTermEnum
     int                  doc;
 } SpanMultiTermEnum;
 
-static bool spanmte_next(SpanEnum *self)
+static bool spanmte_next(FrtSpanEnum *self)
 {
     int curr_doc, curr_pos;
     TermPosEnumWrapper *tpew;
@@ -559,7 +555,7 @@ static bool spanmte_next(SpanEnum *self)
     return true;
 }
 
-static bool spanmte_skip_to(SpanEnum *self, int target)
+static bool spanmte_skip_to(FrtSpanEnum *self, int target)
 {
     SpanMultiTermEnum *mte = SpMTEn(self);
     PriorityQueue *tpew_pq = mte->tpew_pq;
@@ -590,22 +586,22 @@ static bool spanmte_skip_to(SpanEnum *self, int target)
     return spanmte_next(self);
 }
 
-static int spanmte_doc(SpanEnum *self)
+static int spanmte_doc(FrtSpanEnum *self)
 {
     return SpMTEn(self)->doc;
 }
 
-static int spanmte_start(SpanEnum *self)
+static int spanmte_start(FrtSpanEnum *self)
 {
     return SpMTEn(self)->pos;
 }
 
-static int spanmte_end(SpanEnum *self)
+static int spanmte_end(FrtSpanEnum *self)
 {
     return SpMTEn(self)->pos + 1;
 }
 
-static void spanmte_destroy(SpanEnum *self)
+static void spanmte_destroy(FrtSpanEnum *self)
 {
     SpanMultiTermEnum *mte = SpMTEn(self);
     int i;
@@ -617,11 +613,11 @@ static void spanmte_destroy(SpanEnum *self)
     free(self);
 }
 
-static SpanEnum *spanmte_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanmte_new(Query *query, IndexReader *ir)
 {
-    SpanEnum *self = (SpanEnum *)FRT_ALLOC(SpanMultiTermEnum);
+    FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanMultiTermEnum);
     SpanMultiTermEnum *smte = SpMTEn(self);
-    SpanMultiTermQuery *smtq = SpMTQ(query);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(query);
     int i;
 
 
@@ -654,18 +650,18 @@ static SpanEnum *spanmte_new(Query *query, IndexReader *ir)
  *****************************************************************************/
 
 #define SpFEn(span_enum) ((SpanFirstEnum *)(span_enum))
-#define SpFQ(query) ((SpanFirstQuery *)(query))
+#define SpFQ(query) ((FrtSpanFirstQuery *)(query))
 
 typedef struct SpanFirstEnum
 {
-    SpanEnum    super;
-    SpanEnum   *sub_enum;
+    FrtSpanEnum    super;
+    FrtSpanEnum   *sub_enum;
 } SpanFirstEnum;
 
 
-static bool spanfe_next(SpanEnum *self)
+static bool spanfe_next(FrtSpanEnum *self)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     int end = SpFQ(self->query)->end;
     while (sub_enum->next(sub_enum)) { /* scan to next match */
         if (sub_enum->end(sub_enum) <= end) {
@@ -675,9 +671,9 @@ static bool spanfe_next(SpanEnum *self)
     return false;
 }
 
-static bool spanfe_skip_to(SpanEnum *self, int target)
+static bool spanfe_skip_to(FrtSpanEnum *self, int target)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     int end = SpFQ(self->query)->end;
 
     if (! sub_enum->skip_to(sub_enum, target)) {
@@ -691,25 +687,25 @@ static bool spanfe_skip_to(SpanEnum *self, int target)
     return spanfe_next(self);        /* scan to next match */
 }
 
-static int spanfe_doc(SpanEnum *self)
+static int spanfe_doc(FrtSpanEnum *self)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     return sub_enum->doc(sub_enum);
 }
 
-static int spanfe_start(SpanEnum *self)
+static int spanfe_start(FrtSpanEnum *self)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     return sub_enum->start(sub_enum);
 }
 
-static int spanfe_end(SpanEnum *self)
+static int spanfe_end(FrtSpanEnum *self)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     return sub_enum->end(sub_enum);
 }
 
-static char *spanfe_to_s(SpanEnum *self)
+static char *spanfe_to_s(FrtSpanEnum *self)
 {
     char *query_str = self->query->to_s(self->query, NULL);
     char *res = strfmt("SpanFirstEnum(%s)", query_str);
@@ -717,17 +713,17 @@ static char *spanfe_to_s(SpanEnum *self)
     return res;
 }
 
-static void spanfe_destroy(SpanEnum *self)
+static void spanfe_destroy(FrtSpanEnum *self)
 {
-    SpanEnum *sub_enum = SpFEn(self)->sub_enum;
+    FrtSpanEnum *sub_enum = SpFEn(self)->sub_enum;
     sub_enum->destroy(sub_enum);
     free(self);
 }
 
-static SpanEnum *spanfe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanfe_new(Query *query, IndexReader *ir)
 {
-    SpanEnum *self          = (SpanEnum *)FRT_ALLOC(SpanFirstEnum);
-    SpanFirstQuery *sfq     = SpFQ(query);
+    FrtSpanEnum *self          = (FrtSpanEnum *)FRT_ALLOC(SpanFirstEnum);
+    FrtSpanFirstQuery *sfq     = SpFQ(query);
 
     SpFEn(self)->sub_enum   = SpQ(sfq->match)->get_spans(sfq->match, ir);
 
@@ -749,19 +745,19 @@ static SpanEnum *spanfe_new(Query *query, IndexReader *ir)
  *****************************************************************************/
 
 #define SpOEn(span_enum) ((SpanOrEnum *)(span_enum))
-#define SpOQ(query) ((SpanOrQuery *)(query))
+#define SpOQ(query) ((FrtSpanOrQuery *)(query))
 
 typedef struct SpanOrEnum
 {
-    SpanEnum        super;
+    FrtSpanEnum        super;
     PriorityQueue  *queue;
-    SpanEnum      **span_enums;
+    FrtSpanEnum      **span_enums;
     int             s_cnt;
     bool            first_time : 1;
 } SpanOrEnum;
 
 
-static bool span_less_than(SpanEnum *s1, SpanEnum *s2)
+static bool span_less_than(FrtSpanEnum *s1, FrtSpanEnum *s2)
 {
     int doc_diff, start_diff;
     doc_diff = s1->doc(s1) - s2->doc(s2);
@@ -779,10 +775,10 @@ static bool span_less_than(SpanEnum *s1, SpanEnum *s2)
     }
 }
 
-static bool spanoe_next(SpanEnum *self)
+static bool spanoe_next(FrtSpanEnum *self)
 {
     SpanOrEnum *soe = SpOEn(self);
-    SpanEnum *se;
+    FrtSpanEnum *se;
     int i;
 
     if (soe->first_time) { /* first time -- initialize */
@@ -800,7 +796,7 @@ static bool spanoe_next(SpanEnum *self)
         return false; /* all done */
     }
 
-    se = (SpanEnum *)pq_top(soe->queue);
+    se = (FrtSpanEnum *)pq_top(soe->queue);
     if (se->next(se)) { /* move to next */
         pq_down(soe->queue);
         return true;
@@ -811,10 +807,10 @@ static bool spanoe_next(SpanEnum *self)
     return soe->queue->size != 0;
 }
 
-static bool spanoe_skip_to(SpanEnum *self, int target)
+static bool spanoe_skip_to(FrtSpanEnum *self, int target)
 {
     SpanOrEnum *soe = SpOEn(self);
-    SpanEnum *se;
+    FrtSpanEnum *se;
     int i;
 
     if (soe->first_time) { /* first time -- initialize */
@@ -828,7 +824,7 @@ static bool spanoe_skip_to(SpanEnum *self, int target)
     }
     else {
         while ((soe->queue->size != 0) &&
-               ((se = (SpanEnum *)pq_top(soe->queue)) != NULL) &&
+               ((se = (FrtSpanEnum *)pq_top(soe->queue)) != NULL) &&
                (se->doc(se) < target)) {
             if (se->skip_to(se, target)) {
                 pq_down(soe->queue);
@@ -842,27 +838,27 @@ static bool spanoe_skip_to(SpanEnum *self, int target)
     return soe->queue->size != 0;
 }
 
-#define SpOEn_Top_SE(self) (SpanEnum *)pq_top(SpOEn(self)->queue)
+#define SpOEn_Top_SE(self) (FrtSpanEnum *)pq_top(SpOEn(self)->queue)
 
-static int spanoe_doc(SpanEnum *self)
+static int spanoe_doc(FrtSpanEnum *self)
 {
-    SpanEnum *se = SpOEn_Top_SE(self);
+    FrtSpanEnum *se = SpOEn_Top_SE(self);
     return se->doc(se);
 }
 
-static int spanoe_start(SpanEnum *self)
+static int spanoe_start(FrtSpanEnum *self)
 {
-    SpanEnum *se = SpOEn_Top_SE(self);
+    FrtSpanEnum *se = SpOEn_Top_SE(self);
     return se->start(se);
 }
 
-static int spanoe_end(SpanEnum *self)
+static int spanoe_end(FrtSpanEnum *self)
 {
-    SpanEnum *se = SpOEn_Top_SE(self);
+    FrtSpanEnum *se = SpOEn_Top_SE(self);
     return se->end(se);
 }
 
-static char *spanoe_to_s(SpanEnum *self)
+static char *spanoe_to_s(FrtSpanEnum *self)
 {
     SpanOrEnum *soe = SpOEn(self);
     char *query_str = self->query->to_s(self->query, NULL);
@@ -887,9 +883,9 @@ static char *spanoe_to_s(SpanEnum *self)
     return str;
 }
 
-static void spanoe_destroy(SpanEnum *self)
+static void spanoe_destroy(FrtSpanEnum *self)
 {
-    SpanEnum *se;
+    FrtSpanEnum *se;
     SpanOrEnum *soe = SpOEn(self);
     int i;
     pq_destroy(soe->queue);
@@ -901,16 +897,16 @@ static void spanoe_destroy(SpanEnum *self)
     free(self);
 }
 
-static SpanEnum *spanoe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanoe_new(Query *query, IndexReader *ir)
 {
     Query *clause;
-    SpanEnum *self      = (SpanEnum *)FRT_ALLOC(SpanOrEnum);
-    SpanOrQuery *soq    = SpOQ(query);
+    FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanOrEnum);
+    FrtSpanOrQuery *soq    = SpOQ(query);
     int i;
 
     SpOEn(self)->first_time = true;
     SpOEn(self)->s_cnt      = soq->c_cnt;
-    SpOEn(self)->span_enums = FRT_ALLOC_N(SpanEnum *, SpOEn(self)->s_cnt);
+    SpOEn(self)->span_enums = FRT_ALLOC_N(FrtSpanEnum *, SpOEn(self)->s_cnt);
 
     for (i = 0; i < SpOEn(self)->s_cnt; i++) {
         clause = soq->clauses[i];
@@ -937,12 +933,12 @@ static SpanEnum *spanoe_new(Query *query, IndexReader *ir)
  *****************************************************************************/
 
 #define SpNEn(span_enum) ((SpanNearEnum *)(span_enum))
-#define SpNQ(query) ((SpanNearQuery *)(query))
+#define SpNQ(query) ((FrtSpanNearQuery *)(query))
 
 typedef struct SpanNearEnum
 {
-    SpanEnum    super;
-    SpanEnum  **span_enums;
+    FrtSpanEnum    super;
+    FrtSpanEnum  **span_enums;
     int         s_cnt;
     int         slop;
     int         current;
@@ -961,7 +957,7 @@ typedef struct SpanNearEnum
 
 static bool sne_init(SpanNearEnum *sne)
 {
-    SpanEnum *se = sne->span_enums[sne->current];
+    FrtSpanEnum *se = sne->span_enums[sne->current];
     int prev_doc = se->doc(se);
     int i;
 
@@ -977,7 +973,7 @@ static bool sne_init(SpanNearEnum *sne)
 
 static bool sne_goto_next_doc(SpanNearEnum *sne)
 {
-    SpanEnum *se = sne->span_enums[sne->current];
+    FrtSpanEnum *se = sne->span_enums[sne->current];
     int prev_doc = se->doc(se);
 
     SpNEn_NEXT();
@@ -992,10 +988,10 @@ static bool sne_goto_next_doc(SpanNearEnum *sne)
     return true;
 }
 
-static bool sne_next_unordered_match(SpanEnum *self)
+static bool sne_next_unordered_match(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
-    SpanEnum *se, *min_se = NULL;
+    FrtSpanEnum *se, *min_se = NULL;
     int i;
     int max_end, end, min_start, start, doc;
     int lengths_sum;
@@ -1037,10 +1033,10 @@ static bool sne_next_unordered_match(SpanEnum *self)
     }
 }
 
-static bool sne_next_ordered_match(SpanEnum *self)
+static bool sne_next_ordered_match(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
-    SpanEnum *se;
+    FrtSpanEnum *se;
     int i;
     int prev_doc, prev_start, prev_end;
     int doc=0, start=0, end=0;
@@ -1111,10 +1107,10 @@ static bool sne_next_ordered_match(SpanEnum *self)
     }
 }
 
-static bool sne_next_match(SpanEnum *self)
+static bool sne_next_match(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
-    SpanEnum *se_curr, *se_next;
+    FrtSpanEnum *se_curr, *se_next;
 
     if (!sne->first_time) {
         if (!sne_init(sne)) {
@@ -1138,10 +1134,10 @@ static bool sne_next_match(SpanEnum *self)
     }
 }
 
-static bool spanne_next(SpanEnum *self)
+static bool spanne_next(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
-    SpanEnum *se;
+    FrtSpanEnum *se;
 
     se = sne->span_enums[sne->current];
     if (!se->next(se)) return false;
@@ -1149,9 +1145,9 @@ static bool spanne_next(SpanEnum *self)
     return sne_next_match(self);
 }
 
-static bool spanne_skip_to(SpanEnum *self, int target)
+static bool spanne_skip_to(FrtSpanEnum *self, int target)
 {
-    SpanEnum *se = SpNEn(self)->span_enums[SpNEn(self)->current];
+    FrtSpanEnum *se = SpNEn(self)->span_enums[SpNEn(self)->current];
     if (!se->skip_to(se, target)) {
         return false;
     }
@@ -1159,22 +1155,22 @@ static bool spanne_skip_to(SpanEnum *self, int target)
     return sne_next_match(self);
 }
 
-static int spanne_doc(SpanEnum *self)
+static int spanne_doc(FrtSpanEnum *self)
 {
     return SpNEn(self)->doc;
 }
 
-static int spanne_start(SpanEnum *self)
+static int spanne_start(FrtSpanEnum *self)
 {
     return SpNEn(self)->start;
 }
 
-static int spanne_end(SpanEnum *self)
+static int spanne_end(FrtSpanEnum *self)
 {
     return SpNEn(self)->end;
 }
 
-static char *spanne_to_s(SpanEnum *self)
+static char *spanne_to_s(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
     char *query_str = self->query->to_s(self->query, NULL);
@@ -1194,9 +1190,9 @@ static char *spanne_to_s(SpanEnum *self)
     return str;
 }
 
-static void spanne_destroy(SpanEnum *self)
+static void spanne_destroy(FrtSpanEnum *self)
 {
-    SpanEnum *se;
+    FrtSpanEnum *se;
     SpanNearEnum *sne = SpNEn(self);
     int i;
     for (i = 0; i < sne->s_cnt; i++) {
@@ -1207,18 +1203,18 @@ static void spanne_destroy(SpanEnum *self)
     free(self);
 }
 
-static SpanEnum *spanne_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanne_new(Query *query, IndexReader *ir)
 {
     int i;
     Query *clause;
-    SpanEnum *self          = (SpanEnum *)FRT_ALLOC(SpanNearEnum);
-    SpanNearQuery *snq      = SpNQ(query);
+    FrtSpanEnum *self          = (FrtSpanEnum *)FRT_ALLOC(SpanNearEnum);
+    FrtSpanNearQuery *snq      = SpNQ(query);
 
     SpNEn(self)->first_time = true;
     SpNEn(self)->in_order   = snq->in_order;
     SpNEn(self)->slop       = snq->slop;
     SpNEn(self)->s_cnt      = snq->c_cnt;
-    SpNEn(self)->span_enums = FRT_ALLOC_N(SpanEnum *, SpNEn(self)->s_cnt);
+    SpNEn(self)->span_enums = FRT_ALLOC_N(FrtSpanEnum *, SpNEn(self)->s_cnt);
 
     for (i = 0; i < SpNEn(self)->s_cnt; i++) {
         clause = snq->clauses[i];
@@ -1249,22 +1245,22 @@ static SpanEnum *spanne_new(Query *query, IndexReader *ir)
  *****************************************************************************/
 
 #define SpXEn(span_enum) ((SpanNotEnum *)(span_enum))
-#define SpXQ(query) ((SpanNotQuery *)(query))
+#define SpXQ(query) ((FrtSpanNotQuery *)(query))
 
 typedef struct SpanNotEnum
 {
-    SpanEnum    super;
-    SpanEnum   *inc;
-    SpanEnum   *exc;
+    FrtSpanEnum    super;
+    FrtSpanEnum   *inc;
+    FrtSpanEnum   *exc;
     bool        more_inc : 1;
     bool        more_exc : 1;
 } SpanNotEnum;
 
 
-static bool spanxe_next(SpanEnum *self)
+static bool spanxe_next(FrtSpanEnum *self)
 {
     SpanNotEnum *sxe = SpXEn(self);
-    SpanEnum *inc = sxe->inc, *exc = sxe->exc;
+    FrtSpanEnum *inc = sxe->inc, *exc = sxe->exc;
     if (sxe->more_inc) {                        /*  move to next incl */
         sxe->more_inc = inc->next(inc);
     }
@@ -1291,10 +1287,10 @@ static bool spanxe_next(SpanEnum *self)
     return sxe->more_inc;
 }
 
-static bool spanxe_skip_to(SpanEnum *self, int target)
+static bool spanxe_skip_to(FrtSpanEnum *self, int target)
 {
     SpanNotEnum *sxe = SpXEn(self);
-    SpanEnum *inc = sxe->inc, *exc = sxe->exc;
+    FrtSpanEnum *inc = sxe->inc, *exc = sxe->exc;
     int doc;
 
     if (sxe->more_inc) {                        /*  move to next incl */
@@ -1320,25 +1316,25 @@ static bool spanxe_skip_to(SpanEnum *self, int target)
     return spanxe_next(self);                  /*  scan to next match */
 }
 
-static int spanxe_doc(SpanEnum *self)
+static int spanxe_doc(FrtSpanEnum *self)
 {
-    SpanEnum *inc = SpXEn(self)->inc;
+    FrtSpanEnum *inc = SpXEn(self)->inc;
     return inc->doc(inc);
 }
 
-static int spanxe_start(SpanEnum *self)
+static int spanxe_start(FrtSpanEnum *self)
 {
-    SpanEnum *inc = SpXEn(self)->inc;
+    FrtSpanEnum *inc = SpXEn(self)->inc;
     return inc->start(inc);
 }
 
-static int spanxe_end(SpanEnum *self)
+static int spanxe_end(FrtSpanEnum *self)
 {
-    SpanEnum *inc = SpXEn(self)->inc;
+    FrtSpanEnum *inc = SpXEn(self)->inc;
     return inc->end(inc);
 }
 
-static char *spanxe_to_s(SpanEnum *self)
+static char *spanxe_to_s(FrtSpanEnum *self)
 {
     char *query_str = self->query->to_s(self->query, NULL);
     char *res = strfmt("SpanNotEnum(%s)", query_str);
@@ -1346,7 +1342,7 @@ static char *spanxe_to_s(SpanEnum *self)
     return res;
 }
 
-static void spanxe_destroy(SpanEnum *self)
+static void spanxe_destroy(FrtSpanEnum *self)
 {
     SpanNotEnum *sxe = SpXEn(self);
     sxe->inc->destroy(sxe->inc);
@@ -1354,11 +1350,11 @@ static void spanxe_destroy(SpanEnum *self)
     free(self);
 }
 
-static SpanEnum *spanxe_new(Query *query, IndexReader *ir)
+static FrtSpanEnum *spanxe_new(Query *query, IndexReader *ir)
 {
-    SpanEnum *self      = (SpanEnum *)FRT_ALLOC(SpanNotEnum);
+    FrtSpanEnum *self      = (FrtSpanEnum *)FRT_ALLOC(SpanNotEnum);
     SpanNotEnum *sxe    = SpXEn(self);
-    SpanNotQuery *sxq   = SpXQ(query);
+    FrtSpanNotQuery *sxq   = SpXQ(query);
 
     sxe->inc            = SpQ(sxq->inc)->get_spans(sxq->inc, ir);
     sxe->exc            = SpQ(sxq->exc)->get_spans(sxq->exc, ir);
@@ -1399,7 +1395,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, IndexReader *ir, int targe
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
-    Scorer *scorer;
+    FrtScorer *scorer;
     uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
@@ -1503,7 +1499,7 @@ static void spanw_destroy(FrtWeight *self)
     w_destroy(self);
 }
 
-static FrtWeight *spanw_new(Query *query, Searcher *searcher)
+static FrtWeight *spanw_new(Query *query, FrtSearcher *searcher)
 {
     HashSetEntry *hse;
     FrtWeight *self        = w_new(SpanWeight, query);
@@ -1528,10 +1524,10 @@ static FrtWeight *spanw_new(Query *query, Searcher *searcher)
 }
 
 /*****************************************************************************
- * SpanTermQuery
+ * FrtSpanTermQuery
  *****************************************************************************/
 
-static char *spantq_to_s(Query *self, Symbol default_field)
+static char *spantq_to_s(Query *self, FrtSymbol default_field)
 {
     if (default_field && (strcmp(default_field, SpQ(self)->field) == 0)) {
         return strfmt("span_terms(%s)", SpTQ(self)->term);
@@ -1569,9 +1565,9 @@ static int spantq_eq(Query *self, Query *o)
     return spanq_eq(self, o) && strcmp(SpTQ(self)->term, SpTQ(o)->term) == 0;
 }
 
-Query *spantq_new(Symbol field, const char *term)
+Query *spantq_new(FrtSymbol field, const char *term)
 {
-    Query *self             = q_new(SpanTermQuery);
+    Query *self             = q_new(FrtSpanTermQuery);
 
     SpTQ(self)->term        = estrdup(term);
     SpQ(self)->field        = field;
@@ -1593,11 +1589,11 @@ Query *spantq_new(Symbol field, const char *term)
  * SpanMultiTermQuery
  *****************************************************************************/
 
-static char *spanmtq_to_s(Query *self, Symbol field)
+static char *spanmtq_to_s(Query *self, FrtSymbol field)
 {
     char *terms = NULL, *p;
     int len = 3, i;
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     for (i = 0; i < smtq->term_cnt; i++) {
         len += strlen(smtq->terms[i]) + 2;
     }
@@ -1623,7 +1619,7 @@ static char *spanmtq_to_s(Query *self, Symbol field)
 
 static void spanmtq_destroy_i(Query *self)
 {
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
         free(smtq->terms[i]);
@@ -1634,7 +1630,7 @@ static void spanmtq_destroy_i(Query *self)
 
 static void spanmtq_extract_terms(Query *self, HashSet *terms)
 {
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
         hs_add(terms, term_new(SpQ(self)->field, smtq->terms[i]));
@@ -1644,7 +1640,7 @@ static void spanmtq_extract_terms(Query *self, HashSet *terms)
 static HashSet *spanmtq_get_terms(Query *self)
 {
     HashSet *terms = hs_new_str(&free);
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
         hs_add(terms, estrdup(smtq->terms[i]));
@@ -1655,7 +1651,7 @@ static HashSet *spanmtq_get_terms(Query *self)
 static unsigned long long spanmtq_hash(Query *self)
 {
     unsigned long long hash = spanq_hash(self);
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
         hash ^= str_hash(smtq->terms[i]);
@@ -1665,8 +1661,8 @@ static unsigned long long spanmtq_hash(Query *self)
 
 static int spanmtq_eq(Query *self, Query *o)
 {
-    SpanMultiTermQuery *smtq = SpMTQ(self);
-    SpanMultiTermQuery *smtqo = SpMTQ(o);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtqo = SpMTQ(o);
     int i;
     if (!spanq_eq(self, o)) return false;
     if (smtq->term_cnt != smtqo->term_cnt) return false;
@@ -1676,9 +1672,9 @@ static int spanmtq_eq(Query *self, Query *o)
     return true;;
 }
 
-Query *spanmtq_new_conf(Symbol field, int max_terms)
+Query *spanmtq_new_conf(FrtSymbol field, int max_terms)
 {
-    Query *self             = q_new(SpanMultiTermQuery);
+    Query *self             = q_new(FrtSpanMultiTermQuery);
 
     SpMTQ(self)->terms      = FRT_ALLOC_N(char *, max_terms);
     SpMTQ(self)->term_cnt   = 0;
@@ -1700,14 +1696,14 @@ Query *spanmtq_new_conf(Symbol field, int max_terms)
     return self;
 }
 
-Query *spanmtq_new(Symbol field)
+Query *spanmtq_new(FrtSymbol field)
 {
     return spanmtq_new_conf(field, SPAN_MULTI_TERM_QUERY_CAPA);
 }
 
 void spanmtq_add_term(Query *self, const char *term)
 {
-    SpanMultiTermQuery *smtq = SpMTQ(self);
+    FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     if (smtq->term_cnt < smtq->term_capa) {
         smtq->terms[smtq->term_cnt++] = estrdup(term);
     }
@@ -1719,7 +1715,7 @@ void spanmtq_add_term(Query *self, const char *term)
  *
  *****************************************************************************/
 
-static char *spanfq_to_s(Query *self, Symbol field)
+static char *spanfq_to_s(Query *self, FrtSymbol field)
 {
     Query *match = SpFQ(self)->match;
     char *q_str = match->to_s(match, field);
@@ -1735,7 +1731,7 @@ static void spanfq_extract_terms(Query *self, HashSet *terms)
 
 static HashSet *spanfq_get_terms(Query *self)
 {
-    SpanFirstQuery *sfq = SpFQ(self);
+    FrtSpanFirstQuery *sfq = SpFQ(self);
     return SpQ(sfq->match)->get_terms(sfq->match);
 }
 
@@ -1766,15 +1762,15 @@ static unsigned long long spanfq_hash(Query *self)
 
 static int spanfq_eq(Query *self, Query *o)
 {
-    SpanFirstQuery *sfq1 = SpFQ(self);
-    SpanFirstQuery *sfq2 = SpFQ(o);
+    FrtSpanFirstQuery *sfq1 = SpFQ(self);
+    FrtSpanFirstQuery *sfq2 = SpFQ(o);
     return spanq_eq(self, o) && sfq1->match->eq(sfq1->match, sfq2->match)
         && (sfq1->end == sfq2->end);
 }
 
 Query *spanfq_new_nr(Query *match, int end)
 {
-    Query *self = q_new(SpanFirstQuery);
+    Query *self = q_new(FrtSpanFirstQuery);
 
     SpFQ(self)->match       = match;
     SpFQ(self)->end         = end;
@@ -1804,14 +1800,14 @@ Query *spanfq_new(Query *match, int end)
 
 /*****************************************************************************
  *
- * SpanOrQuery
+ * FrtSpanOrQuery
  *
  *****************************************************************************/
 
-static char *spanoq_to_s(Query *self, Symbol field)
+static char *spanoq_to_s(Query *self, FrtSymbol field)
 {
     int i;
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
     char *res, *res_p;
     char **q_strs = FRT_ALLOC_N(char *, soq->c_cnt);
     int len = 50;
@@ -1837,7 +1833,7 @@ static char *spanoq_to_s(Query *self, Symbol field)
 
 static void spanoq_extract_terms(Query *self, HashSet *terms)
 {
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
         Query *clause = soq->clauses[i];
@@ -1847,7 +1843,7 @@ static void spanoq_extract_terms(Query *self, HashSet *terms)
 
 static HashSet *spanoq_get_terms(Query *self)
 {
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
     HashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
@@ -1859,9 +1855,9 @@ static HashSet *spanoq_get_terms(Query *self)
     return terms;
 }
 
-static SpanEnum *spanoq_get_spans(Query *self, IndexReader *ir)
+static FrtSpanEnum *spanoq_get_spans(Query *self, IndexReader *ir)
 {
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
     if (soq->c_cnt == 1) {
         Query *q = soq->clauses[0];
         return SpQ(q)->get_spans(q, ir);
@@ -1872,7 +1868,7 @@ static SpanEnum *spanoq_get_spans(Query *self, IndexReader *ir)
 
 static Query *spanoq_rewrite(Query *self, IndexReader *ir)
 {
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
     int i;
 
     /* replace clauses with their rewritten queries */
@@ -1889,7 +1885,7 @@ static Query *spanoq_rewrite(Query *self, IndexReader *ir)
 
 static void spanoq_destroy_i(Query *self)
 {
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
 
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
@@ -1905,7 +1901,7 @@ static unsigned long long spanoq_hash(Query *self)
 {
     int i;
     unsigned long long hash = spanq_hash(self);
-    SpanOrQuery *soq = SpOQ(self);
+    FrtSpanOrQuery *soq = SpOQ(self);
 
     for (i = 0; i < soq->c_cnt; i++) {
         Query *q = soq->clauses[i];
@@ -1918,8 +1914,8 @@ static int spanoq_eq(Query *self, Query *o)
 {
     int i;
     Query *q1, *q2;
-    SpanOrQuery *soq1 = SpOQ(self);
-    SpanOrQuery *soq2 = SpOQ(o);
+    FrtSpanOrQuery *soq1 = SpOQ(self);
+    FrtSpanOrQuery *soq2 = SpOQ(o);
 
     if (!spanq_eq(self, o) || soq1->c_cnt != soq2->c_cnt) {
         return false;
@@ -1936,7 +1932,7 @@ static int spanoq_eq(Query *self, Query *o)
 
 Query *spanoq_new()
 {
-    Query *self             = q_new(SpanOrQuery);
+    Query *self             = q_new(FrtSpanOrQuery);
     SpOQ(self)->clauses     = FRT_ALLOC_N(Query *, CLAUSE_INIT_CAPA);
     SpOQ(self)->c_capa      = CLAUSE_INIT_CAPA;
 
@@ -1992,10 +1988,10 @@ Query *spanoq_add_clause(Query *self, Query *clause)
  *
  *****************************************************************************/
 
-static char *spannq_to_s(Query *self, Symbol field)
+static char *spannq_to_s(Query *self, FrtSymbol field)
 {
     int i;
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
     char *res, *res_p;
     char **q_strs = FRT_ALLOC_N(char *, snq->c_cnt);
     int len = 50;
@@ -2021,7 +2017,7 @@ static char *spannq_to_s(Query *self, Symbol field)
 
 static void spannq_extract_terms(Query *self, HashSet *terms)
 {
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
         Query *clause = snq->clauses[i];
@@ -2031,7 +2027,7 @@ static void spannq_extract_terms(Query *self, HashSet *terms)
 
 static HashSet *spannq_get_terms(Query *self)
 {
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
     HashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
@@ -2043,9 +2039,9 @@ static HashSet *spannq_get_terms(Query *self)
     return terms;
 }
 
-static SpanEnum *spannq_get_spans(Query *self, IndexReader *ir)
+static FrtSpanEnum *spannq_get_spans(Query *self, IndexReader *ir)
 {
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
 
     if (snq->c_cnt == 1) {
         Query *q = snq->clauses[0];
@@ -2057,7 +2053,7 @@ static SpanEnum *spannq_get_spans(Query *self, IndexReader *ir)
 
 static Query *spannq_rewrite(Query *self, IndexReader *ir)
 {
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
         Query *clause = snq->clauses[i];
@@ -2072,7 +2068,7 @@ static Query *spannq_rewrite(Query *self, IndexReader *ir)
 
 static void spannq_destroy(Query *self)
 {
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
 
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
@@ -2088,7 +2084,7 @@ static unsigned long long spannq_hash(Query *self)
 {
     int i;
     unsigned long long hash = spanq_hash(self);
-    SpanNearQuery *snq = SpNQ(self);
+    FrtSpanNearQuery *snq = SpNQ(self);
 
     for (i = 0; i < snq->c_cnt; i++) {
         Query *q = snq->clauses[i];
@@ -2101,8 +2097,8 @@ static int spannq_eq(Query *self, Query *o)
 {
     int i;
     Query *q1, *q2;
-    SpanNearQuery *snq1 = SpNQ(self);
-    SpanNearQuery *snq2 = SpNQ(o);
+    FrtSpanNearQuery *snq1 = SpNQ(self);
+    FrtSpanNearQuery *snq2 = SpNQ(o);
     if (! spanq_eq(self, o)
         || (snq1->c_cnt != snq2->c_cnt)
         || (snq1->slop != snq2->slop)
@@ -2123,7 +2119,7 @@ static int spannq_eq(Query *self, Query *o)
 
 Query *spannq_new(int slop, bool in_order)
 {
-    Query *self             = q_new(SpanNearQuery);
+    Query *self             = q_new(FrtSpanNearQuery);
 
     SpNQ(self)->clauses     = FRT_ALLOC_N(Query *, CLAUSE_INIT_CAPA);
     SpNQ(self)->c_capa      = CLAUSE_INIT_CAPA;
@@ -2178,13 +2174,13 @@ Query *spannq_add_clause(Query *self, Query *clause)
 
 /*****************************************************************************
  *
- * SpanNotQuery
+ * FrtSpanNotQuery
  *
  *****************************************************************************/
 
-static char *spanxq_to_s(Query *self, Symbol field)
+static char *spanxq_to_s(Query *self, FrtSymbol field)
 {
-    SpanNotQuery *sxq = SpXQ(self);
+    FrtSpanNotQuery *sxq = SpXQ(self);
     char *inc_s = sxq->inc->to_s(sxq->inc, field);
     char *exc_s = sxq->exc->to_s(sxq->exc, field);
     char *res = strfmt("span_not(inc:<%s>, exc:<%s>)", inc_s, exc_s);
@@ -2206,7 +2202,7 @@ static HashSet *spanxq_get_terms(Query *self)
 
 static Query *spanxq_rewrite(Query *self, IndexReader *ir)
 {
-    SpanNotQuery *sxq = SpXQ(self);
+    FrtSpanNotQuery *sxq = SpXQ(self);
     Query *q, *rq;
 
     /* rewrite inclusive query */
@@ -2227,7 +2223,7 @@ static Query *spanxq_rewrite(Query *self, IndexReader *ir)
 
 static void spanxq_destroy(Query *self)
 {
-    SpanNotQuery *sxq = SpXQ(self);
+    FrtSpanNotQuery *sxq = SpXQ(self);
 
     q_deref(sxq->inc);
     q_deref(sxq->exc);
@@ -2237,15 +2233,15 @@ static void spanxq_destroy(Query *self)
 
 static unsigned long long spanxq_hash(Query *self)
 {
-    SpanNotQuery *sxq = SpXQ(self);
+    FrtSpanNotQuery *sxq = SpXQ(self);
     return spanq_hash(self) ^ sxq->inc->hash(sxq->inc)
         ^ sxq->exc->hash(sxq->exc);
 }
 
 static int spanxq_eq(Query *self, Query *o)
 {
-    SpanNotQuery *sxq1 = SpXQ(self);
-    SpanNotQuery *sxq2 = SpXQ(o);
+    FrtSpanNotQuery *sxq1 = SpXQ(self);
+    FrtSpanNotQuery *sxq2 = SpXQ(o);
     return spanq_eq(self, o) && sxq1->inc->eq(sxq1->inc, sxq2->inc)
         && sxq1->exc->eq(sxq1->exc, sxq2->exc);
 }
@@ -2260,7 +2256,7 @@ Query *spanxq_new_nr(Query *inc, Query *exc)
               "SpanQuery with field \"%s\" to an SpanNotQuery",
               SpQ(inc)->field, SpQ(exc)->field);
     }
-    self = q_new(SpanNotQuery);
+    self = q_new(FrtSpanNotQuery);
 
     SpXQ(self)->inc         = inc;
     SpXQ(self)->exc         = exc;
@@ -2298,17 +2294,17 @@ Query *spanxq_new(Query *inc, Query *exc)
 
 /*****************************************************************************
  *
- * SpanPrefixQuery
+ * FrtSpanPrefixQuery
  *
  *****************************************************************************/
 
-#define SpPfxQ(query) ((SpanPrefixQuery *)(query))
+#define SpPfxQ(query) ((FrtSpanPrefixQuery *)(query))
 
-static char *spanprq_to_s(Query *self, Symbol default_field)
+static char *spanprq_to_s(Query *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *prefix = SpPfxQ(self)->prefix;
-    Symbol field = SpQ(self)->field;
+    FrtSymbol field = SpQ(self)->field;
     size_t plen = strlen(prefix);
     size_t flen = strlen(field);
 
@@ -2371,9 +2367,9 @@ static int spanprq_eq(Query *self, Query *o)
         && (strcmp(SpQ(self)->field, SpQ(o)->field) == 0);
 }
 
-Query *spanprq_new(Symbol field, const char *prefix)
+Query *spanprq_new(FrtSymbol field, const char *prefix)
 {
-    Query *self = q_new(SpanPrefixQuery);
+    Query *self = q_new(FrtSpanPrefixQuery);
 
     SpQ(self)->field        = field;
     SpPfxQ(self)->prefix    = estrdup(prefix);

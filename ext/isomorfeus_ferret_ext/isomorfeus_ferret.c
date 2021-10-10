@@ -180,7 +180,7 @@ rstrdup(VALUE rstr)
     return strdup(old);
 }
 
-Symbol
+FrtSymbol
 frb_field(VALUE rfield)
 {
     switch (TYPE(rfield)) {
@@ -284,7 +284,7 @@ void FRT_EXIT(const char *err_type, const char *fmt, ...)
 static ID id_field;
 static ID id_text;
 
-VALUE frb_get_term(Symbol field, const char *text)
+VALUE frb_get_term(FrtSymbol field, const char *text)
 {
     return rb_struct_new(cTerm,
                          ID2SYM(rb_intern(field)),

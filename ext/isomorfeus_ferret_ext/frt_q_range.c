@@ -11,14 +11,14 @@
 
 typedef struct Range
 {
-    Symbol field;
+    FrtSymbol field;
     char *lower_term;
     char *upper_term;
     bool include_lower : 1;
     bool include_upper : 1;
 } Range;
 
-static char *range_to_s(Range *range, Symbol default_field, float boost)
+static char *range_to_s(Range *range, FrtSymbol default_field, float boost)
 {
     char *buffer, *b;
     size_t flen, llen, ulen;
@@ -95,7 +95,7 @@ static int range_eq(Range *filt, Range *o)
             && (filt->include_upper == o->include_upper));
 }
 
-static Range *range_new(Symbol field, const char *lower_term,
+static Range *range_new(FrtSymbol field, const char *lower_term,
                  const char *upper_term, bool include_lower,
                  bool include_upper)
 {
@@ -130,7 +130,7 @@ static Range *range_new(Symbol field, const char *lower_term,
     return range;
 }
 
-static Range *trange_new(Symbol field, const char *lower_term,
+static Range *trange_new(FrtSymbol field, const char *lower_term,
                   const char *upper_term, bool include_lower,
                   bool include_upper)
 {
@@ -282,7 +282,7 @@ static int rfilt_eq(FrtFilter *filt, FrtFilter *o)
     return range_eq(RF(filt)->range, RF(o)->range);
 }
 
-FrtFilter *rfilt_new(Symbol field,
+FrtFilter *rfilt_new(FrtSymbol field,
                   const char *lower_term, const char *upper_term,
                   bool include_lower, bool include_upper)
 {
@@ -419,7 +419,7 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
     }
 }
 
-FrtFilter *trfilt_new(Symbol field,
+FrtFilter *trfilt_new(FrtSymbol field,
                    const char *lower_term, const char *upper_term,
                    bool include_lower, bool include_upper)
 {
@@ -448,7 +448,7 @@ typedef struct RangeQuery
     Range *range;
 } RangeQuery;
 
-static char *rq_to_s(Query *self, Symbol field)
+static char *rq_to_s(Query *self, FrtSymbol field)
 {
     return range_to_s(RQ(self)->range, field, self->boost);
 }
@@ -515,19 +515,19 @@ static int rq_eq(Query *self, Query *o)
     return range_eq(RQ(self)->range, RQ(o)->range);
 }
 
-Query *rq_new_less(Symbol field, const char *upper_term,
+Query *rq_new_less(FrtSymbol field, const char *upper_term,
                    bool include_upper)
 {
     return rq_new(field, NULL, upper_term, false, include_upper);
 }
 
-Query *rq_new_more(Symbol field, const char *lower_term,
+Query *rq_new_more(FrtSymbol field, const char *lower_term,
                    bool include_lower)
 {
     return rq_new(field, lower_term, NULL, include_lower, false);
 }
 
-Query *rq_new(Symbol field, const char *lower_term,
+Query *rq_new(FrtSymbol field, const char *lower_term,
               const char *upper_term, bool include_lower, bool include_upper)
 {
     Query *self;
@@ -647,19 +647,19 @@ static Query *trq_rewrite(Query *self, IndexReader *ir)
     return (Query *)csq;
 }
 
-Query *trq_new_less(Symbol field, const char *upper_term,
+Query *trq_new_less(FrtSymbol field, const char *upper_term,
                     bool include_upper)
 {
     return trq_new(field, NULL, upper_term, false, include_upper);
 }
 
-Query *trq_new_more(Symbol field, const char *lower_term,
+Query *trq_new_more(FrtSymbol field, const char *lower_term,
                     bool include_lower)
 {
     return trq_new(field, lower_term, NULL, include_lower, false);
 }
 
-Query *trq_new(Symbol field, const char *lower_term,
+Query *trq_new(FrtSymbol field, const char *lower_term,
                const char *upper_term, bool include_lower, bool include_upper)
 {
     Query *self;

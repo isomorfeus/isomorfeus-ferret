@@ -43,7 +43,7 @@ void index_auto_flush_iw(Index *self)
 }
 
 
-Index *index_new(Store *store, FrtAnalyzer *analyzer, HashSet *def_fields,
+Index *index_new(FrtStore *store, FrtAnalyzer *analyzer, HashSet *def_fields,
                  bool create)
 {
     Index *self = FRT_ALLOC_AND_ZERO(Index);
@@ -83,7 +83,7 @@ Index *index_new(Store *store, FrtAnalyzer *analyzer, HashSet *def_fields,
     FRT_REF(self->analyzer);
     self->qp = qp_new(self->analyzer);
     for (hse = def_fields->first; hse; hse = hse->next) {
-        qp_add_field(self->qp, (Symbol)hse->elem, true, true);
+        qp_add_field(self->qp, (FrtSymbol)hse->elem, true, true);
     }
     /* Index is a convenience class so set qp convenience options */
     self->qp->allow_any_fields = true;
@@ -208,7 +208,7 @@ static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
     HashSetEntry *hse;
 
     if (key->size == 1) {
-        Symbol field = (Symbol)key->first->elem;
+        FrtSymbol field = (FrtSymbol)key->first->elem;
         ensure_writer_open(self);
         df = doc_get_field(doc, field);
         if (df) {
@@ -221,7 +221,7 @@ static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
     ensure_searcher_open(self);
 
     for (hse = key->first; hse; hse = hse->next) {
-        Symbol field = (Symbol)hse->elem;
+        FrtSymbol field = (FrtSymbol)hse->elem;
         df = doc_get_field(doc, field);
         if (!df) continue;
         bq_add_query(q, tq_new(field, df->data[0]), FRT_BC_MUST);
@@ -289,7 +289,7 @@ Query *index_get_query(Index *self, char *qstr)
 }
 
 FrtTopDocs *index_search_str(Index *self, char *qstr, int first_doc,
-                          int num_docs, FrtFilter *filter, Sort *sort,
+                          int num_docs, FrtFilter *filter, FrtSort *sort,
                           PostFilter *post_filter)
 {
     Query *query;
@@ -320,7 +320,7 @@ FrtDocument *index_get_doc_ts(Index *self, int doc_num)
     return doc;
 }
 
-int index_term_id(Index *self, Symbol field, const char *term)
+int index_term_id(Index *self, FrtSymbol field, const char *term)
 {
     FrtTermDocEnum *tde;
     int doc_num = -1;
@@ -333,7 +333,7 @@ int index_term_id(Index *self, Symbol field, const char *term)
     return doc_num;
 }
 
-FrtDocument *index_get_doc_term(Index *self, Symbol field,
+FrtDocument *index_get_doc_term(Index *self, FrtSymbol field,
                              const char *term)
 {
     FrtDocument *doc = NULL;
@@ -367,7 +367,7 @@ void index_delete(Index *self, int doc_num)
     mutex_unlock(&self->mutex);
 }
 
-void index_delete_term(Index *self, Symbol field, const char *term)
+void index_delete_term(Index *self, FrtSymbol field, const char *term)
 {
     FrtTermDocEnum *tde;
     mutex_lock(&self->mutex);
@@ -395,7 +395,7 @@ void index_delete_id(Index *self, const char *id)
     index_delete_term(self, self->id_field, id);
 }
 
-static void index_qdel_i(Searcher *sea, int doc_num, float score, void *arg)
+static void index_qdel_i(FrtSearcher *sea, int doc_num, float score, void *arg)
 {
     (void)score; (void)arg;
     ir_delete_doc(((IndexSearcher *)sea)->ir, doc_num);

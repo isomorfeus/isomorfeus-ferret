@@ -4,9 +4,9 @@
 #include "frt_internal.h"
 
 extern VALUE cStateError;
-extern void store_destroy(Store *store);
+extern void store_destroy(FrtStore *store);
 extern InStream *is_new();
-extern Store *store_new();
+extern FrtStore *store_new();
 
 /****************************************************************************
  *
@@ -19,12 +19,12 @@ typedef struct FileEntry {
     off_t length;
 } FileEntry;
 
-static void cmpd_touch(Store *store, const char *file_name)
+static void cmpd_touch(FrtStore *store, const char *file_name)
 {
     store->dir.cmpd->store->touch(store->dir.cmpd->store, file_name);
 }
 
-static int cmpd_exists(Store *store, const char *file_name)
+static int cmpd_exists(FrtStore *store, const char *file_name)
 {
     if (h_get(store->dir.cmpd->entries, file_name) != NULL) {
         return true;
@@ -34,7 +34,7 @@ static int cmpd_exists(Store *store, const char *file_name)
     }
 }
 
-static int cmpd_remove(Store *store, const char *file_name)
+static int cmpd_remove(FrtStore *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
@@ -42,7 +42,7 @@ static int cmpd_remove(Store *store, const char *file_name)
     return 0;
 }
 
-static void cmpd_rename(Store *store, const char *from, const char *to)
+static void cmpd_rename(FrtStore *store, const char *from, const char *to)
 {
     (void)store;
     (void)from;
@@ -50,12 +50,12 @@ static void cmpd_rename(Store *store, const char *from, const char *to)
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static int cmpd_count(Store *store)
+static int cmpd_count(FrtStore *store)
 {
     return store->dir.cmpd->entries->size;
 }
 
-static void cmpd_each(Store *store,
+static void cmpd_each(FrtStore *store,
                      void (*func)(const char *fname, void *arg), void *arg)
 {
     Hash *ht = store->dir.cmpd->entries;
@@ -69,13 +69,13 @@ static void cmpd_each(Store *store,
 }
 
 
-static void cmpd_clear(Store *store)
+static void cmpd_clear(FrtStore *store)
 {
     (void)store;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static void cmpd_close_i(Store *store)
+static void cmpd_close_i(FrtStore *store)
 {
     FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) {
@@ -90,7 +90,7 @@ static void cmpd_close_i(Store *store)
     store_destroy(store);
 }
 
-static off_t cmpd_length(Store *store, const char *file_name)
+static off_t cmpd_length(FrtStore *store, const char *file_name)
 {
     FileEntry *fe = (FileEntry *)h_get(store->dir.cmpd->entries, file_name);
     if (fe != NULL) {
@@ -156,7 +156,7 @@ static InStream *cmpd_create_input(InStream *sub_is, off_t offset, off_t length)
     return is;
 }
 
-static InStream *cmpd_open_input(Store *store, const char *file_name)
+static InStream *cmpd_open_input(FrtStore *store, const char *file_name)
 {
     FileEntry *entry;
     FrtCompoundStore *cmpd = store->dir.cmpd;
@@ -181,7 +181,7 @@ static InStream *cmpd_open_input(Store *store, const char *file_name)
     return is;
 }
 
-static OutStream *cmpd_new_output(Store *store, const char *file_name)
+static OutStream *cmpd_new_output(FrtStore *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
@@ -189,7 +189,7 @@ static OutStream *cmpd_new_output(Store *store, const char *file_name)
     return NULL;
 }
 
-static Lock *cmpd_open_lock_i(Store *store, const char *lock_name)
+static Lock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
 {
     (void)store;
     (void)lock_name;
@@ -203,13 +203,13 @@ static void cmpd_close_lock_i(Lock *lock)
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-Store *open_cmpd_store(Store *store, const char *name)
+FrtStore *open_cmpd_store(FrtStore *store, const char *name)
 {
     int count, i;
     off_t offset;
     char *fname;
     FileEntry *volatile entry = NULL;
-    Store *new_store = NULL;
+    FrtStore *new_store = NULL;
     FrtCompoundStore *volatile cmpd = NULL;
     InStream *volatile is = NULL;
 
@@ -273,7 +273,7 @@ Store *open_cmpd_store(Store *store, const char *name)
  *
  ****************************************************************************/
 
-FrtCompoundWriter *open_cw(Store *store, char *name)
+FrtCompoundWriter *open_cw(FrtStore *store, char *name)
 {
     FrtCompoundWriter *cw = FRT_ALLOC(FrtCompoundWriter);
     cw->store = store;

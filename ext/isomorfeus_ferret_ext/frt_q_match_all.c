@@ -12,18 +12,18 @@
 
 typedef struct MatchAllScorer
 {
-    Scorer          super;
+    FrtScorer          super;
     IndexReader    *ir;
     int             max_doc;
     float           score;
 } MatchAllScorer;
 
-static float masc_score(Scorer *self)
+static float masc_score(FrtScorer *self)
 {
     return MASc(self)->score;
 }
 
-static bool masc_next(Scorer *self)
+static bool masc_next(FrtScorer *self)
 {
     while (self->doc < (MASc(self)->max_doc - 1)) {
         self->doc++;
@@ -34,22 +34,22 @@ static bool masc_next(Scorer *self)
     return false;
 }
 
-static bool masc_skip_to(Scorer *self, int doc_num)
+static bool masc_skip_to(FrtScorer *self, int doc_num)
 {
     self->doc = doc_num - 1;
     return masc_next(self);
 }
 
-static FrtExplanation *masc_explain(Scorer *self, int doc_num)
+static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
 {
     (void)self;
     (void)doc_num;
     return expl_new(1.0, "MatchAllScorer");
 }
 
-static Scorer *masc_new(FrtWeight *weight, IndexReader *ir)
+static FrtScorer *masc_new(FrtWeight *weight, IndexReader *ir)
 {
-    Scorer *self        = scorer_new(MatchAllScorer, weight->similarity);
+    FrtScorer *self        = scorer_new(MatchAllScorer, weight->similarity);
 
     MASc(self)->ir      = ir;
     MASc(self)->max_doc = ir->max_doc(ir);
@@ -91,7 +91,7 @@ static FrtExplanation *maw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     return expl;
 }
 
-static FrtWeight *maw_new(Query *query, Searcher *searcher)
+static FrtWeight *maw_new(Query *query, FrtSearcher *searcher)
 {
     FrtWeight *self        = w_new(FrtWeight, query);
 
@@ -111,7 +111,7 @@ static FrtWeight *maw_new(Query *query, Searcher *searcher)
  *
  ***************************************************************************/
 
-static char *maq_to_s(Query *self, Symbol default_field)
+static char *maq_to_s(Query *self, FrtSymbol default_field)
 {
     (void)default_field;
     if (self->boost == 1.0) {

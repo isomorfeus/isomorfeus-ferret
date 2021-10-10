@@ -40,14 +40,14 @@ static void rf_close(void *p)
     free(rf);
 }
 
-static void ram_touch(Store *store, const char *filename)
+static void ram_touch(FrtStore *store, const char *filename)
 {
     if (h_get(store->dir.ht, filename) == NULL) {
         h_set(store->dir.ht, filename, rf_new(filename));
     }
 }
 
-static int ram_exists(Store *store, const char *filename)
+static int ram_exists(FrtStore *store, const char *filename)
 {
     if (h_get(store->dir.ht, filename) != NULL) {
         return true;
@@ -57,7 +57,7 @@ static int ram_exists(Store *store, const char *filename)
     }
 }
 
-static int ram_remove(Store *store, const char *filename)
+static int ram_remove(FrtStore *store, const char *filename)
 {
     RAMFile *rf = (RAMFile *)h_rem(store->dir.ht, filename, false);
     if (rf != NULL) {
@@ -70,7 +70,7 @@ static int ram_remove(Store *store, const char *filename)
     }
 }
 
-static void ram_rename(Store *store, const char *from, const char *to)
+static void ram_rename(FrtStore *store, const char *from, const char *to)
 {
     RAMFile *rf = (RAMFile *)h_rem(store->dir.ht, from, false);
     RAMFile *tmp;
@@ -93,12 +93,12 @@ static void ram_rename(Store *store, const char *from, const char *to)
     h_set(store->dir.ht, rf->name, rf);
 }
 
-static int ram_count(Store *store)
+static int ram_count(FrtStore *store)
 {
     return store->dir.ht->size;
 }
 
-static void ram_each(Store *store,
+static void ram_each(FrtStore *store,
                      void (*func)(const char *fname, void *arg), void *arg)
 {
     Hash *ht = store->dir.ht;
@@ -114,7 +114,7 @@ static void ram_each(Store *store,
     }
 }
 
-static void ram_close_i(Store *store)
+static void ram_close_i(FrtStore *store)
 {
     Hash *ht = store->dir.ht;
     int i;
@@ -131,7 +131,7 @@ static void ram_close_i(Store *store)
 /*
  * Be sure to keep the locks
  */
-static void ram_clear(Store *store)
+static void ram_clear(FrtStore *store)
 {
     int i;
     Hash *ht = store->dir.ht;
@@ -144,7 +144,7 @@ static void ram_clear(Store *store)
     }
 }
 
-static void ram_clear_locks(Store *store)
+static void ram_clear_locks(FrtStore *store)
 {
     int i;
     Hash *ht = store->dir.ht;
@@ -157,7 +157,7 @@ static void ram_clear_locks(Store *store)
     }
 }
 
-static void ram_clear_all(Store *store)
+static void ram_clear_all(FrtStore *store)
 {
     int i;
     Hash *ht = store->dir.ht;
@@ -170,7 +170,7 @@ static void ram_clear_all(Store *store)
     }
 }
 
-static off_t ram_length(Store *store, const char *filename)
+static off_t ram_length(FrtStore *store, const char *filename)
 {
     RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
     if (rf != NULL) {
@@ -278,7 +278,7 @@ void ram_destroy_buffer(OutStream *os)
     free(os);
 }
 
-static OutStream *ram_new_output(Store *store, const char *filename)
+static OutStream *ram_new_output(FrtStore *store, const char *filename)
 {
     RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
     OutStream *os = os_new();
@@ -349,7 +349,7 @@ static const struct InStreamMethods RAM_IN_STREAM_METHODS = {
     rami_close_i
 };
 
-static InStream *ram_open_input(Store *store, const char *filename)
+static InStream *ram_open_input(FrtStore *store, const char *filename)
 {
     RAMFile *rf = (RAMFile *)h_get(store->dir.ht, filename);
     InStream *is = NULL;
@@ -399,7 +399,7 @@ static void ram_lock_release(Lock *lock)
     ram_remove(lock->store, lock->name);
 }
 
-static Lock *ram_open_lock_i(Store *store, const char *lockname)
+static Lock *ram_open_lock_i(FrtStore *store, const char *lockname)
 {
     Lock *lock = FRT_ALLOC(Lock);
     char lname[100];
@@ -419,9 +419,9 @@ static void ram_close_lock_i(Lock *lock)
 }
 
 
-Store *open_ram_store()
+FrtStore *open_ram_store()
 {
-    Store *new_store = store_new();
+    FrtStore *new_store = store_new();
 
     new_store->dir.ht       = h_new_str(NULL, rf_close);
     new_store->touch        = &ram_touch;
@@ -444,7 +444,7 @@ Store *open_ram_store()
 
 struct CopyFileArg
 {
-    Store *to_store, *from_store;
+    FrtStore *to_store, *from_store;
 };
 
 static void copy_files(const char *fname, void *arg)
@@ -463,9 +463,9 @@ static void copy_files(const char *fname, void *arg)
     free(buffer);
 }
 
-Store *open_ram_store_and_copy(Store *from_store, bool close_dir)
+FrtStore *open_ram_store_and_copy(FrtStore *from_store, bool close_dir)
 {
-    Store *store = open_ram_store();
+    FrtStore *store = open_ram_store();
     struct CopyFileArg cfa;
     cfa.to_store = store;
     cfa.from_store = from_store;

@@ -162,8 +162,8 @@ static PhPos *pp_new(FrtTermDocEnum *tpe, int offset)
 
 typedef struct PhraseScorer
 {
-    Scorer  super;
-    float (*phrase_freq)(Scorer *self);
+    FrtScorer  super;
+    float (*phrase_freq)(FrtScorer *self);
     float   freq;
     uchar  *norms;
     float   value;
@@ -191,7 +191,7 @@ static void phsc_init(PhraseScorer *phsc)
     }
 }
 
-static bool phsc_do_next(Scorer *self)
+static bool phsc_do_next(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     const int pp_cnt = phsc->pp_cnt;
@@ -233,7 +233,7 @@ static bool phsc_do_next(Scorer *self)
     return false;
 }
 
-static float phsc_score(Scorer *self)
+static float phsc_score(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     float raw_score = sim_tf(self->similarity, phsc->freq) * phsc->value;
@@ -243,7 +243,7 @@ static float phsc_score(Scorer *self)
         phsc->norms[self->doc]);
 }
 
-static bool phsc_next(Scorer *self)
+static bool phsc_next(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     if (phsc->first_time) {
@@ -256,7 +256,7 @@ static bool phsc_next(Scorer *self)
     return phsc_do_next(self);
 }
 
-static bool phsc_skip_to(Scorer *self, int doc_num)
+static bool phsc_skip_to(FrtScorer *self, int doc_num)
 {
     PhraseScorer *phsc = PhSc(self);
     int i;
@@ -274,7 +274,7 @@ static bool phsc_skip_to(Scorer *self, int doc_num)
     return phsc_do_next(self);
 }
 
-static FrtExplanation *phsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *phsc_explain(FrtScorer *self, int doc_num)
 {
     PhraseScorer *phsc = PhSc(self);
     float phrase_freq;
@@ -286,7 +286,7 @@ static FrtExplanation *phsc_explain(Scorer *self, int doc_num)
                     "tf(phrase_freq=%f)", phrase_freq);
 }
 
-static void phsc_destroy(Scorer *self)
+static void phsc_destroy(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     int i;
@@ -297,15 +297,15 @@ static void phsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *phsc_new(FrtWeight *weight,
+static FrtScorer *phsc_new(FrtWeight *weight,
                         FrtTermDocEnum **term_pos_enum,
                         PhrasePosition *positions, int pos_cnt,
-                        Similarity *similarity,
+                        FrtSimilarity *similarity,
                         uchar *norms,
                         int slop)
 {
     int i;
-    Scorer *self                = scorer_new(PhraseScorer, similarity);
+    FrtScorer *self                = scorer_new(PhraseScorer, similarity);
     HashSet *term_set           = NULL;
 
 
@@ -356,7 +356,7 @@ static Scorer *phsc_new(FrtWeight *weight,
  * ExactPhraseScorer
  ***************************************************************************/
 
-static float ephsc_phrase_freq(Scorer *self)
+static float ephsc_phrase_freq(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     int i;
@@ -398,12 +398,12 @@ static float ephsc_phrase_freq(Scorer *self)
     return freq;
 }
 
-static Scorer *exact_phrase_scorer_new(FrtWeight *weight,
+static FrtScorer *exact_phrase_scorer_new(FrtWeight *weight,
                                        FrtTermDocEnum **term_pos_enum,
                                        PhrasePosition *positions, int pp_cnt,
-                                       Similarity *similarity, uchar *norms)
+                                       FrtSimilarity *similarity, uchar *norms)
 {
-    Scorer *self = phsc_new(weight,
+    FrtScorer *self = phsc_new(weight,
                             term_pos_enum,
                             positions,
                             pp_cnt,
@@ -446,7 +446,7 @@ static bool sphsc_check_repeats(PhPos *pp,
     return true;
 }
 
-static float sphsc_phrase_freq(Scorer *self)
+static float sphsc_phrase_freq(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     PhPos *pp;
@@ -507,13 +507,13 @@ return_freq:
     return freq;
 }
 
-static Scorer *sloppy_phrase_scorer_new(FrtWeight *weight,
+static FrtScorer *sloppy_phrase_scorer_new(FrtWeight *weight,
                                         FrtTermDocEnum **term_pos_enum,
                                         PhrasePosition *positions,
-                                        int pp_cnt, Similarity *similarity,
+                                        int pp_cnt, FrtSimilarity *similarity,
                                         int slop, uchar *norms)
 {
-    Scorer *self = phsc_new(weight,
+    FrtScorer *self = phsc_new(weight,
                             term_pos_enum,
                             positions,
                             pp_cnt,
@@ -536,10 +536,10 @@ static char *phw_to_s(FrtWeight *self)
     return strfmt("PhraseWeight(%f)", self->value);
 }
 
-static Scorer *phw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *phw_scorer(FrtWeight *self, IndexReader *ir)
 {
     int i;
-    Scorer *phsc = NULL;
+    FrtScorer *phsc = NULL;
     PhraseQuery *phq = PhQ(self->query);
     FrtTermDocEnum **tps, *tpe;
     PhrasePosition *positions = phq->positions;
@@ -589,7 +589,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
-    Scorer *scorer;
+    FrtScorer *scorer;
     uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
@@ -686,7 +686,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     }
 }
 
-static FrtWeight *phw_new(Query *query, Searcher *searcher)
+static FrtWeight *phw_new(Query *query, FrtSearcher *searcher)
 {
     FrtWeight *self        = w_new(FrtWeight, query);
 
@@ -955,7 +955,7 @@ static void phq_extract_terms(Query *self, HashSet *term_set)
     }
 }
 
-static char *phq_to_s(Query *self, Symbol default_field)
+static char *phq_to_s(Query *self, FrtSymbol default_field)
 {
     PhraseQuery *phq = PhQ(self);
     const int pos_cnt = phq->pos_cnt;
@@ -1134,7 +1134,7 @@ static int phq_eq(Query *self, Query *o)
     return true;
 }
 
-Query *phq_new(Symbol field)
+Query *phq_new(FrtSymbol field)
 {
     Query *self = q_new(PhraseQuery);
 

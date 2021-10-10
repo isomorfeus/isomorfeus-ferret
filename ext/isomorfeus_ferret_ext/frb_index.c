@@ -49,7 +49,7 @@ static VALUE sym_with_positions;
 static VALUE sym_with_offsets;
 static VALUE sym_with_positions_offsets;
 
-static Symbol fsym_content;
+static FrtSymbol fsym_content;
 
 static ID id_term;
 static ID id_fields;
@@ -76,7 +76,7 @@ frb_fi_free(void *p)
 
 static void
 frb_fi_get_params(VALUE roptions,
-                  StoreValue *store,
+                  FrtStoreValue *store,
                   IndexValue *index,
                   FrtTermVectorValue *term_vector,
                   float *boost)
@@ -177,7 +177,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE roptions, rname;
     FrtFieldInfo *fi;
-    StoreValue store = FRT_STORE_YES;
+    FrtStoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
@@ -405,7 +405,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE roptions;
     FrtFieldInfos *fis;
-    StoreValue store = FRT_STORE_YES;
+    FrtStoreValue store = FRT_STORE_YES;
     IndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
@@ -515,7 +515,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
-    StoreValue store = fis->store;
+    FrtStoreValue store = fis->store;
     IndexValue index = fis->index;
     FrtTermVectorValue term_vector = fis->term_vector;
     float boost = 1.0f;
@@ -592,7 +592,7 @@ static VALUE
 frb_fis_create_index(VALUE self, VALUE rdir)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
-    Store *store = NULL;
+    FrtStore *store = NULL;
     if (TYPE(rdir) == T_DATA) {
         store = DATA_PTR(rdir);
         FRT_REF(store);
@@ -1309,7 +1309,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions, rval;
     bool create = false;
     bool create_if_missing = true;
-    Store *store = NULL;
+    FrtStore *store = NULL;
     FrtAnalyzer *analyzer = NULL;
     IndexWriter *volatile iw = NULL;
     FrtConfig config = default_config;
@@ -1410,7 +1410,7 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
         return ST_CONTINUE;
     } else {
         FrtDocument *doc = (FrtDocument *)arg;
-        Symbol field = frb_field(key);
+        FrtSymbol field = frb_field(key);
         VALUE val;
         FrtDocField *df;
         if (NULL == (df = doc_get_field(doc, field))) {
@@ -1952,7 +1952,7 @@ static VALUE
 frb_lzd_default(VALUE self, VALUE rkey)
 {
     LazyDoc *lazy_doc = (LazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
-    Symbol field = frb_field(rkey);
+    FrtSymbol field = frb_field(rkey);
     VALUE rfield = ID2SYM(rb_intern(field));
 
     return frb_lazy_df_load(self, rfield, lazy_doc_get(lazy_doc, field));
@@ -2072,7 +2072,7 @@ frb_mr_mark(void *p)
 static VALUE
 frb_ir_init(VALUE self, VALUE rdir)
 {
-    Store *store = NULL;
+    FrtStore *store = NULL;
     IndexReader *ir;
     int i;
     FrtFieldInfos *fis;

@@ -174,10 +174,10 @@ static void bca_destroy(BCArray *bca);
 
 static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur);
 
-static Query *get_term_q(QParser *qp, Symbol field, char *word);
-static Query *get_fuzzy_q(QParser *qp, Symbol field, char *word,
+static Query *get_term_q(QParser *qp, FrtSymbol field, char *word);
+static Query *get_fuzzy_q(QParser *qp, FrtSymbol field, char *word,
                           char *slop);
-static Query *get_wild_q(QParser *qp, Symbol field, char *pattern);
+static Query *get_wild_q(QParser *qp, FrtSymbol field, char *pattern);
 
 static HashSet *first_field(QParser *qp, const char *field);
 static HashSet *add_field(QParser *qp, const char *field);
@@ -189,7 +189,7 @@ static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static Query *get_r_q(QParser *qp, Symbol field, char *from, char *to,
+static Query *get_r_q(QParser *qp, FrtSymbol field, char *from, char *to,
                       bool inc_lower, bool inc_upper);
 
 static void qp_push_fields(QParser *self, HashSet *fields, bool destroy);
@@ -204,17 +204,17 @@ static void qp_pop_fields(QParser *self);
  */
 #define FLDS(q, func) do {\
     FRT_TRY {\
-        Symbol field;\
+        FrtSymbol field;\
         if (qp->fields->size == 0) {\
             q = NULL;\
         } else if (qp->fields->size == 1) {\
-            field = (Symbol)qp->fields->first->elem;\
+            field = (FrtSymbol)qp->fields->first->elem;\
             q = func;\
         } else {\
             Query *volatile sq; HashSetEntry *volatile hse;\
             q = bq_new_max(false, qp->max_clauses);\
             for (hse = qp->fields->first; hse; hse = hse->next) {\
-                field = (Symbol)hse->elem;\
+                field = (FrtSymbol)hse->elem;\
                 sq = func;\
                 FRT_TRY\
                   if (sq) bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
@@ -2202,7 +2202,7 @@ static int yyerror(QParser *qp, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static FrtTokenStream *get_cached_ts(QParser *qp, Symbol field, char *text)
+static FrtTokenStream *get_cached_ts(QParser *qp, FrtSymbol field, char *text)
 {
     FrtTokenStream *ts;
     if (hs_exists(qp->tokenized_fields, field)) {
@@ -2374,7 +2374,7 @@ static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur)
  * what we want as it will match any documents containing the same email
  * address and tokenized with the same tokenizer.
  */
-static Query *get_term_q(QParser *qp, Symbol field, char *word)
+static Query *get_term_q(QParser *qp, FrtSymbol field, char *word)
 {
     Query *q;
     FrtToken *token;
@@ -2412,7 +2412,7 @@ static Query *get_term_q(QParser *qp, Symbol field, char *word)
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static Query *get_fuzzy_q(QParser *qp, Symbol field, char *word,
+static Query *get_fuzzy_q(QParser *qp, FrtSymbol field, char *word,
                           char *slop_str)
 {
     Query *q;
@@ -2472,7 +2472,7 @@ static char *lower_str(char *str)
  * optimized to a MatchAllQuery if the pattern is '*' or a PrefixQuery if the
  * only wild char (*, ?) in the pattern is a '*' at the end of the pattern.
  */
-static Query *get_wild_q(QParser *qp, Symbol field, char *pattern)
+static Query *get_wild_q(QParser *qp, FrtSymbol field, char *pattern)
 {
     Query *q;
     bool is_prefix = false;
@@ -2519,7 +2519,7 @@ static Query *get_wild_q(QParser *qp, Symbol field, char *pattern)
 static HashSet *add_field(QParser *qp, const char *field_name)
 {
     if (qp->allow_any_fields || hs_exists(qp->all_fields, field_name)) {
-        hs_add(qp->fields, (Symbol)strdup(field_name));
+        hs_add(qp->fields, (FrtSymbol)strdup(field_name));
     }
     return qp->fields;
 }
@@ -2643,7 +2643,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static Query *get_phrase_query(QParser *qp, Symbol field,
+static Query *get_phrase_query(QParser *qp, FrtSymbol field,
                                Phrase *phrase, char *slop_str)
 {
     const int pos_cnt = phrase->size;
@@ -2769,7 +2769,7 @@ static Query *get_phrase_q(QParser *qp, Phrase *phrase, char *slop_str)
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static Query *get_r_q(QParser *qp, Symbol field, char *from, char *to,
+static Query *get_r_q(QParser *qp, FrtSymbol field, char *from, char *to,
                       bool inc_lower, bool inc_upper)
 {
     Query *rq;
@@ -2901,7 +2901,7 @@ QParser *qp_new(FrtAnalyzer *analyzer)
 }
 
 void qp_add_field(QParser *self,
-                  Symbol field,
+                  FrtSymbol field,
                   bool is_default,
                   bool is_tokenized)
 {

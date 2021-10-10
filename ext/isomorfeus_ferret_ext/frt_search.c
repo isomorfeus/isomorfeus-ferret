@@ -325,7 +325,7 @@ static void q_extract_terms(Query *self, HashSet *terms)
     (void)terms;
 }
 
-Similarity *q_get_similarity_i(Query *self, Searcher *searcher)
+FrtSimilarity *q_get_similarity_i(Query *self, FrtSearcher *searcher)
 {
     (void)self;
     return searcher->get_similarity(searcher);
@@ -343,7 +343,7 @@ void q_deref(Query *self)
     }
 }
 
-FrtWeight *q_create_weight_unsup(Query *self, Searcher *searcher)
+FrtWeight *q_create_weight_unsup(Query *self, FrtSearcher *searcher)
 {
     (void)self;
     (void)searcher;
@@ -352,12 +352,12 @@ FrtWeight *q_create_weight_unsup(Query *self, Searcher *searcher)
     return NULL;
 }
 
-FrtWeight *q_weight(Query *self, Searcher *searcher)
+FrtWeight *q_weight(Query *self, FrtSearcher *searcher)
 {
     Query      *query   = searcher->rewrite(searcher, self);
     FrtWeight     *weight  = query->create_weight_i(query, searcher);
     float       sum     = weight->sum_of_squared_weights(weight);
-    Similarity *sim     = query->get_similarity(query, searcher);
+    FrtSimilarity *sim     = query->get_similarity(query, searcher);
     float       norm    = sim_query_norm(sim, sum);
     q_deref(query);
 
@@ -460,18 +460,18 @@ Query *q_create(size_t size)
  *
  ***************************************************************************/
 
-void scorer_destroy_i(Scorer *scorer)
+void scorer_destroy_i(FrtScorer *scorer)
 {
     free(scorer);
 }
 
-Scorer *scorer_create(size_t size, Similarity *similarity)
+FrtScorer *scorer_create(size_t size, FrtSimilarity *similarity)
 {
-    Scorer *self        = (Scorer *)ecalloc(size);
+    FrtScorer *self        = (FrtScorer *)ecalloc(size);
 #ifdef DEBUG
-    if (size < sizeof(Scorer)) {
+    if (size < sizeof(FrtScorer)) {
         rb_raise(rb_eArgError, "size of scorer <%d> should be at least <%d>",
-              (int)size, (int)sizeof(Scorer));
+              (int)size, (int)sizeof(FrtScorer));
     }
 #endif
     self->destroy       = &scorer_destroy_i;
@@ -481,19 +481,19 @@ Scorer *scorer_create(size_t size, Similarity *similarity)
 
 bool scorer_less_than(void *p1, void *p2)
 {
-    Scorer *s1 = (Scorer *)p1;
-    Scorer *s2 = (Scorer *)p2;
+    FrtScorer *s1 = (FrtScorer *)p1;
+    FrtScorer *s2 = (FrtScorer *)p2;
     return s1->score(s1) < s2->score(s2);
 }
 
-bool scorer_doc_less_than(const Scorer *s1, const Scorer *s2)
+bool scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2)
 {
     return s1->doc < s2->doc;
 }
 
 int scorer_doc_cmp(const void *p1, const void *p2)
 {
-    return (*(Scorer **)p1)->doc - (*(Scorer **)p2)->doc;
+    return (*(FrtScorer **)p1)->doc - (*(FrtScorer **)p2)->doc;
 }
 
 /***************************************************************************
@@ -617,10 +617,10 @@ void matchv_destroy(MatchVector *self)
  *
  ***************************************************************************/
 
-MatchVector *searcher_get_match_vector(Searcher *self,
+MatchVector *searcher_get_match_vector(FrtSearcher *self,
                                        Query *query,
                                        const int doc_num,
-                                       Symbol field)
+                                       FrtSymbol field)
 {
     MatchVector *mv = matchv_new();
     bool rewrite = query->get_matchv_i == q_get_matchv_i;
@@ -829,10 +829,10 @@ static char *highlight_field(MatchVector *mv,
     return excerpt_str;
 }
 
-char **searcher_highlight(Searcher *self,
+char **searcher_highlight(FrtSearcher *self,
                           Query *query,
                           const int doc_num,
-                          Symbol field,
+                          FrtSymbol field,
                           const int excerpt_len,
                           const int num_excerpts,
                           const char *pre_tag,
@@ -959,7 +959,7 @@ char **searcher_highlight(Searcher *self,
     return excerpt_strs;
 }
 
-static FrtWeight *sea_create_weight(Searcher *self, Query *query)
+static FrtWeight *sea_create_weight(FrtSearcher *self, Query *query)
 {
     return q_weight(query, self);
 }
@@ -977,7 +977,7 @@ static void sea_check_args(int num_docs, int first_doc)
     }
 }
 
-static Similarity *sea_get_similarity(Searcher *self)
+static FrtSimilarity *sea_get_similarity(FrtSearcher *self)
 {
     return self->similarity;
 }
@@ -990,24 +990,24 @@ static Similarity *sea_get_similarity(Searcher *self)
 
 #define ISEA(searcher) ((IndexSearcher *)(searcher))
 
-int isea_doc_freq(Searcher *self, Symbol field, const char *term)
+int isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 {
     return ir_doc_freq(ISEA(self)->ir, field, term);
 }
 
-static FrtDocument *isea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *isea_get_doc(FrtSearcher *self, int doc_num)
 {
     IndexReader *ir = ISEA(self)->ir;
     return ir->get_doc(ir, doc_num);
 }
 
-static LazyDoc *isea_get_lazy_doc(Searcher *self, int doc_num)
+static LazyDoc *isea_get_lazy_doc(FrtSearcher *self, int doc_num)
 {
     IndexReader *ir = ISEA(self)->ir;
     return ir->get_lazy_doc(ir, doc_num);
 }
 
-static int isea_max_doc(Searcher *self)
+static int isea_max_doc(FrtSearcher *self)
 {
     IndexReader *ir = ISEA(self)->ir;
     return ir->max_doc(ir);
@@ -1020,12 +1020,12 @@ static int isea_max_doc(Searcher *self)
           post_filter->filter_func(scorer->doc, scorer->score(scorer),\
                                    searcher, post_filter->arg))))
 
-static FrtTopDocs *isea_search_w(Searcher *self,
+static FrtTopDocs *isea_search_w(FrtSearcher *self,
                               FrtWeight *weight,
                               int first_doc,
                               int num_docs,
                               FrtFilter *filter,
-                              Sort *sort,
+                              FrtSort *sort,
                               PostFilter *post_filter,
                               bool load_fields)
 {
@@ -1039,7 +1039,7 @@ static FrtTopDocs *isea_search_w(Searcher *self,
     void (*hq_insert)(PriorityQueue *pq, Hit *hit);
     void (*hq_destroy)(PriorityQueue *self);
 
-    Scorer *scorer;
+    FrtScorer *scorer;
     Hit hit;
 
     float max_score = 0.0f;
@@ -1109,12 +1109,12 @@ static FrtTopDocs *isea_search_w(Searcher *self,
     return td_new(total_hits, num_docs, score_docs, max_score);
 }
 
-static FrtTopDocs *isea_search(Searcher *self,
+static FrtTopDocs *isea_search(FrtSearcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
                             FrtFilter *filter,
-                            Sort *sort,
+                            FrtSort *sort,
                             PostFilter *post_filter,
                             bool load_fields)
 {
@@ -1125,12 +1125,12 @@ static FrtTopDocs *isea_search(Searcher *self,
     return td;
 }
 
-static void isea_search_each_w(Searcher *self, FrtWeight *weight, FrtFilter *filter,
+static void isea_search_each_w(FrtSearcher *self, FrtWeight *weight, FrtFilter *filter,
                                PostFilter *post_filter,
-                               void (*fn)(Searcher *, int, float, void *),
+                               void (*fn)(FrtSearcher *, int, float, void *),
                                void *arg)
 {
-    Scorer *scorer;
+    FrtScorer *scorer;
     float filter_factor = 1.0f;
     FrtBitVector *bits = (filter
                        ? filt_get_bv(filter, ISEA(self)->ir)
@@ -1157,9 +1157,9 @@ static void isea_search_each_w(Searcher *self, FrtWeight *weight, FrtFilter *fil
     scorer->destroy(scorer);
 }
 
-static void isea_search_each(Searcher *self, Query *query, FrtFilter *filter,
+static void isea_search_each(FrtSearcher *self, Query *query, FrtFilter *filter,
                              PostFilter *post_filter,
-                             void (*fn)(Searcher *, int, float, void *),
+                             void (*fn)(FrtSearcher *, int, float, void *),
                              void *arg)
 {
     FrtWeight *weight = q_weight(query, self);
@@ -1175,14 +1175,14 @@ static void isea_search_each(Searcher *self, Query *query, FrtFilter *filter,
  * Note: Unlike the offset_docnum in other search methods, this offset_docnum
  * refers to document number and not hit.
  */
-static int isea_search_unscored_w(Searcher *self,
+static int isea_search_unscored_w(FrtSearcher *self,
                                   FrtWeight *weight,
                                   int *buf,
                                   int limit,
                                   int offset_docnum)
 {
     int count = 0;
-    Scorer *scorer = weight->scorer(weight, ISEA(self)->ir);
+    FrtScorer *scorer = weight->scorer(weight, ISEA(self)->ir);
     if (scorer) {
         if (scorer->skip_to(scorer, offset_docnum)) {
             do {
@@ -1194,7 +1194,7 @@ static int isea_search_unscored_w(Searcher *self,
     return count;
 }
 
-static int isea_search_unscored(Searcher *self,
+static int isea_search_unscored(FrtSearcher *self,
                                 Query *query,
                                 int *buf,
                                 int limit,
@@ -1207,7 +1207,7 @@ static int isea_search_unscored(Searcher *self,
     return count;
 }
 
-static Query *isea_rewrite(Searcher *self, Query *original)
+static Query *isea_rewrite(FrtSearcher *self, Query *original)
 {
     int q_is_destroyed = false;
     Query *query = original;
@@ -1221,7 +1221,7 @@ static Query *isea_rewrite(Searcher *self, Query *original)
     return query;
 }
 
-static FrtExplanation *isea_explain(Searcher *self,
+static FrtExplanation *isea_explain(FrtSearcher *self,
                                  Query *query,
                                  int doc_num)
 {
@@ -1231,20 +1231,20 @@ static FrtExplanation *isea_explain(Searcher *self,
     return e;
 }
 
-static FrtExplanation *isea_explain_w(Searcher *self, FrtWeight *w, int doc_num)
+static FrtExplanation *isea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
 {
     return w->explain(w, ISEA(self)->ir, doc_num);
 }
 
-static FrtTermVector *isea_get_term_vector(Searcher *self,
+static FrtTermVector *isea_get_term_vector(FrtSearcher *self,
                                           const int doc_num,
-                                          Symbol field)
+                                          FrtSymbol field)
 {
     IndexReader *ir = ISEA(self)->ir;
     return ir->term_vector(ir, doc_num, field);
 }
 
-static void isea_close(Searcher *self)
+static void isea_close(FrtSearcher *self)
 {
     if (ISEA(self)->ir && ISEA(self)->close_ir) {
         ir_close(ISEA(self)->ir);
@@ -1252,9 +1252,9 @@ static void isea_close(Searcher *self)
     free(self);
 }
 
-Searcher *isea_new(IndexReader *ir)
+FrtSearcher *isea_new(IndexReader *ir)
 {
-    Searcher *self          = (Searcher *)FRT_ALLOC(IndexSearcher);
+    FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(IndexSearcher);
 
     ISEA(self)->ir          = ir;
     ISEA(self)->close_ir    = true;
@@ -1290,12 +1290,12 @@ Searcher *isea_new(IndexReader *ir)
 #define CDFSEA(searcher) ((CachedDFSearcher *)(searcher))
 typedef struct CachedDFSearcher
 {
-    Searcher super;
+    FrtSearcher super;
     Hash     *df_map;
     int      max_doc;
 } CachedDFSearcher;
 
-static int cdfsea_doc_freq(Searcher *self, Symbol field, const char *text)
+static int cdfsea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *text)
 {
     FrtTerm term;
     int *df;
@@ -1305,28 +1305,28 @@ static int cdfsea_doc_freq(Searcher *self, Symbol field, const char *text)
     return df ? *df : 0;
 }
 
-static FrtDocument *cdfsea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *cdfsea_get_doc(FrtSearcher *self, int doc_num)
 {
     (void)self; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static int cdfsea_max_doc(Searcher *self)
+static int cdfsea_max_doc(FrtSearcher *self)
 {
     (void)self;
     return CDFSEA(self)->max_doc;
 }
 
-static FrtWeight *cdfsea_create_weight(Searcher *self, Query *query)
+static FrtWeight *cdfsea_create_weight(FrtSearcher *self, Query *query)
 {
     (void)self; (void)query;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static FrtTopDocs *cdfsea_search_w(Searcher *self, FrtWeight *w, int fd, int nd,
-                                FrtFilter *f, Sort *s, PostFilter *pf, bool load)
+static FrtTopDocs *cdfsea_search_w(FrtSearcher *self, FrtWeight *w, int fd, int nd,
+                                FrtFilter *f, FrtSort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)w; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
@@ -1334,8 +1334,8 @@ static FrtTopDocs *cdfsea_search_w(Searcher *self, FrtWeight *w, int fd, int nd,
     return NULL;
 }
 
-static FrtTopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
-                              FrtFilter *f, Sort *s, PostFilter *pf, bool load)
+static FrtTopDocs *cdfsea_search(FrtSearcher *self, Query *q, int fd, int nd,
+                              FrtFilter *f, FrtSort *s, PostFilter *pf, bool load)
 {
     (void)self; (void)q; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
@@ -1343,67 +1343,67 @@ static FrtTopDocs *cdfsea_search(Searcher *self, Query *q, int fd, int nd,
     return NULL;
 }
 
-static void cdfsea_search_each(Searcher *self, Query *query, FrtFilter *filter,
+static void cdfsea_search_each(FrtSearcher *self, Query *query, FrtFilter *filter,
                                PostFilter *pf,
-                               void (*fn)(Searcher *, int, float, void *),
+                               void (*fn)(FrtSearcher *, int, float, void *),
                                void *arg)
 {
     (void)self; (void)query; (void)filter; (void)pf; (void)fn; (void)arg;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static void cdfsea_search_each_w(Searcher *self, FrtWeight *w, FrtFilter *filter,
+static void cdfsea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *filter,
                                  PostFilter *pf,
-                                 void (*fn)(Searcher *, int, float, void *),
+                                 void (*fn)(FrtSearcher *, int, float, void *),
                                  void *arg)
 {
     (void)self; (void)w; (void)filter; (void)pf; (void)fn; (void)arg;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static Query *cdfsea_rewrite(Searcher *self, Query *original)
+static Query *cdfsea_rewrite(FrtSearcher *self, Query *original)
 {
     (void)self;
     original->ref_cnt++;
     return original;
 }
 
-static FrtExplanation *cdfsea_explain(Searcher *self, Query *query, int doc_num)
+static FrtExplanation *cdfsea_explain(FrtSearcher *self, Query *query, int doc_num)
 {
     (void)self; (void)query; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static FrtExplanation *cdfsea_explain_w(Searcher *self, FrtWeight *w, int doc_num)
+static FrtExplanation *cdfsea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
 {
     (void)self; (void)w; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static FrtTermVector *cdfsea_get_term_vector(Searcher *self, const int doc_num,
-                                          Symbol field)
+static FrtTermVector *cdfsea_get_term_vector(FrtSearcher *self, const int doc_num,
+                                          FrtSymbol field)
 {
     (void)self; (void)doc_num; (void)field;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static Similarity *cdfsea_get_similarity(Searcher *self)
+static FrtSimilarity *cdfsea_get_similarity(FrtSearcher *self)
 {
     return self->similarity;
 }
 
-static void cdfsea_close(Searcher *self)
+static void cdfsea_close(FrtSearcher *self)
 {
     h_destroy(CDFSEA(self)->df_map);
     free(self);
 }
 
-static Searcher *cdfsea_new(Hash *df_map, int max_doc)
+static FrtSearcher *cdfsea_new(Hash *df_map, int max_doc)
 {
-    Searcher *self          = (Searcher *)FRT_ALLOC(CachedDFSearcher);
+    FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(CachedDFSearcher);
 
     CDFSEA(self)->df_map    = df_map;
     CDFSEA(self)->max_doc   = max_doc;
@@ -1433,7 +1433,7 @@ static Searcher *cdfsea_new(Hash *df_map, int max_doc)
  ***************************************************************************/
 
 #define MSEA(searcher) ((MultiSearcher *)(searcher))
-static int msea_get_searcher_index(Searcher *self, int n)
+static int msea_get_searcher_index(FrtSearcher *self, int n)
 {
     MultiSearcher *msea = MSEA(self);
     int lo = 0;                 /* search starts array */
@@ -1460,41 +1460,41 @@ static int msea_get_searcher_index(Searcher *self, int n)
     return hi;
 }
 
-static int msea_doc_freq(Searcher *self, Symbol field, const char *term)
+static int msea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 {
     int i;
     int doc_freq = 0;
     MultiSearcher *msea = MSEA(self);
     for (i = 0; i < msea->s_cnt; i++) {
-        Searcher *s = msea->searchers[i];
+        FrtSearcher *s = msea->searchers[i];
         doc_freq += s->doc_freq(s, field, term);
     }
 
     return doc_freq;
 }
 
-static FrtDocument *msea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *msea_get_doc(FrtSearcher *self, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
-    Searcher *s = msea->searchers[i];
+    FrtSearcher *s = msea->searchers[i];
     return s->get_doc(s, doc_num - msea->starts[i]);
 }
 
-static LazyDoc *msea_get_lazy_doc(Searcher *self, int doc_num)
+static LazyDoc *msea_get_lazy_doc(FrtSearcher *self, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
-    Searcher *s = msea->searchers[i];
+    FrtSearcher *s = msea->searchers[i];
     return s->get_lazy_doc(s, doc_num - msea->starts[i]);
 }
 
-static int msea_max_doc(Searcher *self)
+static int msea_max_doc(FrtSearcher *self)
 {
     return MSEA(self)->max_doc;
 }
 
-static int *msea_get_doc_freqs(Searcher *self, HashSet *terms)
+static int *msea_get_doc_freqs(FrtSearcher *self, HashSet *terms)
 {
     int i;
     HashSetEntry *hse;
@@ -1506,10 +1506,10 @@ static int *msea_get_doc_freqs(Searcher *self, HashSet *terms)
     return doc_freqs;
 }
 
-static FrtWeight *msea_create_weight(Searcher *self, Query *query)
+static FrtWeight *msea_create_weight(FrtSearcher *self, Query *query)
 {
     int i, *doc_freqs;
-    Searcher *cdfsea;
+    FrtSearcher *cdfsea;
     FrtWeight *w;
     Hash *df_map = h_new((hash_ft)&term_hash,
                          (eq_ft)&term_eq,
@@ -1543,25 +1543,25 @@ static FrtWeight *msea_create_weight(Searcher *self, Query *query)
 struct MultiSearchEachArg {
     int start;
     void *arg;
-    void (*fn)(Searcher *, int, float, void *);
+    void (*fn)(FrtSearcher *, int, float, void *);
 };
 
-static void msea_search_each_i(Searcher *self, int doc_num, float score, void *arg)
+static void msea_search_each_i(FrtSearcher *self, int doc_num, float score, void *arg)
 {
     struct MultiSearchEachArg *mse_arg = (struct MultiSearchEachArg *)arg;
 
     mse_arg->fn(self, doc_num + mse_arg->start, score, mse_arg->arg);
 }
 
-static void msea_search_each_w(Searcher *self, FrtWeight *w, FrtFilter *filter,
+static void msea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *filter,
                                PostFilter *post_filter,
-                               void (*fn)(Searcher *, int, float, void *),
+                               void (*fn)(FrtSearcher *, int, float, void *),
                                void *arg)
 {
     int i;
     struct MultiSearchEachArg mse_arg;
     MultiSearcher *msea = MSEA(self);
-    Searcher *s;
+    FrtSearcher *s;
 
     mse_arg.fn = fn;
     mse_arg.arg = arg;
@@ -1573,9 +1573,9 @@ static void msea_search_each_w(Searcher *self, FrtWeight *w, FrtFilter *filter,
     }
 }
 
-static void msea_search_each(Searcher *self, Query *query, FrtFilter *filter,
+static void msea_search_each(FrtSearcher *self, Query *query, FrtFilter *filter,
                              PostFilter *post_filter,
-                             void (*fn)(Searcher *, int, float, void *),
+                             void (*fn)(FrtSearcher *, int, float, void *),
                              void *arg)
 {
     FrtWeight *weight = q_weight(query, self);
@@ -1583,7 +1583,7 @@ static void msea_search_each(Searcher *self, Query *query, FrtFilter *filter,
     weight->destroy(weight);
 }
 
-static int msea_search_unscored_w(Searcher *self,
+static int msea_search_unscored_w(FrtSearcher *self,
                                   FrtWeight *w,
                                   int *buf,
                                   int limit,
@@ -1595,7 +1595,7 @@ static int msea_search_unscored_w(Searcher *self,
     for (i = 0; count < limit && i < msea->s_cnt; i++) {
         /* if offset_docnum falls in this or previous indexes */
         if (offset_docnum < msea->starts[i+1]) {
-            Searcher *searcher = msea->searchers[i];
+            FrtSearcher *searcher = msea->searchers[i];
             const int index_offset = msea->starts[i];
             int current_limit = limit - count;
             /* if offset_docnum occurs in the current index then adjust,
@@ -1619,7 +1619,7 @@ static int msea_search_unscored_w(Searcher *self,
     return count;
 }
 
-static int msea_search_unscored(Searcher *self,
+static int msea_search_unscored(FrtSearcher *self,
                                 Query *query,
                                 int *buf,
                                 int limit,
@@ -1640,7 +1640,7 @@ struct MultiSearchArg {
 
 /*
  * FIXME Not used anywhere. Is it needed?
-static void msea_search_i(Searcher *self, int doc_num, float score, void *arg)
+static void msea_search_i(FrtSearcher *self, int doc_num, float score, void *arg)
 {
     struct MultiSearchArg *ms_arg = (struct MultiSearchArg *)arg;
     Hit hit;
@@ -1653,12 +1653,12 @@ static void msea_search_i(Searcher *self, int doc_num, float score, void *arg)
 }
 */
 
-static FrtTopDocs *msea_search_w(Searcher *self,
+static FrtTopDocs *msea_search_w(FrtSearcher *self,
                               FrtWeight *weight,
                               int first_doc,
                               int num_docs,
                               FrtFilter *filter,
-                              Sort *sort,
+                              FrtSort *sort,
                               PostFilter *post_filter,
                               bool load_fields)
 {
@@ -1689,7 +1689,7 @@ static FrtTopDocs *msea_search_w(Searcher *self,
 
     /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
     for (i = 0; i < MSEA(self)->s_cnt; i++) {
-        Searcher *s = MSEA(self)->searchers[i];
+        FrtSearcher *s = MSEA(self)->searchers[i];
         FrtTopDocs *td = s->search_w(s, weight, 0, max_size,
                                   filter, sort, post_filter, true);
         /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
@@ -1731,12 +1731,12 @@ static FrtTopDocs *msea_search_w(Searcher *self,
     return td_new(total_hits, num_docs, score_docs, max_score);
 }
 
-static FrtTopDocs *msea_search(Searcher *self,
+static FrtTopDocs *msea_search(FrtSearcher *self,
                             Query *query,
                             int first_doc,
                             int num_docs,
                             FrtFilter *filter,
-                            Sort *sort,
+                            FrtSort *sort,
                             PostFilter *post_filter,
                             bool load_fields)
 {
@@ -1748,10 +1748,10 @@ static FrtTopDocs *msea_search(Searcher *self,
     return td;
 }
 
-static Query *msea_rewrite(Searcher *self, Query *original)
+static Query *msea_rewrite(FrtSearcher *self, Query *original)
 {
     int i;
-    Searcher *s;
+    FrtSearcher *s;
     MultiSearcher *msea = MSEA(self);
     Query **queries = FRT_ALLOC_N(Query *, msea->s_cnt), *rewritten;
 
@@ -1768,44 +1768,44 @@ static Query *msea_rewrite(Searcher *self, Query *original)
     return rewritten;
 }
 
-static FrtExplanation *msea_explain(Searcher *self, Query *query, int doc_num)
+static FrtExplanation *msea_explain(FrtSearcher *self, Query *query, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtWeight *w = q_weight(query, self);
-    Searcher *s = msea->searchers[i];
+    FrtSearcher *s = msea->searchers[i];
     FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
     w->destroy(w);
     return e;
 }
 
-static FrtExplanation *msea_explain_w(Searcher *self, FrtWeight *w, int doc_num)
+static FrtExplanation *msea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
-    Searcher *s = msea->searchers[i];
+    FrtSearcher *s = msea->searchers[i];
     FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
     return e;
 }
 
-static FrtTermVector *msea_get_term_vector(Searcher *self, const int doc_num,
-                                        Symbol field)
+static FrtTermVector *msea_get_term_vector(FrtSearcher *self, const int doc_num,
+                                        FrtSymbol field)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
-    Searcher *s = msea->searchers[i];
+    FrtSearcher *s = msea->searchers[i];
     return s->get_term_vector(s, doc_num - msea->starts[i], field);
 }
 
-static Similarity *msea_get_similarity(Searcher *self)
+static FrtSimilarity *msea_get_similarity(FrtSearcher *self)
 {
     return self->similarity;
 }
 
-static void msea_close(Searcher *self)
+static void msea_close(FrtSearcher *self)
 {
     int i;
-    Searcher *s;
+    FrtSearcher *s;
     MultiSearcher *msea = MSEA(self);
     if (msea->close_subs) {
         for (i = 0; i < msea->s_cnt; i++) {
@@ -1818,10 +1818,10 @@ static void msea_close(Searcher *self)
     free(self);
 }
 
-Searcher *msea_new(Searcher **searchers, int s_cnt, bool close_subs)
+FrtSearcher *msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs)
 {
     int i, max_doc = 0;
-    Searcher *self = (Searcher *)FRT_ALLOC(MultiSearcher);
+    FrtSearcher *self = (FrtSearcher *)FRT_ALLOC(MultiSearcher);
     int *starts = FRT_ALLOC_N(int, s_cnt + 1);
     for (i = 0; i < s_cnt; i++) {
         starts[i] = max_doc;

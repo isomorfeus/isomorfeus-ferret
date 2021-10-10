@@ -143,8 +143,8 @@ static TermDocEnumWrapper *tdew_new(const char *term, FrtTermDocEnum *tde,
 
 typedef struct MultiTermScorer
 {
-    Scorer                super;
-    Symbol                field;
+    FrtScorer                super;
+    FrtSymbol                field;
     uchar                *norms;
     FrtWeight               *weight;
     TermDocEnumWrapper  **tdew_a;
@@ -155,13 +155,13 @@ typedef struct MultiTermScorer
     float                 total_score;
 } MultiTermScorer;
 
-static float multi_tsc_score(Scorer *self)
+static float multi_tsc_score(FrtScorer *self)
 {
     return MTSc(self)->total_score * MTSc(self)->weight_value
         * sim_decode_norm(self->similarity, MTSc(self)->norms[self->doc]);
 }
 
-static bool multi_tsc_next(Scorer *self)
+static bool multi_tsc_next(FrtScorer *self)
 {
     int curr_doc;
     float total_score = 0.0f;
@@ -208,7 +208,7 @@ static bool multi_tsc_next(Scorer *self)
     return true;
 }
 
-static bool multi_tsc_advance_to(Scorer *self, int target_doc_num)
+static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num)
 {
     PriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
     TermDocEnumWrapper *tdew;
@@ -241,12 +241,12 @@ static bool multi_tsc_advance_to(Scorer *self, int target_doc_num)
     return (pq_top(tdew_pq) == NULL) ? false : true;
 }
 
-static bool multi_tsc_skip_to(Scorer *self, int target_doc_num)
+static bool multi_tsc_skip_to(FrtScorer *self, int target_doc_num)
 {
     return multi_tsc_advance_to(self, target_doc_num) && multi_tsc_next(self);
 }
 
-static FrtExplanation *multi_tsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
 {
     MultiTermScorer *mtsc = MTSc(self);
     TermDocEnumWrapper *tdew;
@@ -287,7 +287,7 @@ static FrtExplanation *multi_tsc_explain(Scorer *self, int doc_num)
     }
 }
 
-static void multi_tsc_destroy(Scorer *self)
+static void multi_tsc_destroy(FrtScorer *self)
 {
     int i;
     TermDocEnumWrapper **tdew_a = MTSc(self)->tdew_a;
@@ -299,12 +299,12 @@ static void multi_tsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Scorer *multi_tsc_new(FrtWeight *weight, Symbol field,
+static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
                              TermDocEnumWrapper **tdew_a, int tdew_cnt,
                              uchar *norms)
 {
     int i;
-    Scorer *self = scorer_new(MultiTermScorer, weight->similarity);
+    FrtScorer *self = scorer_new(MultiTermScorer, weight->similarity);
 
     MTSc(self)->weight          = weight;
     MTSc(self)->field           = field;
@@ -335,9 +335,9 @@ static char *multi_tw_to_s(FrtWeight *self)
     return strfmt("MultiTermWeight(%f)", self->value);
 }
 
-static Scorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *multi_tw_scorer(FrtWeight *self, IndexReader *ir)
 {
-    Scorer *multi_tsc = NULL;
+    FrtScorer *multi_tsc = NULL;
     PriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
     const int field_num = fis_get_field_num(ir->fis, MTQ(self->query)->field);
 
@@ -379,7 +379,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int do
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
-    Scorer *scorer;
+    FrtScorer *scorer;
     uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
@@ -474,7 +474,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, IndexReader *ir, int do
     }
 }
 
-static FrtWeight *multi_tw_new(Query *query, Searcher *searcher)
+static FrtWeight *multi_tw_new(Query *query, FrtSearcher *searcher)
 {
     int i;
     int doc_freq         = 0;
@@ -504,7 +504,7 @@ static FrtWeight *multi_tw_new(Query *query, Searcher *searcher)
  * MultiTermQuery
  ***************************************************************************/
 
-static char *multi_tq_to_s(Query *self, Symbol default_field)
+static char *multi_tq_to_s(Query *self, FrtSymbol default_field)
 {
     int i;
     PriorityQueue *boosted_terms = MTQ(self)->boosted_terms, *bt_pq_clone;
@@ -622,7 +622,7 @@ static MatchVector *multi_tq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-Query *multi_tq_new_conf(Symbol field, int max_terms, float min_boost)
+Query *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
 {
     Query *self;
 
@@ -651,7 +651,7 @@ Query *multi_tq_new_conf(Symbol field, int max_terms, float min_boost)
     return self;
 }
 
-Query *multi_tq_new(Symbol field)
+Query *multi_tq_new(FrtSymbol field)
 {
     return multi_tq_new_conf(field, MULTI_TERM_QUERY_MAX_TERMS, 0.0f);
 }

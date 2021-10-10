@@ -13,35 +13,35 @@
 
 typedef struct ConstantScoreScorer
 {
-    Scorer      super;
+    FrtScorer      super;
     FrtBitVector  *bv;
     float       score;
 } ConstantScoreScorer;
 
-static float cssc_score(Scorer *self)
+static float cssc_score(FrtScorer *self)
 {
     return CScSc(self)->score;
 }
 
-static bool cssc_next(Scorer *self)
+static bool cssc_next(FrtScorer *self)
 {
     return ((self->doc = bv_scan_next(CScSc(self)->bv)) >= 0);
 }
 
-static bool cssc_skip_to(Scorer *self, int doc_num)
+static bool cssc_skip_to(FrtScorer *self, int doc_num)
 {
     return ((self->doc = bv_scan_next_from(CScSc(self)->bv, doc_num)) >= 0);
 }
 
-static FrtExplanation *cssc_explain(Scorer *self, int doc_num)
+static FrtExplanation *cssc_explain(FrtScorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
     return expl_new(1.0, "ConstantScoreScorer");
 }
 
-static Scorer *cssc_new(FrtWeight *weight, IndexReader *ir)
+static FrtScorer *cssc_new(FrtWeight *weight, IndexReader *ir)
 {
-    Scorer *self    = scorer_new(ConstantScoreScorer, weight->similarity);
+    FrtScorer *self    = scorer_new(ConstantScoreScorer, weight->similarity);
     FrtFilter *filter  = CScQ(weight->query)->filter;
 
     CScSc(self)->score  = weight->value;
@@ -88,7 +88,7 @@ static FrtExplanation *csw_explain(FrtWeight *self, IndexReader *ir, int doc_num
     return expl;
 }
 
-static FrtWeight *csw_new(Query *query, Searcher *searcher)
+static FrtWeight *csw_new(Query *query, FrtSearcher *searcher)
 {
     FrtWeight *self        = w_new(FrtWeight, query);
 
@@ -108,7 +108,7 @@ static FrtWeight *csw_new(Query *query, Searcher *searcher)
  *
  ***************************************************************************/
 
-static char *csq_to_s(Query *self, Symbol default_field)
+static char *csq_to_s(Query *self, FrtSymbol default_field)
 {
     FrtFilter *filter = CScQ(self)->filter;
     char *filter_str = filter->to_s(filter);

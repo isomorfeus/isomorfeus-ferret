@@ -11,7 +11,7 @@
 
 #define PfxQ(query) ((PrefixQuery *)(query))
 
-static char *prq_to_s(Query *self, Symbol default_field)
+static char *prq_to_s(Query *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *prefix = PfxQ(self)->prefix;
@@ -78,7 +78,7 @@ static int prq_eq(Query *self, Query *o)
         && (strcmp(PfxQ(self)->field, PfxQ(o)->field) == 0);
 }
 
-Query *prefixq_new(Symbol field, const char *prefix)
+Query *prefixq_new(FrtSymbol field, const char *prefix)
 {
     Query *self = q_new(PrefixQuery);
 

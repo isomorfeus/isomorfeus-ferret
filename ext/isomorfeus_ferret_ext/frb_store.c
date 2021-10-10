@@ -15,7 +15,7 @@ VALUE cFSDirectory;
  ****************************************************************************/
 
 void
-frb_unwrap_locks(Store *store)
+frb_unwrap_locks(FrtStore *store)
 {
     HashSetEntry *hse = store->locks->first;
     for (; hse; hse = hse->next) {
@@ -152,7 +152,7 @@ frb_lock_release(VALUE self)
  ****************************************************************************/
 
 void
-frb_dir_free(Store *store)
+frb_dir_free(FrtStore *store)
 {
     frb_unwrap_locks(store);
     object_del(store);
@@ -170,7 +170,7 @@ frb_dir_free(Store *store)
 static VALUE
 frb_dir_close(VALUE self)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) - 1;
     rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
     if (ref_cnt < 0) {
@@ -191,7 +191,7 @@ frb_dir_close(VALUE self)
 static VALUE
 frb_dir_exists(VALUE self, VALUE rfname)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     return store->exists(store, rs2s(rfname)) ? Qtrue : Qfalse;
 }
@@ -205,7 +205,7 @@ frb_dir_exists(VALUE self, VALUE rfname)
 static VALUE
 frb_dir_touch(VALUE self, VALUE rfname)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     store->touch(store, rs2s(rfname));
     return Qnil;
@@ -220,7 +220,7 @@ frb_dir_touch(VALUE self, VALUE rfname)
 static VALUE
 frb_dir_delete(VALUE self, VALUE rfname)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     return (store->remove(store, rs2s(rfname)) == 0) ? Qtrue : Qfalse;
 }
@@ -234,7 +234,7 @@ frb_dir_delete(VALUE self, VALUE rfname)
 static VALUE
 frb_dir_file_count(VALUE self)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     return INT2FIX(store->count(store));
 }
 
@@ -247,7 +247,7 @@ frb_dir_file_count(VALUE self)
 static VALUE
 frb_dir_refresh(VALUE self)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     store->clear_all(store);
     return self;
 }
@@ -262,7 +262,7 @@ frb_dir_refresh(VALUE self)
 static VALUE
 frb_dir_rename(VALUE self, VALUE rfrom, VALUE rto)
 {
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     StringValue(rfrom);
     StringValue(rto);
     store->rename(store, rs2s(rfrom), rs2s(rto));
@@ -283,7 +283,7 @@ frb_dir_make_lock(VALUE self, VALUE rlock_name)
 {
     VALUE rlock;
     Lock *lock;
-    Store *store = DATA_PTR(self);
+    FrtStore *store = DATA_PTR(self);
     StringValue(rlock_name);
     lock = open_lock(store, rs2s(rlock_name));
     rlock = Data_Wrap_Struct(cLock, &frb_lock_mark, &frb_lock_free, lock);
@@ -313,11 +313,11 @@ static VALUE
 frb_ramdir_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rdir;
-    Store *store;
+    FrtStore *store;
     switch (rb_scan_args(argc, argv, "01", &rdir)) {
         case 1: {
-                    Store *ostore;
-                    Data_Get_Struct(rdir, Store, ostore);
+                    FrtStore *ostore;
+                    Data_Get_Struct(rdir, FrtStore, ostore);
                     store = open_ram_store_and_copy(ostore, false);
                     break;
                 }
@@ -353,7 +353,7 @@ static VALUE
 frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
 {
     VALUE self, rpath, rcreate;
-    Store *store;
+    FrtStore *store;
     bool create;
 
     rb_scan_args(argc, argv, "11", &rpath, &rcreate);

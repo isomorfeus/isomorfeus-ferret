@@ -17,7 +17,7 @@
 
 typedef struct TermScorer
 {
-    Scorer          super;
+    FrtScorer          super;
     int             docs[TDE_READ_SIZE];
     int             freqs[TDE_READ_SIZE];
     int             pointer;
@@ -29,7 +29,7 @@ typedef struct TermScorer
     float           weight_value;
 } TermScorer;
 
-static float tsc_score(Scorer *self)
+static float tsc_score(FrtScorer *self)
 {
     TermScorer *ts = TSc(self);
     int freq = ts->freqs[ts->pointer];
@@ -47,7 +47,7 @@ static float tsc_score(Scorer *self)
     return score;
 }
 
-static bool tsc_next(Scorer *self)
+static bool tsc_next(FrtScorer *self)
 {
     TermScorer *ts = TSc(self);
 
@@ -67,7 +67,7 @@ static bool tsc_next(Scorer *self)
     return true;
 }
 
-static bool tsc_skip_to(Scorer *self, int doc_num)
+static bool tsc_skip_to(FrtScorer *self, int doc_num)
 {
     TermScorer *ts = TSc(self);
     FrtTermDocEnum *tde = ts->tde;
@@ -93,7 +93,7 @@ static bool tsc_skip_to(Scorer *self, int doc_num)
     }
 }
 
-static FrtExplanation *tsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
 {
     TermScorer *ts = TSc(self);
     Query *query = ts->weight->get_query(ts->weight);
@@ -108,16 +108,16 @@ static FrtExplanation *tsc_explain(Scorer *self, int doc_num)
                     TQ(query)->field, TQ(query)->term, tf);
 }
 
-static void tsc_destroy(Scorer *self)
+static void tsc_destroy(FrtScorer *self)
 {
     TSc(self)->tde->close(TSc(self)->tde);
     scorer_destroy_i(self);
 }
 
-static Scorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
+static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
 {
     int i;
-    Scorer *self            = scorer_new(TermScorer, weight->similarity);
+    FrtScorer *self            = scorer_new(TermScorer, weight->similarity);
     TSc(self)->weight       = weight;
     TSc(self)->tde          = tde;
     TSc(self)->norms        = norms;
@@ -142,7 +142,7 @@ static Scorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
  *
  ***************************************************************************/
 
-static Scorer *tw_scorer(FrtWeight *self, IndexReader *ir)
+static FrtScorer *tw_scorer(FrtWeight *self, IndexReader *ir)
 {
     FrtTermQuery *tq = TQ(self->query);
     FrtTermDocEnum *tde = ir_term_docs_for(ir, tq->field, tq->term);
@@ -156,7 +156,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, IndexReader *ir, int doc_num)
 {
     FrtExplanation *qnorm_expl;
     FrtExplanation *field_expl;
-    Scorer *scorer;
+    FrtScorer *scorer;
     FrtExplanation *tf_expl;
     uchar *field_norms;
     float field_norm;
@@ -210,7 +210,7 @@ static char *tw_to_s(FrtWeight *self)
     return strfmt("TermWeight(%f)", self->value);
 }
 
-static FrtWeight *tw_new(Query *query, Searcher *searcher)
+static FrtWeight *tw_new(Query *query, FrtSearcher *searcher)
 {
     FrtWeight *self    = w_new(FrtWeight, query);
     self->scorer    = &tw_scorer;
@@ -239,7 +239,7 @@ static void tq_destroy(Query *self)
     q_destroy_i(self);
 }
 
-static char *tq_to_s(Query *self, Symbol default_field)
+static char *tq_to_s(Query *self, FrtSymbol default_field)
 {
     const char *field = TQ(self)->field;
     const char *term = TQ(self)->term;
@@ -294,7 +294,7 @@ static MatchVector *tq_get_matchv_i(Query *self, MatchVector *mv,
     return mv;
 }
 
-Query *tq_new(Symbol field, const char *term)
+Query *tq_new(FrtSymbol field, const char *term)
 {
     Query *self             = q_new(FrtTermQuery);
 

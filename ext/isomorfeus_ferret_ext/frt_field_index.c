@@ -32,7 +32,7 @@ static void field_index_destroy(void *p)
     free(self);
 }
 
-FrtFieldIndex *field_index_get(IndexReader *ir, Symbol field,
+FrtFieldIndex *field_index_get(IndexReader *ir, FrtSymbol field,
                             const FrtFieldIndexClass *klass)
 {
     int length = 0;
@@ -207,7 +207,7 @@ float get_float_value(FrtFieldIndex *field_index, long doc_num)
 
 static void *string_create_index(int size)
 {
-    StringIndex *self = FRT_ALLOC_AND_ZERO(StringIndex);
+    FrtStringIndex *self = FRT_ALLOC_AND_ZERO(FrtStringIndex);
     self->size = size;
     self->index = FRT_ALLOC_AND_ZERO_N(long, size);
     self->v_capa = VALUES_ARRAY_START_SIZE;
@@ -218,7 +218,7 @@ static void *string_create_index(int size)
 
 static void string_destroy_index(void *p)
 {
-    StringIndex *self = (StringIndex *)p;
+    FrtStringIndex *self = (FrtStringIndex *)p;
     int i;
     free(self->index);
     for (i = 0; i < self->v_size; i++) {
@@ -232,7 +232,7 @@ static void string_handle_term(void *index_ptr,
                                FrtTermDocEnum *tde,
                                const char *text)
 {
-    StringIndex *index = (StringIndex *)index_ptr;
+    FrtStringIndex *index = (FrtStringIndex *)index_ptr;
     if (index->v_size >= index->v_capa) {
         index->v_capa *= 2;
         FRT_REALLOC_N(index->values, char *, index->v_capa);
@@ -254,7 +254,7 @@ const FrtFieldIndexClass FRT_STRING_FIELD_INDEX_CLASS = {
 const char *get_string_value(FrtFieldIndex *field_index, long doc_num)
 {
     if (field_index->klass == &FRT_STRING_FIELD_INDEX_CLASS) {
-        StringIndex *string_index = (StringIndex *)field_index->index;
+        FrtStringIndex *string_index = (FrtStringIndex *)field_index->index;
         if (doc_num >= 0 && doc_num < string_index->size) {
             return string_index->values[string_index->index[doc_num]];
         }

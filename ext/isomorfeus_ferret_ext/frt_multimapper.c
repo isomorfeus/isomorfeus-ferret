@@ -5,17 +5,17 @@
 #include <string.h>
 #include "frt_internal.h"
 
-#define St(state) ((State *)(state))
+#define St(state) ((FrtState *)(state))
 #define UCtoI(val) ((int)(unsigned char)(val))
 
-static void state_destroy(State *state)
+static void state_destroy(FrtState *state)
 {
     state->destroy_i(state);
 }
 
 typedef struct LetterState
 {
-    State super;
+    FrtState super;
     int c;
     int val;
     char *mapping;
@@ -51,15 +51,15 @@ static LetterState *lstate_new(int c, int val)
     self->c             = c;
     self->val           = val;
     self->mapping       = NULL;
-    St(self)->next      = (int (*)(State *, int, int *))&lstate_next;
-    St(self)->destroy_i = (void (*)(State *))&free;
-    St(self)->is_match  = (int (*)(State *, char **))&lstate_is_match;
+    St(self)->next      = (int (*)(FrtState *, int, int *))&lstate_next;
+    St(self)->destroy_i = (void (*)(FrtState *))&free;
+    St(self)->is_match  = (int (*)(FrtState *, char **))&lstate_is_match;
     return self;
 }
 
 typedef struct NonDeterministicState
 {
-    State super;
+    FrtState super;
     int *states[256];
     int size[256];
     int capa[256];
@@ -95,7 +95,7 @@ static void ndstate_destroy_i(NonDeterministicState *self)
     free(self);
 }
 
-static int ndstate_is_match(State *self, char **mapping)
+static int ndstate_is_match(FrtState *self, char **mapping)
 {
     (void)self; (void)mapping;
     return 0;
@@ -104,8 +104,8 @@ static int ndstate_is_match(State *self, char **mapping)
 static NonDeterministicState *ndstate_new()
 {
     NonDeterministicState *self = FRT_ALLOC_AND_ZERO(NonDeterministicState);
-    St(self)->next              = (int (*)(State *, int, int *))&ndstate_next;
-    St(self)->destroy_i         = (void (*)(State *))&ndstate_destroy_i;
+    St(self)->next              = (int (*)(FrtState *, int, int *))&ndstate_next;
+    St(self)->destroy_i         = (void (*)(FrtState *))&ndstate_destroy_i;
     St(self)->is_match          = &ndstate_is_match;
     return self;
 }
@@ -167,7 +167,7 @@ static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVect
     if (current_state == NULL) {
         int bit, i;
         int match_len = 0, max_match_len = 0;
-        State *start = self->nstates[0];
+        FrtState *start = self->nstates[0];
         FrtDeterministicState *start_ds;
         current_state = FRT_ALLOC_AND_ZERO(FrtDeterministicState);
         h_set(self->dstates_map, bv, current_state);
@@ -182,7 +182,7 @@ static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVect
         }
         while ((bit = bv_scan_next(bv)) >= 0) {
             char *mapping;
-            State *st = self->nstates[bit];
+            FrtState *st = self->nstates[bit];
             if ((match_len = -st->is_match(st, &mapping)) > max_match_len) {
                 current_state->longest_match = max_match_len = match_len;
                 current_state->mapping = mapping;
@@ -196,7 +196,7 @@ static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVect
                                  start->next(start, (int)c, self->next_states));
             bv_scan_reset(bv);
             while ((bit = bv_scan_next(bv)) >= 0) {
-                State *state = self->nstates[bit];
+                FrtState *state = self->nstates[bit];
                 mulmap_bv_set_states(nxt_bv, self->next_states,
                                      state->next(state, (int)c, self->next_states));
             }
@@ -216,10 +216,10 @@ void mulmap_compile(MultiMapper *self)
     int size = 1;
     int capa = 128;
     LetterState *ls;
-    State **nstates = FRT_ALLOC_N(State *, capa);
+    FrtState **nstates = FRT_ALLOC_N(FrtState *, capa);
     Mapping **mappings = self->mappings;
     unsigned char alphabet[256];
-    nstates[0] = (State *)start;
+    nstates[0] = (FrtState *)start;
     memset(alphabet, 0, 256);
 
     for (i = self->size - 1; i >= 0; i--) {
@@ -228,12 +228,12 @@ void mulmap_compile(MultiMapper *self)
         ndstate_add(start, UCtoI(pattern[0]), size);
         if (size + plen + 1 >= capa) {
             capa <<= 2;
-            FRT_REALLOC_N(nstates, State *, capa);
+            FRT_REALLOC_N(nstates, FrtState *, capa);
         }
         for (j = 0; j < plen; j++) {
             alphabet[UCtoI(pattern[j])] = 1;
             size += 1;
-            nstates[size-1] = (State *)lstate_new(UCtoI(pattern[j+1]), size);
+            nstates[size-1] = (FrtState *)lstate_new(UCtoI(pattern[j+1]), size);
         }
         ls = LSt(nstates[size-1]);
         ls->mapping = mappings[i]->replacement;

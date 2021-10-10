@@ -149,11 +149,11 @@ float fuzq_score(FrtFuzzyQuery *fuzq, const char *target)
 
 #define FzQ(query) ((FrtFuzzyQuery *)(query))
 
-static char *fuzq_to_s(Query *self, Symbol curr_field)
+static char *fuzq_to_s(Query *self, FrtSymbol curr_field)
 {
     char *buffer, *bptr;
     char *term = FzQ(self)->term;
-    Symbol field = FzQ(self)->field;
+    FrtSymbol field = FzQ(self)->field;
     bptr = buffer = FRT_ALLOC_N(char, strlen(term) + strlen(field) + 70);
 
     if (strcmp(curr_field, field) != 0) {
@@ -252,7 +252,7 @@ static int fuzq_eq(Query *self, Query *o)
         && (fq1->min_sim == fq2->min_sim);
 }
 
-Query *fuzq_new_conf(Symbol field, const char *term,
+Query *fuzq_new_conf(FrtSymbol field, const char *term,
                      float min_sim, int pre_len, int max_terms)
 {
     Query *self = q_new(FrtFuzzyQuery);
@@ -275,7 +275,7 @@ Query *fuzq_new_conf(Symbol field, const char *term,
     return self;
 }
 
-Query *fuzq_new(Symbol field, const char *term)
+Query *fuzq_new(FrtSymbol field, const char *term)
 {
     return fuzq_new_conf(field, term, 0.0f, 0, 0);
 }

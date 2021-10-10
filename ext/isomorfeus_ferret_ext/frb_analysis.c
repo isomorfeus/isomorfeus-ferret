@@ -1152,7 +1152,7 @@ frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
-    if (((StemFilter *)ts)->stemmer == NULL) {
+    if (((FrtStemFilter *)ts)->stemmer == NULL) {
         rb_raise(rb_eArgError, "No stemmer could be found with the encoding "
                  "%s and the language %s", charenc, algorithm);
     }
@@ -1187,7 +1187,7 @@ cwa_destroy_i(FrtAnalyzer *a)
 }
 
 static FrtTokenStream *
-cwa_get_ts(FrtAnalyzer *a, Symbol field, char *text)
+cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text)
 {
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
                            rb_str_new_cstr(field), rb_str_new_cstr(text));
@@ -1519,7 +1519,7 @@ static VALUE
 frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 {
     FrtAnalyzer *pfa, *a;
-    Symbol field = frb_field(rfield);
+    FrtSymbol field = frb_field(rfield);
     GET_A(pfa, self);
 
     StringValue(rstring);

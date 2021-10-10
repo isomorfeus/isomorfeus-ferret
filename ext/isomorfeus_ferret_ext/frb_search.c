@@ -125,7 +125,7 @@ static VALUE sym_pre_tag;
 static VALUE sym_post_tag;
 static VALUE sym_ellipsis;
 
-static Symbol fsym_id;
+static FrtSymbol fsym_id;
 
 extern VALUE cIndexReader;
 extern void frb_ir_free(void *p);
@@ -190,12 +190,12 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
 {
     int i;
     VALUE rhits = rb_funcall(self, id_hits, 0);
-    Searcher *sea = (Searcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
+    FrtSearcher *sea = (FrtSearcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
     const int len = RARRAY_LEN(rhits);
     unsigned int capa = len * 64 + 100;
     int p = 0;
     char *str = FRT_ALLOC_N(char, len * 64 + 100);
-    Symbol field = fsym_id;
+    FrtSymbol field = fsym_id;
     VALUE rstr;
 
     if (argc) {
@@ -292,7 +292,7 @@ frb_td_to_json(VALUE self)
 	VALUE rhits = rb_funcall(self, id_hits, 0);
 	VALUE rhit;
 	LazyDoc *lzd;
-	Searcher *sea = (Searcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
+	FrtSearcher *sea = (FrtSearcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
 	const int num_hits = RARRAY_LEN(rhits);
 	int doc_id;
     int len = 32768;
@@ -403,7 +403,7 @@ frb_q_to_s(int argc, VALUE *argv, VALUE self)
     GET_Q();
     VALUE rstr, rfield;
     char *str;
-    Symbol field = NULL;
+    FrtSymbol field = NULL;
     if (rb_scan_args(argc, argv, "01", &rfield)) {
         field = frb_field(rfield);
     }
@@ -496,7 +496,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
                             (free_ft)term_destroy);
     HashSetEntry *hse;
     GET_Q();
-    Searcher *sea = (Searcher *)DATA_PTR(searcher);
+    FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
     Query *rq = sea->rewrite(sea, q);
     rq->extract_terms(rq, terms);
     q_deref(rq);
@@ -601,7 +601,7 @@ frb_get_q(Query *q)
 static VALUE
 frb_tq_init(VALUE self, VALUE rfield, VALUE rterm)
 {
-    Symbol field = frb_field(rfield);
+    FrtSymbol field = frb_field(rfield);
     char *term = rs2s(rb_obj_as_string(rterm));
     Query *q = tq_new(field, term);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
@@ -718,7 +718,7 @@ frb_mtq_add_term(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-typedef Query *(*mtq_maker_ft)(Symbol field, const char *term);
+typedef Query *(*mtq_maker_ft)(FrtSymbol field, const char *term);
 
 static int
 get_max_terms(VALUE rmax_terms, int max_terms)
@@ -1710,7 +1710,7 @@ frb_spanprq_init(int argc, VALUE *argv, VALUE self)
         max_terms = FIX2INT(rmax_terms);
     }
     q = spanprq_new(frb_field(rfield), StringValuePtr(rprefix));
-    ((SpanPrefixQuery *)q)->max_terms = max_terms;
+    ((FrtSpanPrefixQuery *)q)->max_terms = max_terms;
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1752,7 +1752,7 @@ static void
 frb_spannq_mark(void *p)
 {
     int i;
-    SpanNearQuery *snq = (SpanNearQuery *)p;
+    FrtSpanNearQuery *snq = (FrtSpanNearQuery *)p;
     for (i = 0; i < snq->c_cnt; i++) {
         frb_gc_mark(snq->clauses[i]);
     }
@@ -1845,7 +1845,7 @@ static void
 frb_spanoq_mark(void *p)
 {
     int i;
-    SpanOrQuery *soq = (SpanOrQuery *)p;
+    FrtSpanOrQuery *soq = (FrtSpanOrQuery *)p;
     for (i = 0; i < soq->c_cnt; i++) {
         frb_gc_mark(soq->clauses[i]);
     }
@@ -1907,7 +1907,7 @@ frb_spanoq_add(VALUE self, VALUE rclause)
 static void
 frb_spanxq_mark(void *p)
 {
-    SpanNotQuery *sxq = (SpanNotQuery *)p;
+    FrtSpanNotQuery *sxq = (FrtSpanNotQuery *)p;
     frb_gc_mark(sxq->inc);
     frb_gc_mark(sxq->exc);
 }
@@ -2112,11 +2112,11 @@ static void
 frb_sf_free(void *p)
 {
     object_del(p);
-    sort_field_destroy((SortField *)p);
+    sort_field_destroy((FrtSortField *)p);
 }
 
 static VALUE
-frb_get_sf(SortField *sf)
+frb_get_sf(FrtSortField *sf)
 {
     VALUE self = object_get(sf);
     if (self == Qnil) {
@@ -2175,12 +2175,12 @@ get_sort_type(VALUE rtype)
 static VALUE
 frb_sf_init(int argc, VALUE *argv, VALUE self)
 {
-    SortField *sf;
+    FrtSortField *sf;
     VALUE rfield, roptions;
     VALUE rval;
     int type = FRT_SORT_TYPE_AUTO;
     int is_reverse = false;
-    Symbol field;
+    FrtSymbol field;
 
     if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
         if (Qnil != (rval = rb_hash_aref(roptions, sym_type))) {
@@ -2206,7 +2206,7 @@ frb_sf_init(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-#define GET_SF() SortField *sf = (SortField *)DATA_PTR(self)
+#define GET_SF() FrtSortField *sf = (FrtSortField *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -2295,7 +2295,7 @@ frb_sf_to_s(VALUE self)
 static void
 frb_sort_free(void *p)
 {
-    Sort *sort = (Sort *)p;
+    FrtSort *sort = (FrtSort *)p;
     object_del(sort);
     sort_destroy(sort);
 }
@@ -2303,7 +2303,7 @@ frb_sort_free(void *p)
 static void
 frb_sort_mark(void *p)
 {
-    Sort *sort = (Sort *)p;
+    FrtSort *sort = (FrtSort *)p;
     int i;
     for (i = 0; i < sort->size; i++) {
         frb_gc_mark(sort->sort_fields[i]);
@@ -2314,7 +2314,7 @@ static VALUE
 frb_sort_alloc(VALUE klass)
 {
     VALUE self;
-    Sort *sort = sort_new();
+    FrtSort *sort = sort_new();
     sort->destroy_all = false;
     self = Data_Wrap_Struct(klass, &frb_sort_mark, &frb_sort_free, sort);
     object_add(sort, self);
@@ -2322,9 +2322,9 @@ frb_sort_alloc(VALUE klass)
 }
 
 static void
-frb_parse_sort_str(Sort *sort, char *xsort_str)
+frb_parse_sort_str(FrtSort *sort, char *xsort_str)
 {
-    SortField *sf;
+    FrtSortField *sf;
     char *comma, *end, *e, *s;
     const int len = strlen(xsort_str);
     char *sort_str = FRT_ALLOC_N(char, len + 2);
@@ -2364,12 +2364,12 @@ frb_parse_sort_str(Sort *sort, char *xsort_str)
 }
 
 static void
-frb_sort_add(Sort *sort, VALUE rsf, bool reverse)
+frb_sort_add(FrtSort *sort, VALUE rsf, bool reverse)
 {
-    SortField *sf;
+    FrtSortField *sf;
     switch (TYPE(rsf)) {
         case T_DATA:
-            Data_Get_Struct(rsf, SortField, sf);
+            Data_Get_Struct(rsf, FrtSortField, sf);
             if (reverse) sf->reverse = !sf->reverse;
             sort_add_sort_field(sort, sf);
             break;
@@ -2389,7 +2389,7 @@ frb_sort_add(Sort *sort, VALUE rsf, bool reverse)
     }
 }
 
-#define GET_SORT() Sort *sort = (Sort *)DATA_PTR(self)
+#define GET_SORT() FrtSort *sort = (FrtSort *)DATA_PTR(self)
 /*
  *  call-seq:
  *     Sort.new(sort_fields = [SortField::SCORE, SortField::DOC_ID], reverse = false) -> Sort
@@ -2421,12 +2421,12 @@ frb_sort_init(int argc, VALUE *argv, VALUE self)
                     if (sort->sort_fields[i] == &FRT_SORT_FIELD_DOC) has_sfd = true;
                 }
                 if (!has_sfd) {
-                    sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_DOC);
+                    sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
                 }
                 break;
         case 0:
-                sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_SCORE);
-                sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_DOC);
+                sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_SCORE);
+                sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
     }
 
     return self;
@@ -2476,12 +2476,12 @@ frb_sort_to_s(VALUE self)
 static void
 frb_sea_free(void *p)
 {
-    Searcher *sea = (Searcher *)p;
+    FrtSearcher *sea = (FrtSearcher *)p;
     object_del(sea);
     sea->close(sea);
 }
 
-#define GET_SEA() Searcher *sea = (Searcher *)DATA_PTR(self)
+#define GET_SEA() FrtSearcher *sea = (FrtSearcher *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -2562,7 +2562,7 @@ frb_sea_max_doc(VALUE self)
 }
 
 static float
-call_filter_proc(int doc_id, float score, Searcher *self, void *arg)
+call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg)
 {
     VALUE val = rb_funcall((VALUE)arg, id_call, 3,
                            INT2FIX(doc_id),
@@ -2630,12 +2630,12 @@ frb_get_cwrapped_filter(VALUE rval)
 }
 
 static FrtTopDocs *
-frb_sea_search_internal(Query *query, VALUE roptions, Searcher *sea)
+frb_sea_search_internal(Query *query, VALUE roptions, FrtSearcher *sea)
 {
     VALUE rval;
     int offset = 0, limit = 10;
     FrtFilter *filter = NULL;
-    Sort *sort = NULL;
+    FrtSort *sort = NULL;
     FrtTopDocs *td;
 
     PostFilter post_filter_holder;
@@ -2687,7 +2687,7 @@ frb_sea_search_internal(Query *query, VALUE roptions, Searcher *sea)
             if (TYPE(rval) != T_DATA || CLASS_OF(rval) == cSortField) {
                 rval = frb_sort_init(1, &rval, frb_sort_alloc(cSort));
             }
-            Data_Get_Struct(rval, Sort, sort);
+            Data_Get_Struct(rval, FrtSort, sort);
         }
     }
 
@@ -3045,9 +3045,9 @@ frb_sea_mark(void *p)
 static VALUE
 frb_sea_init(VALUE self, VALUE obj)
 {
-    Store *store = NULL;
+    FrtStore *store = NULL;
     IndexReader *ir = NULL;
-    Searcher *sea;
+    FrtSearcher *sea;
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
         store = open_fs_store(rs2s(obj));
@@ -3057,7 +3057,7 @@ frb_sea_init(VALUE self, VALUE obj)
     } else {
         Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
-            Data_Get_Struct(obj, Store, store);
+            Data_Get_Struct(obj, FrtStore, store);
             ir = ir_open(store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
@@ -3082,7 +3082,7 @@ frb_sea_init(VALUE self, VALUE obj)
 static void
 frb_ms_free(void *p)
 {
-    Searcher *sea = (Searcher *)p;
+    FrtSearcher *sea = (FrtSearcher *)p;
     MultiSearcher *msea = (MultiSearcher *)sea;
     free(msea->searchers);
     object_del(sea);
@@ -3112,23 +3112,23 @@ frb_ms_init(int argc, VALUE *argv, VALUE self)
     int i, j, top = 0, capa = argc;
 
     VALUE rsearcher;
-    Searcher **searchers = FRT_ALLOC_N(Searcher *, capa);
-    Searcher *s;
+    FrtSearcher **searchers = FRT_ALLOC_N(FrtSearcher *, capa);
+    FrtSearcher *s;
 
     for (i = 0; i < argc; i++) {
         rsearcher = argv[i];
         switch (TYPE(rsearcher)) {
             case T_ARRAY:
                 capa += RARRAY_LEN(rsearcher);
-                REALLOC_N(searchers, Searcher *, capa);
+                REALLOC_N(searchers, FrtSearcher *, capa);
                 for (j = 0; j < RARRAY_LEN(rsearcher); j++) {
                     VALUE rs = RARRAY_PTR(rsearcher)[j];
-                    Data_Get_Struct(rs, Searcher, s);
+                    Data_Get_Struct(rs, FrtSearcher, s);
                     searchers[top++] = s;
                 }
                 break;
             case T_DATA:
-                Data_Get_Struct(rsearcher, Searcher, s);
+                Data_Get_Struct(rsearcher, FrtSearcher, s);
                 searchers[top++] = s;
                 break;
             default:
@@ -4006,8 +4006,8 @@ Init_SpanOrQuery(void)
  *  near the start but without the term "train" near the start. This would
  *  allow the term "train" to occur later on in the document.
  *
- *    rails_query = SpanFirstQuery.new(SpanTermQuery.new(:content, "rails"), 100)
- *    train_query = SpanFirstQuery.new(SpanTermQuery.new(:content, "train"), 100)
+ *    rails_query = SpanFirstQuery.new(FrtSpanTermQuery.new(:content, "rails"), 100)
+ *    train_query = SpanFirstQuery.new(FrtSpanTermQuery.new(:content, "train"), 100)
  *    query = SpanNotQuery.new(rails_query, train_query)
  *
  *  == NOTE
@@ -4238,30 +4238,30 @@ Init_SortField(void)
     rb_define_const(cSortField, "SCORE",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&FRT_SORT_FIELD_SCORE));
-    object_add((SortField *)&FRT_SORT_FIELD_SCORE,
+                                     (FrtSortField *)&FRT_SORT_FIELD_SCORE));
+    object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE,
                rb_const_get(cSortField, rb_intern("SCORE")));
 
     rb_define_const(cSortField, "SCORE_REV",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&FRT_SORT_FIELD_SCORE_REV));
-    object_add((SortField *)&FRT_SORT_FIELD_SCORE_REV,
+                                     (FrtSortField *)&FRT_SORT_FIELD_SCORE_REV));
+    object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE_REV,
                rb_const_get(cSortField, rb_intern("SCORE_REV")));
 
     rb_define_const(cSortField, "DOC_ID",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&FRT_SORT_FIELD_DOC));
+                                     (FrtSortField *)&FRT_SORT_FIELD_DOC));
 
     oSORT_FIELD_DOC = rb_const_get(cSortField, rb_intern("DOC_ID"));
-    object_add((SortField *)&FRT_SORT_FIELD_DOC, oSORT_FIELD_DOC);
+    object_add((FrtSortField *)&FRT_SORT_FIELD_DOC, oSORT_FIELD_DOC);
 
     rb_define_const(cSortField, "DOC_ID_REV",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&FRT_SORT_FIELD_DOC_REV));
-    object_add((SortField *)&FRT_SORT_FIELD_DOC_REV,
+                                     (FrtSortField *)&FRT_SORT_FIELD_DOC_REV));
+    object_add((FrtSortField *)&FRT_SORT_FIELD_DOC_REV,
                rb_const_get(cSortField, rb_intern("DOC_ID_REV")));
 }
 

@@ -23,7 +23,7 @@ void with_lock(Lock *lock, void (*func)(void *arg), void *arg)
 /*
  * TODO: add try finally
  */
-void with_lock_name(Store *store, const char *lock_name,
+void with_lock_name(FrtStore *store, const char *lock_name,
                     void (*func)(void *arg), void *arg)
 {
     Lock *lock = store->open_lock_i(store, lock_name);
@@ -35,7 +35,7 @@ void with_lock_name(Store *store, const char *lock_name,
     store->close_lock_i(lock);
 }
 
-void store_deref(Store *store)
+void store_deref(FrtStore *store)
 {
     mutex_lock(&store->mutex_i);
     if (--store->ref_cnt <= 0) {
@@ -46,7 +46,7 @@ void store_deref(Store *store)
     }
 }
 
-Lock *open_lock(Store *store, const char *lockname)
+Lock *open_lock(FrtStore *store, const char *lockname)
 {
     Lock *lock = store->open_lock_i(store, lockname);
     hs_add(store->locks, lock);
@@ -66,9 +66,9 @@ static void close_lock_i(Lock *lock)
 /**
  * Create a store struct initializing the mutex.
  */
-Store *store_new()
+FrtStore *store_new()
 {
-    Store *store = FRT_ALLOC(Store);
+    FrtStore *store = FRT_ALLOC(FrtStore);
     store->ref_cnt = 1;
     mutex_init(&store->mutex_i, NULL);
     mutex_init(&store->mutex, NULL);
@@ -81,7 +81,7 @@ Store *store_new()
  *
  * @param store the store struct to free
  */
-void store_destroy(Store *store)
+void store_destroy(FrtStore *store)
 {
     mutex_destroy(&store->mutex_i);
     mutex_destroy(&store->mutex);
@@ -672,7 +672,7 @@ static void add_file_name(const char *fname, void *arg)
     fnl->total_len += strlen(fname) + 2;
 }
 
-char *store_to_s(Store *store)
+char *store_to_s(FrtStore *store)
 {
     struct FileNameListArg fnl;
     char *buf, *b;

@@ -15,7 +15,7 @@
  *
  ****************************************************************************/
 
-FrtTerm *term_new(Symbol field, const char *text)
+FrtTerm *term_new(FrtSymbol field, const char *text)
 {
     FrtTerm *t = FRT_ALLOC(FrtTerm);
     t->field = field;
@@ -46,41 +46,41 @@ unsigned long long term_hash(const void *t)
  *
  ****************************************************************************/
 
-static float simdef_length_norm(Similarity *s, Symbol field, int num_terms)
+static float simdef_length_norm(FrtSimilarity *s, FrtSymbol field, int num_terms)
 {
     (void)s;
     (void)field;
     return (float)(1.0 / sqrt(num_terms));
 }
 
-static float simdef_query_norm(struct Similarity *s, float sum_of_squared_weights)
+static float simdef_query_norm(struct FrtSimilarity *s, float sum_of_squared_weights)
 {
     (void)s;
     return (float)(1.0 / sqrt(sum_of_squared_weights));
 }
 
-static float simdef_tf(struct Similarity *s, float freq)
+static float simdef_tf(struct FrtSimilarity *s, float freq)
 {
     (void)s;
     return (float)sqrt(freq);
 }
 
-static float simdef_sloppy_freq(struct Similarity *s, int distance)
+static float simdef_sloppy_freq(struct FrtSimilarity *s, int distance)
 {
     (void)s;
     return (float)(1.0 / (double)(distance + 1));
 }
 
-static float simdef_idf_term(struct Similarity *s, Symbol field, char *term,
-                      Searcher *searcher)
+static float simdef_idf_term(struct FrtSimilarity *s, FrtSymbol field, char *term,
+                      FrtSearcher *searcher)
 {
     return s->idf(s, searcher->doc_freq(searcher, field, term),
                   searcher->max_doc(searcher));
 }
 
-static float simdef_idf_phrase(struct Similarity *s, Symbol field,
+static float simdef_idf_phrase(struct FrtSimilarity *s, FrtSymbol field,
                         PhrasePosition *positions,
-                        int pp_cnt, Searcher *searcher)
+                        int pp_cnt, FrtSearcher *searcher)
 {
     float idf = 0.0f;
     int i, j;
@@ -93,36 +93,36 @@ static float simdef_idf_phrase(struct Similarity *s, Symbol field,
     return idf;
 }
 
-static float simdef_idf(struct Similarity *s, int doc_freq, int num_docs)
+static float simdef_idf(struct FrtSimilarity *s, int doc_freq, int num_docs)
 {
     (void)s;
     return (float)(log((float)num_docs/(float)(doc_freq+1)) + 1.0);
 }
 
-static float simdef_coord(struct Similarity *s, int overlap, int max_overlap)
+static float simdef_coord(struct FrtSimilarity *s, int overlap, int max_overlap)
 {
     (void)s;
     return (float)((double)overlap / (double)max_overlap);
 }
 
-static float simdef_decode_norm(struct Similarity *s, uchar b)
+static float simdef_decode_norm(struct FrtSimilarity *s, uchar b)
 {
     return s->norm_table[b];
 }
 
-static uchar simdef_encode_norm(struct Similarity *s, float f)
+static uchar simdef_encode_norm(struct FrtSimilarity *s, float f)
 {
     (void)s;
     return float2byte(f);
 }
 
-static void simdef_destroy(Similarity *s)
+static void simdef_destroy(FrtSimilarity *s)
 {
     (void)s;
     /* nothing to do here */
 }
 
-static Similarity default_similarity = {
+static FrtSimilarity default_similarity = {
     NULL,
     {0},
     &simdef_length_norm,
@@ -138,7 +138,7 @@ static Similarity default_similarity = {
     &simdef_destroy
 };
 
-Similarity *sim_create_default()
+FrtSimilarity *sim_create_default()
 {
     int i;
     if (!default_similarity.data) {

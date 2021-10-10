@@ -9,7 +9,7 @@
  *
  ****************************************************************************/
 
-FrtDocField *df_new(Symbol name)
+FrtDocField *df_new(FrtSymbol name)
 {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
@@ -121,7 +121,7 @@ FrtDocField *doc_add_field(FrtDocument *doc, FrtDocField *df)
     return df;
 }
 
-FrtDocField *doc_get_field(FrtDocument *doc, Symbol name)
+FrtDocField *doc_get_field(FrtDocument *doc, FrtSymbol name)
 {
     return (FrtDocField *)h_get(doc->field_dict, name);
 }

@@ -55,7 +55,7 @@ static int filt_eq_default(FrtFilter *filt, FrtFilter *o)
     return false;
 }
 
-FrtFilter *filt_create(size_t size, Symbol name)
+FrtFilter *filt_create(size_t size, FrtSymbol name)
 {
     FrtFilter *filt    = (FrtFilter *)emalloc(size);
     filt->cache     = co_hash_create();
@@ -106,9 +106,9 @@ static char *qfilt_to_s(FrtFilter *filt)
 static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, IndexReader *ir)
 {
     FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
-    Searcher *sea = isea_new(ir);
+    FrtSearcher *sea = isea_new(ir);
     FrtWeight *weight = q_weight(QF(filt)->query, sea);
-    Scorer *scorer = weight->scorer(weight, ir);
+    FrtScorer *scorer = weight->scorer(weight, ir);
     if (scorer) {
         while (scorer->next(scorer)) {
             bv_set(bv, scorer->doc);

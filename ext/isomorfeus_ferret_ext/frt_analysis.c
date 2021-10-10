@@ -213,7 +213,7 @@ static void a_standard_destroy_i(FrtAnalyzer *a)
 }
 
 static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a,
-                                      Symbol field,
+                                      FrtSymbol field,
                                       char *text)
 {
     FrtTokenStream *ts;
@@ -225,7 +225,7 @@ static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a,
 FrtAnalyzer *analyzer_new(FrtTokenStream *ts,
                        void (*destroy_i)(FrtAnalyzer *a),
                        FrtTokenStream *(*get_ts)(FrtAnalyzer *a,
-                                              Symbol field,
+                                              FrtSymbol field,
                                               char *text))
 {
     FrtAnalyzer *a = FRT_ALLOC(FrtAnalyzer);
@@ -554,14 +554,14 @@ FrtAnalyzer *mb_letter_analyzer_new(bool lowercase)
  *
  ****************************************************************************/
 
-#define STDTS(token_stream) ((StandardTokenizer *)(token_stream))
+#define STDTS(token_stream) ((FrtStandardTokenizer *)(token_stream))
 
 /*
- * StandardTokenizer
+ * FrtStandardTokenizer
  */
 static FrtToken *std_next(FrtTokenStream *ts)
 {
-    StandardTokenizer *std_tz = STDTS(ts);
+    FrtStandardTokenizer *std_tz = STDTS(ts);
     const char *start = NULL;
     const char *end = NULL;
     int len;
@@ -595,12 +595,12 @@ static FrtToken *std_next(FrtTokenStream *ts)
 
 static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
 {
-    return ts_clone_size(orig_ts, sizeof(StandardTokenizer));
+    return ts_clone_size(orig_ts, sizeof(FrtStandardTokenizer));
 }
 
 static FrtTokenStream *std_ts_new()
 {
-    FrtTokenStream *ts = ts_new(StandardTokenizer);
+    FrtTokenStream *ts = ts_new(FrtStandardTokenizer);
 
     ts->clone_i     = &std_ts_clone_i;
     ts->next        = &std_next;
@@ -1115,10 +1115,10 @@ FrtTokenStream *tf_new_i(size_t size, FrtTokenStream *sub_ts)
 }
 
 /****************************************************************************
- * StopFilter
+ * FrtStopFilter
  ****************************************************************************/
 
-#define StopFilt(filter) ((StopFilter *)(filter))
+#define StopFilt(filter) ((FrtStopFilter *)(filter))
 
 static void sf_destroy_i(FrtTokenStream *ts)
 {
@@ -1158,7 +1158,7 @@ FrtTokenStream *stop_filter_new_with_words_len(FrtTokenStream *sub_ts,
     int i;
     char *word;
     Hash *word_table = h_new_str(&free, (free_ft) NULL);
-    FrtTokenStream *ts = tf_new(StopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
 
     for (i = 0; i < len; i++) {
         word = estrdup(words[i]);
@@ -1176,7 +1176,7 @@ FrtTokenStream *stop_filter_new_with_words(FrtTokenStream *sub_ts,
 {
     char *word;
     Hash *word_table = h_new_str(&free, (free_ft) NULL);
-    FrtTokenStream *ts = tf_new(StopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
 
     while (*words) {
         word = estrdup(*words);
@@ -1395,10 +1395,10 @@ FrtTokenStream *lowercase_filter_new(FrtTokenStream *sub_ts)
 }
 
 /****************************************************************************
- * StemFilter
+ * FrtStemFilter
  ****************************************************************************/
 
-#define StemFilt(filter) ((StemFilter *)(filter))
+#define StemFilt(filter) ((FrtStemFilter *)(filter))
 
 static void stemf_destroy_i(FrtTokenStream *ts)
 {
@@ -1432,9 +1432,9 @@ static FrtToken *stemf_next(FrtTokenStream *ts)
 
 static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts)
 {
-    FrtTokenStream *new_ts      = filter_clone_size(orig_ts, sizeof(StemFilter));
-    StemFilter *stemf        = StemFilt(new_ts);
-    StemFilter *orig_stemf   = StemFilt(orig_ts);
+    FrtTokenStream *new_ts      = filter_clone_size(orig_ts, sizeof(FrtStemFilter));
+    FrtStemFilter *stemf        = StemFilt(new_ts);
+    FrtStemFilter *orig_stemf   = StemFilt(orig_ts);
     stemf->stemmer =
         sb_stemmer_new(orig_stemf->algorithm, orig_stemf->charenc);
     stemf->algorithm =
@@ -1447,7 +1447,7 @@ static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts)
 FrtTokenStream *stem_filter_new(FrtTokenStream *ts, const char *algorithm,
                              const char *charenc)
 {
-    FrtTokenStream *tf = tf_new(StemFilter, ts);
+    FrtTokenStream *tf = tf_new(FrtStemFilter, ts);
     char *my_algorithm = NULL;
     char *my_charenc   = NULL;
     char *s = NULL;
@@ -1653,7 +1653,7 @@ static void pfa_destroy_i(FrtAnalyzer *self)
 }
 
 static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self,
-                               Symbol field, char *text)
+                               FrtSymbol field, char *text)
 {
     FrtAnalyzer *a = (FrtAnalyzer *)h_get(PFA(self)->dict, field);
     if (a == NULL) {
@@ -1669,7 +1669,7 @@ static void pfa_sub_a_destroy_i(void *p)
 }
 
 void pfa_add_field(FrtAnalyzer *self,
-                   Symbol field,
+                   FrtSymbol field,
                    FrtAnalyzer *analyzer)
 {
     h_set(PFA(self)->dict, field, analyzer);
