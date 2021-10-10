@@ -189,7 +189,7 @@ static void co_destroy(FrtCacheObject *self)
     free(self);
 }
 
-FrtCacheObject *co_create(Hash *ref_tab1, Hash *ref_tab2,
+FrtCacheObject *co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
                        void *ref1, void *ref2, free_ft destroy, void *obj)
 {
     FrtCacheObject *self = FRT_ALLOC(FrtCacheObject);
@@ -204,7 +204,7 @@ FrtCacheObject *co_create(Hash *ref_tab1, Hash *ref_tab2,
     return self;
 }
 
-Hash *co_hash_create()
+FrtHash *co_hash_create()
 {
     return h_new(&co_hash, &co_eq, (free_ft)NULL, (free_ft)&co_destroy);
 }
@@ -1470,9 +1470,9 @@ static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
     return tv;
 }
 
-Hash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
+FrtHash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
 {
-    Hash *term_vectors = h_new_str(NULL, (free_ft)&tv_destroy);
+    FrtHash *term_vectors = h_new_str(NULL, (free_ft)&tv_destroy);
     int i;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
@@ -1567,7 +1567,7 @@ FrtFieldsWriter *fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fi
     fw->buffer = ram_new_buffer();
 
     fw->fis = fis;
-    fw->tv_fields = ary_new_type_capa(FrtTVField, FRT_TV_FIELD_INIT_CAPA);
+    fw->tv_fields = frt_ary_new_type_capa(FrtTVField, FRT_TV_FIELD_INIT_CAPA);
 
     return fw;
 }
@@ -1577,7 +1577,7 @@ void fw_close(FrtFieldsWriter *fw)
     os_close(fw->fdt_out);
     os_close(fw->fdx_out);
     ram_destroy_buffer(fw->buffer);
-    ary_free(fw->tv_fields);
+    frt_ary_free(fw->tv_fields);
     free(fw);
 }
 
@@ -1597,7 +1597,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
     }
 
     fw->start_ptr = os_pos(fdt_out);
-    ary_size(fw->tv_fields) = 0;
+    frt_ary_size(fw->tv_fields) = 0;
     os_write_u64(fdx_out, fw->start_ptr);
     os_write_vint(fdt_out, stored_cnt);
     ramo_reset(fw->buffer);
@@ -1625,7 +1625,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 void fw_write_tv_index(FrtFieldsWriter *fw)
 {
     int i;
-    const int tv_cnt = ary_size(fw->tv_fields);
+    const int tv_cnt = frt_ary_size(fw->tv_fields);
     FrtOutStream *fdt_out = fw->fdt_out;
     os_write_u32(fw->fdx_out, (u32)(os_pos(fdt_out) - fw->start_ptr));
     os_write_vint(fdt_out, tv_cnt);
@@ -1654,8 +1654,8 @@ void fw_add_postings(FrtFieldsWriter *fw,
     FrtFieldInfo *fi = fw->fis->fields[field_num];
     int store_positions = fi_store_positions(fi);
 
-    ary_grow(fw->tv_fields);
-    ary_last(fw->tv_fields).field_num = field_num;
+    frt_ary_grow(fw->tv_fields);
+    frt_ary_last(fw->tv_fields).field_num = field_num;
 
     os_write_vint(fdt_out, posting_count);
     for (i = 0; i < posting_count; i++) {
@@ -1696,7 +1696,7 @@ void fw_add_postings(FrtFieldsWriter *fw,
             last_end = end;
         }
     }
-    ary_last(fw->tv_fields).size = os_pos(fdt_out) - fdt_start_pos;
+    frt_ary_last(fw->tv_fields).size = os_pos(fdt_out) - fdt_start_pos;
 }
 
 /****************************************************************************
@@ -2300,7 +2300,7 @@ FrtTermInfosReader *tir_open(FrtStore *store,
     sprintf(file_name, "%s.tis", segment);
     tir->orig_te = ste_new(store->open_input(store, file_name), sfi);
     thread_key_create(&tir->thread_te, NULL);
-    tir->te_bucket = ary_new();
+    tir->te_bucket = frt_ary_new();
     tir->field_num = -1;
 
     return tir;
@@ -2312,7 +2312,7 @@ static FrtTermEnum *tir_enum(FrtTermInfosReader *tir)
     if (NULL == (te = (FrtTermEnum *)thread_getspecific(tir->thread_te))) {
         te = ste_clone(tir->orig_te);
         ste_set_field(te, tir->field_num);
-        ary_push(tir->te_bucket, te);
+        frt_ary_push(tir->te_bucket, te);
         thread_setspecific(tir->thread_te, te);
     }
     return te;
@@ -2369,7 +2369,7 @@ char *tir_get_term(FrtTermInfosReader *tir, int pos)
 
 void tir_close(FrtTermInfosReader *tir)
 {
-    ary_destroy(tir->te_bucket, (free_ft)&ste_close);
+    frt_ary_destroy(tir->te_bucket, (free_ft)&ste_close);
     ste_close(tir->orig_te);
 
     /* fix for some dodgy old versions of pthread */
@@ -3293,7 +3293,7 @@ FrtTermDocEnum *mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, int t
  *
  ****************************************************************************/
 
-static Hash *fn_extensions = NULL;
+static FrtHash *fn_extensions = NULL;
 static void file_name_filter_init()
 {
     int i;
@@ -3396,7 +3396,7 @@ void deleter_delete_file(FrtDeleter *dlr, char *file_name)
 
 static void deleter_commit_pending_deletions(FrtDeleter *dlr)
 {
-    HashSetEntry *hse, *hse_next = dlr->pending->first;
+    FrtHashSetEntry *hse, *hse_next = dlr->pending->first;
     while ((hse = hse_next) != NULL) {
         hse_next = hse->next;
         deleter_delete_file(dlr, (char *)hse->elem);
@@ -3415,7 +3415,7 @@ void deleter_delete_files(FrtDeleter *dlr, char **files, int file_cnt)
 struct DelFilesArg {
     char  curr_seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtDeleter *dlr;
-    Hash *current;
+    FrtHash *current;
 };
 
 static void deleter_find_deletable_files_i(const char *file_name, void *arg)
@@ -3510,7 +3510,7 @@ void deleter_find_deletable_files(FrtDeleter *dlr)
     FrtSegmentInfos *sis = dlr->sis;
     FrtStore *store = dlr->store;
     struct DelFilesArg dfa;
-    Hash *current = dfa.current
+    FrtHash *current = dfa.current
                        = h_new_str((free_ft)NULL, (free_ft)si_deref);
     dfa.dlr = dlr;
 
@@ -3929,7 +3929,7 @@ typedef struct SegmentReader {
     FrtTermInfosReader *tir;
     thread_key_t thread_fr;
     void **fr_bucket;
-    Hash *norms;
+    FrtHash *norms;
     FrtStore *cfs_store;
     bool deleted_docs_dirty : 1;
     bool undelete_all : 1;
@@ -3947,7 +3947,7 @@ static FrtFieldsReader *sr_fr(SegmentReader *sr)
 
     if (NULL == (fr = (FrtFieldsReader *)thread_getspecific(sr->thread_fr))) {
         fr = fr_clone(sr->fr);
-        ary_push(sr->fr_bucket, fr);
+        frt_ary_push(sr->fr_bucket, fr);
         thread_setspecific(sr->thread_fr, fr);
     }
     return fr;
@@ -4126,7 +4126,7 @@ static void sr_close_i(FrtIndexReader *ir)
     if (sr->fr_bucket) {
         thread_setspecific(sr->thread_fr, NULL);
         thread_key_delete(sr->thread_fr);
-        ary_destroy(sr->fr_bucket, (free_ft)&fr_close);
+        frt_ary_destroy(sr->fr_bucket, (free_ft)&fr_close);
     }
 }
 
@@ -4241,7 +4241,7 @@ static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num,
     return fr_get_field_tv(fr, doc_num, fi->number);
 }
 
-static Hash *sr_term_vectors(FrtIndexReader *ir, int doc_num)
+static FrtHash *sr_term_vectors(FrtIndexReader *ir, int doc_num)
 {
     FrtFieldsReader *fr;
     if (!SR(ir)->fr || NULL == (fr = sr_fr(SR(ir)))) {
@@ -4344,7 +4344,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         sr_open_norms(ir, store);
         if (fis_has_vectors(ir->fis)) {
             thread_key_create(&sr->thread_fr, NULL);
-            sr->fr_bucket = ary_new();
+            sr->fr_bucket = frt_ary_new();
         }
     FRT_XCATCHALL
         ir->sis = NULL;
@@ -4535,7 +4535,7 @@ static FrtTermVector *mr_term_vector(FrtIndexReader *ir, int doc_num,
     return reader->term_vector(reader, doc_num - MR(ir)->starts[i], field);
 }
 
-static Hash *mr_term_vectors(FrtIndexReader *ir, int doc_num)
+static FrtHash *mr_term_vectors(FrtIndexReader *ir, int doc_num)
 {
     GET_READER();
     return reader->term_vectors(reader, doc_num - MR(ir)->starts[i]);
@@ -5019,10 +5019,10 @@ static void dw_write_norms(FrtDocWriter *dw, FrtFieldInverter *fld_inv)
 
 /* we'll use the postings Hash's table area to sort the postings as it is
  * going to be zeroset soon anyway */
-static FrtPostingList **dw_sort_postings(Hash *plists_ht)
+static FrtPostingList **dw_sort_postings(FrtHash *plists_ht)
 {
     int i, j;
-    HashEntry *he;
+    FrtHashEntry *he;
     FrtPostingList **plists = (FrtPostingList **)plists_ht->table;
     const int num_entries = plists_ht->mask + 1;
     for (i = 0, j = 0; i < num_entries; i++) {
@@ -5192,17 +5192,17 @@ FrtFieldInverter *dw_get_fld_inv(FrtDocWriter *dw, FrtFieldInfo *fi)
 }
 
 static void dw_add_posting(FrtMemoryPool *mp,
-                           Hash *curr_plists,
-                           Hash *fld_plists,
+                           FrtHash *curr_plists,
+                           FrtHash *fld_plists,
                            int doc_num,
                            const char *text,
                            int len,
                            int pos)
 {
-    HashEntry *pl_he;
+    FrtHashEntry *pl_he;
     if (h_set_ext(curr_plists, text, &pl_he)) {
         FrtPosting *p =  p_new(mp, doc_num, pos);
-        HashEntry *fld_pl_he;
+        FrtHashEntry *fld_pl_he;
         FrtPostingList *pl;
 
         if (h_set_ext(fld_plists, text, &fld_pl_he)) {
@@ -5236,14 +5236,14 @@ static void dw_add_offsets(FrtDocWriter *dw, int pos, off_t start, off_t end)
     dw->offsets_size = pos + 1;
 }
 
-Hash *dw_invert_field(FrtDocWriter *dw,
+FrtHash *dw_invert_field(FrtDocWriter *dw,
                            FrtFieldInverter *fld_inv,
                            FrtDocField *df)
 {
     FrtMemoryPool *mp = dw->mp;
     FrtAnalyzer *a = dw->analyzer;
-    Hash *curr_plists = dw->curr_plists;
-    Hash *fld_plists = fld_inv->plists;
+    FrtHash *curr_plists = dw->curr_plists;
+    FrtHash *fld_plists = fld_inv->plists;
     const bool store_offsets = fld_inv->store_offsets;
     int doc_num = dw->doc_num;
     int i;
@@ -5255,7 +5255,7 @@ Hash *dw_invert_field(FrtDocWriter *dw,
         int pos = -1, num_terms = 0;
 
         for (i = 0; i < df_size; i++) {
-            FrtTokenStream *ts = a_get_ts(a, df->name, df->data[i]);
+            FrtTokenStream *ts = frt_a_get_ts(a, df->name, df->data[i]);
             /* ts->reset(ts, df->data[i]); no longer being called */
             if (store_offsets) {
                 while (NULL != (tk = ts->next(ts))) {
@@ -5313,9 +5313,9 @@ Hash *dw_invert_field(FrtDocWriter *dw,
     return curr_plists;
 }
 
-void dw_reset_postings(Hash *postings)
+void dw_reset_postings(FrtHash *postings)
 {
-    FRT_ZEROSET_N(postings->table, HashEntry, postings->mask + 1);
+    FRT_ZEROSET_N(postings->table, FrtHashEntry, postings->mask + 1);
     postings->fill = postings->size = 0;
 }
 
@@ -5325,7 +5325,7 @@ void dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
     float boost;
     FrtDocField *df;
     FrtFieldInverter *fld_inv;
-    Hash *postings;
+    FrtHash *postings;
     FrtFieldInfo *fi;
     const int doc_size = doc->size;
 
@@ -6135,7 +6135,7 @@ void iw_close(FrtIndexWriter *iw)
     if (iw->dw) {
         dw_close(iw->dw);
     }
-    a_deref(iw->analyzer);
+    frt_a_deref(iw->analyzer);
     sis_destroy(iw->sis);
     fis_deref(iw->fis);
     sim_destroy(iw->similarity);
@@ -6176,7 +6176,7 @@ FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
             iw->write_lock = NULL;
         }
         if (iw->sis) sis_destroy(iw->sis);
-        if (analyzer) a_deref((FrtAnalyzer *)analyzer);
+        if (analyzer) frt_a_deref((FrtAnalyzer *)analyzer);
         free(iw);
     FRT_XENDTRY
 

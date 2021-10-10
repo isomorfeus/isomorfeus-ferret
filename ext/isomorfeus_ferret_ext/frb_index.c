@@ -1647,7 +1647,7 @@ frb_iw_set_analyzer(VALUE self, VALUE ranalyzer)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
 
-    a_deref(iw->analyzer);
+    frt_a_deref(iw->analyzer);
     iw->analyzer = frb_get_cwrapped_analyzer(ranalyzer);
     return ranalyzer;
 }
@@ -2457,7 +2457,7 @@ static VALUE
 frb_ir_term_vectors(VALUE self, VALUE rdoc_id)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    Hash *tvs = ir->term_vectors(ir, FIX2INT(rdoc_id));
+    FrtHash *tvs = ir->term_vectors(ir, FIX2INT(rdoc_id));
     VALUE rtvs = rb_hash_new();
     h_each(tvs, &frb_add_each_tv, (void *)rtvs);
     h_destroy(tvs);

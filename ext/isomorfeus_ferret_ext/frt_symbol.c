@@ -2,7 +2,7 @@
 #include "frt_hash.h"
 #include "frt_internal.h"
 
-static Hash *symbol_table = NULL;
+static FrtHash *symbol_table = NULL;
 
 
 void symbol_init()

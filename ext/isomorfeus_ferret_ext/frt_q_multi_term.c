@@ -559,7 +559,7 @@ static void multi_tq_destroy_i(FrtQuery *self)
     q_destroy_i(self);
 }
 
-static void multi_tq_extract_terms(FrtQuery *self, HashSet *terms)
+static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     int i;
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;

@@ -43,11 +43,11 @@ void index_auto_flush_iw(FrtIndex *self)
 }
 
 
-FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, HashSet *def_fields,
+FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fields,
                  bool create)
 {
     FrtIndex *self = FRT_ALLOC_AND_ZERO(FrtIndex);
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     /* FIXME: need to add these to the query parser */
     self->config = default_config;
     mutex_init(&self->mutex, NULL);
@@ -99,7 +99,7 @@ void index_destroy(FrtIndex *self)
     INDEX_CLOSE_READER(self);
     if (self->iw) iw_close(self->iw);
     store_deref(self->store);
-    a_deref(self->analyzer);
+    frt_a_deref(self->analyzer);
     if (self->qp) qp_destroy(self->qp);
     if (self->key) hs_destroy(self->key);
     free(self);
@@ -200,12 +200,12 @@ bool index_is_deleted(FrtIndex *self, int doc_num)
 }
 
 static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
-                                            HashSet *key)
+                                            FrtHashSet *key)
 {
     FrtQuery *q;
     FrtTopDocs *td;
     FrtDocField *df;
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
 
     if (key->size == 1) {
         FrtSymbol field = (FrtSymbol)key->first->elem;
@@ -268,7 +268,7 @@ void index_add_array(FrtIndex *self, char **fields)
 {
     int i;
     FrtDocument *doc = doc_new();
-    for (i = 0; i < ary_size(fields); i++) {
+    for (i = 0; i < frt_ary_size(fields); i++) {
         doc_add_field(doc, df_add_data(df_new(self->def_field),
                                        estrdup(fields[i])));
     }

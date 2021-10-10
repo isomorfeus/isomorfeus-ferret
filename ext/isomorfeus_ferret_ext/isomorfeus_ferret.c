@@ -9,7 +9,7 @@
 #include "frt_internal.h"
 
 /* Object Map */
-static Hash *object_map;
+static FrtHash *object_map;
 
 /* IDs */
 ID id_new;
@@ -147,9 +147,9 @@ void frb_create_dir(VALUE rpath)
     rb_funcall(mFileUtils, id_mkdir_p, 1, rpath);
 }
 
-VALUE frb_hs_to_rb_ary(HashSet *hs)
+VALUE frb_hs_to_rb_ary(FrtHashSet *hs)
 {
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     VALUE ary = rb_ary_new();
 
     for (hse = hs->first; hse; hse = hse->next) {

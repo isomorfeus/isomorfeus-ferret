@@ -1,58 +1,7 @@
 #ifndef FRT_INTERNAL_H
 #define FRT_INTERNAL_H
 
-/* Types */
-#define Hash                    FrtHash
-#define HashEntry               FrtHashEntry
-#define HashKeyStatus           FrtHashKeyStatus
-#define HashSet                 FrtHashSet
-#define HashSetEntry            FrtHashSetEntry
-#define Hit                     FrtHit
-#define HyphenFilter            FrtHyphenFilter
-
 /* Functions */
-#define a_deref                                        frt_a_deref
-#define a_get_ts                                       frt_a_get_ts
-#define a_standard_destroy                             frt_a_standard_destroy
-#define analyzer_new                                   frt_analyzer_new
-#define ary_capa                                       frt_ary_capa
-#define ary_delete                                     frt_ary_delete
-#define ary_delete_i                                   frt_ary_delete_i
-#define ary_destroy                                    frt_ary_destroy
-#define ary_destroy_i                                  frt_ary_destroy_i
-#define ary_each                                       frt_ary_each
-#define ary_each_rev                                   frt_ary_each_rev
-#define ary_free                                       frt_ary_free
-#define ary_get                                        frt_ary_get
-#define ary_get_i                                      frt_ary_get_i
-#define ary_grow                                       frt_ary_grow
-#define ary_last                                       frt_ary_last
-#define ary_new                                        frt_ary_new
-#define ary_new_capa                                   frt_ary_new_capa
-#define ary_new_i                                      frt_ary_new_i
-#define ary_new_type                                   frt_ary_new_type
-#define ary_new_type_capa                              frt_ary_new_type_capa
-#define ary_pop                                        frt_ary_pop
-#define ary_pop_i                                      frt_ary_pop_i
-#define ary_push                                       frt_ary_push
-#define ary_push_i                                     frt_ary_push_i
-#define ary_remove                                     frt_ary_remove
-#define ary_remove_i                                   frt_ary_remove_i
-#define ary_resize                                     frt_ary_resize
-#define ary_resize_i                                   frt_ary_resize_i
-#define ary_rsz                                        frt_ary_rsz
-#define ary_set                                        frt_ary_set
-#define ary_set_i                                      frt_ary_set_i
-#define ary_shift                                      frt_ary_shift
-#define ary_shift_i                                    frt_ary_shift_i
-#define ary_size                                       frt_ary_size
-#define ary_sort                                       frt_ary_sort
-#define ary_start                                      frt_ary_start
-#define ary_sz                                         frt_ary_sz
-#define ary_type_size                                  frt_ary_type_size
-#define ary_unshift                                    frt_ary_unshift
-#define ary_unshift_i                                  frt_ary_unshift_i
-#define bc_deref                                       frt_bc_deref
 #define bc_new                                         frt_bc_new
 #define bc_set_occur                                   frt_bc_set_occur
 #define bq_add_clause                                  frt_bq_add_clause
@@ -675,8 +624,5 @@
 #define x_exception_stream                             frt_x_exception_stream
 #define x_has_aborted                                  frt_x_has_aborted
 #define xcontext_t                                     frt_xcontext_t
-#define xexit                                          frt_xexit
-#define xmsg_buffer                                    frt_xmsg_buffer
-#define xmsg_buffer_final                              frt_xmsg_buffer_final
 
 #endif

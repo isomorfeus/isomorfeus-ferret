@@ -1218,7 +1218,7 @@ static void
 frb_analyzer_free(FrtAnalyzer *a)
 {
     object_del(a);
-    a_deref(a);
+    frt_a_deref(a);
 }
 
 VALUE
@@ -1239,7 +1239,7 @@ frb_get_analyzer(FrtAnalyzer *a)
 VALUE
 get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring)
 {
-    FrtTokenStream *ts = a_get_ts(a, frb_field(rfield), rs2s(rstring));
+    FrtTokenStream *ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rstring));
 
     /* Make sure that there is no entry already */
     object_set(&ts->text, rstring);
@@ -1579,7 +1579,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
     }
     FRT_REF(ts);
 
-    a = analyzer_new(ts, &re_analyzer_destroy_i, NULL);
+    a = frt_analyzer_new(ts, &re_analyzer_destroy_i, NULL);
     Frt_Wrap_Struct(self, &frb_re_analyzer_mark, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1605,7 +1605,7 @@ frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
 
     StringValue(rtext);
 
-    ts = a_get_ts(a, frb_field(rfield), rs2s(rtext));
+    ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rtext));
 
     /* Make sure that there is no entry already */
     object_set(&ts->text, rtext);

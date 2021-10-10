@@ -31,9 +31,9 @@ static void spanq_destroy_i(FrtQuery *self)
 }
 
 static FrtMatchVector *mv_to_term_mv(FrtMatchVector *term_mv, FrtMatchVector *full_mv,
-                                  HashSet *terms, FrtTermVector *tv)
+                                  FrtHashSet *terms, FrtTermVector *tv)
 {
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     for (hse = terms->first; hse; hse = hse->next) {
         char *term = (char *)hse->elem;
         FrtTVTerm *tv_term = tv_get_tv_term(tv, term);
@@ -151,7 +151,7 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         FrtSpanEnum *sp_enum;
         FrtIndexReader *ir = FRT_ALLOC(FrtIndexReader);
         FrtMatchVector *full_mv = matchv_new();
-        HashSet *terms = SpQ(self)->get_terms(self);
+        FrtHashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
         ir->fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
         fis_add_field(ir->fis,
@@ -1383,7 +1383,7 @@ static FrtSpanEnum *spanxe_new(FrtQuery *query, FrtIndexReader *ir)
 typedef struct SpanWeight
 {
     FrtWeight      super;
-    HashSet    *terms;
+    FrtHashSet    *terms;
 } SpanWeight;
 
 static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int target)
@@ -1402,11 +1402,11 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     const char *field = SpQ(self->query)->field;
 
     char *query_str;
-    HashSet *terms = SpW(self)->terms;
+    FrtHashSet *terms = SpW(self)->terms;
     const int field_num = fis_get_field_num(ir->fis, SpQ(self->query)->field);
     char *doc_freqs = NULL;
     size_t df_i = 0;
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
 
     if (field_num < 0) {
         return expl_new(0.0, "field \"%s\" does not exist in the index", field);
@@ -1501,9 +1501,9 @@ static void spanw_destroy(FrtWeight *self)
 
 static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)
 {
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     FrtWeight *self        = w_new(SpanWeight, query);
-    HashSet *terms      = SpQ(query)->get_terms(query);
+    FrtHashSet *terms      = SpQ(query)->get_terms(query);
 
     SpW(self)->terms    = terms;
     self->scorer        = &spansc_new;
@@ -1543,14 +1543,14 @@ static void spantq_destroy_i(FrtQuery *self)
     spanq_destroy_i(self);
 }
 
-static void spantq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     hs_add(terms, term_new(SpQ(self)->field, SpTQ(self)->term));
 }
 
-static HashSet *spantq_get_terms(FrtQuery *self)
+static FrtHashSet *spantq_get_terms(FrtQuery *self)
 {
-    HashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = hs_new_str(&free);
     hs_add(terms, estrdup(SpTQ(self)->term));
     return terms;
 }
@@ -1628,7 +1628,7 @@ static void spanmtq_destroy_i(FrtQuery *self)
     spanq_destroy_i(self);
 }
 
-static void spanmtq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
@@ -1637,9 +1637,9 @@ static void spanmtq_extract_terms(FrtQuery *self, HashSet *terms)
     }
 }
 
-static HashSet *spanmtq_get_terms(FrtQuery *self)
+static FrtHashSet *spanmtq_get_terms(FrtQuery *self)
 {
-    HashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = hs_new_str(&free);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
@@ -1724,12 +1724,12 @@ static char *spanfq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanfq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spanfq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     SpFQ(self)->match->extract_terms(SpFQ(self)->match, terms);
 }
 
-static HashSet *spanfq_get_terms(FrtQuery *self)
+static FrtHashSet *spanfq_get_terms(FrtQuery *self)
 {
     FrtSpanFirstQuery *sfq = SpFQ(self);
     return SpQ(sfq->match)->get_terms(sfq->match);
@@ -1831,7 +1831,7 @@ static char *spanoq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanoq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spanoq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
@@ -1841,14 +1841,14 @@ static void spanoq_extract_terms(FrtQuery *self, HashSet *terms)
     }
 }
 
-static HashSet *spanoq_get_terms(FrtQuery *self)
+static FrtHashSet *spanoq_get_terms(FrtQuery *self)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
-    HashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
         FrtQuery *clause = soq->clauses[i];
-        HashSet *sub_terms = SpQ(clause)->get_terms(clause);
+        FrtHashSet *sub_terms = SpQ(clause)->get_terms(clause);
         hs_merge(terms, sub_terms);
     }
 
@@ -2015,7 +2015,7 @@ static char *spannq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spannq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spannq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
     int i;
@@ -2025,14 +2025,14 @@ static void spannq_extract_terms(FrtQuery *self, HashSet *terms)
     }
 }
 
-static HashSet *spannq_get_terms(FrtQuery *self)
+static FrtHashSet *spannq_get_terms(FrtQuery *self)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
-    HashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = hs_new_str(&free);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
         FrtQuery *clause = snq->clauses[i];
-        HashSet *sub_terms = SpQ(clause)->get_terms(clause);
+        FrtHashSet *sub_terms = SpQ(clause)->get_terms(clause);
         hs_merge(terms, sub_terms);
     }
 
@@ -2190,12 +2190,12 @@ static char *spanxq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanxq_extract_terms(FrtQuery *self, HashSet *terms)
+static void spanxq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     SpXQ(self)->inc->extract_terms(SpXQ(self)->inc, terms);
 }
 
-static HashSet *spanxq_get_terms(FrtQuery *self)
+static FrtHashSet *spanxq_get_terms(FrtQuery *self)
 {
     return SpQ(SpXQ(self)->inc)->get_terms(SpXQ(self)->inc);
 }

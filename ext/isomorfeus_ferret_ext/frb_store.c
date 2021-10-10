@@ -17,7 +17,7 @@ VALUE cFSDirectory;
 void
 frb_unwrap_locks(FrtStore *store)
 {
-    HashSetEntry *hse = store->locks->first;
+    FrtHashSetEntry *hse = store->locks->first;
     for (; hse; hse = hse->next) {
         void *lock = hse->elem;
         VALUE rlock = object_get(lock);

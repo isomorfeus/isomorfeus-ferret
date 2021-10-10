@@ -101,7 +101,7 @@ static int ram_count(FrtStore *store)
 static void ram_each(FrtStore *store,
                      void (*func)(const char *fname, void *arg), void *arg)
 {
-    Hash *ht = store->dir.ht;
+    FrtHash *ht = store->dir.ht;
     int i;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
@@ -116,7 +116,7 @@ static void ram_each(FrtStore *store,
 
 static void ram_close_i(FrtStore *store)
 {
-    Hash *ht = store->dir.ht;
+    FrtHash *ht = store->dir.ht;
     int i;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
@@ -134,7 +134,7 @@ static void ram_close_i(FrtStore *store)
 static void ram_clear(FrtStore *store)
 {
     int i;
-    Hash *ht = store->dir.ht;
+    FrtHash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && !file_is_lock(rf->name)) {
@@ -147,7 +147,7 @@ static void ram_clear(FrtStore *store)
 static void ram_clear_locks(FrtStore *store)
 {
     int i;
-    Hash *ht = store->dir.ht;
+    FrtHash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && file_is_lock(rf->name)) {
@@ -160,7 +160,7 @@ static void ram_clear_locks(FrtStore *store)
 static void ram_clear_all(FrtStore *store)
 {
     int i;
-    Hash *ht = store->dir.ht;
+    FrtHash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf) {
@@ -356,7 +356,7 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
 
     if (rf == NULL) {
         /*
-        Hash *ht = store->dir.ht;
+        FrtHash *ht = store->dir.ht;
         int i;
         printf("\nlooking for %s, %ld\n", filename, str_hash(filename));
         for (i = 0; i <= ht->mask; i++) {

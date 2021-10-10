@@ -306,7 +306,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
 {
     int i;
     FrtScorer *self                = scorer_new(PhraseScorer, similarity);
-    HashSet *term_set           = NULL;
+    FrtHashSet *term_set           = NULL;
 
 
     PhSc(self)->weight          = weight;
@@ -327,7 +327,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
         /* check for repeats */
         if (slop && !PhSc(self)->check_repeats) {
             char **terms = positions[i].terms;
-            const int t_cnt = ary_size(terms);
+            const int t_cnt = frt_ary_size(terms);
             int j;
             for (j = 0; j < t_cnt; j++) {
                 if (hs_add(term_set, terms[j])) {
@@ -554,7 +554,7 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
 
     for (i = 0; i < pos_cnt; i++) {
         char **terms = positions[i].terms;
-        const int t_cnt = ary_size(terms);
+        const int t_cnt = frt_ary_size(terms);
         if (t_cnt == 1) {
             tpe = tps[i] = ir->term_positions(ir);
             tpe->seek(tpe, field_num, terms[0]);
@@ -616,14 +616,14 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
 
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
-        for (j = ary_size(terms) - 1; j >= 0; j--) {
+        for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
             len += strlen(terms[j]) + 30;
         }
     }
     doc_freqs = FRT_ALLOC_N(char, len);
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
-        const int t_cnt = ary_size(terms);
+        const int t_cnt = frt_ary_size(terms);
         for (j = 0; j < t_cnt; j++) {
             char *term = terms[j];
             pos += sprintf(doc_freqs + pos, "%s=%d, ",
@@ -838,7 +838,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
             int last_pos = 0;
             for (i = 0; i < pos_cnt; i++) {
                 FrtPhrasePosition *pp = &(PhQ(self)->positions[i]);
-                const int t_cnt = ary_size(pp->terms);
+                const int t_cnt = frt_ary_size(pp->terms);
                 TVPosEnum *tvpe = get_tvpe(tv, pp->terms, t_cnt, pp->pos);
                 if (tvpe && tvpe_next(tvpe)) {
                     if (tvpe->pos > last_pos) {
@@ -893,7 +893,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                   &phrase_pos_cmp);
             for (i = 0; i < pos_cnt; i++) {
                 FrtPhrasePosition *pp = &(PhQ(self)->positions[i]);
-                const int t_cnt = ary_size(pp->terms);
+                const int t_cnt = frt_ary_size(pp->terms);
                 TVPosEnum *tvpe = get_tvpe(tv, pp->terms, t_cnt, pp->pos);
                 if (tvpe && ((i == 0 && tvpe_next(tvpe))
                              || tvpe_skip_to(tvpe, tvpe_a[i-1]->pos))) {
@@ -943,13 +943,13 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
 
 #define PhQ_INIT_CAPA 4
 
-static void phq_extract_terms(FrtQuery *self, HashSet *term_set)
+static void phq_extract_terms(FrtQuery *self, FrtHashSet *term_set)
 {
     FrtPhraseQuery *phq = PhQ(self);
     int i, j;
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
-        for (j = ary_size(terms) - 1; j >= 0; j--) {
+        for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
             hs_add(term_set, term_new(phq->field, terms[j]));
         }
     }
@@ -988,7 +988,7 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     for (i = 0; i < pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
-        for (j = ary_size(terms) - 1; j >= 0; j--) {
+        for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
             len += strlen(terms[j]) + 5;
         }
     }
@@ -1010,7 +1010,7 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
     last_pos = positions[0].pos - 1;
     for (i = 0; i < pos_cnt; i++) {
         char **terms = positions[i].terms;
-        const int t_cnt = ary_size(terms);
+        const int t_cnt = frt_ary_size(terms);
 
         pos = positions[i].pos;
         if (pos == last_pos) {
@@ -1058,7 +1058,7 @@ static void phq_destroy(FrtQuery *self)
     FrtPhraseQuery *phq = PhQ(self);
     int i;
     for (i = 0; i < phq->pos_cnt; i++) {
-        ary_destroy(phq->positions[i].terms, &free);
+        frt_ary_destroy(phq->positions[i].terms, &free);
     }
     free(phq->positions);
     q_destroy_i(self);
@@ -1071,7 +1071,7 @@ static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     if (phq->pos_cnt == 1) {
         /* optimize one-position case */
         char **terms = phq->positions[0].terms;
-        const int t_cnt = ary_size(terms);
+        const int t_cnt = frt_ary_size(terms);
         if (t_cnt == 1) {
             FrtQuery *tq = tq_new(phq->field, terms[0]);
             tq->boost = self->boost;
@@ -1099,7 +1099,7 @@ static unsigned long long phq_hash(FrtQuery *self)
     unsigned long long hash = sym_hash(phq->field);
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
-        for (j = ary_size(terms) - 1; j >= 0; j--) {
+        for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
             hash = (hash << 1) ^ (str_hash(terms[j])
                                ^ phq->positions[i].pos);
         }
@@ -1120,8 +1120,8 @@ static int phq_eq(FrtQuery *self, FrtQuery *o)
     for (i = 0; i < phq1->pos_cnt; i++) {
         char **terms1 = phq1->positions[i].terms;
         char **terms2 = phq2->positions[i].terms;
-        const int t_cnt = ary_size(terms1);
-        if (t_cnt != ary_size(terms2)
+        const int t_cnt = frt_ary_size(terms1);
+        if (t_cnt != frt_ary_size(terms2)
             || phq1->positions[i].pos != phq2->positions[i].pos) {
             return false;
         }
@@ -1165,8 +1165,8 @@ void phq_add_term_abs(FrtQuery *self, const char *term, int position)
         FRT_REALLOC_N(phq->positions, FrtPhrasePosition, phq->pos_capa);
     }
     pp = &(phq->positions[index]);
-    pp->terms = ary_new_type_capa(char *, 2);
-    ary_push(pp->terms, estrdup(term));
+    pp->terms = frt_ary_new_type_capa(char *, 2);
+    frt_ary_push(pp->terms, estrdup(term));
     pp->pos = position;
     phq->pos_cnt++;
 }
@@ -1193,7 +1193,7 @@ void phq_append_multi_term(FrtQuery *self, const char *term)
         phq_add_term(self, term, 0);
     }
     else {
-        ary_push(phq->positions[index].terms, estrdup(term));
+        frt_ary_push(phq->positions[index].terms, estrdup(term));
     }
 }
 

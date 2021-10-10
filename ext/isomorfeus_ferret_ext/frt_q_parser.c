@@ -142,7 +142,7 @@ typedef union YYSTYPE
     FrtQuery *query;
     FrtBooleanClause *bcls;
     BCArray *bclss;
-    HashSet *hashset;
+    FrtHashSet *hashset;
     Phrase *phrase;
     char *str;
 }
@@ -179,8 +179,8 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
                           char *slop);
 static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
 
-static HashSet *first_field(FrtQParser *qp, const char *field);
-static HashSet *add_field(FrtQParser *qp, const char *field);
+static FrtHashSet *first_field(FrtQParser *qp, const char *field);
+static FrtHashSet *add_field(FrtQParser *qp, const char *field);
 
 static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop);
 
@@ -192,7 +192,7 @@ static void ph_destroy(Phrase *self);
 static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
                       bool inc_lower, bool inc_upper);
 
-static void qp_push_fields(FrtQParser *self, HashSet *fields, bool destroy);
+static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
 
 /**
@@ -211,7 +211,7 @@ static void qp_pop_fields(FrtQParser *self);
             field = (FrtSymbol)qp->fields->first->elem;\
             q = func;\
         } else {\
-            FrtQuery *volatile sq; HashSetEntry *volatile hse;\
+            FrtQuery *volatile sq; FrtHashSetEntry *volatile hse;\
             q = bq_new_max(false, qp->max_clauses);\
             for (hse = qp->fields->first; hse; hse = hse->next) {\
                 field = (FrtSymbol)hse->elem;\
@@ -1223,7 +1223,7 @@ yydestruct (yymsg, yytype, yyvaluep, qp)
 	break;
       case 29: /* "bool_cls" */
 #line 222 "src/q_parser.y"
-	{ if ((yyvaluep->bcls) && qp->destruct) bc_deref((yyvaluep->bcls)); };
+	{ if ((yyvaluep->bcls) && qp->destruct) frt_bc_deref((yyvaluep->bcls)); };
 #line 1240 "src/q_parser.c"
 	break;
       case 30: /* "boosted_q" */
@@ -2182,7 +2182,7 @@ static int yyerror(FrtQParser *qp, char const *msg)
             free(qp->qstr);
         }
         mutex_unlock(&qp->mutex);
-        snprintf(xmsg_buffer, FRT_XMSG_BUFFER_SIZE,
+        snprintf(frt_xmsg_buffer, FRT_XMSG_BUFFER_SIZE,
                  "couldn't parse query ``%s''. Error message "
                  " was %s", buf, (char *)msg);
     }
@@ -2208,7 +2208,7 @@ static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text
     if (hs_exists(qp->tokenized_fields, field)) {
         ts = (FrtTokenStream *)h_get(qp->ts_cache, field);
         if (!ts) {
-            ts = a_get_ts(qp->analyzer, field, text);
+            ts = frt_a_get_ts(qp->analyzer, field, text);
             h_set(qp->ts_cache, field, ts);
         }
         else {
@@ -2347,7 +2347,7 @@ static void bca_destroy(BCArray *bca)
 {
     int i;
     for (i = 0; i < bca->size; i++) {
-        bc_deref(bca->clauses[i]);
+        frt_bc_deref(bca->clauses[i]);
     }
     free(bca->clauses);
     free(bca);
@@ -2516,7 +2516,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
 /**
  * Adds another field to the top of the FieldStack.
  */
-static HashSet *add_field(FrtQParser *qp, const char *field_name)
+static FrtHashSet *add_field(FrtQParser *qp, const char *field_name)
 {
     if (qp->allow_any_fields || hs_exists(qp->all_fields, field_name)) {
         hs_add(qp->fields, (FrtSymbol)strdup(field_name));
@@ -2529,7 +2529,7 @@ static HashSet *add_field(FrtQParser *qp, const char *field_name)
  * will push a new FieldStack object onto the stack and add +field+ to its
  * fields set.
  */
-static HashSet *first_field(FrtQParser *qp, const char *field)
+static FrtHashSet *first_field(FrtQParser *qp, const char *field)
 {
     qp_push_fields(qp, hs_new_str(NULL), true);
     return add_field(qp, field);
@@ -2542,7 +2542,7 @@ static void ph_destroy(Phrase *self)
 {
     int i;
     for (i = 0; i < self->size; i++) {
-        ary_destroy(self->positions[i].terms, &free);
+        frt_ary_destroy(self->positions[i].terms, &free);
     }
     free(self->positions);
     free(self);
@@ -2568,8 +2568,8 @@ static Phrase *ph_first_word(char *word)
 {
     Phrase *self = ph_new();
     if (word) { /* no point in adding NULL in start */
-        self->positions[0].terms = ary_new_type_capa(char *, 1);
-        ary_push(self->positions[0].terms, estrdup(word));
+        self->positions[0].terms = frt_ary_new_type_capa(char *, 1);
+        frt_ary_push(self->positions[0].terms, estrdup(word));
         self->size = 1;
     }
     return self;
@@ -2589,8 +2589,8 @@ static Phrase *ph_add_word(Phrase *self, char *word)
             self->positions = pp;
         }
         pp[index].pos = self->pos_inc;
-        pp[index].terms = ary_new_type_capa(char *, 1);
-        ary_push(pp[index].terms, estrdup(word));
+        pp[index].terms = frt_ary_new_type_capa(char *, 1);
+        frt_ary_push(pp[index].terms, estrdup(word));
         self->size++;
         self->pos_inc = 0;
     }
@@ -2610,7 +2610,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
     FrtPhrasePosition *pp = self->positions;
 
     if (word) {
-        ary_push(pp[index].terms, estrdup(word));
+        frt_ary_push(pp[index].terms, estrdup(word));
     }
     return self;
 }
@@ -2651,7 +2651,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
 
     if (pos_cnt == 1) {
         char **words = phrase->positions[0].terms;
-        const int word_count = ary_size(words);
+        const int word_count = frt_ary_size(words);
         if (word_count == 1) {
             q = get_term_q(qp, field, words[0]);
         }
@@ -2707,7 +2707,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
 
         for (i = 0; i < pos_cnt; i++) {
             char **words = phrase->positions[i].terms;
-            const int word_count = ary_size(words);
+            const int word_count = frt_ary_size(words);
             if (pos_inc) {
                 ((FrtPhraseQuery *)q)->slop++;
             }
@@ -2812,7 +2812,7 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
  * the bottom of the stack (ie the very first set of fields pushed onto the
  * stack).
  */
-static void qp_push_fields(FrtQParser *self, HashSet *fields, bool destroy)
+static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy)
 {
     FrtFieldStack *fs = FRT_ALLOC(FrtFieldStack);
 
@@ -2861,7 +2861,7 @@ void qp_destroy(FrtQParser *self)
 
     h_destroy(self->ts_cache);
     tk_destroy(self->non_tokenizer);
-    a_deref(self->analyzer);
+    frt_a_deref(self->analyzer);
     free(self);
 }
 
@@ -3079,7 +3079,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
         result = qp_get_bad_query(self, self->qstr);
     }
     if (self->destruct && !self->handle_parse_errors) {
-        rb_raise(cQueryParseException, xmsg_buffer);
+        rb_raise(cQueryParseException, frt_xmsg_buffer);
     }
     if (!result) {
         result = bq_new(false);

@@ -133,7 +133,7 @@ extern void frb_ir_mark(void *p);
 
 extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
-extern HashSet *frb_get_fields(VALUE rfields);
+extern FrtHashSet *frb_get_fields(VALUE rfields);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
 
@@ -144,7 +144,7 @@ extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
  ****************************************************************************/
 
 static VALUE
-frb_get_hit(Hit *hit)
+frb_get_hit(FrtHit *hit)
 {
     return rb_struct_new(cHit,
                          INT2FIX(hit->doc),
@@ -491,10 +491,10 @@ static VALUE
 frb_q_get_terms(VALUE self, VALUE searcher)
 {
     VALUE rterms = rb_ary_new();
-    HashSet *terms = hs_new((hash_ft)&term_hash,
+    FrtHashSet *terms = hs_new((hash_ft)&term_hash,
                             (eq_ft)&term_eq,
                             (free_ft)term_destroy);
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     GET_Q();
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
     FrtQuery *rq = sea->rewrite(sea, q);
@@ -774,7 +774,7 @@ static void
 frb_bc_free(void *p)
 {
     object_del(p);
-    bc_deref((FrtBooleanClause *)p);
+    frt_bc_deref((FrtBooleanClause *)p);
 }
 
 static VALUE
@@ -3000,14 +3000,14 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
                                        pre_tag,
                                        post_tag,
                                        ellipsis)) != NULL) {
-        const int size = ary_size(excerpts);
+        const int size = frt_ary_size(excerpts);
         int i;
         VALUE rexcerpts = rb_ary_new2(size);
 
         for (i = 0; i < size; i++) {
           rb_ary_store(rexcerpts, i, rb_str_new2(excerpts[i]));
         }
-        ary_destroy(excerpts, &free);
+        frt_ary_destroy(excerpts, &free);
         return rexcerpts;
     }
     return Qnil;

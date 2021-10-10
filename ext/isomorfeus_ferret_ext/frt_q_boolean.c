@@ -1217,7 +1217,7 @@ static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     sum_expl->value = sum;
     if (coord == 1) {                /* only one clause matched */
         explanation = sum_expl;      /* eliminate wrapper */
-        ary_size(sum_expl->details) = 0;
+        frt_ary_size(sum_expl->details) = 0;
         sum_expl = sum_expl->details[0];
         expl_destroy(explanation);
     }
@@ -1285,7 +1285,7 @@ void bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
     }
 }
 
-void bc_deref(FrtBooleanClause *self)
+void frt_bc_deref(FrtBooleanClause *self)
 {
     if (--self->ref_cnt <= 0) {
         q_deref(self->query);
@@ -1401,7 +1401,7 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;
 }
 
-static void bq_extract_terms(FrtQuery *self, HashSet *terms)
+static void bq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     int i;
     for (i = 0; i < BQ(self)->clause_cnt; i++) {
@@ -1479,7 +1479,7 @@ static void bq_destroy(FrtQuery *self)
 {
     int i;
     for (i = 0; i < BQ(self)->clause_cnt; i++) {
-        bc_deref(BQ(self)->clauses[i]);
+        frt_bc_deref(BQ(self)->clauses[i]);
     }
     free(BQ(self)->clauses);
     if (BQ(self)->similarity) {
@@ -1604,7 +1604,7 @@ FrtBooleanClause *bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBCType
     }
     bc = bc_new(sub_query, occur);
     bq_add_clause(self, bc);
-    bc_deref(bc); /* bc was referenced unnecessarily */
+    frt_bc_deref(bc); /* bc was referenced unnecessarily */
     return bc;
 }
 

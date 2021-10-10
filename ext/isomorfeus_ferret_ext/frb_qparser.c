@@ -43,11 +43,11 @@ frb_qp_mark(void *p)
     frb_gc_mark(((FrtQParser *)p)->analyzer);
 }
 
-static HashSet *
-frb_get_fields(VALUE rfields, HashSet *other_fields)
+static FrtHashSet *
+frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
 {
     VALUE rval;
-    HashSet *fields;
+    FrtHashSet *fields;
     char *s, *p, *str;
 
     if (rfields == Qnil) return NULL;
@@ -79,9 +79,9 @@ frb_get_fields(VALUE rfields, HashSet *other_fields)
 }
 
 static void
-hs_safe_merge(HashSet *merger, HashSet *mergee)
+hs_safe_merge(FrtHashSet *merger, FrtHashSet *mergee)
 {
-    HashSetEntry *entry = mergee->first;
+    FrtHashSetEntry *entry = mergee->first;
     for (; entry != NULL; entry = entry->next) {
         hs_add_safe(merger, entry->elem);
     }
@@ -154,9 +154,9 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
     VALUE roptions = Qnil;
     VALUE rval;
     FrtAnalyzer *analyzer = NULL;
-    HashSet *def_fields = NULL;
-    HashSet *all_fields = NULL;
-    HashSet *tkz_fields = NULL;
+    FrtHashSet *def_fields = NULL;
+    FrtHashSet *all_fields = NULL;
+    FrtHashSet *tkz_fields = NULL;
     FrtQParser *qp;
 
     if (rb_scan_args(argc, argv, "01", &roptions) > 0) {
@@ -276,8 +276,8 @@ static VALUE
 frb_qp_get_fields(VALUE self)
 {
     GET_QP;
-    HashSet *fields = qp->all_fields;
-    HashSetEntry *hse;
+    FrtHashSet *fields = qp->all_fields;
+    FrtHashSetEntry *hse;
     VALUE rfields = rb_ary_new();
 
     for (hse = fields->first; hse; hse = hse->next) {
@@ -297,7 +297,7 @@ static VALUE
 frb_qp_set_fields(VALUE self, VALUE rfields)
 {
     GET_QP;
-    HashSet *fields = frb_get_fields(rfields, NULL);
+    FrtHashSet *fields = frb_get_fields(rfields, NULL);
 
     /* if def_fields == all_fields then we need to replace both */
     if (qp->def_fields == qp->all_fields) qp->def_fields = NULL;
@@ -336,10 +336,10 @@ static VALUE
 frb_qp_get_tkz_fields(VALUE self)
 {
     GET_QP;
-    HashSet *fields = qp->tokenized_fields;
+    FrtHashSet *fields = qp->tokenized_fields;
     if (fields) {
         VALUE rfields = rb_ary_new();
-        HashSetEntry *hse;
+        FrtHashSetEntry *hse;
 
         for (hse = fields->first; hse; hse = hse->next) {
             rb_ary_push(rfields, ID2SYM(rb_intern((char *)hse->elem)));

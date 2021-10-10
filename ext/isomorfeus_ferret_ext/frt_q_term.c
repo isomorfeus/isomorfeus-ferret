@@ -262,7 +262,7 @@ static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
     return buffer;
 }
 
-static void tq_extract_terms(FrtQuery *self, HashSet *terms)
+static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     hs_add(terms, term_new(TQ(self)->field, TQ(self)->term));
 }

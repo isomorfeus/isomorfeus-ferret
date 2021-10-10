@@ -63,7 +63,7 @@ extern VALUE object_get(void *key);
 extern VALUE frb_data_alloc(VALUE klass);
 extern void frb_deref_free(void *p);
 extern void frb_create_dir(VALUE rpath);
-extern VALUE frb_hs_to_rb_ary(HashSet *hs);
+extern VALUE frb_hs_to_rb_ary(FrtHashSet *hs);
 extern void *frb_rb_data_ptr(VALUE val);
 extern FrtSymbol frb_field(VALUE rfield);
 extern VALUE frb_get_term(FrtSymbol field, const char *term);

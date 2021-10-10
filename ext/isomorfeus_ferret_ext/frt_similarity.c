@@ -86,7 +86,7 @@ static float simdef_idf_phrase(struct FrtSimilarity *s, FrtSymbol field,
     int i, j;
     for (i = 0; i < pp_cnt; i++) {
         char **terms = positions[i].terms;
-        for (j = ary_size(terms) - 1; j >= 0; j--) {
+        for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
             idf += sim_idf_term(s, field, terms[j], searcher);
         }
     }

@@ -20,21 +20,21 @@ FrtExplanation *expl_new(float value, const char *description, ...)
     va_end(args);
 
     expl->value = value;
-    expl->details = ary_new_type_capa(FrtExplanation *,
+    expl->details = frt_ary_new_type_capa(FrtExplanation *,
                                       FRT_EXPLANATION_DETAILS_START_SIZE);
     return expl;
 }
 
 void expl_destroy(FrtExplanation *expl)
 {
-    ary_destroy((void **)expl->details, (free_ft)expl_destroy);
+    frt_ary_destroy((void **)expl->details, (free_ft)expl_destroy);
     free(expl->description);
     free(expl);
 }
 
 FrtExplanation *expl_add_detail(FrtExplanation *expl, FrtExplanation *detail)
 {
-    ary_push(expl->details, detail);
+    frt_ary_push(expl->details, detail);
     return expl;
 }
 
@@ -42,7 +42,7 @@ char *expl_to_s_depth(FrtExplanation *expl, int depth)
 {
     int i;
     char *buffer = FRT_ALLOC_N(char, depth * 2 + 1);
-    const int num_details = ary_size(expl->details);
+    const int num_details = frt_ary_size(expl->details);
 
     memset(buffer, ' ', sizeof(char) * depth * 2);
     buffer[depth*2] = 0;
@@ -60,7 +60,7 @@ char *expl_to_html(FrtExplanation *expl)
 {
     int i;
     char *buffer;
-    const int num_details = ary_size(expl->details);
+    const int num_details = frt_ary_size(expl->details);
 
     buffer = strfmt("<ul>\n<li>%f = %s</li>\n", expl->value, expl->description);
 
@@ -78,7 +78,7 @@ char *expl_to_html(FrtExplanation *expl)
  *
  ***************************************************************************/
 
-static bool hit_less_than(const Hit *hit1, const Hit *hit2)
+static bool hit_less_than(const FrtHit *hit1, const FrtHit *hit2)
 {
     if (hit1->score == hit2->score) {
         return hit1->doc > hit2->doc;
@@ -88,7 +88,7 @@ static bool hit_less_than(const Hit *hit1, const Hit *hit2)
     }
 }
 
-static bool hit_lt(Hit *hit1, Hit *hit2)
+static bool hit_lt(FrtHit *hit1, FrtHit *hit2)
 {
     if (hit1->score == hit2->score) {
         return hit1->doc > hit2->doc;
@@ -103,8 +103,8 @@ static void hit_pq_down(FrtPriorityQueue *pq)
     register int i = 1;
     register int j = 2;     /* i << 1; */
     register int k = 3;     /* j + 1;  */
-    Hit **heap = (Hit **)pq->heap;
-    Hit *node = heap[i];    /* save top node */
+    FrtHit **heap = (FrtHit **)pq->heap;
+    FrtHit *node = heap[i];    /* save top node */
 
     if ((k <= pq->size) && hit_lt(heap[k], heap[j])) {
         j = k;
@@ -122,11 +122,11 @@ static void hit_pq_down(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-static Hit *hit_pq_pop(FrtPriorityQueue *pq)
+static FrtHit *hit_pq_pop(FrtPriorityQueue *pq)
 {
     if (pq->size > 0) {
-        Hit **heap = (Hit **)pq->heap;
-        Hit *result = heap[1];    /* save first value */
+        FrtHit **heap = (FrtHit **)pq->heap;
+        FrtHit *result = heap[1];    /* save first value */
         heap[1] = heap[pq->size]; /* move last to first */
         heap[pq->size] = NULL;
         pq->size--;
@@ -140,8 +140,8 @@ static Hit *hit_pq_pop(FrtPriorityQueue *pq)
 
 static void hit_pq_up(FrtPriorityQueue *pq)
 {
-    Hit **heap = (Hit **)pq->heap;
-    Hit *node;
+    FrtHit **heap = (FrtHit **)pq->heap;
+    FrtHit *node;
     int i = pq->size;
     int j = i >> 1;
     node = heap[i];
@@ -154,11 +154,11 @@ static void hit_pq_up(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-static void hit_pq_insert(FrtPriorityQueue *pq, Hit *hit)
+static void hit_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
 {
     if (pq->size < pq->capa) {
-        Hit *new_hit = FRT_ALLOC(Hit);
-        memcpy(new_hit, hit, sizeof(Hit));
+        FrtHit *new_hit = FRT_ALLOC(FrtHit);
+        memcpy(new_hit, hit, sizeof(FrtHit));
         pq->size++;
         if (pq->size >= pq->mem_capa) {
             pq->mem_capa <<= 1;
@@ -167,13 +167,13 @@ static void hit_pq_insert(FrtPriorityQueue *pq, Hit *hit)
         pq->heap[pq->size] = new_hit;
         hit_pq_up(pq);
     }
-    else if (pq->size > 0 && hit_lt((Hit *)pq->heap[1], hit)) {
-        memcpy(pq->heap[1], hit, sizeof(Hit));
+    else if (pq->size > 0 && hit_lt((FrtHit *)pq->heap[1], hit)) {
+        memcpy(pq->heap[1], hit, sizeof(FrtHit));
         hit_pq_down(pq);
     }
 }
 
-static void hit_pq_multi_insert(FrtPriorityQueue *pq, Hit *hit)
+static void hit_pq_multi_insert(FrtPriorityQueue *pq, FrtHit *hit)
 {
     hit_pq_insert(pq, hit);
     free(hit);
@@ -185,7 +185,7 @@ static void hit_pq_multi_insert(FrtPriorityQueue *pq, Hit *hit)
  *
  ***************************************************************************/
 
-FrtTopDocs *td_new(int total_hits, int size, Hit **hits, float max_score)
+FrtTopDocs *td_new(int total_hits, int size, FrtHit **hits, float max_score)
 {
     FrtTopDocs *td = FRT_ALLOC(FrtTopDocs);
     td->total_hits = total_hits;
@@ -209,7 +209,7 @@ void td_destroy(FrtTopDocs *td)
 char *td_to_s(FrtTopDocs *td)
 {
     int i;
-    Hit *hit;
+    FrtHit *hit;
     char *buffer = strfmt("%d hits sorted by <score, doc_num>\n",
                           td->total_hits);
     for (i = 0; i < td->size; i++) {
@@ -318,7 +318,7 @@ static FrtQuery *q_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;
 }
 
-static void q_extract_terms(FrtQuery *self, HashSet *terms)
+static void q_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
     /* do nothing by default */
     (void)self;
@@ -370,7 +370,7 @@ FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
 {
     int i;
     FrtQuery *q, *ret_q;
-    HashSet *uniques = hs_new((hash_ft)&q_hash, (eq_ft)&q_eq, NULL);
+    FrtHashSet *uniques = hs_new((hash_ft)&q_hash, (eq_ft)&q_eq, NULL);
     for (i = 0; i < q_cnt; i++) {
         q = queries[i];
         if (q->type == BOOLEAN_QUERY) {
@@ -403,7 +403,7 @@ FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
         ret_q = (FrtQuery *)uniques->first->elem;
         FRT_REF(ret_q);
     } else {
-        HashSetEntry *hse;
+        FrtHashSetEntry *hse;
         ret_q = bq_new(true);
         for (hse = uniques->first; hse; hse = hse->next) {
             q = (FrtQuery *)hse->elem;
@@ -853,8 +853,8 @@ char **searcher_highlight(FrtSearcher *self,
         mv = query->get_matchv_i(query, matchv_new(), tv);
         q_deref(query);
         if (lazy_df->len < (excerpt_len * num_excerpts)) {
-            excerpt_strs = ary_new_type_capa(char *, 1);
-            ary_push(excerpt_strs,
+            excerpt_strs = frt_ary_new_type_capa(char *, 1);
+            frt_ary_push(excerpt_strs,
                      highlight_field(mv, lazy_df, tv, pre_tag, post_tag));
         }
         else if (mv->size > 0) {
@@ -925,7 +925,7 @@ char **searcher_highlight(FrtSearcher *self,
                 }
             }
 
-            excerpt_strs = ary_new_type_capa(char *, num_excerpts);
+            excerpt_strs = frt_ary_new_type_capa(char *, num_excerpts);
             /* merge excerpts where possible */
             for (i = 0; i < num_excerpts;) {
                 Excerpt *ei = excerpts[i];
@@ -941,7 +941,7 @@ char **searcher_highlight(FrtSearcher *self,
                     }
                 }
                 excerpt_expand(ei, merged * excerpt_len, tv);
-                ary_push(excerpt_strs,
+                frt_ary_push(excerpt_strs,
                          excerpt_get_str(ei, mv, lazy_df,
                                          pre_tag, post_tag, ellipsis));
                 i += merged;
@@ -1032,15 +1032,15 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     int max_size = num_docs + (num_docs == INT_MAX ? 0 : first_doc);
     int i;
     int total_hits = 0;
-    Hit **score_docs = NULL;
+    FrtHit **score_docs = NULL;
 
     FrtPriorityQueue *hq;
-    Hit *(*hq_pop)(FrtPriorityQueue *pq);
-    void (*hq_insert)(FrtPriorityQueue *pq, Hit *hit);
+    FrtHit *(*hq_pop)(FrtPriorityQueue *pq);
+    void (*hq_insert)(FrtPriorityQueue *pq, FrtHit *hit);
     void (*hq_destroy)(FrtPriorityQueue *self);
 
     FrtScorer *scorer;
-    Hit hit;
+    FrtHit hit;
 
     float max_score = 0.0f;
     float score = 0.0f;
@@ -1093,7 +1093,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
         if ((hq->size - first_doc) < num_docs) {
             num_docs = hq->size - first_doc;
         }
-        score_docs = FRT_ALLOC_N(Hit *, num_docs);
+        score_docs = FRT_ALLOC_N(FrtHit *, num_docs);
         for (i = num_docs - 1; i >= 0; i--) {
             score_docs[i] = hq_pop(hq);
             /*
@@ -1291,7 +1291,7 @@ FrtSearcher *isea_new(FrtIndexReader *ir)
 typedef struct CachedDFSearcher
 {
     FrtSearcher super;
-    Hash     *df_map;
+    FrtHash     *df_map;
     int      max_doc;
 } CachedDFSearcher;
 
@@ -1401,7 +1401,7 @@ static void cdfsea_close(FrtSearcher *self)
     free(self);
 }
 
-static FrtSearcher *cdfsea_new(Hash *df_map, int max_doc)
+static FrtSearcher *cdfsea_new(FrtHash *df_map, int max_doc)
 {
     FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(CachedDFSearcher);
 
@@ -1494,10 +1494,10 @@ static int msea_max_doc(FrtSearcher *self)
     return MSEA(self)->max_doc;
 }
 
-static int *msea_get_doc_freqs(FrtSearcher *self, HashSet *terms)
+static int *msea_get_doc_freqs(FrtSearcher *self, FrtHashSet *terms)
 {
     int i;
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
     int *doc_freqs = FRT_ALLOC_N(int, terms->size);
     for (i = 0, hse = terms->first; hse; ++i, hse = hse->next) {
         FrtTerm *t = (FrtTerm *)hse->elem;
@@ -1511,16 +1511,16 @@ static FrtWeight *msea_create_weight(FrtSearcher *self, FrtQuery *query)
     int i, *doc_freqs;
     FrtSearcher *cdfsea;
     FrtWeight *w;
-    Hash *df_map = h_new((hash_ft)&term_hash,
+    FrtHash *df_map = h_new((hash_ft)&term_hash,
                          (eq_ft)&term_eq,
                          (free_ft)term_destroy,
                          free);
     FrtQuery *rewritten_query = self->rewrite(self, query);
     /* terms get copied directly to df_map so no need to free here */
-    HashSet *terms = hs_new((hash_ft)&term_hash,
+    FrtHashSet *terms = hs_new((hash_ft)&term_hash,
                             (eq_ft)&term_eq,
                             (free_ft)NULL);
-    HashSetEntry *hse;
+    FrtHashSetEntry *hse;
 
     rewritten_query->extract_terms(rewritten_query, terms);
     doc_freqs = msea_get_doc_freqs(self, terms);
@@ -1635,7 +1635,7 @@ static int msea_search_unscored(FrtSearcher *self,
 struct MultiSearchArg {
     int total_hits, max_size;
     FrtPriorityQueue *hq;
-    void (*hq_insert)(FrtPriorityQueue *pq, Hit *hit);
+    void (*hq_insert)(FrtPriorityQueue *pq, FrtHit *hit);
 };
 
 /*
@@ -1643,7 +1643,7 @@ struct MultiSearchArg {
 static void msea_search_i(FrtSearcher *self, int doc_num, float score, void *arg)
 {
     struct MultiSearchArg *ms_arg = (struct MultiSearchArg *)arg;
-    Hit hit;
+    FrtHit hit;
     (void)self;
 
     ms_arg->total_hits++;
@@ -1665,11 +1665,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     int max_size = num_docs + (num_docs == INT_MAX ? 0 : first_doc);
     int i;
     int total_hits = 0;
-    Hit **score_docs = NULL;
+    FrtHit **score_docs = NULL;
 
     FrtPriorityQueue *hq;
-    Hit *(*hq_pop)(FrtPriorityQueue *pq);
-    void (*hq_insert)(FrtPriorityQueue *pq, Hit *hit);
+    FrtHit *(*hq_pop)(FrtPriorityQueue *pq);
+    void (*hq_insert)(FrtPriorityQueue *pq, FrtHit *hit);
 
     float max_score = 0.0f;
 
@@ -1679,8 +1679,8 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
 
     if (sort) {
         hq = pq_new(max_size, (lt_ft)fdshq_lt, &free);
-        hq_insert = (void (*)(FrtPriorityQueue *pq, Hit *hit))&pq_insert;
-        hq_pop = (Hit *(*)(FrtPriorityQueue *pq))&pq_pop;
+        hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&pq_insert;
+        hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&pq_pop;
     } else {
         hq = pq_new(max_size, (lt_ft)&hit_less_than, &free);
         hq_insert = &hit_pq_multi_insert;
@@ -1698,7 +1698,7 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
             int j;
             int start = MSEA(self)->starts[i];
             for (j = 0; j < td->size; j++) {
-                Hit *hit = td->hits[j];
+                FrtHit *hit = td->hits[j];
                 hit->doc += start;
                 // printf("adding hit = %d:%f from %i\n", hit->doc, hit->score, i);
                 hq_insert(hq, hit);
@@ -1714,11 +1714,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
         if ((hq->size - first_doc) < num_docs) {
             num_docs = hq->size - first_doc;
         }
-        score_docs = FRT_ALLOC_N(Hit *, num_docs);
+        score_docs = FRT_ALLOC_N(FrtHit *, num_docs);
         for (i = num_docs - 1; i >= 0; i--) {
             score_docs[i] = hq_pop(hq);
             /*
-            Hit *hit = score_docs[i] = hq_pop(hq);
+            FrtHit *hit = score_docs[i] = hq_pop(hq);
             printf("popped hit = %d-->%f\n", hit->doc, hit->score);
             */
         }

@@ -14,8 +14,8 @@
 static FrtSortField *sort_field_alloc(FrtSymbol field,
     SortType type,
     bool reverse,
-    int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
-    void (*get_val)(void *index_ptr, Hit *hit1, FrtComparable *comparable),
+    int (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2),
+    void (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable),
     const FrtFieldIndexClass *field_index_class)
 {
     FrtSortField *self         = FRT_ALLOC(FrtSortField);
@@ -107,13 +107,13 @@ char *sort_field_to_s(FrtSortField *self)
  * ScoreSortField
  ***************************************************************************/
 
-static void sf_score_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_score_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     (void)index;
     comparable->val.f = hit->score;
 }
 
-static int sf_score_compare(void *index_ptr, Hit *hit2, Hit *hit1)
+static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1)
 {
     float val1 = hit1->score;
     float val2 = hit2->score;
@@ -152,13 +152,13 @@ const FrtSortField FRT_SORT_FIELD_SCORE_REV = {
  * DocSortField
  ***************************************************************************/
 
-static void sf_doc_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_doc_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     (void)index;
     comparable->val.l = hit->doc;
 }
 
-static int sf_doc_compare(void *index_ptr, Hit *hit1, Hit *hit2)
+static int sf_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2)
 {
     int val1 = hit1->doc;
     int val2 = hit2->doc;
@@ -197,12 +197,12 @@ const FrtSortField FRT_SORT_FIELD_DOC_REV = {
  * ByteSortField
  ***************************************************************************/
 
-static void sf_byte_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_byte_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     comparable->val.l = ((long *)index)[hit->doc];
 }
 
-static int sf_byte_compare(void *index, Hit *hit1, Hit *hit2)
+static int sf_byte_compare(void *index, FrtHit *hit1, FrtHit *hit2)
 {
     long val1 = ((long *)index)[hit1->doc];
     long val2 = ((long *)index)[hit2->doc];
@@ -222,12 +222,12 @@ FrtSortField *sort_field_byte_new(FrtSymbol field, bool reverse)
  * IntegerSortField
  ***************************************************************************/
 
-static void sf_int_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_int_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     comparable->val.l = ((long *)index)[hit->doc];
 }
 
-static int sf_int_compare(void *index, Hit *hit1, Hit *hit2)
+static int sf_int_compare(void *index, FrtHit *hit1, FrtHit *hit2)
 {
     long val1 = ((long *)index)[hit1->doc];
     long val2 = ((long *)index)[hit2->doc];
@@ -247,12 +247,12 @@ FrtSortField *sort_field_int_new(FrtSymbol field, bool reverse)
  * FloatSortField
  ***************************************************************************/
 
-static void sf_float_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_float_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     comparable->val.f = ((float *)index)[hit->doc];
 }
 
-static int sf_float_compare(void *index, Hit *hit1, Hit *hit2)
+static int sf_float_compare(void *index, FrtHit *hit1, FrtHit *hit2)
 {
     float val1 = ((float *)index)[hit1->doc];
     float val2 = ((float *)index)[hit2->doc];
@@ -272,14 +272,14 @@ FrtSortField *sort_field_float_new(FrtSymbol field, bool reverse)
  * StringSortField
  ***************************************************************************/
 
-static void sf_string_get_val(void *index, Hit *hit, FrtComparable *comparable)
+static void sf_string_get_val(void *index, FrtHit *hit, FrtComparable *comparable)
 {
     comparable->val.s
         = ((FrtStringIndex *)index)->values[
         ((FrtStringIndex *)index)->index[hit->doc]];
 }
 
-static int sf_string_compare(void *index, Hit *hit1, Hit *hit2)
+static int sf_string_compare(void *index, FrtHit *hit1, FrtHit *hit2)
 {
     char *s1 = ((FrtStringIndex *)index)->values[
         ((FrtStringIndex *)index)->index[hit1->doc]];
@@ -335,11 +335,11 @@ FrtSortField *sort_field_auto_new(FrtSymbol field, bool reverse)
 typedef struct Comparator {
     void *index;
     bool  reverse : 1;
-    int   (*compare)(void *index_ptr, Hit *hit1, Hit *hit2);
+    int   (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
 } Comparator;
 
 static Comparator *comparator_new(void *index, bool reverse,
-                  int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2))
+                  int (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2))
 {
     Comparator *self = FRT_ALLOC(Comparator);
     self->index = index;
@@ -440,11 +440,11 @@ static bool fshq_less_than(const void *hit1, const void *hit2)
     if (cmp != 0) {
         return cmp;
     } else {
-        return ((Hit *)hit1)->score < ((Hit *)hit2)->score;
+        return ((FrtHit *)hit1)->score < ((FrtHit *)hit2)->score;
     }
 }
 
-static bool fshq_lt(Sorter *sorter, Hit *hit1, Hit *hit2)
+static bool fshq_lt(Sorter *sorter, FrtHit *hit1, FrtHit *hit2)
 {
     Comparator *comp;
     int diff = 0, i;
@@ -469,8 +469,8 @@ void fshq_pq_down(FrtPriorityQueue *pq)
     register int i = 1;
     register int j = 2;     /* i << 1; */
     register int k = 3;     /* j + 1; */
-    Hit **heap = (Hit **)pq->heap;
-    Hit *node = heap[i];    /* save top node */
+    FrtHit **heap = (FrtHit **)pq->heap;
+    FrtHit *node = heap[i];    /* save top node */
     Sorter *sorter = (Sorter *)heap[0];
 
     if ((k <= pq->size) && fshq_lt(sorter, heap[k], heap[j])) {
@@ -489,10 +489,10 @@ void fshq_pq_down(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-Hit *fshq_pq_pop(FrtPriorityQueue *pq)
+FrtHit *fshq_pq_pop(FrtPriorityQueue *pq)
 {
     if (pq->size > 0) {
-        Hit *hit = (Hit *)pq->heap[1];   /* save first value */
+        FrtHit *hit = (FrtHit *)pq->heap[1];   /* save first value */
         pq->heap[1] = pq->heap[pq->size];   /* move last to first */
         pq->heap[pq->size] = NULL;
         pq->size--;
@@ -505,8 +505,8 @@ Hit *fshq_pq_pop(FrtPriorityQueue *pq)
 
 static void fshq_pq_up(FrtPriorityQueue *pq)
 {
-    Hit **heap = (Hit **)pq->heap;
-    Hit *node;
+    FrtHit **heap = (FrtHit **)pq->heap;
+    FrtHit *node;
     int i = pq->size;
     int j = i >> 1;
     Sorter *sorter = (Sorter *)heap[0];
@@ -520,11 +520,11 @@ static void fshq_pq_up(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-void fshq_pq_insert(FrtPriorityQueue *pq, Hit *hit)
+void fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
 {
     if (pq->size < pq->capa) {
-        Hit *new_hit = FRT_ALLOC(Hit);
-        memcpy(new_hit, hit, sizeof(Hit));
+        FrtHit *new_hit = FRT_ALLOC(FrtHit);
+        memcpy(new_hit, hit, sizeof(FrtHit));
         pq->size++;
         if (pq->size >= pq->mem_capa) {
             pq->mem_capa <<= 1;
@@ -533,8 +533,8 @@ void fshq_pq_insert(FrtPriorityQueue *pq, Hit *hit)
         pq->heap[pq->size] = new_hit;
         fshq_pq_up(pq);
     } else if (pq->size > 0
-               && fshq_lt((Sorter *)pq->heap[0], (Hit *)pq->heap[1], hit)) {
-        memcpy(pq->heap[1], hit, sizeof(Hit));
+               && fshq_lt((Sorter *)pq->heap[0], (FrtHit *)pq->heap[1], hit)) {
+        memcpy(pq->heap[1], hit, sizeof(FrtHit));
         fshq_pq_down(pq);
     }
 }
@@ -561,7 +561,7 @@ FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
     return self;
 }
 
-Hit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
+FrtHit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
 {
     if (pq->size <= 0) {
         return NULL;
@@ -571,7 +571,7 @@ Hit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
         Sorter *sorter = (Sorter *)pq->heap[0];
         const int cmp_cnt = sorter->c_cnt;
         FrtSortField **sort_fields = sorter->sort->sort_fields;
-        Hit *hit = (Hit *)pq->heap[1];   /* save first value */
+        FrtHit *hit = (FrtHit *)pq->heap[1];   /* save first value */
         FrtFieldDoc *field_doc;
         FrtComparable *comparables;
         Comparator **comparators = sorter->comparators;
@@ -583,7 +583,7 @@ Hit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
         field_doc = (FrtFieldDoc *)emalloc(sizeof(FrtFieldDoc)
                                         + sizeof(FrtComparable) * cmp_cnt);
         comparables = field_doc->comparables;
-        memcpy(field_doc, hit, sizeof(Hit));
+        memcpy(field_doc, hit, sizeof(FrtHit));
         field_doc->size = cmp_cnt;
 
         for (j = 0; j < cmp_cnt; j++) {
@@ -594,7 +594,7 @@ Hit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
             comparables[j].reverse = comparator->reverse;
         }
         free(hit);
-        return (Hit *)field_doc;
+        return (FrtHit *)field_doc;
     }
 }
 

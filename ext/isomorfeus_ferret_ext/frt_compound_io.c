@@ -58,7 +58,7 @@ static int cmpd_count(FrtStore *store)
 static void cmpd_each(FrtStore *store,
                      void (*func)(const char *fname, void *arg), void *arg)
 {
-    Hash *ht = store->dir.cmpd->entries;
+    FrtHash *ht = store->dir.cmpd->entries;
     int i;
     for (i = 0; i <= ht->mask; i++) {
         char *fn = (char *)ht->table[i].key;
@@ -279,7 +279,7 @@ FrtCompoundWriter *open_cw(FrtStore *store, char *name)
     cw->store = store;
     cw->name = name;
     cw->ids = hs_new_str(&free);
-    cw->file_entries = ary_new_type_capa(FrtCWFileEntry, FRT_CW_INIT_CAPA);
+    cw->file_entries = frt_ary_new_type_capa(FrtCWFileEntry, FRT_CW_INIT_CAPA);
     return cw;
 }
 
@@ -291,8 +291,8 @@ void cw_add_file(FrtCompoundWriter *cw, char *id)
               "added to the compound store", id);
     }
 
-    ary_grow(cw->file_entries);
-    ary_last(cw->file_entries).name = id;
+    frt_ary_grow(cw->file_entries);
+    frt_ary_last(cw->file_entries).name = id;
 }
 
 static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os)
@@ -343,12 +343,12 @@ void cw_close(FrtCompoundWriter *cw)
 
     os = cw->store->new_output(cw->store, cw->name);
 
-    os_write_vint(os, ary_size(cw->file_entries));
+    os_write_vint(os, frt_ary_size(cw->file_entries));
 
     /* Write the directory with all offsets at 0.
      * Remember the positions of directory entries so that we can adjust the
      * offsets later */
-    for (i = 0; i < ary_size(cw->file_entries); i++) {
+    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
         cw->file_entries[i].dir_offset = os_pos(os);
         os_write_u64(os, 0);  /* for now */
         os_write_string(os, cw->file_entries[i].name);
@@ -356,13 +356,13 @@ void cw_close(FrtCompoundWriter *cw)
 
     /* Open the files and copy their data into the stream.  Remember the
      * locations of each file's data section. */
-    for (i = 0; i < ary_size(cw->file_entries); i++) {
+    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
         cw->file_entries[i].data_offset = os_pos(os);
         cw_copy_file(cw, &cw->file_entries[i], os);
     }
 
     /* Write the data offsets into the directory of the compound stream */
-    for (i = 0; i < ary_size(cw->file_entries); i++) {
+    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
         os_seek(os, cw->file_entries[i].dir_offset);
         os_write_u64(os, cw->file_entries[i].data_offset);
     }
@@ -372,6 +372,6 @@ void cw_close(FrtCompoundWriter *cw)
     }
 
     hs_destroy(cw->ids);
-    ary_free(cw->file_entries);
+    frt_ary_free(cw->file_entries);
     free(cw);
 }

@@ -22,8 +22,8 @@ static const char *const ERROR_TYPES[] = {
 
 const char *const FRT_UNSUPPORTED_ERROR_MSG = "Unsupported operation";
 const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
-char xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
-char xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
+char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
+char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
 
 static thread_key_t exception_stack_key;
 static thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
