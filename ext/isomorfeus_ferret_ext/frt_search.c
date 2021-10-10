@@ -6,13 +6,13 @@
 
 /***************************************************************************
  *
- * Explanation - Used to give details for query scores
+ * FrtExplanation - Used to give details for query scores
  *
  ***************************************************************************/
 
-Explanation *expl_new(float value, const char *description, ...)
+FrtExplanation *expl_new(float value, const char *description, ...)
 {
-    Explanation *expl = FRT_ALLOC(Explanation);
+    FrtExplanation *expl = FRT_ALLOC(FrtExplanation);
 
     va_list args;
     va_start(args, description);
@@ -20,25 +20,25 @@ Explanation *expl_new(float value, const char *description, ...)
     va_end(args);
 
     expl->value = value;
-    expl->details = ary_new_type_capa(Explanation *,
+    expl->details = ary_new_type_capa(FrtExplanation *,
                                       FRT_EXPLANATION_DETAILS_START_SIZE);
     return expl;
 }
 
-void expl_destroy(Explanation *expl)
+void expl_destroy(FrtExplanation *expl)
 {
     ary_destroy((void **)expl->details, (free_ft)expl_destroy);
     free(expl->description);
     free(expl);
 }
 
-Explanation *expl_add_detail(Explanation *expl, Explanation *detail)
+FrtExplanation *expl_add_detail(FrtExplanation *expl, FrtExplanation *detail)
 {
     ary_push(expl->details, detail);
     return expl;
 }
 
-char *expl_to_s_depth(Explanation *expl, int depth)
+char *expl_to_s_depth(FrtExplanation *expl, int depth)
 {
     int i;
     char *buffer = FRT_ALLOC_N(char, depth * 2 + 1);
@@ -56,7 +56,7 @@ char *expl_to_s_depth(Explanation *expl, int depth)
     return buffer;
 }
 
-char *expl_to_html(Explanation *expl)
+char *expl_to_html(FrtExplanation *expl)
 {
     int i;
     char *buffer;
@@ -995,7 +995,7 @@ int isea_doc_freq(Searcher *self, Symbol field, const char *term)
     return ir_doc_freq(ISEA(self)->ir, field, term);
 }
 
-static Document *isea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *isea_get_doc(Searcher *self, int doc_num)
 {
     IndexReader *ir = ISEA(self)->ir;
     return ir->get_doc(ir, doc_num);
@@ -1221,17 +1221,17 @@ static Query *isea_rewrite(Searcher *self, Query *original)
     return query;
 }
 
-static Explanation *isea_explain(Searcher *self,
+static FrtExplanation *isea_explain(Searcher *self,
                                  Query *query,
                                  int doc_num)
 {
     Weight *weight = q_weight(query, self);
-    Explanation *e = weight->explain(weight, ISEA(self)->ir, doc_num);
+    FrtExplanation *e = weight->explain(weight, ISEA(self)->ir, doc_num);
     weight->destroy(weight);
     return e;
 }
 
-static Explanation *isea_explain_w(Searcher *self, Weight *w, int doc_num)
+static FrtExplanation *isea_explain_w(Searcher *self, Weight *w, int doc_num)
 {
     return w->explain(w, ISEA(self)->ir, doc_num);
 }
@@ -1305,7 +1305,7 @@ static int cdfsea_doc_freq(Searcher *self, Symbol field, const char *text)
     return df ? *df : 0;
 }
 
-static Document *cdfsea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *cdfsea_get_doc(Searcher *self, int doc_num)
 {
     (void)self; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
@@ -1368,14 +1368,14 @@ static Query *cdfsea_rewrite(Searcher *self, Query *original)
     return original;
 }
 
-static Explanation *cdfsea_explain(Searcher *self, Query *query, int doc_num)
+static FrtExplanation *cdfsea_explain(Searcher *self, Query *query, int doc_num)
 {
     (void)self; (void)query; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static Explanation *cdfsea_explain_w(Searcher *self, Weight *w, int doc_num)
+static FrtExplanation *cdfsea_explain_w(Searcher *self, Weight *w, int doc_num)
 {
     (void)self; (void)w; (void)doc_num;
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
@@ -1473,7 +1473,7 @@ static int msea_doc_freq(Searcher *self, Symbol field, const char *term)
     return doc_freq;
 }
 
-static Document *msea_get_doc(Searcher *self, int doc_num)
+static FrtDocument *msea_get_doc(Searcher *self, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
@@ -1768,23 +1768,23 @@ static Query *msea_rewrite(Searcher *self, Query *original)
     return rewritten;
 }
 
-static Explanation *msea_explain(Searcher *self, Query *query, int doc_num)
+static FrtExplanation *msea_explain(Searcher *self, Query *query, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     Weight *w = q_weight(query, self);
     Searcher *s = msea->searchers[i];
-    Explanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
+    FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
     w->destroy(w);
     return e;
 }
 
-static Explanation *msea_explain_w(Searcher *self, Weight *w, int doc_num)
+static FrtExplanation *msea_explain_w(Searcher *self, Weight *w, int doc_num)
 {
     MultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     Searcher *s = msea->searchers[i];
-    Explanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
+    FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
     return e;
 }
 

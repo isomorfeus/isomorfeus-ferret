@@ -2,13 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Types */
-#define DelTerm                 FrtDelTerm
-#define Deleter                 FrtDeleter
-#define DeterministicState      FrtDeterministicState
-#define DocField                FrtDocField
-#define DocWriter               FrtDocWriter
-#define Document                FrtDocument
-#define Explanation             FrtExplanation
 #define FieldDoc                FrtFieldDoc
 #define FieldIndex              FrtFieldIndex
 #define FieldIndexClass         FrtFieldIndexClass

@@ -116,7 +116,7 @@ MultiMapper *mulmap_new()
     self->capa = 128;
     self->mappings = FRT_ALLOC_N(Mapping *, 128);
     self->d_capa = 128;
-    self->dstates = FRT_ALLOC_N(DeterministicState *, 128);
+    self->dstates = FRT_ALLOC_N(FrtDeterministicState *, 128);
     self->dstates_map = NULL;
     self->nstates = NULL;
     self->ref_cnt = 1;
@@ -160,20 +160,20 @@ static void mulmap_bv_set_states(FrtBitVector *bv, int *states, int cnt)
     }
 }
 
-static DeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVector *bv)
+static FrtDeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVector *bv)
 {
-    DeterministicState *current_state
-        = (DeterministicState *)h_get(self->dstates_map, bv);
+    FrtDeterministicState *current_state
+        = (FrtDeterministicState *)h_get(self->dstates_map, bv);
     if (current_state == NULL) {
         int bit, i;
         int match_len = 0, max_match_len = 0;
         State *start = self->nstates[0];
-        DeterministicState *start_ds;
-        current_state = FRT_ALLOC_AND_ZERO(DeterministicState);
+        FrtDeterministicState *start_ds;
+        current_state = FRT_ALLOC_AND_ZERO(FrtDeterministicState);
         h_set(self->dstates_map, bv, current_state);
         if (self->d_size >= self->d_capa) {
             self->d_capa <<= 1;
-            FRT_REALLOC_N(self->dstates, DeterministicState *, self->d_capa);
+            FRT_REALLOC_N(self->dstates, FrtDeterministicState *, self->d_capa);
         }
         self->dstates[self->d_size++] = current_state;
         start_ds = self->dstates[0];
@@ -261,8 +261,8 @@ void mulmap_compile(MultiMapper *self)
 
 int mulmap_map_len(MultiMapper *self, char *to, char *from, int capa)
 {
-    DeterministicState *start = self->dstates[0];
-    DeterministicState *state = start;
+    FrtDeterministicState *start = self->dstates[0];
+    FrtDeterministicState *state = start;
     char *s = from, *d = to, *end = to + capa - 1;
     if (self->d_size == 0) {
         mulmap_compile(self);
@@ -297,8 +297,8 @@ char *mulmap_map(MultiMapper *self, char *to, char *from, int capa)
 /* Maps a string to a dynamically allocated string */
 char *mulmap_dynamic_map(MultiMapper *self, char *from)
 {
-    DeterministicState *start = self->dstates[0];
-    DeterministicState *state = start;
+    FrtDeterministicState *start = self->dstates[0];
+    FrtDeterministicState *state = start;
     int capa = strlen(from);
     char *to = (char *)ecalloc(capa);
     char *s = from, *d = to, *end = to + capa - 1;

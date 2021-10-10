@@ -847,12 +847,6 @@ extern void frt_dw_reset_postings(FrtHash *postings);
  *
  ****************************************************************************/
 
-typedef struct FrtDelTerm
-{
-    int field_num;
-    char *term;
-} FrtDelTerm;
-
 struct FrtIndexWriter
 {
     FrtConfig config;

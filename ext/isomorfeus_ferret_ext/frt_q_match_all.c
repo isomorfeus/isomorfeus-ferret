@@ -40,7 +40,7 @@ static bool masc_skip_to(Scorer *self, int doc_num)
     return masc_next(self);
 }
 
-static Explanation *masc_explain(Scorer *self, int doc_num)
+static FrtExplanation *masc_explain(Scorer *self, int doc_num)
 {
     (void)self;
     (void)doc_num;
@@ -76,9 +76,9 @@ static char *maw_to_s(Weight *self)
     return strfmt("MatchAllWeight(%f)", self->value);
 }
 
-static Explanation *maw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *maw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    Explanation *expl;
+    FrtExplanation *expl;
     if (!ir->is_deleted(ir, doc_num)) {
         expl = expl_new(self->value, "MatchAllQuery: product of:");
         expl_add_detail(expl, expl_new(self->query->boost, "boost"));

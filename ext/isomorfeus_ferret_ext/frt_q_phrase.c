@@ -274,7 +274,7 @@ static bool phsc_skip_to(Scorer *self, int doc_num)
     return phsc_do_next(self);
 }
 
-static Explanation *phsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *phsc_explain(Scorer *self, int doc_num)
 {
     PhraseScorer *phsc = PhSc(self);
     float phrase_freq;
@@ -580,19 +580,19 @@ static Scorer *phw_scorer(Weight *self, IndexReader *ir)
     return phsc;
 }
 
-static Explanation *phw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *phw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    Explanation *expl;
-    Explanation *idf_expl1;
-    Explanation *idf_expl2;
-    Explanation *query_expl;
-    Explanation *qnorm_expl;
-    Explanation *field_expl;
-    Explanation *tf_expl;
+    FrtExplanation *expl;
+    FrtExplanation *idf_expl1;
+    FrtExplanation *idf_expl2;
+    FrtExplanation *query_expl;
+    FrtExplanation *qnorm_expl;
+    FrtExplanation *field_expl;
+    FrtExplanation *tf_expl;
     Scorer *scorer;
     uchar *field_norms;
     float field_norm;
-    Explanation *field_norm_expl;
+    FrtExplanation *field_norm_expl;
     char *query_str;
     PhraseQuery *phq = PhQ(self->query);
     const int pos_cnt = phq->pos_cnt;

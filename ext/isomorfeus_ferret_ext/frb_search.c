@@ -325,7 +325,7 @@ frb_td_to_json(VALUE self)
  *
  ****************************************************************************/
 
-#define GET_EXPL() Explanation *expl = (Explanation *)DATA_PTR(self)
+#define GET_EXPL() FrtExplanation *expl = (FrtExplanation *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -2921,7 +2921,7 @@ frb_sea_explain(VALUE self, VALUE rquery, VALUE rdoc_id)
 {
     GET_SEA();
     Query *query;
-    Explanation *expl;
+    FrtExplanation *expl;
     Data_Get_Struct(rquery, Query, query);
     expl = sea->explain(sea, query, FIX2INT(rdoc_id));
     return Data_Wrap_Struct(cExplanation, NULL, &expl_destroy, expl);

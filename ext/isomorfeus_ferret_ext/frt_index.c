@@ -669,10 +669,10 @@ static char *si_norm_file_name(SegmentInfo *si, char *buf, int field_num)
     }
 }
 
-static void deleter_queue_file(Deleter *dlr, const char *file_name);
+static void deleter_queue_file(FrtDeleter *dlr, const char *file_name);
 #define DEL(file_name) deleter_queue_file(dlr, file_name)
 
-static void si_delete_files(SegmentInfo *si, FieldInfos *fis, Deleter *dlr)
+static void si_delete_files(SegmentInfo *si, FieldInfos *fis, FrtDeleter *dlr)
 {
     int i;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -1108,7 +1108,7 @@ SegmentInfos *sis_read(Store *store)
     return fsf.ret.sis;
 }
 
-void sis_write(SegmentInfos *sis, Store *store, Deleter *deleter)
+void sis_write(SegmentInfos *sis, Store *store, FrtDeleter *deleter)
 {
     int i;
     OutStream *volatile os = NULL;
@@ -1318,9 +1318,9 @@ void fr_close(FieldsReader *fr)
     free(fr);
 }
 
-static DocField *fr_df_new(Symbol name, int size)
+static FrtDocField *fr_df_new(Symbol name, int size)
 {
-    DocField *df = FRT_ALLOC(DocField);
+    FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
     df->capa = df->size = size;
     df->data = FRT_ALLOC_N(char *, df->capa);
@@ -1330,12 +1330,12 @@ static DocField *fr_df_new(Symbol name, int size)
     return df;
 }
 
-Document *fr_get_doc(FieldsReader *fr, int doc_num)
+FrtDocument *fr_get_doc(FieldsReader *fr, int doc_num)
 {
     int i, j;
     off_t pos;
     int stored_cnt;
-    Document *doc = doc_new();
+    FrtDocument *doc = doc_new();
     InStream *fdx_in = fr->fdx_in;
     InStream *fdt_in = fr->fdt_in;
 
@@ -1348,7 +1348,7 @@ Document *fr_get_doc(FieldsReader *fr, int doc_num)
         const int field_num = is_read_vint(fdt_in);
         FieldInfo *fi = fr->fis->fields[field_num];
         const int df_size = is_read_vint(fdt_in);
-        DocField *df = fr_df_new(fi->name, df_size);
+        FrtDocField *df = fr_df_new(fi->name, df_size);
 
         for (j = 0; j < df_size; j++) {
             df->lengths[j] = is_read_vint(fdt_in);
@@ -1357,7 +1357,7 @@ Document *fr_get_doc(FieldsReader *fr, int doc_num)
         doc_add_field(doc, df);
     }
     for (i = 0; i < stored_cnt; i++) {
-        DocField *df = doc->fields[i];
+        FrtDocField *df = doc->fields[i];
         const int df_size = df->size;
         for (j = 0; j < df_size; j++) {
             const int read_len = df->lengths[j] + 1;
@@ -1581,10 +1581,10 @@ void fw_close(FieldsWriter *fw)
     free(fw);
 }
 
-void fw_add_doc(FieldsWriter *fw, Document *doc)
+void fw_add_doc(FieldsWriter *fw, FrtDocument *doc)
 {
     int i, j, stored_cnt = 0;
-    DocField *df;
+    FrtDocField *df;
     FieldInfo *fi;
     OutStream *fdt_out = fw->fdt_out, *fdx_out = fw->fdx_out;
     const int doc_size = doc->size;
@@ -3361,27 +3361,27 @@ static bool file_name_filter_is_cfs_file(const char *file_name) {
  ****************************************************************************/
 
 #define DELETABLE_START_CAPA 8
-Deleter *deleter_new(SegmentInfos *sis, Store *store)
+FrtDeleter *deleter_new(SegmentInfos *sis, Store *store)
 {
-    Deleter *dlr = FRT_ALLOC(Deleter);
+    FrtDeleter *dlr = FRT_ALLOC(FrtDeleter);
     dlr->sis = sis;
     dlr->store = store;
     dlr->pending = hs_new_str(&free);
     return dlr;
 }
 
-void deleter_destroy(Deleter *dlr)
+void deleter_destroy(FrtDeleter *dlr)
 {
     hs_destroy(dlr->pending);
     free(dlr);
 }
 
-static void deleter_queue_file(Deleter *dlr, const char *file_name)
+static void deleter_queue_file(FrtDeleter *dlr, const char *file_name)
 {
     hs_add(dlr->pending, estrdup(file_name));
 }
 
-void deleter_delete_file(Deleter *dlr, char *file_name)
+void deleter_delete_file(FrtDeleter *dlr, char *file_name)
 {
     Store *store = dlr->store;
     FRT_TRY
@@ -3394,7 +3394,7 @@ void deleter_delete_file(Deleter *dlr, char *file_name)
     FRT_XENDTRY
 }
 
-static void deleter_commit_pending_deletions(Deleter *dlr)
+static void deleter_commit_pending_deletions(FrtDeleter *dlr)
 {
     HashSetEntry *hse, *hse_next = dlr->pending->first;
     while ((hse = hse_next) != NULL) {
@@ -3403,7 +3403,7 @@ static void deleter_commit_pending_deletions(Deleter *dlr)
     }
 }
 
-void deleter_delete_files(Deleter *dlr, char **files, int file_cnt)
+void deleter_delete_files(FrtDeleter *dlr, char **files, int file_cnt)
 {
     int i;
     for (i = file_cnt - 1; i >= 0; i--) {
@@ -3414,14 +3414,14 @@ void deleter_delete_files(Deleter *dlr, char **files, int file_cnt)
 
 struct DelFilesArg {
     char  curr_seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
-    Deleter *dlr;
+    FrtDeleter *dlr;
     Hash *current;
 };
 
 static void deleter_find_deletable_files_i(const char *file_name, void *arg)
 {
     struct DelFilesArg *dfa = (struct DelFilesArg *)arg;
-    Deleter *dlr = dfa->dlr;
+    FrtDeleter *dlr = dfa->dlr;
 
     if (file_name_filter_is_index_file(file_name, false)
         && 0 != strcmp(file_name, dfa->curr_seg_file_name)
@@ -3503,7 +3503,7 @@ static void deleter_find_deletable_files_i(const char *file_name, void *arg)
  * create the unused file (eg when merging segments), and we only remove from
  * deletable when a file is successfully deleted.
  */
-void deleter_find_deletable_files(Deleter *dlr)
+void deleter_find_deletable_files(FrtDeleter *dlr)
 {
     /* Gather all "current" segments: */
     int i;
@@ -3529,7 +3529,7 @@ void deleter_find_deletable_files(Deleter *dlr)
     h_destroy(dfa.current);
 }
 
-static void deleter_delete_deletable_files(Deleter *dlr)
+static void deleter_delete_deletable_files(FrtDeleter *dlr)
 {
     deleter_find_deletable_files(dlr);
     deleter_commit_pending_deletions(dlr);
@@ -3537,7 +3537,7 @@ static void deleter_delete_deletable_files(Deleter *dlr)
 
 /*
 TODO: currently not used. Why not?
-static void deleter_clear_pending_deletions(Deleter *dlr)
+static void deleter_clear_pending_deletions(FrtDeleter *dlr)
 {
     hs_clear(dlr->pending);
 }
@@ -3715,11 +3715,11 @@ void ir_delete_doc(IndexReader *ir, int doc_num)
     }
 }
 
-Document *ir_get_doc_with_term(IndexReader *ir, Symbol field,
+FrtDocument *ir_get_doc_with_term(IndexReader *ir, Symbol field,
                                const char *term)
 {
     TermDocEnum *tde = ir_term_docs_for(ir, field, term);
-    Document *doc = NULL;
+    FrtDocument *doc = NULL;
 
     if (tde) {
         if (tde->next(tde)) {
@@ -3895,7 +3895,7 @@ static void norm_destroy(Norm *norm)
     free(norm);
 }
 
-static void norm_rewrite(Norm *norm, Store *store, Deleter *dlr,
+static void norm_rewrite(Norm *norm, Store *store, FrtDeleter *dlr,
                          SegmentInfo *si, int doc_count)
 {
     OutStream *os;
@@ -4026,7 +4026,7 @@ static void sr_undelete_all_i(IndexReader *ir)
     SR(ir)->deleted_docs = NULL;
 }
 
-static void sr_set_deleter_i(IndexReader *ir, Deleter *deleter)
+static void sr_set_deleter_i(IndexReader *ir, FrtDeleter *deleter)
 {
   ir->deleter = deleter;
 }
@@ -4148,9 +4148,9 @@ static int sr_max_doc(IndexReader *ir)
     return SR(ir)->fr->size;
 }
 
-static Document *sr_get_doc(IndexReader *ir, int doc_num)
+static FrtDocument *sr_get_doc(IndexReader *ir, int doc_num)
 {
-    Document *doc;
+    FrtDocument *doc;
     mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         mutex_unlock(&ir->mutex);
@@ -4422,7 +4422,7 @@ static int mr_max_doc(IndexReader *ir)
     int i = mr_reader_index_i(MR(ir), doc_num);\
     IndexReader *reader = MR(ir)->sub_readers[i]
 
-static Document *mr_get_doc(IndexReader *ir, int doc_num)
+static FrtDocument *mr_get_doc(IndexReader *ir, int doc_num)
 {
     GET_READER();
     return reader->get_doc(reader, doc_num - MR(ir)->starts[i]);
@@ -4589,7 +4589,7 @@ static void mr_undelete_all_i(IndexReader *ir)
     ir->has_changes = true;
 }
 
-static void mr_set_deleter_i(IndexReader *ir, Deleter *deleter)
+static void mr_set_deleter_i(IndexReader *ir, FrtDeleter *deleter)
 {
     int i;
     ir->deleter = deleter;
@@ -4917,7 +4917,7 @@ int pl_cmp(const PostingList **pl1, const PostingList **pl2)
  *
  ****************************************************************************/
 
-static FieldInverter *fld_inv_new(DocWriter *dw, FieldInfo *fi)
+static FieldInverter *fld_inv_new(FrtDocWriter *dw, FieldInfo *fi)
 {
     FieldInverter *fld_inv = FRT_MP_ALLOC(dw->mp, FieldInverter);
     fld_inv->is_tokenized = fi_is_tokenized(fi);
@@ -5002,11 +5002,11 @@ static void skip_buf_destroy(SkipBuffer *skip_buf)
 
 /****************************************************************************
  *
- * DocWriter
+ * FrtDocWriter
  *
  ****************************************************************************/
 
-static void dw_write_norms(DocWriter *dw, FieldInverter *fld_inv)
+static void dw_write_norms(FrtDocWriter *dw, FieldInverter *fld_inv)
 {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *norms_out;
@@ -5038,7 +5038,7 @@ static PostingList **dw_sort_postings(Hash *plists_ht)
     return plists;
 }
 
-static void dw_flush_streams(DocWriter *dw)
+static void dw_flush_streams(FrtDocWriter *dw)
 {
     mp_reset(dw->mp);
     fw_close(dw->fw);
@@ -5047,7 +5047,7 @@ static void dw_flush_streams(DocWriter *dw)
     dw->doc_num = 0;
 }
 
-static void dw_flush(DocWriter *dw)
+static void dw_flush(FrtDocWriter *dw)
 {
     int i, j, last_doc, doc_code, doc_freq, last_pos, posting_count;
     int skip_interval = dw->skip_interval;
@@ -5127,13 +5127,13 @@ static void dw_flush(DocWriter *dw)
     dw_flush_streams(dw);
 }
 
-DocWriter *dw_open(IndexWriter *iw, SegmentInfo *si)
+FrtDocWriter *dw_open(IndexWriter *iw, SegmentInfo *si)
 {
     Store *store = iw->store;
     MemoryPool *mp = mp_new_capa(iw->config.chunk_size,
         iw->config.max_buffer_memory/iw->config.chunk_size);
 
-    DocWriter *dw = FRT_ALLOC(DocWriter);
+    FrtDocWriter *dw = FRT_ALLOC(FrtDocWriter);
 
     dw->mp          = mp;
     dw->analyzer    = iw->analyzer;
@@ -5159,13 +5159,13 @@ DocWriter *dw_open(IndexWriter *iw, SegmentInfo *si)
     return dw;
 }
 
-void dw_new_segment(DocWriter *dw, SegmentInfo *si)
+void dw_new_segment(FrtDocWriter *dw, SegmentInfo *si)
 {
     dw->fw = fw_open(dw->store, si->name, dw->fis);
     dw->si = si;
 }
 
-void dw_close(DocWriter *dw)
+void dw_close(FrtDocWriter *dw)
 {
     if (dw->doc_num) {
         dw_flush(dw);
@@ -5180,7 +5180,7 @@ void dw_close(DocWriter *dw)
     free(dw);
 }
 
-FieldInverter *dw_get_fld_inv(DocWriter *dw, FieldInfo *fi)
+FieldInverter *dw_get_fld_inv(FrtDocWriter *dw, FieldInfo *fi)
 {
     FieldInverter *fld_inv = (FieldInverter*)h_get_int(dw->fields, fi->number);
 
@@ -5221,7 +5221,7 @@ static void dw_add_posting(MemoryPool *mp,
     }
 }
 
-static void dw_add_offsets(DocWriter *dw, int pos, off_t start, off_t end)
+static void dw_add_offsets(FrtDocWriter *dw, int pos, off_t start, off_t end)
 {
     if (pos >= dw->offsets_capa) {
         int old_capa = dw->offsets_capa;
@@ -5236,9 +5236,9 @@ static void dw_add_offsets(DocWriter *dw, int pos, off_t start, off_t end)
     dw->offsets_size = pos + 1;
 }
 
-Hash *dw_invert_field(DocWriter *dw,
+Hash *dw_invert_field(FrtDocWriter *dw,
                            FieldInverter *fld_inv,
-                           DocField *df)
+                           FrtDocField *df)
 {
     MemoryPool *mp = dw->mp;
     FrtAnalyzer *a = dw->analyzer;
@@ -5319,11 +5319,11 @@ void dw_reset_postings(Hash *postings)
     postings->fill = postings->size = 0;
 }
 
-void dw_add_doc(DocWriter *dw, Document *doc)
+void dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
 {
     int i;
     float boost;
-    DocField *df;
+    FrtDocField *df;
     FieldInverter *fld_inv;
     Hash *postings;
     FieldInfo *fi;
@@ -5874,7 +5874,7 @@ int iw_doc_count(IndexWriter *iw)
 
 static void iw_create_compound_file(Store *store, FieldInfos *fis,
                                     SegmentInfo *si, char *cfs_file_name,
-                                    Deleter *dlr)
+                                    FrtDeleter *dlr)
 {
     int i;
     FrtCompoundWriter *cw;
@@ -6001,7 +6001,7 @@ static void iw_flush_ram_segment(IndexWriter *iw)
     iw_maybe_merge_segments(iw);
 }
 
-void iw_add_doc(IndexWriter *iw, Document *doc)
+void iw_add_doc(IndexWriter *iw, FrtDocument *doc)
 {
     mutex_lock(&iw->mutex);
     if (NULL == iw->dw) {
@@ -6242,7 +6242,7 @@ static void iw_cp_fields(IndexWriter *iw, SegmentReader *sr,
                 const int df_size = is_read_vint(fdt_in);
                 os_write_vint(fdt_out, field_num);
                 os_write_vint(fdt_out, df_size);
-                /* sum total lengths of DocField */
+                /* sum total lengths of FrtDocField */
                 for (k = 0; k < df_size; k++) {
                     /* Each field has one ' ' byte so add 1 */
                     const int flen = is_read_vint(fdt_in);

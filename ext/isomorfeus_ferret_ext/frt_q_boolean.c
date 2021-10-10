@@ -181,12 +181,12 @@ static bool dssc_skip_to(Scorer *self, int doc_num)
     }
 }
 
-static Explanation *dssc_explain(Scorer *self, int doc_num)
+static FrtExplanation *dssc_explain(Scorer *self, int doc_num)
 {
     int i;
     DisjunctionSumScorer *dssc = DSSc(self);
     Scorer *sub_scorer;
-    Explanation *e
+    FrtExplanation *e
         = expl_new(0.0, "At least %d of:", dssc->min_num_matches);
     for (i = 0; i < dssc->ss_cnt; i++) {
         sub_scorer = dssc->sub_scorers[i];
@@ -505,7 +505,7 @@ static bool smsc_skip_to(Scorer *self, int doc_num)
     return false;
 }
 
-static Explanation *smsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *smsc_explain(Scorer *self, int doc_num)
 {
     Scorer *scorer = SMSc(self)->scorer;
     return scorer->explain(scorer, doc_num);
@@ -596,12 +596,12 @@ static bool rossc_skip_to(Scorer *self, int doc_num)
     return false;
 }
 
-static Explanation *rossc_explain(Scorer *self, int doc_num)
+static FrtExplanation *rossc_explain(Scorer *self, int doc_num)
 {
     Scorer *req_scorer = ROSSc(self)->req_scorer;
     Scorer *opt_scorer = ROSSc(self)->opt_scorer;
 
-    Explanation *e = expl_new(self->score(self),"required, optional:");
+    FrtExplanation *e = expl_new(self->score(self),"required, optional:");
     expl_add_detail(e, req_scorer->explain(req_scorer, doc_num));
     expl_add_detail(e, opt_scorer->explain(opt_scorer, doc_num));
     return e;
@@ -750,12 +750,12 @@ static float rxsc_score(Scorer *self)
     return req_scorer->score(req_scorer);
 }
 
-static Explanation *rxsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *rxsc_explain(Scorer *self, int doc_num)
 {
     ReqExclScorer *rxsc = RXSc(self);
     Scorer *req_scorer = rxsc->req_scorer;
     Scorer *excl_scorer = rxsc->excl_scorer;
-    Explanation *e;
+    FrtExplanation *e;
 
     if (excl_scorer->skip_to(excl_scorer, doc_num)
         && excl_scorer->doc == doc_num) {
@@ -818,7 +818,7 @@ static bool nmsc_skip_to(Scorer *self, int doc_num)
     return false;
 }
 
-static Explanation *nmsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *nmsc_explain(Scorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
     return expl_new(0.0, "No documents matched");
@@ -1071,7 +1071,7 @@ static void bsc_destroy(Scorer *self)
     scorer_destroy_i(self);
 }
 
-static Explanation *bsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *bsc_explain(Scorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
     return expl_new(0.0, "This explanation is not supported");
@@ -1179,11 +1179,11 @@ static void bw_destroy(Weight *self)
     w_destroy(self);
 }
 
-static Explanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
     FrtBooleanQuery *bq = BQ(self->query);
-    Explanation *sum_expl = expl_new(0.0f, "sum of:");
-    Explanation *explanation;
+    FrtExplanation *sum_expl = expl_new(0.0f, "sum of:");
+    FrtExplanation *explanation;
     int coord = 0;
     int max_coord = 0;
     float coord_factor = 0.0f;

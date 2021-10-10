@@ -50,7 +50,7 @@ static bool fqsc_skip_to(Scorer *self, int doc_num)
     return false;
 }
 
-static Explanation *fqsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *fqsc_explain(Scorer *self, int doc_num)
 {
     Scorer *sub_sc = FQSc(self)->sub_scorer;
     return sub_sc->explain(sub_sc, doc_num);
@@ -115,7 +115,7 @@ static float fqw_get_value(Weight *self)
     return sub_weight->get_value(sub_weight);
 }
 
-static Explanation *fqw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *fqw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
     Weight *sub_weight = FQW(self)->sub_weight;
     return sub_weight->explain(sub_weight, ir, doc_num);

@@ -33,7 +33,7 @@ static bool cssc_skip_to(Scorer *self, int doc_num)
     return ((self->doc = bv_scan_next_from(CScSc(self)->bv, doc_num)) >= 0);
 }
 
-static Explanation *cssc_explain(Scorer *self, int doc_num)
+static FrtExplanation *cssc_explain(Scorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
     return expl_new(1.0, "ConstantScoreScorer");
@@ -66,10 +66,10 @@ static char *csw_to_s(Weight *self)
     return strfmt("ConstantScoreWeight(%f)", self->value);
 }
 
-static Explanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
     Filter *filter = CScQ(self->query)->filter;
-    Explanation *expl;
+    FrtExplanation *expl;
     char *filter_str = filter->to_s(filter);
     FrtBitVector *bv = filt_get_bv(filter, ir);
 

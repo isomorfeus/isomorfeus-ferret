@@ -262,9 +262,9 @@ static bool spansc_skip_to(Scorer *self, int target)
     return (spansc->more || (spansc->freq != 0.0));
 }
 
-static Explanation *spansc_explain(Scorer *self, int target)
+static FrtExplanation *spansc_explain(Scorer *self, int target)
 {
-    Explanation *tf_explanation;
+    FrtExplanation *tf_explanation;
     SpanScorer *spansc = SpSc(self);
     float phrase_freq;
     self->skip_to(self, target);
@@ -1390,19 +1390,19 @@ typedef struct SpanWeight
     HashSet    *terms;
 } SpanWeight;
 
-static Explanation *spanw_explain(Weight *self, IndexReader *ir, int target)
+static FrtExplanation *spanw_explain(Weight *self, IndexReader *ir, int target)
 {
-    Explanation *expl;
-    Explanation *idf_expl1;
-    Explanation *idf_expl2;
-    Explanation *query_expl;
-    Explanation *qnorm_expl;
-    Explanation *field_expl;
-    Explanation *tf_expl;
+    FrtExplanation *expl;
+    FrtExplanation *idf_expl1;
+    FrtExplanation *idf_expl2;
+    FrtExplanation *query_expl;
+    FrtExplanation *qnorm_expl;
+    FrtExplanation *field_expl;
+    FrtExplanation *tf_expl;
     Scorer *scorer;
     uchar *field_norms;
     float field_norm;
-    Explanation *field_norm_expl;
+    FrtExplanation *field_norm_expl;
     const char *field = SpQ(self->query)->field;
 
     char *query_str;

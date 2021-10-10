@@ -1409,10 +1409,10 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
     if (key == Qundef) {
         return ST_CONTINUE;
     } else {
-        Document *doc = (Document *)arg;
+        FrtDocument *doc = (FrtDocument *)arg;
         Symbol field = frb_field(key);
         VALUE val;
-        DocField *df;
+        FrtDocField *df;
         if (NULL == (df = doc_get_field(doc, field))) {
             df = df_new(field);
         }
@@ -1444,12 +1444,12 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
     return ST_CONTINUE;
 }
 
-static Document *
+static FrtDocument *
 frb_get_doc(VALUE rdoc)
 {
     VALUE val;
-    Document *doc = doc_new();
-    DocField *df;
+    FrtDocument *doc = doc_new();
+    FrtDocField *df;
 
     if (rb_respond_to(rdoc, id_boost)) {
         doc->boost = (float)NUM2DBL(rb_funcall(rdoc, id_boost, 0));
@@ -1504,7 +1504,7 @@ static VALUE
 frb_iw_add_doc(VALUE self, VALUE rdoc)
 {
     IndexWriter *iw = (IndexWriter *)DATA_PTR(self);
-    Document *doc = frb_get_doc(rdoc);
+    FrtDocument *doc = frb_get_doc(rdoc);
     iw_add_doc(iw, doc);
     doc_destroy(doc);
     return self;

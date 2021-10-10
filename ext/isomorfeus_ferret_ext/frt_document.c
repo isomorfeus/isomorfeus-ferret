@@ -5,13 +5,13 @@
 
 /****************************************************************************
  *
- * DocField
+ * FrtDocField
  *
  ****************************************************************************/
 
-DocField *df_new(Symbol name)
+FrtDocField *df_new(Symbol name)
 {
-    DocField *df = FRT_ALLOC(DocField);
+    FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
     df->size = 0;
     df->capa = FRT_DF_INIT_CAPA;
@@ -22,7 +22,7 @@ DocField *df_new(Symbol name)
     return df;
 }
 
-DocField *df_add_data_len(DocField *df, char *data, int len)
+FrtDocField *df_add_data_len(FrtDocField *df, char *data, int len)
 {
     if (df->size >= df->capa) {
         df->capa <<= 2;
@@ -35,12 +35,12 @@ DocField *df_add_data_len(DocField *df, char *data, int len)
     return df;
 }
 
-DocField *df_add_data(DocField *df, char *data)
+FrtDocField *df_add_data(FrtDocField *df, char *data)
 {
     return df_add_data_len(df, data, strlen(data));
 }
 
-void df_destroy(DocField *df)
+void df_destroy(FrtDocField *df)
 {
     if (df->destroy_data) {
         int i;
@@ -57,7 +57,7 @@ void df_destroy(DocField *df)
  * Format for one item is: name: "data"
  *        for more items : name: ["data", "data", "data"]
  */
-char *df_to_s(DocField *df)
+char *df_to_s(FrtDocField *df)
 {
     int i, len = 0, namelen = strlen(df->name);
     char *str, *s;
@@ -91,22 +91,22 @@ char *df_to_s(DocField *df)
 
 /****************************************************************************
  *
- * Document
+ * FrtDocument
  *
  ****************************************************************************/
 
-Document *doc_new()
+FrtDocument *doc_new()
 {
-    Document *doc = FRT_ALLOC(Document);
+    FrtDocument *doc = FRT_ALLOC(FrtDocument);
     doc->field_dict = h_new_str(NULL, (free_ft)&df_destroy);
     doc->size = 0;
     doc->capa = FRT_DOC_INIT_CAPA;
-    doc->fields = FRT_ALLOC_N(DocField *, doc->capa);
+    doc->fields = FRT_ALLOC_N(FrtDocField *, doc->capa);
     doc->boost = 1.0f;
     return doc;
 }
 
-DocField *doc_add_field(Document *doc, DocField *df)
+FrtDocField *doc_add_field(FrtDocument *doc, FrtDocField *df)
 {
     if (!h_set_safe(doc->field_dict, df->name, df)) {
         rb_raise(rb_eException, "tried to add %s field which alread existed\n",
@@ -114,19 +114,19 @@ DocField *doc_add_field(Document *doc, DocField *df)
     }
     if (doc->size >= doc->capa) {
         doc->capa <<= 1;
-        FRT_REALLOC_N(doc->fields, DocField *, doc->capa);
+        FRT_REALLOC_N(doc->fields, FrtDocField *, doc->capa);
     }
     doc->fields[doc->size] = df;
     doc->size++;
     return df;
 }
 
-DocField *doc_get_field(Document *doc, Symbol name)
+FrtDocField *doc_get_field(FrtDocument *doc, Symbol name)
 {
-    return (DocField *)h_get(doc->field_dict, name);
+    return (FrtDocField *)h_get(doc->field_dict, name);
 }
 
-char *doc_to_s(Document *doc)
+char *doc_to_s(FrtDocument *doc)
 {
     int i;
     int len = 0;
@@ -147,7 +147,7 @@ char *doc_to_s(Document *doc)
     return buf;
 }
 
-void doc_destroy(Document *doc)
+void doc_destroy(FrtDocument *doc)
 {
     h_destroy(doc->field_dict);
     free(doc->fields);

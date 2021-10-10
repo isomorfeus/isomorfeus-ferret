@@ -93,7 +93,7 @@ static bool tsc_skip_to(Scorer *self, int doc_num)
     }
 }
 
-static Explanation *tsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *tsc_explain(Scorer *self, int doc_num)
 {
     TermScorer *ts = TSc(self);
     Query *query = ts->weight->get_query(ts->weight);
@@ -152,25 +152,25 @@ static Scorer *tw_scorer(Weight *self, IndexReader *ir)
     return tsc_new(self, tde, ir_get_norms(ir, tq->field));
 }
 
-static Explanation *tw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *tw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    Explanation *qnorm_expl;
-    Explanation *field_expl;
+    FrtExplanation *qnorm_expl;
+    FrtExplanation *field_expl;
     Scorer *scorer;
-    Explanation *tf_expl;
+    FrtExplanation *tf_expl;
     uchar *field_norms;
     float field_norm;
-    Explanation *field_norm_expl;
+    FrtExplanation *field_norm_expl;
     char *query_str = self->query->to_s(self->query, NULL);
     TermQuery *tq = TQ(self->query);
     char *term = tq->term;
-    Explanation *expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
+    FrtExplanation *expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
     /* We need two of these as it's included in both the query explanation
      * and the field explanation */
-    Explanation *idf_expl1 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
-    Explanation *idf_expl2 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl1 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl2 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
     /* explain query weight */
-    Explanation *query_expl = expl_new(0.0, "query_weight(%s), product of:", query_str);
+    FrtExplanation *query_expl = expl_new(0.0, "query_weight(%s), product of:", query_str);
     free(query_str);
     if (self->query->boost != 1.0) {
         expl_add_detail(query_expl, expl_new(self->query->boost, "boost"));
@@ -274,7 +274,7 @@ static unsigned long long tq_hash(Query *self)
 
 static int tq_eq(Query *self, Query *o)
 {
-    return (strcmp(TQ(self)->term, TQ(o)->term) == 0) 
+    return (strcmp(TQ(self)->term, TQ(o)->term) == 0)
         && (strcmp(TQ(self)->field, TQ(o)->field) == 0);
 }
 

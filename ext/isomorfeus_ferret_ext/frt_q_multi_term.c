@@ -246,7 +246,7 @@ static bool multi_tsc_skip_to(Scorer *self, int target_doc_num)
     return multi_tsc_advance_to(self, target_doc_num) && multi_tsc_next(self);
 }
 
-static Explanation *multi_tsc_explain(Scorer *self, int doc_num)
+static FrtExplanation *multi_tsc_explain(Scorer *self, int doc_num)
 {
     MultiTermScorer *mtsc = MTSc(self);
     TermDocEnumWrapper *tdew;
@@ -255,7 +255,7 @@ static Explanation *multi_tsc_explain(Scorer *self, int doc_num)
         (tdew = (TermDocEnumWrapper *)pq_top(mtsc->tdew_pq))->doc == doc_num) {
 
         PriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
-        Explanation *expl = expl_new(0.0f, "The sum of:");
+        FrtExplanation *expl = expl_new(0.0f, "The sum of:");
         int curr_doc = self->doc = tdew->doc;
         float total_score = 0.0f;
 
@@ -370,19 +370,19 @@ static Scorer *multi_tw_scorer(Weight *self, IndexReader *ir)
     return multi_tsc;
 }
 
-static Explanation *multi_tw_explain(Weight *self, IndexReader *ir, int doc_num)
+static FrtExplanation *multi_tw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    Explanation *expl;
-    Explanation *idf_expl1;
-    Explanation *idf_expl2;
-    Explanation *query_expl;
-    Explanation *qnorm_expl;
-    Explanation *field_expl;
-    Explanation *tf_expl;
+    FrtExplanation *expl;
+    FrtExplanation *idf_expl1;
+    FrtExplanation *idf_expl2;
+    FrtExplanation *query_expl;
+    FrtExplanation *qnorm_expl;
+    FrtExplanation *field_expl;
+    FrtExplanation *tf_expl;
     Scorer *scorer;
     uchar *field_norms;
     float field_norm;
-    Explanation *field_norm_expl;
+    FrtExplanation *field_norm_expl;
 
     char *query_str;
     MultiTermQuery *mtq = MTQ(self->query);

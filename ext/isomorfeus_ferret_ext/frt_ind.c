@@ -199,12 +199,12 @@ bool index_is_deleted(Index *self, int doc_num)
     return is_del;
 }
 
-static void index_del_doc_with_key_i(Index *self, Document *doc,
+static void index_del_doc_with_key_i(Index *self, FrtDocument *doc,
                                             HashSet *key)
 {
     Query *q;
     TopDocs *td;
-    DocField *df;
+    FrtDocField *df;
     HashSetEntry *hse;
 
     if (key->size == 1) {
@@ -237,7 +237,7 @@ static void index_del_doc_with_key_i(Index *self, Document *doc,
     td_destroy(td);
 }
 
-static void index_add_doc_i(Index *self, Document *doc)
+static void index_add_doc_i(Index *self, FrtDocument *doc)
 {
     if (self->key) {
         index_del_doc_with_key_i(self, doc, self->key);
@@ -247,7 +247,7 @@ static void index_add_doc_i(Index *self, Document *doc)
     AUTOFLUSH_IW(self);
 }
 
-void index_add_doc(Index *self, Document *doc)
+void index_add_doc(Index *self, FrtDocument *doc)
 {
     mutex_lock(&self->mutex);
     {
@@ -258,7 +258,7 @@ void index_add_doc(Index *self, Document *doc)
 
 void index_add_string(Index *self, char *str)
 {
-    Document *doc = doc_new();
+    FrtDocument *doc = doc_new();
     doc_add_field(doc, df_add_data(df_new(self->def_field), estrdup(str)));
     index_add_doc(self, doc);
     doc_destroy(doc);
@@ -267,7 +267,7 @@ void index_add_string(Index *self, char *str)
 void index_add_array(Index *self, char **fields)
 {
     int i;
-    Document *doc = doc_new();
+    FrtDocument *doc = doc_new();
     for (i = 0; i < ary_size(fields); i++) {
         doc_add_field(doc, df_add_data(df_new(self->def_field),
                                        estrdup(fields[i])));
@@ -301,17 +301,17 @@ TopDocs *index_search_str(Index *self, char *qstr, int first_doc,
     return td;
 }
 
-Document *index_get_doc(Index *self, int doc_num)
+FrtDocument *index_get_doc(Index *self, int doc_num)
 {
-    Document *doc;
+    FrtDocument *doc;
     ensure_reader_open(self);
     doc = self->ir->get_doc(self->ir, doc_num);
     return doc;
 }
 
-Document *index_get_doc_ts(Index *self, int doc_num)
+FrtDocument *index_get_doc_ts(Index *self, int doc_num)
 {
-    Document *doc;
+    FrtDocument *doc;
     mutex_lock(&self->mutex);
     {
         doc = index_get_doc(self, doc_num);
@@ -333,10 +333,10 @@ int index_term_id(Index *self, Symbol field, const char *term)
     return doc_num;
 }
 
-Document *index_get_doc_term(Index *self, Symbol field,
+FrtDocument *index_get_doc_term(Index *self, Symbol field,
                              const char *term)
 {
-    Document *doc = NULL;
+    FrtDocument *doc = NULL;
     TermDocEnum *tde;
     mutex_lock(&self->mutex);
     {
@@ -351,7 +351,7 @@ Document *index_get_doc_term(Index *self, Symbol field,
     return doc;
 }
 
-Document *index_get_doc_id(Index *self, const char *id)
+FrtDocument *index_get_doc_id(Index *self, const char *id)
 {
     return index_get_doc_term(self, self->id_field, id);
 }
@@ -421,9 +421,9 @@ void index_delete_query_str(Index *self, char *qstr, Filter *f,
     q_deref(q);
 }
 
-Explanation *index_explain(Index *self, Query *q, int doc_num)
+FrtExplanation *index_explain(Index *self, Query *q, int doc_num)
 {
-    Explanation *expl;
+    FrtExplanation *expl;
     mutex_lock(&self->mutex);
     {
         ensure_searcher_open(self);
