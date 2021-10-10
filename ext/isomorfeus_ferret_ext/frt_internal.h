@@ -1,34 +1,6 @@
 #ifndef FRT_INTERNAL_H
 #define FRT_INTERNAL_H
 
-/* Constants */
-#define SCANNER                            FRT_SCANNER
-#define SCORER_NULLIFY                     FRT_SCORER_NULLIFY
-#define SEGMENTS_FILE_NAME                 FRT_SEGMENTS_FILE_NAME
-#define SEGMENT_NAME_MAX_LENGTH            FRT_SEGMENT_NAME_MAX_LENGTH
-#define SKIP_INTERVAL                      FRT_SKIP_INTERVAL
-#define SLOW_DOWN                          FRT_SLOW_DOWN
-#define SORT_FIELD_DOC                     FRT_SORT_FIELD_DOC
-#define SORT_FIELD_DOC_REV                 FRT_SORT_FIELD_DOC_REV
-#define SORT_FIELD_SCORE                   FRT_SORT_FIELD_SCORE
-#define SORT_FIELD_SCORE_REV               FRT_SORT_FIELD_SCORE_REV
-#define SORT_TYPE_AUTO                     FRT_SORT_TYPE_AUTO
-#define SORT_TYPE_BYTE                     FRT_SORT_TYPE_BYTE
-#define SORT_TYPE_DOC                      FRT_SORT_TYPE_DOC
-#define SORT_TYPE_FLOAT                    FRT_SORT_TYPE_FLOAT
-#define SORT_TYPE_INTEGER                  FRT_SORT_TYPE_INTEGER
-#define SORT_TYPE_SCORE                    FRT_SORT_TYPE_SCORE
-#define SORT_TYPE_STRING                   FRT_SORT_TYPE_STRING
-#define SPAN_PREFIX_QUERY_MAX_TERMS        FRT_SPAN_PREFIX_QUERY_MAX_TERMS
-#define STATE_ERROR                        FRT_STATE_ERROR
-#define STORE_COMPRESS                     FRT_STORE_COMPRESS
-#define STORE_NO                           FRT_STORE_NO
-#define STORE_YES                          FRT_STORE_YES
-#define STRING_FIELD_INDEX_CLASS           FRT_STRING_FIELD_INDEX_CLASS
-#define STT_ASCII                          FRT_STT_ASCII
-#define STT_MB                             FRT_STT_MB
-#define STT_UTF8                           FRT_STT_UTF8
-
 /* Types */
 #define Analyzer                FrtAnalyzer
 #define BCType                  FrtBCType
@@ -164,7 +136,6 @@
 #define TypedRangeQuery         FrtTypedRangeQuery
 #define Weight                  FrtWeight
 #define WildCardQuery           FrtWildCardQuery
-#define __Symbol                Frt__Symbol
 
 /* Functions */
 #define a_deref                                        frt_a_deref

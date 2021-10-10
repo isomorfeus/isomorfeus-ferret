@@ -244,7 +244,7 @@ static void string_handle_term(void *index_ptr,
     index->v_size++;
 }
 
-const FieldIndexClass STRING_FIELD_INDEX_CLASS = {
+const FieldIndexClass FRT_STRING_FIELD_INDEX_CLASS = {
     "string",
     &string_create_index,
     &string_destroy_index,
@@ -253,7 +253,7 @@ const FieldIndexClass STRING_FIELD_INDEX_CLASS = {
 
 const char *get_string_value(FieldIndex *field_index, long doc_num)
 {
-    if (field_index->klass == &STRING_FIELD_INDEX_CLASS) {
+    if (field_index->klass == &FRT_STRING_FIELD_INDEX_CLASS) {
         StringIndex *string_index = (StringIndex *)field_index->index;
         if (doc_num >= 0 && doc_num < string_index->size) {
             return string_index->values[string_index->index[doc_num]];

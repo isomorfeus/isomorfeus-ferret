@@ -67,7 +67,7 @@ Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
     }
 
     if (create) {
-        FieldInfos *fis = fis_new(STORE_YES, FRT_INDEX_YES,
+        FieldInfos *fis = fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                                   FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         index_create(self->store, fis);
         fis_deref(fis);

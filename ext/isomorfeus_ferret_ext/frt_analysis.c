@@ -568,15 +568,15 @@ static Token *std_next(TokenStream *ts)
     Token *tk = &(CTS(ts)->token);
 
     switch (std_tz->type) {
-        case STT_ASCII:
+        case FRT_STT_ASCII:
             frt_std_scan(ts->t, tk->text, sizeof(tk->text) - 1,
                          &start, &end, &len);
             break;
-        case STT_MB:
+        case FRT_STT_MB:
             frt_std_scan_mb(ts->t, tk->text, sizeof(tk->text) - 1,
                             &start, &end, &len);
             break;
-        case STT_UTF8:
+        case FRT_STT_UTF8:
             frt_std_scan_utf8(ts->t, tk->text, sizeof(tk->text) - 1,
                               &start, &end, &len);
             break;
@@ -611,21 +611,21 @@ static TokenStream *std_ts_new()
 TokenStream *standard_tokenizer_new()
 {
     TokenStream *ts = std_ts_new();
-    STDTS(ts)->type = STT_ASCII;
+    STDTS(ts)->type = FRT_STT_ASCII;
     return ts;
 }
 
 TokenStream *mb_standard_tokenizer_new()
 {
     TokenStream *ts = std_ts_new();
-    STDTS(ts)->type = STT_MB;
+    STDTS(ts)->type = FRT_STT_MB;
     return ts;
 }
 
 TokenStream *utf8_standard_tokenizer_new()
 {
     TokenStream *ts = std_ts_new();
-    STDTS(ts)->type = STT_UTF8;
+    STDTS(ts)->type = FRT_STT_UTF8;
     return ts;
 }
 

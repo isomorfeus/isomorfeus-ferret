@@ -558,7 +558,7 @@ static float rossc_score(Scorer *self)
     if (rossc->first_time_opt) {
         rossc->first_time_opt = false;
         if (! opt_scorer->skip_to(opt_scorer, cur_doc)) {
-            SCORER_NULLIFY(rossc->opt_scorer);
+            FRT_SCORER_NULLIFY(rossc->opt_scorer);
             return req_score;
         }
     }
@@ -567,7 +567,7 @@ static float rossc_score(Scorer *self)
     }
     else if ((opt_scorer->doc < cur_doc)
              && ! opt_scorer->skip_to(opt_scorer, cur_doc)) {
-        SCORER_NULLIFY(rossc->opt_scorer);
+        FRT_SCORER_NULLIFY(rossc->opt_scorer);
         return req_score;
     }
     /* assert (@opt_scorer != nil) and (@opt_scorer.doc() >= cur_doc) */
@@ -667,7 +667,7 @@ static bool rxsc_to_non_excluded(Scorer *self)
         else if (req_doc > excl_doc) {
             if (! excl_scorer->skip_to(excl_scorer, req_doc)) {
                 /* emptied, no more exclusions */
-                SCORER_NULLIFY(RXSc(self)->excl_scorer);
+                FRT_SCORER_NULLIFY(RXSc(self)->excl_scorer);
                 self->doc = req_doc;
                 return true;
             }
@@ -679,7 +679,7 @@ static bool rxsc_to_non_excluded(Scorer *self)
         }
     } while (req_scorer->next(req_scorer));
     /* emptied, nothing left */
-    SCORER_NULLIFY(RXSc(self)->req_scorer);
+    FRT_SCORER_NULLIFY(RXSc(self)->req_scorer);
     return false;
 }
 
@@ -692,7 +692,7 @@ static bool rxsc_next(Scorer *self)
     if (rxsc->first_time) {
         if (! excl_scorer->next(excl_scorer)) {
             /* emptied at start */
-            SCORER_NULLIFY(rxsc->excl_scorer);
+            FRT_SCORER_NULLIFY(rxsc->excl_scorer);
             excl_scorer = NULL;
         }
         rxsc->first_time = false;
@@ -702,7 +702,7 @@ static bool rxsc_next(Scorer *self)
     }
     if (! req_scorer->next(req_scorer)) {
         /* emptied, nothing left */
-        SCORER_NULLIFY(rxsc->req_scorer);
+        FRT_SCORER_NULLIFY(rxsc->req_scorer);
         return false;
     }
     if (excl_scorer == NULL) {
@@ -723,7 +723,7 @@ static bool rxsc_skip_to(Scorer *self, int doc_num)
         rxsc->first_time = false;
         if (! excl_scorer->skip_to(excl_scorer, doc_num)) {
             /* emptied */
-            SCORER_NULLIFY(rxsc->excl_scorer);
+            FRT_SCORER_NULLIFY(rxsc->excl_scorer);
             excl_scorer = NULL;
         }
     }
@@ -738,7 +738,7 @@ static bool rxsc_skip_to(Scorer *self, int doc_num)
         return false;
     }
     if (! req_scorer->skip_to(req_scorer, doc_num)) {
-        SCORER_NULLIFY(rxsc->req_scorer);
+        FRT_SCORER_NULLIFY(rxsc->req_scorer);
         return false;
     }
     return rxsc_to_non_excluded(self);

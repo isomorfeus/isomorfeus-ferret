@@ -28,7 +28,7 @@ const Config default_config = {
     0x100000,       /* chunk size is 1Mb */
     0x1000000,      /* Max memory used for buffer is 16 Mb */
     FRT_INDEX_INTERVAL, /* index interval */
-    SKIP_INTERVAL,  /* skip interval */
+    FRT_SKIP_INTERVAL,  /* skip interval */
     10,             /* default merge factor */
     10000,          /* max_buffered_docs */
     INT_MAX,        /* max_merge_docs */
@@ -113,8 +113,8 @@ char *fn_for_generation(char *buf,
         return NULL;
     }
     else {
-        char b[SEGMENT_NAME_MAX_LENGTH];
-        char *u = u64_to_str36(b, SEGMENT_NAME_MAX_LENGTH, (u64)gen);
+        char b[FRT_SEGMENT_NAME_MAX_LENGTH];
+        char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (u64)gen);
         if (ext == NULL) {
             sprintf(buf, "%s_%s", base, u);
         }
@@ -127,9 +127,9 @@ char *fn_for_generation(char *buf,
 
 static char *segfn_for_generation(char *buf, u64 generation)
 {
-    char b[SEGMENT_NAME_MAX_LENGTH];
-    char *u = u64_to_str36(b, SEGMENT_NAME_MAX_LENGTH, generation);
-    sprintf(buf, SEGMENTS_FILE_NAME"_%s", u);
+    char b[FRT_SEGMENT_NAME_MAX_LENGTH];
+    char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, generation);
+    sprintf(buf, FRT_SEGMENTS_FILE_NAME"_%s", u);
     return buf;
 }
 
@@ -155,10 +155,10 @@ static char *fn_for_gen_field(char *buf,
         return NULL;
     }
     else {
-        char b[SEGMENT_NAME_MAX_LENGTH];
+        char b[FRT_SEGMENT_NAME_MAX_LENGTH];
         sprintf(buf, "%s_%s.%s%d",
                 base,
-                u64_to_str36(b, SEGMENT_NAME_MAX_LENGTH, (u64)gen),
+                u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (u64)gen),
                 ext,
                 field_num);
         return buf;
@@ -218,9 +218,9 @@ Hash *co_hash_create()
 static void fi_set_store(FieldInfo *fi, int store)
 {
     switch (store) {
-        case STORE_NO:
+        case FRT_STORE_NO:
             break;
-        case STORE_YES:
+        case FRT_STORE_YES:
             fi->bits |= FRT_FI_IS_STORED_BM;
             break;
     }
@@ -675,7 +675,7 @@ static void deleter_queue_file(Deleter *dlr, const char *file_name);
 static void si_delete_files(SegmentInfo *si, FieldInfos *fis, Deleter *dlr)
 {
     int i;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t seg_len = strlen(si->name);
     char *ext;
 
@@ -713,8 +713,8 @@ static void si_delete_files(SegmentInfo *si, FieldInfos *fis, Deleter *dlr)
 #include <time.h>
 static char *new_segment(i64 generation)
 {
-    char buf[SEGMENT_NAME_MAX_LENGTH];
-    char *fn_p = u64_to_str36(buf, SEGMENT_NAME_MAX_LENGTH - 1,
+    char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
+    char *fn_p = u64_to_str36(buf, FRT_SEGMENT_NAME_MAX_LENGTH - 1,
                               (u64)generation);
     *(--fn_p) = '_';
     return estrdup(fn_p);
@@ -736,8 +736,8 @@ typedef struct FindSegmentsFile {
 static void which_gen_i(const char *file_name, void *arg)
 {
     i64 *max_generation = (i64 *)arg;
-    if (0 == strncmp(SEGMENTS_FILE_NAME"_", file_name,
-                     sizeof(SEGMENTS_FILE_NAME))) {
+    if (0 == strncmp(FRT_SEGMENTS_FILE_NAME"_", file_name,
+                     sizeof(FRT_SEGMENTS_FILE_NAME))) {
         char *p = strrchr(file_name, '_') + 1;
         i64 generation = (i64)str36_to_u64(p);
         if (generation > *max_generation) *max_generation = generation;
@@ -965,7 +965,7 @@ static void sis_find_segments_file(Store *store, FindSegmentsFile *fsf,
                  * retry is false), and, there is possibly a segments_(N-1)
                  * (because gen > 1).  So, check if the segments_(N-1) exists
                  * and try it if so: */
-                char prev_seg_file_name[SEGMENT_NAME_MAX_LENGTH];
+                char prev_seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
                 segfn_for_generation(prev_seg_file_name, gen - 1);
                 if (store->exists(store, prev_seg_file_name)) {
                     /* TODO:LOG "fallback to prior segment file '" +
@@ -1070,7 +1070,7 @@ static void sis_read_i(Store *store, FindSegmentsFile *fsf)
     int seg_cnt;
     int i;
     volatile bool success = false;
-    char seg_file_name[SEGMENT_NAME_MAX_LENGTH];
+    char seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     InStream *volatile is = NULL;
     SegmentInfos *volatile sis = FRT_ALLOC_AND_ZERO(SegmentInfos);
     segfn_for_generation(seg_file_name, fsf->generation);
@@ -1113,7 +1113,7 @@ void sis_write(SegmentInfos *sis, Store *store, Deleter *deleter)
     int i;
     OutStream *volatile os = NULL;
     const int sis_size = sis->size;
-    char buf[SEGMENT_NAME_MAX_LENGTH];
+    char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
     sis->generation++;
     FRT_TRY
         os = store->new_output(store, segfn_for_generation(buf, sis->generation));
@@ -1148,7 +1148,7 @@ static void sis_read_ver_i(Store *store, FindSegmentsFile *fsf)
 {
     InStream *is;
     u64 version;
-    char seg_file_name[SEGMENT_NAME_MAX_LENGTH];
+    char seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     segfn_for_generation(seg_file_name, (u64)fsf->generation);
     is = store->open_input(store, seg_file_name);
@@ -1283,7 +1283,7 @@ FieldsReader *fr_open(Store *store, const char *segment, FieldInfos *fis)
 {
     FieldsReader *fr = FRT_ALLOC(FieldsReader);
     InStream *fdx_in;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t segment_len = strlen(segment);
 
     memcpy(file_name, segment, segment_len);
@@ -1553,7 +1553,7 @@ TermVector *fr_get_field_tv(FieldsReader *fr, int doc_num, int field_num)
 FieldsWriter *fw_open(Store *store, const char *segment, FieldInfos *fis)
 {
     FieldsWriter *fw = FRT_ALLOC(FieldsWriter);
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t segment_len = strlen(segment);
 
     memcpy(file_name, segment, segment_len);
@@ -1827,7 +1827,7 @@ SegmentFieldIndex *sfi_open(Store *store, const char *segment)
 {
     int field_count;
     SegmentFieldIndex *sfi = FRT_ALLOC(SegmentFieldIndex);
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     InStream *is;
 
     mutex_init(&sfi->mutex, NULL);
@@ -2295,7 +2295,7 @@ TermInfosReader *tir_open(Store *store,
                           SegmentFieldIndex *sfi, const char *segment)
 {
     TermInfosReader *tir = FRT_ALLOC(TermInfosReader);
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     sprintf(file_name, "%s.tis", segment);
     tir->orig_te = ste_new(store->open_input(store, file_name), sfi);
@@ -2404,7 +2404,7 @@ TermInfosWriter *tiw_open(Store *store,
                           int index_interval,
                           int skip_interval)
 {
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     TermInfosWriter *tiw = FRT_ALLOC(TermInfosWriter);
     size_t segment_len = strlen(segment);
 
@@ -3323,8 +3323,8 @@ bool file_name_filter_is_index_file(const char *file_name, bool include_locks)
             return true;
         }
     }
-    else if (0 == strncmp(SEGMENTS_FILE_NAME, file_name,
-                          sizeof(SEGMENTS_FILE_NAME) - 1)) {
+    else if (0 == strncmp(FRT_SEGMENTS_FILE_NAME, file_name,
+                          sizeof(FRT_SEGMENTS_FILE_NAME) - 1)) {
         return true;
     }
     return false;
@@ -3413,7 +3413,7 @@ void deleter_delete_files(Deleter *dlr, char **files, int file_cnt)
 }
 
 struct DelFilesArg {
-    char  curr_seg_file_name[SEGMENT_NAME_MAX_LENGTH];
+    char  curr_seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     Deleter *dlr;
     Hash *current;
 };
@@ -3429,7 +3429,7 @@ static void deleter_find_deletable_files_i(const char *file_name, void *arg)
 
         bool do_delete = false;
         SegmentInfo *si;
-        char segment_name[SEGMENT_NAME_MAX_LENGTH];
+        char segment_name[FRT_SEGMENT_NAME_MAX_LENGTH];
         char *extension, *p;
         strcpy(segment_name, file_name);
 
@@ -3457,7 +3457,7 @@ static void deleter_find_deletable_files_i(const char *file_name, void *arg)
             do_delete = true;
         }
         else {
-            char tmp_fn[SEGMENT_NAME_MAX_LENGTH];
+            char tmp_fn[FRT_SEGMENT_NAME_MAX_LENGTH];
             /* OK, segment is referenced, but file may still be orphan'd: */
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {
@@ -3899,7 +3899,7 @@ static void norm_rewrite(Norm *norm, Store *store, Deleter *dlr,
                          SegmentInfo *si, int doc_count)
 {
     OutStream *os;
-    char norm_file_name[SEGMENT_NAME_MAX_LENGTH];
+    char norm_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     const int field_num = norm->field_num;
 
     if (si_norm_file_name(si, norm_file_name, field_num)) {
@@ -4074,7 +4074,7 @@ static void sr_commit_i(IndexReader *ir)
 {
     SegmentInfo *si = SR(ir)->si;
     char *segment = SR(ir)->si->name;
-    char tmp_file_name[SEGMENT_NAME_MAX_LENGTH];
+    char tmp_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     if (SR(ir)->undelete_all || SR(ir)->deleted_docs_dirty) {
         if (si->del_gen >= 0) {
@@ -4271,7 +4271,7 @@ static void sr_open_norms(IndexReader *ir, Store *cfs_store)
 {
     int i;
     SegmentInfo *si = SR(ir)->si;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     for (i = si->norm_gens_size - 1; i >= 0; i--) {
         Store *store = (si->use_compound_file && si->norm_gens[i] == 0) ?
@@ -4288,7 +4288,7 @@ static IndexReader *sr_setup_i(SegmentReader *sr)
 {
     Store *volatile store = sr->si->store;
     IndexReader *ir = IR(sr);
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *sr_segment = sr->si->name;
 
     ir->num_docs            = &sr_num_docs;
@@ -4716,7 +4716,7 @@ IndexReader *mr_open(IndexReader **sub_readers, const int r_cnt)
     IndexReader *ir = mr_new(sub_readers, r_cnt);
     MultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FieldInfos *fis = fis_new(STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FieldInfos *fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
@@ -5008,7 +5008,7 @@ static void skip_buf_destroy(SkipBuffer *skip_buf)
 
 static void dw_write_norms(DocWriter *dw, FieldInverter *fld_inv)
 {
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *norms_out;
     si_advance_norm_gen(dw->si, fld_inv->fi->number);
     si_norm_file_name(dw->si, file_name, fld_inv->fi->number);
@@ -5062,7 +5062,7 @@ static void dw_flush(DocWriter *dw)
     TermInfosWriter *tiw = tiw_open(store, dw->si->name,
                                     dw->index_interval, skip_interval);
     TermInfo ti;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *frq_out, *prx_out;
     SkipBuffer *skip_buf;
 
@@ -5421,7 +5421,7 @@ static void smi_load_doc_map(SegmentMergeInfo *smi)
 static SegmentMergeInfo *smi_new(int base, Store *store, SegmentInfo *si)
 {
     SegmentMergeInfo *smi = FRT_ALLOC_AND_ZERO(SegmentMergeInfo);
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *segment = si->name;
     smi->base = base;
     smi->si = si;
@@ -5448,7 +5448,7 @@ static void smi_load_term_input(SegmentMergeInfo *smi)
 {
     Store *store = smi->store;
     char *segment = smi->si->name;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     smi->sfi = sfi_open(store, segment);
     sprintf(file_name, "%s.tis", segment);
     smi->te = TE(ste_new(store->open_input(store, file_name), smi->sfi));
@@ -5544,7 +5544,7 @@ static void sm_merge_fields(SegmentMerger *sm)
 {
     int i, j;
     off_t start, end = 0;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *fdt_out, *fdx_out;
     Store *store = sm->store;
     const int seg_cnt = sm->seg_cnt;
@@ -5740,7 +5740,7 @@ static void sm_merge_term_infos(SegmentMerger *sm)
 
 static void sm_merge_terms(SegmentMerger *sm)
 {
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     sprintf(file_name, "%s.frq", sm->si->name);
     sm->frq_out = sm->store->new_output(sm->store, file_name);
@@ -5780,7 +5780,7 @@ static void sm_merge_norms(SegmentMerger *sm)
     FieldInfo *fi;
     OutStream *os;
     InStream *is;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     SegmentMergeInfo *smi;
     const int seg_cnt = sm->seg_cnt;
     for (i = sm->fis->size - 1; i >= 0; i--) {
@@ -5878,7 +5878,7 @@ static void iw_create_compound_file(Store *store, FieldInfos *fis,
 {
     int i;
     CompoundWriter *cw;
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *ext;
     int seg_len = strlen(si->name);
 
@@ -5906,7 +5906,7 @@ static void iw_create_compound_file(Store *store, FieldInfos *fis,
 
 static void iw_commit_compound_file(IndexWriter *iw, SegmentInfo *si)
 {
-    char cfs_name[SEGMENT_NAME_MAX_LENGTH];
+    char cfs_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     sprintf(cfs_name, "%s.cfs", si->name);
 
     iw_create_compound_file(iw->store, iw->fis, si, cfs_name, iw->deleter);
@@ -6197,7 +6197,7 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
 static void iw_cp_fields(IndexWriter *iw, SegmentReader *sr,
                          const char *segment, int *map)
 {
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *fdt_out, *fdx_out;
     InStream *fdt_in, *fdx_in;
     Store *store_in = sr->cfs_store ? sr->cfs_store : sr->ir.store;
@@ -6284,7 +6284,7 @@ static void iw_cp_fields(IndexWriter *iw, SegmentReader *sr,
 static void iw_cp_terms(IndexWriter *iw, SegmentReader *sr,
                         const char *segment, int *map)
 {
-    char file_name[SEGMENT_NAME_MAX_LENGTH];
+    char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     OutStream *tix_out, *tis_out, *tfx_out, *frq_out, *prx_out;
     InStream *tix_in, *tis_in, *tfx_in, *frq_in, *prx_in;
     Store *store_out = iw->store;
@@ -6359,8 +6359,8 @@ static void iw_cp_norms(IndexWriter *iw, SegmentReader *sr,
     InStream *norms_in;
     OutStream *norms_out;
     Store *store_out = iw->store;
-    char file_name_in[SEGMENT_NAME_MAX_LENGTH];
-    char file_name_out[SEGMENT_NAME_MAX_LENGTH];
+    char file_name_in[FRT_SEGMENT_NAME_MAX_LENGTH];
+    char file_name_out[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     for (i = 0; i < field_cnt; i++) {
         if (fi_has_norms(fis->fields[i])
@@ -6424,7 +6424,7 @@ static void iw_add_segment(IndexWriter *iw, SegmentReader *sr)
         FieldInfo *fi = sub_fis->fields[j];
         FieldInfo *new_fi = fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
-            new_fi = fi_new(fi->name, STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+            new_fi = fi_new(fi->name, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
             new_fi->bits = fi->bits;
             fis_add_field(fis, new_fi);
         }

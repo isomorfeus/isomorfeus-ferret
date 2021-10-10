@@ -70,8 +70,7 @@ extern FrtHash *frt_co_hash_create();
 typedef enum
 {
     FRT_STORE_NO = 0,
-    FRT_STORE_YES = 1,
-    FRT_STORE_COMPRESS = 2
+    FRT_STORE_YES = 1
 } FrtStoreValue;
 
 typedef enum

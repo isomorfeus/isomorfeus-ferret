@@ -1704,7 +1704,7 @@ static VALUE
 frb_spanprq_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE rfield, rprefix, rmax_terms;
-    int max_terms = SPAN_PREFIX_QUERY_MAX_TERMS;
+    int max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
     Query *q;
     if (rb_scan_args(argc, argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
         max_terms = FIX2INT(rmax_terms);
@@ -2131,25 +2131,25 @@ get_sort_type(VALUE rtype)
 {
     Check_Type(rtype, T_SYMBOL);
     if (rtype == sym_byte) {
-        return SORT_TYPE_BYTE;
+        return FRT_SORT_TYPE_BYTE;
     } else if (rtype == sym_integer) {
-        return SORT_TYPE_INTEGER;
+        return FRT_SORT_TYPE_INTEGER;
     } else if (rtype == sym_string) {
-        return SORT_TYPE_STRING;
+        return FRT_SORT_TYPE_STRING;
     } else if (rtype == sym_score) {
-        return SORT_TYPE_SCORE;
+        return FRT_SORT_TYPE_SCORE;
     } else if (rtype == sym_doc_id) {
-        return SORT_TYPE_DOC;
+        return FRT_SORT_TYPE_DOC;
     } else if (rtype == sym_float) {
-        return SORT_TYPE_FLOAT;
+        return FRT_SORT_TYPE_FLOAT;
     } else if (rtype == sym_auto) {
-        return SORT_TYPE_AUTO;
+        return FRT_SORT_TYPE_AUTO;
     } else {
         rb_raise(rb_eArgError, ":%s is an unknown sort-type. Please choose "
                  "from [:integer, :float, :string, :auto, :score, :doc_id]",
                  rb_id2name(SYM2ID(rtype)));
     }
-    return SORT_TYPE_DOC;
+    return FRT_SORT_TYPE_DOC;
 }
 
 /*
@@ -2178,7 +2178,7 @@ frb_sf_init(int argc, VALUE *argv, VALUE self)
     SortField *sf;
     VALUE rfield, roptions;
     VALUE rval;
-    int type = SORT_TYPE_AUTO;
+    int type = FRT_SORT_TYPE_AUTO;
     int is_reverse = false;
     Symbol field;
 
@@ -2247,13 +2247,13 @@ frb_sf_get_type(VALUE self)
 {
     GET_SF();
     switch (sf->type) {
-        case SORT_TYPE_BYTE:    return sym_byte;
-        case SORT_TYPE_INTEGER: return sym_integer;
-        case SORT_TYPE_FLOAT:   return sym_float;
-        case SORT_TYPE_STRING:  return sym_string;
-        case SORT_TYPE_AUTO:    return sym_auto;
-        case SORT_TYPE_DOC:     return sym_doc_id;
-        case SORT_TYPE_SCORE:   return sym_score;
+        case FRT_SORT_TYPE_BYTE:    return sym_byte;
+        case FRT_SORT_TYPE_INTEGER: return sym_integer;
+        case FRT_SORT_TYPE_FLOAT:   return sym_float;
+        case FRT_SORT_TYPE_STRING:  return sym_string;
+        case FRT_SORT_TYPE_AUTO:    return sym_auto;
+        case FRT_SORT_TYPE_DOC:     return sym_doc_id;
+        case FRT_SORT_TYPE_SCORE:   return sym_score;
     }
     return Qnil;
 }
@@ -2418,15 +2418,15 @@ frb_sort_init(int argc, VALUE *argv, VALUE self)
                     frb_sort_add(sort, rfields, reverse);
                 }
                 for (i = 0; i < sort->size; i++) {
-                    if (sort->sort_fields[i] == &SORT_FIELD_DOC) has_sfd = true;
+                    if (sort->sort_fields[i] == &FRT_SORT_FIELD_DOC) has_sfd = true;
                 }
                 if (!has_sfd) {
-                    sort_add_sort_field(sort, (SortField *)&SORT_FIELD_DOC);
+                    sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_DOC);
                 }
                 break;
         case 0:
-                sort_add_sort_field(sort, (SortField *)&SORT_FIELD_SCORE);
-                sort_add_sort_field(sort, (SortField *)&SORT_FIELD_DOC);
+                sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_SCORE);
+                sort_add_sort_field(sort, (SortField *)&FRT_SORT_FIELD_DOC);
     }
 
     return self;
@@ -4238,30 +4238,30 @@ Init_SortField(void)
     rb_define_const(cSortField, "SCORE",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&SORT_FIELD_SCORE));
-    object_add((SortField *)&SORT_FIELD_SCORE,
+                                     (SortField *)&FRT_SORT_FIELD_SCORE));
+    object_add((SortField *)&FRT_SORT_FIELD_SCORE,
                rb_const_get(cSortField, rb_intern("SCORE")));
 
     rb_define_const(cSortField, "SCORE_REV",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&SORT_FIELD_SCORE_REV));
-    object_add((SortField *)&SORT_FIELD_SCORE_REV,
+                                     (SortField *)&FRT_SORT_FIELD_SCORE_REV));
+    object_add((SortField *)&FRT_SORT_FIELD_SCORE_REV,
                rb_const_get(cSortField, rb_intern("SCORE_REV")));
 
     rb_define_const(cSortField, "DOC_ID",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&SORT_FIELD_DOC));
+                                     (SortField *)&FRT_SORT_FIELD_DOC));
 
     oSORT_FIELD_DOC = rb_const_get(cSortField, rb_intern("DOC_ID"));
-    object_add((SortField *)&SORT_FIELD_DOC, oSORT_FIELD_DOC);
+    object_add((SortField *)&FRT_SORT_FIELD_DOC, oSORT_FIELD_DOC);
 
     rb_define_const(cSortField, "DOC_ID_REV",
                     Data_Wrap_Struct(cSortField, NULL,
                                      &frb_deref_free,
-                                     (SortField *)&SORT_FIELD_DOC_REV));
-    object_add((SortField *)&SORT_FIELD_DOC_REV,
+                                     (SortField *)&FRT_SORT_FIELD_DOC_REV));
+    object_add((SortField *)&FRT_SORT_FIELD_DOC_REV,
                rb_const_get(cSortField, rb_intern("DOC_ID_REV")));
 }
 

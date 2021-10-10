@@ -82,10 +82,7 @@
 #define FRT_BODY 0
 #define FRT_IO_ERROR 3
 #define FRT_FILE_NOT_FOUND_ERROR 4
-#define FRT_ARG_ERROR 5
 #define FRT_EOF_ERROR 6
-#define FRT_UNSUPPORTED_ERROR 7
-#define FRT_STATE_ERROR 8
 
 extern const char *const FRT_UNSUPPORTED_ERROR_MSG;
 extern const char *const FRT_EOF_ERROR_MSG;

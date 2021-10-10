@@ -344,7 +344,7 @@ bool h_set_ext(Hash *self, const void *key, HashEntry **he)
     *he = self->lookup_i(self, key);
     if ((*he)->key == NULL) {
         if (self->fill * 3 > self->mask * 2) {
-            h_resize(self, self->size * ((self->size > SLOW_DOWN) ? 4 : 2));
+            h_resize(self, self->size * ((self->size > FRT_SLOW_DOWN) ? 4 : 2));
             *he = self->lookup_i(self, key);
         }
         self->fill++;

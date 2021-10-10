@@ -32,25 +32,25 @@ SortField *sort_field_new(Symbol field, SortType type, bool reverse)
 {
     SortField *sf = NULL;
     switch (type) {
-        case SORT_TYPE_SCORE:
+        case FRT_SORT_TYPE_SCORE:
             sf = sort_field_score_new(reverse);
             break;
-        case SORT_TYPE_DOC:
+        case FRT_SORT_TYPE_DOC:
             sf = sort_field_doc_new(reverse);
             break;
-        case SORT_TYPE_BYTE:
+        case FRT_SORT_TYPE_BYTE:
             sf = sort_field_byte_new(field, reverse);
             break;
-        case SORT_TYPE_INTEGER:
+        case FRT_SORT_TYPE_INTEGER:
             sf = sort_field_int_new(field, reverse);
             break;
-        case SORT_TYPE_FLOAT:
+        case FRT_SORT_TYPE_FLOAT:
             sf = sort_field_float_new(field, reverse);
             break;
-        case SORT_TYPE_STRING:
+        case FRT_SORT_TYPE_STRING:
             sf = sort_field_string_new(field, reverse);
             break;
-        case SORT_TYPE_AUTO:
+        case FRT_SORT_TYPE_AUTO:
             sf = sort_field_auto_new(field, reverse);
             break;
     }
@@ -70,25 +70,25 @@ char *sort_field_to_s(SortField *self)
     char *str;
     const char *type = NULL;
     switch (self->type) {
-        case SORT_TYPE_SCORE:
+        case FRT_SORT_TYPE_SCORE:
             type = "<SCORE>";
             break;
-        case SORT_TYPE_DOC:
+        case FRT_SORT_TYPE_DOC:
             type = "<DOC>";
             break;
-        case SORT_TYPE_BYTE:
+        case FRT_SORT_TYPE_BYTE:
             type = "<byte>";
             break;
-        case SORT_TYPE_INTEGER:
+        case FRT_SORT_TYPE_INTEGER:
             type = "<integer>";
             break;
-        case SORT_TYPE_FLOAT:
+        case FRT_SORT_TYPE_FLOAT:
             type = "<float>";
             break;
-        case SORT_TYPE_STRING:
+        case FRT_SORT_TYPE_STRING:
             type = "<string>";
             break;
-        case SORT_TYPE_AUTO:
+        case FRT_SORT_TYPE_AUTO:
             type = "<auto>";
             break;
     }
@@ -126,23 +126,23 @@ static int sf_score_compare(void *index_ptr, Hit *hit2, Hit *hit1)
 
 SortField *sort_field_score_new(bool reverse)
 {
-    return sort_field_alloc(NULL, SORT_TYPE_SCORE, reverse,
+    return sort_field_alloc(NULL, FRT_SORT_TYPE_SCORE, reverse,
                             &sf_score_compare, &sf_score_get_val, NULL);
 }
 
-const SortField SORT_FIELD_SCORE = {
+const SortField FRT_SORT_FIELD_SCORE = {
     NULL,               /* field_index_class */
     NULL,               /* field */
-    SORT_TYPE_SCORE,    /* type */
+    FRT_SORT_TYPE_SCORE,    /* type */
     false,              /* reverse */
     &sf_score_compare,  /* compare */
     &sf_score_get_val,  /* get_val */
 };
 
-const SortField SORT_FIELD_SCORE_REV = {
+const SortField FRT_SORT_FIELD_SCORE_REV = {
     NULL,               /* field_index_class */
     NULL,               /* field */
-    SORT_TYPE_SCORE,    /* type */
+    FRT_SORT_TYPE_SCORE,    /* type */
     true,               /* reverse */
     &sf_score_compare,  /* compare */
     &sf_score_get_val,  /* get_val */
@@ -171,23 +171,23 @@ static int sf_doc_compare(void *index_ptr, Hit *hit1, Hit *hit2)
 
 SortField *sort_field_doc_new(bool reverse)
 {
-    return sort_field_alloc(NULL, SORT_TYPE_DOC, reverse,
+    return sort_field_alloc(NULL, FRT_SORT_TYPE_DOC, reverse,
                             &sf_doc_compare, &sf_doc_get_val, NULL);
 }
 
-const SortField SORT_FIELD_DOC = {
+const SortField FRT_SORT_FIELD_DOC = {
     NULL,               /* field_index_class */
     NULL,               /* field */
-    SORT_TYPE_DOC,      /* type */
+    FRT_SORT_TYPE_DOC,      /* type */
     false,              /* reverse */
     &sf_doc_compare,    /* compare */
     &sf_doc_get_val,    /* get_val */
 };
 
-const SortField SORT_FIELD_DOC_REV = {
+const SortField FRT_SORT_FIELD_DOC_REV = {
     NULL,               /* field_index_class */
     NULL,               /* field */
-    SORT_TYPE_DOC,      /* type */
+    FRT_SORT_TYPE_DOC,      /* type */
     true,               /* reverse */
     &sf_doc_compare,    /* compare */
     &sf_doc_get_val,    /* get_val */
@@ -213,7 +213,7 @@ static int sf_byte_compare(void *index, Hit *hit1, Hit *hit2)
 
 SortField *sort_field_byte_new(Symbol field, bool reverse)
 {
-    return sort_field_alloc(field, SORT_TYPE_BYTE, reverse,
+    return sort_field_alloc(field, FRT_SORT_TYPE_BYTE, reverse,
                             &sf_byte_compare, &sf_byte_get_val,
                             &FRT_BYTE_FIELD_INDEX_CLASS);
 }
@@ -238,7 +238,7 @@ static int sf_int_compare(void *index, Hit *hit1, Hit *hit2)
 
 SortField *sort_field_int_new(Symbol field, bool reverse)
 {
-    return sort_field_alloc(field, SORT_TYPE_INTEGER, reverse,
+    return sort_field_alloc(field, FRT_SORT_TYPE_INTEGER, reverse,
                             &sf_int_compare, &sf_int_get_val,
                             &FRT_INTEGER_FIELD_INDEX_CLASS);
 }
@@ -263,7 +263,7 @@ static int sf_float_compare(void *index, Hit *hit1, Hit *hit2)
 
 SortField *sort_field_float_new(Symbol field, bool reverse)
 {
-    return sort_field_alloc(field, SORT_TYPE_FLOAT, reverse,
+    return sort_field_alloc(field, FRT_SORT_TYPE_FLOAT, reverse,
                             &sf_float_compare, &sf_float_get_val,
                             &FRT_FLOAT_FIELD_INDEX_CLASS);
 }
@@ -308,9 +308,9 @@ static int sf_string_compare(void *index, Hit *hit1, Hit *hit2)
 
 SortField *sort_field_string_new(Symbol field, bool reverse)
 {
-    return sort_field_alloc(field, SORT_TYPE_STRING, reverse,
+    return sort_field_alloc(field, FRT_SORT_TYPE_STRING, reverse,
                             &sf_string_compare, &sf_string_get_val,
-                            &STRING_FIELD_INDEX_CLASS);
+                            &FRT_STRING_FIELD_INDEX_CLASS);
 }
 
 /***************************************************************************
@@ -319,7 +319,7 @@ SortField *sort_field_string_new(Symbol field, bool reverse)
 
 SortField *sort_field_auto_new(Symbol field, bool reverse)
 {
-    return sort_field_alloc(field, SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
+    return sort_field_alloc(field, FRT_SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
 }
 
 /***************************************************************************
@@ -359,7 +359,7 @@ typedef struct Sorter {
 } Sorter;
 
 #define SET_AUTO(upper_type, lower_type) \
-    sf->type = SORT_TYPE_ ## upper_type;\
+    sf->type = FRT_SORT_TYPE_ ## upper_type;\
     sf->field_index_class = &FRT_ ## upper_type ## _FIELD_INDEX_CLASS;\
     sf->compare = sf_ ## lower_type ## _compare;\
     sf->get_val = sf_ ## lower_type ## _get_val
@@ -383,49 +383,13 @@ static void sort_field_auto_evaluate(SortField *sf, char *text)
         }
     }
 }
-/*
-static void set_auto(SortField *sf,
-    SortType type,
-    const FieldIndexClass *field_index_class,
-    int  (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
-    void (*get_val)(void *index_ptr, Hit *hit1, Comparable *comparable))
-{
-    sf->type = type;
-    sf->field_index_class = field_index_class;
-    sf->compare = compare;
-    sf->get_val = get_val;
-}
-
-static void sort_field_auto_evaluate(SortField *sf, char *text)
-{
-    int int_val;
-    float float_val;
-    int text_len = 0, scan_len = 0;
-
-    text_len = (int)strlen(text);
-    sscanf(text, "%d%n", &int_val, &scan_len);
-    if (scan_len == text_len) {
-        set_auto(sf, SORT_TYPE_INTEGER, &FRT_INTEGER_FIELD_INDEX_CLASS,
-                 sf_int_compare, sf_int_get_val);
-    } else {
-        sscanf(text, "%f%n", &float_val, &scan_len);
-        if (scan_len == text_len) {
-            set_auto(sf, SORT_TYPE_FLOAT, &FRT_FLOAT_FIELD_INDEX_CLASS,
-                     sf_float_compare, sf_float_get_val);
-        } else {
-            set_auto(sf, SORT_TYPE_STRING, &STRING_FIELD_INDEX_CLASS,
-                     sf_string_compare, sf_string_get_val);
-        }
-    }
-}
-*/
 
 static Comparator *sorter_get_comparator(SortField *sf, IndexReader *ir)
 {
     void *index = NULL;
-    if (sf->type > SORT_TYPE_DOC) {
+    if (sf->type > FRT_SORT_TYPE_DOC) {
         FieldIndex *field_index = NULL;
-        if (sf->type == SORT_TYPE_AUTO) {
+        if (sf->type == FRT_SORT_TYPE_AUTO) {
             TermEnum *te = ir_terms(ir, sf->field);
             if (te) {
                 if (!te->next(te) && (ir->num_docs(ir) > 0)) {
@@ -656,27 +620,27 @@ bool fdshq_lt(FieldDoc *fd1, FieldDoc *fd2)
     for (i = 0; i < fd1->size && c == 0; i++) {
         int type = cmps1[i].type;
         switch (type) {
-            case SORT_TYPE_SCORE:
+            case FRT_SORT_TYPE_SCORE:
                 if (cmps1[i].val.f < cmps2[i].val.f) c =  1;
                 if (cmps1[i].val.f > cmps2[i].val.f) c = -1;
                 break;
-            case SORT_TYPE_FLOAT:
+            case FRT_SORT_TYPE_FLOAT:
                 if (cmps1[i].val.f > cmps2[i].val.f) c =  1;
                 if (cmps1[i].val.f < cmps2[i].val.f) c = -1;
                 break;
-            case SORT_TYPE_DOC:
+            case FRT_SORT_TYPE_DOC:
                 if (fd1->hit.doc > fd2->hit.doc) c =  1;
                 if (fd1->hit.doc < fd2->hit.doc) c = -1;
                 break;
-            case SORT_TYPE_INTEGER:
+            case FRT_SORT_TYPE_INTEGER:
                 if (cmps1[i].val.l > cmps2[i].val.l) c =  1;
                 if (cmps1[i].val.l < cmps2[i].val.l) c = -1;
                 break;
-            case SORT_TYPE_BYTE:
+            case FRT_SORT_TYPE_BYTE:
                 if (cmps1[i].val.l > cmps2[i].val.l) c =  1;
                 if (cmps1[i].val.l < cmps2[i].val.l) c = -1;
                 break;
-            case SORT_TYPE_STRING:
+            case FRT_SORT_TYPE_STRING:
                 do {
                     char *s1 = cmps1[i].val.s;
                     char *s2 = cmps2[i].val.s;
