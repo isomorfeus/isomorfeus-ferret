@@ -15,7 +15,7 @@ static SortField *sort_field_alloc(Symbol field,
     SortType type,
     bool reverse,
     int (*compare)(void *index_ptr, Hit *hit1, Hit *hit2),
-    void (*get_val)(void *index_ptr, Hit *hit1, Comparable *comparable),
+    void (*get_val)(void *index_ptr, Hit *hit1, FrtComparable *comparable),
     const FieldIndexClass *field_index_class)
 {
     SortField *self         = FRT_ALLOC(SortField);
@@ -107,7 +107,7 @@ char *sort_field_to_s(SortField *self)
  * ScoreSortField
  ***************************************************************************/
 
-static void sf_score_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_score_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     (void)index;
     comparable->val.f = hit->score;
@@ -152,7 +152,7 @@ const SortField FRT_SORT_FIELD_SCORE_REV = {
  * DocSortField
  ***************************************************************************/
 
-static void sf_doc_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_doc_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     (void)index;
     comparable->val.l = hit->doc;
@@ -197,7 +197,7 @@ const SortField FRT_SORT_FIELD_DOC_REV = {
  * ByteSortField
  ***************************************************************************/
 
-static void sf_byte_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_byte_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     comparable->val.l = ((long *)index)[hit->doc];
 }
@@ -222,7 +222,7 @@ SortField *sort_field_byte_new(Symbol field, bool reverse)
  * IntegerSortField
  ***************************************************************************/
 
-static void sf_int_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_int_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     comparable->val.l = ((long *)index)[hit->doc];
 }
@@ -247,7 +247,7 @@ SortField *sort_field_int_new(Symbol field, bool reverse)
  * FloatSortField
  ***************************************************************************/
 
-static void sf_float_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_float_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     comparable->val.f = ((float *)index)[hit->doc];
 }
@@ -272,7 +272,7 @@ SortField *sort_field_float_new(Symbol field, bool reverse)
  * StringSortField
  ***************************************************************************/
 
-static void sf_string_get_val(void *index, Hit *hit, Comparable *comparable)
+static void sf_string_get_val(void *index, Hit *hit, FrtComparable *comparable)
 {
     comparable->val.s
         = ((StringIndex *)index)->values[
@@ -573,7 +573,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         SortField **sort_fields = sorter->sort->sort_fields;
         Hit *hit = (Hit *)pq->heap[1];   /* save first value */
         FieldDoc *field_doc;
-        Comparable *comparables;
+        FrtComparable *comparables;
         Comparator **comparators = sorter->comparators;
         pq->heap[1] = pq->heap[pq->size];   /* move last to first */
         pq->heap[pq->size] = NULL;
@@ -581,7 +581,7 @@ Hit *fshq_pq_pop_fd(PriorityQueue *pq)
         fshq_pq_down(pq);                   /* adjust heap */
 
         field_doc = (FieldDoc *)emalloc(sizeof(FieldDoc)
-                                        + sizeof(Comparable) * cmp_cnt);
+                                        + sizeof(FrtComparable) * cmp_cnt);
         comparables = field_doc->comparables;
         memcpy(field_doc, hit, sizeof(Hit));
         field_doc->size = cmp_cnt;
@@ -614,8 +614,8 @@ void fd_destroy(FieldDoc *fd)
 bool fdshq_lt(FieldDoc *fd1, FieldDoc *fd2)
 {
     int c = 0, i;
-    Comparable *cmps1 = fd1->comparables;
-    Comparable *cmps2 = fd2->comparables;
+    FrtComparable *cmps1 = fd1->comparables;
+    FrtComparable *cmps2 = fd2->comparables;
 
     for (i = 0; i < fd1->size && c == 0; i++) {
         int type = cmps1[i].type;

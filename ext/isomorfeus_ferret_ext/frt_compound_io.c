@@ -77,7 +77,7 @@ static void cmpd_clear(Store *store)
 
 static void cmpd_close_i(Store *store)
 {
-    CompoundStore *cmpd = store->dir.cmpd;
+    FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) {
         rb_raise(rb_eIOError, "Tried to close already closed compound store");
     }
@@ -122,7 +122,7 @@ static off_t cmpdi_length_i(InStream *is)
  */
 static void cmpdi_read_i(InStream *is, uchar *b, int len)
 {
-    CompoundInStream *cis = is->d.cis;
+    FrtCompoundInStream *cis = is->d.cis;
     off_t start = is_pos(is);
 
     if ((start + len) > cis->length) {
@@ -145,7 +145,7 @@ static const struct InStreamMethods CMPD_IN_STREAM_METHODS = {
 static InStream *cmpd_create_input(InStream *sub_is, off_t offset, off_t length)
 {
     InStream *is = is_new();
-    CompoundInStream *cis = FRT_ALLOC(CompoundInStream);
+    FrtCompoundInStream *cis = FRT_ALLOC(FrtCompoundInStream);
 
     cis->sub = sub_is;
     cis->offset = offset;
@@ -159,7 +159,7 @@ static InStream *cmpd_create_input(InStream *sub_is, off_t offset, off_t length)
 static InStream *cmpd_open_input(Store *store, const char *file_name)
 {
     FileEntry *entry;
-    CompoundStore *cmpd = store->dir.cmpd;
+    FrtCompoundStore *cmpd = store->dir.cmpd;
     InStream *is;
 
     mutex_lock(&store->mutex);
@@ -210,11 +210,11 @@ Store *open_cmpd_store(Store *store, const char *name)
     char *fname;
     FileEntry *volatile entry = NULL;
     Store *new_store = NULL;
-    CompoundStore *volatile cmpd = NULL;
+    FrtCompoundStore *volatile cmpd = NULL;
     InStream *volatile is = NULL;
 
     FRT_TRY
-        cmpd = FRT_ALLOC_AND_ZERO(CompoundStore);
+        cmpd = FRT_ALLOC_AND_ZERO(FrtCompoundStore);
 
         cmpd->store       = store;
         cmpd->name        = name;
@@ -273,17 +273,17 @@ Store *open_cmpd_store(Store *store, const char *name)
  *
  ****************************************************************************/
 
-CompoundWriter *open_cw(Store *store, char *name)
+FrtCompoundWriter *open_cw(Store *store, char *name)
 {
-    CompoundWriter *cw = FRT_ALLOC(CompoundWriter);
+    FrtCompoundWriter *cw = FRT_ALLOC(FrtCompoundWriter);
     cw->store = store;
     cw->name = name;
     cw->ids = hs_new_str(&free);
-    cw->file_entries = ary_new_type_capa(CWFileEntry, FRT_CW_INIT_CAPA);
+    cw->file_entries = ary_new_type_capa(FrtCWFileEntry, FRT_CW_INIT_CAPA);
     return cw;
 }
 
-void cw_add_file(CompoundWriter *cw, char *id)
+void cw_add_file(FrtCompoundWriter *cw, char *id)
 {
     id = estrdup(id);
     if (hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
@@ -295,7 +295,7 @@ void cw_add_file(CompoundWriter *cw, char *id)
     ary_last(cw->file_entries).name = id;
 }
 
-static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
+static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, OutStream *os)
 {
     off_t start_ptr = os_pos(os);
     off_t end_ptr;
@@ -332,7 +332,7 @@ static void cw_copy_file(CompoundWriter *cw, CWFileEntry *src, OutStream *os)
     is_close(is);
 }
 
-void cw_close(CompoundWriter *cw)
+void cw_close(FrtCompoundWriter *cw)
 {
     OutStream *os = NULL;
     int i;

@@ -43,7 +43,7 @@ void index_auto_flush_iw(Index *self)
 }
 
 
-Index *index_new(Store *store, Analyzer *analyzer, HashSet *def_fields,
+Index *index_new(Store *store, FrtAnalyzer *analyzer, HashSet *def_fields,
                  bool create)
 {
     Index *self = FRT_ALLOC_AND_ZERO(Index);

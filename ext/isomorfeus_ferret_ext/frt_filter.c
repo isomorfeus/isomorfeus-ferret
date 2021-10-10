@@ -22,12 +22,12 @@ void filt_deref(Filter *filt)
     }
 }
 
-BitVector *filt_get_bv(Filter *filt, IndexReader *ir)
+FrtBitVector *filt_get_bv(Filter *filt, IndexReader *ir)
 {
-    CacheObject *co = (CacheObject *)h_get(filt->cache, ir);
+    FrtCacheObject *co = (FrtCacheObject *)h_get(filt->cache, ir);
 
     if (!co) {
-        BitVector *bv;
+        FrtBitVector *bv;
         if (!ir->cache) {
             ir_add_cache(ir);
         }
@@ -35,7 +35,7 @@ BitVector *filt_get_bv(Filter *filt, IndexReader *ir)
         co = co_create(filt->cache, ir->cache, filt, ir,
                        (free_ft)&bv_destroy, (void *)bv);
     }
-    return (BitVector *)co->obj;
+    return (FrtBitVector *)co->obj;
 }
 
 static char *filt_to_s_i(Filter *filt)
@@ -103,9 +103,9 @@ static char *qfilt_to_s(Filter *filt)
     return filter_str;
 }
 
-static BitVector *qfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *qfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
-    BitVector *bv = bv_new_capa(ir->max_doc(ir));
+    FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Searcher *sea = isea_new(ir);
     Weight *weight = q_weight(QF(filt)->query, sea);
     Scorer *scorer = weight->scorer(weight, ir);

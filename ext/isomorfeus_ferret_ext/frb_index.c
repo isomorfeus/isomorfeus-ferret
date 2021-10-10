@@ -58,8 +58,8 @@ static ID id_field_num;
 static ID id_boost;
 
 extern void frb_set_term(VALUE rterm, Term *t);
-extern Analyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
-extern VALUE frb_get_analyzer(Analyzer *a);
+extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
+extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 
 /****************************************************************************
  *
@@ -1310,9 +1310,9 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     bool create = false;
     bool create_if_missing = true;
     Store *store = NULL;
-    Analyzer *analyzer = NULL;
+    FrtAnalyzer *analyzer = NULL;
     IndexWriter *volatile iw = NULL;
-    Config config = default_config;
+    FrtConfig config = default_config;
 
     rb_scan_args(argc, argv, "01", &roptions);
     if (argc > 0) {
@@ -1622,9 +1622,9 @@ frb_iw_field_infos(VALUE self)
 
 /*
  *  call-seq:
- *     index_writer.analyzer -> Analyzer
+ *     index_writer.analyzer -> FrtAnalyzer
  *
- *  Get the Analyzer for this IndexWriter. This is useful if you need
+ *  Get the FrtAnalyzer for this IndexWriter. This is useful if you need
  *  to use the same analyzer in a QueryParser.
  */
 static VALUE
@@ -1636,9 +1636,9 @@ frb_iw_get_analyzer(VALUE self)
 
 /*
  *  call-seq:
- *     index_writer.analyzer -> Analyzer
+ *     index_writer.analyzer -> FrtAnalyzer
  *
- *  Set the Analyzer for this IndexWriter. This is useful if you need to
+ *  Set the FrtAnalyzer for this IndexWriter. This is useful if you need to
  *  change the analyzer for a special document. It is risky though as the
  *  same analyzer will be used for all documents during search.
  */

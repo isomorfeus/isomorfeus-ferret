@@ -132,9 +132,9 @@ extern void frb_ir_free(void *p);
 extern void frb_ir_mark(void *p);
 
 extern void frb_set_term(VALUE rterm, Term *t);
-extern VALUE frb_get_analyzer(Analyzer *a);
+extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern HashSet *frb_get_fields(VALUE rfields);
-extern Analyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
+extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_lazy_doc(LazyDoc *lazy_doc);
 
 /****************************************************************************
@@ -767,18 +767,18 @@ frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm)
 static void
 frb_bc_mark(void *p)
 {
-    frb_gc_mark(((BooleanClause *)p)->query);
+    frb_gc_mark(((FrtBooleanClause *)p)->query);
 }
 
 static void
 frb_bc_free(void *p)
 {
     object_del(p);
-    bc_deref((BooleanClause *)p);
+    bc_deref((FrtBooleanClause *)p);
 }
 
 static VALUE
-frb_bc_wrap(BooleanClause *bc)
+frb_bc_wrap(FrtBooleanClause *bc)
 {
     VALUE self = Data_Wrap_Struct(cBooleanClause, &frb_bc_mark, &frb_bc_free, bc);
     FRT_REF(bc);
@@ -786,10 +786,10 @@ frb_bc_wrap(BooleanClause *bc)
     return self;
 }
 
-static BCType
+static FrtBCType
 frb_get_occur(VALUE roccur)
 {
-    BCType occur = FRT_BC_SHOULD;
+    FrtBCType occur = FRT_BC_SHOULD;
 
     if (roccur == sym_should) {
         occur = FRT_BC_SHOULD;
@@ -814,7 +814,7 @@ frb_get_occur(VALUE roccur)
 static VALUE
 frb_bc_init(int argc, VALUE *argv, VALUE self)
 {
-    BooleanClause *bc;
+    FrtBooleanClause *bc;
     VALUE rquery, roccur;
     unsigned int occur = FRT_BC_SHOULD;
     Query *sub_q;
@@ -829,7 +829,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
     return self;
 }
 
-#define GET_BC() BooleanClause *bc = (BooleanClause *)DATA_PTR(self)
+#define GET_BC() FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self)
 /*
  *  call-seq:
  *     clause.query -> query
@@ -896,7 +896,7 @@ static VALUE
 frb_bc_set_occur(VALUE self, VALUE roccur)
 {
     GET_BC();
-    BCType occur = frb_get_occur(roccur);
+    FrtBCType occur = frb_get_occur(roccur);
     bc_set_occur(bc, occur);
 
     return roccur;
@@ -950,7 +950,7 @@ frb_bq_mark(void *p)
 {
     int i;
     Query *q = (Query *)p;
-    BooleanQuery *bq = (BooleanQuery *)q;
+    FrtBooleanQuery *bq = (FrtBooleanQuery *)q;
     for (i = 0; i < bq->clause_cnt; i++) {
         frb_gc_mark(bq->clauses[i]);
     }
@@ -1007,7 +1007,7 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
 {
     GET_Q();
     VALUE rquery, roccur;
-    BCType occur = FRT_BC_SHOULD;
+    FrtBCType occur = FRT_BC_SHOULD;
     Query *sub_q;
     VALUE klass;
 
@@ -1016,7 +1016,7 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
     }
     klass = CLASS_OF(rquery);
     if (klass == cBooleanClause) {
-        BooleanClause *bc = (BooleanClause *)DATA_PTR(rquery);
+        FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(rquery);
         if (argc > 1) {
             rb_warning("Second argument to BooleanQuery#add is ignored "
                        "when adding BooleanClause");
@@ -1965,7 +1965,7 @@ frb_f_to_s(VALUE self)
     return rstr;
 }
 
-extern VALUE frb_get_bv(BitVector *bv);
+extern VALUE frb_get_bv(FrtBitVector *bv);
 
 /*
  *  call-seq:
@@ -1977,7 +1977,7 @@ extern VALUE frb_get_bv(BitVector *bv);
 static VALUE
 frb_f_get_bits(VALUE self, VALUE rindex_reader)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     IndexReader *ir;
     GET_F();
     Data_Get_Struct(rindex_reader, IndexReader, ir);
@@ -2601,12 +2601,12 @@ cwfilt_eq(Filter *filt, Filter *o)
     return RTEST(rb_funcall(CWF(filt)->rfilter, id_eql, 1, CWF(o)->rfilter));
 }
 
-static BitVector *
+static FrtBitVector *
 cwfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
     VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
-    BitVector *bv;
-    Data_Get_Struct(rbv, BitVector, bv);
+    FrtBitVector *bv;
+    Data_Get_Struct(rbv, FrtBitVector, bv);
     FRT_REF(bv);
     return bv;
 }

@@ -8,13 +8,13 @@
  *
  ***************************************************************************/
 
-#define CScQ(query) ((ConstantScoreQuery *)(query))
+#define CScQ(query) ((FrtConstantScoreQuery *)(query))
 #define CScSc(scorer) ((ConstantScoreScorer *)(scorer))
 
 typedef struct ConstantScoreScorer
 {
     Scorer      super;
-    BitVector  *bv;
+    FrtBitVector  *bv;
     float       score;
 } ConstantScoreScorer;
 
@@ -71,7 +71,7 @@ static Explanation *csw_explain(Weight *self, IndexReader *ir, int doc_num)
     Filter *filter = CScQ(self->query)->filter;
     Explanation *expl;
     char *filter_str = filter->to_s(filter);
-    BitVector *bv = filt_get_bv(filter, ir);
+    FrtBitVector *bv = filt_get_bv(filter, ir);
 
     if (bv_get(bv, doc_num)) {
         expl = expl_new(self->value,
@@ -142,7 +142,7 @@ static int csq_eq(Query *self, Query *o)
 
 Query *csq_new_nr(Filter *filter)
 {
-    Query *self = q_new(ConstantScoreQuery);
+    Query *self = q_new(FrtConstantScoreQuery);
     CScQ(self)->filter = filter;
 
     self->type              = CONSTANT_QUERY;

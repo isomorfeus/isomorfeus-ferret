@@ -44,7 +44,7 @@ static ID id_reset;
 static ID id_clone;
 static ID id_text;
 
-/* Analyzer Methods */
+/* FrtAnalyzer Methods */
 static ID id_token_stream;
 
 static VALUE object_space;
@@ -536,11 +536,11 @@ frb_tf_free(TokenStream *ts)
  * CWrappedTokenStream
  ****************************************************************************/
 
-#define CachedTS(token_stream) ((CachedTokenStream *)(token_stream))
+#define CachedTS(token_stream) ((FrtCachedTokenStream *)(token_stream))
 #define CWTS(token_stream) ((CWrappedTokenStream *)(token_stream))
 
 typedef struct CWrappedTokenStream {
-    CachedTokenStream super;
+    FrtCachedTokenStream super;
     VALUE rts;
 } CWrappedTokenStream;
 
@@ -623,7 +623,7 @@ static const char *TOKEN_RE =
 static VALUE rtoken_re;
 
 typedef struct RegExpTokenStream {
-    CachedTokenStream super;
+    FrtCachedTokenStream super;
     VALUE rtext;
     VALUE regex;
     VALUE proc;
@@ -1161,7 +1161,7 @@ frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
 
 /****************************************************************************
  *
- * Analyzer Methods
+ * FrtAnalyzer Methods
  *
  ****************************************************************************/
 
@@ -1169,17 +1169,17 @@ frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
  * CWrappedAnalyzer Methods
  ****************************************************************************/
 
-#define GET_A(a, self) Data_Get_Struct(self, Analyzer, a)
+#define GET_A(a, self) Data_Get_Struct(self, FrtAnalyzer, a)
 
 #define CWA(analyzer) ((CWrappedAnalyzer *)(analyzer))
 typedef struct CWrappedAnalyzer
 {
-    Analyzer super;
+    FrtAnalyzer super;
     VALUE ranalyzer;
 } CWrappedAnalyzer;
 
 static void
-cwa_destroy_i(Analyzer *a)
+cwa_destroy_i(FrtAnalyzer *a)
 {
     rb_hash_delete(object_space, ((VALUE)a)|1);
     /*printf("rb_hash_size = %d\n", frb_rb_hash_size(object_space)); */
@@ -1187,23 +1187,23 @@ cwa_destroy_i(Analyzer *a)
 }
 
 static TokenStream *
-cwa_get_ts(Analyzer *a, Symbol field, char *text)
+cwa_get_ts(FrtAnalyzer *a, Symbol field, char *text)
 {
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
                            rb_str_new_cstr(field), rb_str_new_cstr(text));
     return frb_get_cwrapped_rts(rts);
 }
 
-Analyzer *
+FrtAnalyzer *
 frb_get_cwrapped_analyzer(VALUE ranalyzer)
 {
-    Analyzer *a = NULL;
+    FrtAnalyzer *a = NULL;
     if (frb_is_cclass(ranalyzer) && DATA_PTR(ranalyzer)) {
-        Data_Get_Struct(ranalyzer, Analyzer, a);
+        Data_Get_Struct(ranalyzer, FrtAnalyzer, a);
         FRT_REF(a);
     }
     else {
-        a = (Analyzer *)frt_ecalloc(sizeof(CWrappedAnalyzer));
+        a = (FrtAnalyzer *)frt_ecalloc(sizeof(CWrappedAnalyzer));
         a->destroy_i = &cwa_destroy_i;
         a->get_ts    = &cwa_get_ts;
         a->ref_cnt   = 1;
@@ -1215,14 +1215,14 @@ frb_get_cwrapped_analyzer(VALUE ranalyzer)
 }
 
 static void
-frb_analyzer_free(Analyzer *a)
+frb_analyzer_free(FrtAnalyzer *a)
 {
     object_del(a);
     a_deref(a);
 }
 
 VALUE
-frb_get_analyzer(Analyzer *a)
+frb_get_analyzer(FrtAnalyzer *a)
 {
     VALUE self = Qnil;
     if (a) {
@@ -1237,7 +1237,7 @@ frb_get_analyzer(Analyzer *a)
 }
 
 VALUE
-get_rb_ts_from_a(Analyzer *a, VALUE rfield, VALUE rstring)
+get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring)
 {
     TokenStream *ts = a_get_ts(a, frb_field(rfield), rs2s(rstring));
 
@@ -1262,7 +1262,7 @@ frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 {
     /* NOTE: Any changes made to this method may also need to be applied to
      * frb_re_analyzer_token_stream */
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_A(a, self);
 
     StringValue(rstring);
@@ -1289,7 +1289,7 @@ lower = (argc ? RTEST(rlower) : dflt)
 static VALUE
 frb_a_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_LOWER(false);
     a = whitespace_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
@@ -1310,7 +1310,7 @@ frb_a_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_LOWER(false);
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
@@ -1334,7 +1334,7 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_a_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_LOWER(true);
     a = letter_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
@@ -1355,7 +1355,7 @@ frb_a_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_LOWER(true);
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
@@ -1397,7 +1397,7 @@ frb_a_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     bool lower;
     VALUE rlower, rstop_words;
-    Analyzer *a;
+    FrtAnalyzer *a;
     rb_scan_args(argc, argv, "02", &rstop_words, &rlower);
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
@@ -1430,7 +1430,7 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     bool lower;
     VALUE rlower, rstop_words;
-    Analyzer *a;
+    FrtAnalyzer *a;
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
@@ -1476,8 +1476,8 @@ frb_pfa_mark(void *p)
 static VALUE
 frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer)
 {
-    Analyzer *def = frb_get_cwrapped_analyzer(ranalyzer);
-    Analyzer *a = per_field_analyzer_new(def);
+    FrtAnalyzer *def = frb_get_cwrapped_analyzer(ranalyzer);
+    FrtAnalyzer *a = per_field_analyzer_new(def);
     Frt_Wrap_Struct(self, &frb_pfa_mark, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1497,8 +1497,8 @@ frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer)
 static VALUE
 frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
 {
-    Analyzer *pfa, *a;
-    Data_Get_Struct(self, Analyzer, pfa);
+    FrtAnalyzer *pfa, *a;
+    Data_Get_Struct(self, FrtAnalyzer, pfa);
     a = frb_get_cwrapped_analyzer(ranalyzer);
 
     pfa_add_field(pfa, frb_field(rfield), a);
@@ -1518,12 +1518,12 @@ frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
 static VALUE
 frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 {
-    Analyzer *pfa, *a;
+    FrtAnalyzer *pfa, *a;
     Symbol field = frb_field(rfield);
     GET_A(pfa, self);
 
     StringValue(rstring);
-    a = (Analyzer *)h_get(PFA(pfa)->dict, field);
+    a = (FrtAnalyzer *)h_get(PFA(pfa)->dict, field);
     if (a == NULL) {
         a = PFA(pfa)->default_a;
     }
@@ -1539,13 +1539,13 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 /*** RegExpAnalyzer ***/
 
 static void
-frb_re_analyzer_mark(Analyzer *a)
+frb_re_analyzer_mark(FrtAnalyzer *a)
 {
     frb_gc_mark(a->current_ts);
 }
 
 static void
-re_analyzer_destroy_i(Analyzer *a)
+re_analyzer_destroy_i(FrtAnalyzer *a)
 {
     ts_deref(a->current_ts);
     free(a);
@@ -1565,7 +1565,7 @@ static VALUE
 frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE lower, rets, regex, proc;
-    Analyzer *a;
+    FrtAnalyzer *a;
     TokenStream *ts;
     rb_scan_args(argc, argv, "02&", &regex, &lower, &proc);
 
@@ -1600,7 +1600,7 @@ static VALUE
 frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
 {
     TokenStream *ts;
-    Analyzer *a;
+    FrtAnalyzer *a;
     GET_A(a, self);
 
     StringValue(rtext);

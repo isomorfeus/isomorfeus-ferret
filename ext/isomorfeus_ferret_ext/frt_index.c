@@ -24,7 +24,7 @@ extern VALUE cStateError;
     store->close_lock(lock);\
 } while (0)
 
-const Config default_config = {
+const FrtConfig default_config = {
     0x100000,       /* chunk size is 1Mb */
     0x1000000,      /* Max memory used for buffer is 16 Mb */
     FRT_INDEX_INTERVAL, /* index interval */
@@ -181,7 +181,7 @@ static int co_eq(const void *key1, const void *key2)
     return (key1 == key2);
 }
 
-static void co_destroy(CacheObject *self)
+static void co_destroy(FrtCacheObject *self)
 {
     h_rem(self->ref_tab1, self->ref2, false);
     h_rem(self->ref_tab2, self->ref1, false);
@@ -189,10 +189,10 @@ static void co_destroy(CacheObject *self)
     free(self);
 }
 
-CacheObject *co_create(Hash *ref_tab1, Hash *ref_tab2,
+FrtCacheObject *co_create(Hash *ref_tab1, Hash *ref_tab2,
                        void *ref1, void *ref2, free_ft destroy, void *obj)
 {
-    CacheObject *self = FRT_ALLOC(CacheObject);
+    FrtCacheObject *self = FRT_ALLOC(FrtCacheObject);
     h_set(ref_tab1, ref2, self);
     h_set(ref_tab2, ref1, self);
     self->ref_tab1 = ref_tab1;
@@ -2765,7 +2765,7 @@ static void stde_seek_prox(SegmentTermDocEnum *stde, off_t prx_ptr)
 
 TermDocEnum *stde_new(TermInfosReader *tir,
                       InStream *frq_in,
-                      BitVector *deleted_docs,
+                      FrtBitVector *deleted_docs,
                       int skip_interval)
 {
     SegmentTermDocEnum *stde = FRT_ALLOC_AND_ZERO(SegmentTermDocEnum);
@@ -2871,7 +2871,7 @@ static void stpe_seek_prox(SegmentTermDocEnum *stde, off_t prx_ptr)
 TermDocEnum *stpe_new(TermInfosReader *tir,
                       InStream *frq_in,
                       InStream *prx_in,
-                      BitVector *del_docs,
+                      FrtBitVector *del_docs,
                       int skip_interval)
 {
     TermDocEnum *tde         = stde_new(tir, frq_in, del_docs, skip_interval);
@@ -3922,7 +3922,7 @@ typedef struct SegmentReader {
     SegmentInfo *si;
     char *segment;
     FieldsReader *fr;
-    BitVector *deleted_docs;
+    FrtBitVector *deleted_docs;
     InStream *frq_in;
     InStream *prx_in;
     SegmentFieldIndex *sfi;
@@ -4031,7 +4031,7 @@ static void sr_set_deleter_i(IndexReader *ir, Deleter *deleter)
   ir->deleter = deleter;
 }
 
-static void bv_write(BitVector *bv, Store *store, char *name)
+static void bv_write(FrtBitVector *bv, Store *store, char *name)
 {
     int i;
     OutStream *os = store->new_output(store, name);
@@ -4042,12 +4042,12 @@ static void bv_write(BitVector *bv, Store *store, char *name)
     os_close(os);
 }
 
-static BitVector *bv_read(Store *store, char *name)
+static FrtBitVector *bv_read(Store *store, char *name)
 {
     int i;
     volatile bool success = false;
     InStream *volatile is = store->open_input(store, name);
-    BitVector *volatile bv = FRT_ALLOC_AND_ZERO(BitVector);
+    FrtBitVector *volatile bv = FRT_ALLOC_AND_ZERO(FrtBitVector);
     bv->size = (int)is_read_vint(is);
     bv->capa = (bv->size >> 5) + 1;
     bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
@@ -5241,7 +5241,7 @@ Hash *dw_invert_field(DocWriter *dw,
                            DocField *df)
 {
     MemoryPool *mp = dw->mp;
-    Analyzer *a = dw->analyzer;
+    FrtAnalyzer *a = dw->analyzer;
     Hash *curr_plists = dw->curr_plists;
     Hash *fld_plists = fld_inv->plists;
     const bool store_offsets = fld_inv->store_offsets;
@@ -5379,7 +5379,7 @@ typedef struct SegmentMergeInfo {
     SegmentInfo *si;
     Store *store;
     Store *orig_store;
-    BitVector *deleted_docs;
+    FrtBitVector *deleted_docs;
     SegmentFieldIndex *sfi;
     TermEnum *te;
     TermDocEnum *tde;
@@ -5402,7 +5402,7 @@ static bool smi_lt(const SegmentMergeInfo *smi1, const SegmentMergeInfo *smi2)
 
 static void smi_load_doc_map(SegmentMergeInfo *smi)
 {
-    BitVector *deleted_docs = smi->deleted_docs;
+    FrtBitVector *deleted_docs = smi->deleted_docs;
     const int max_doc = smi->max_doc;
     int j = 0, i;
 
@@ -5498,7 +5498,7 @@ typedef struct SegmentMerger {
     SegmentMergeInfo **smis;
     int seg_cnt;
     int doc_cnt;
-    Config *config;
+    FrtConfig *config;
     TermInfosWriter *tiw;
     char *term_buf;
     int term_buf_ptr;
@@ -5795,7 +5795,7 @@ static void sm_merge_norms(SegmentMerger *sm)
                 si = smi->si;
                 if (si_norm_file_name(si, file_name, i)) {
                     const int max_doc = smi->max_doc;
-                    BitVector *deleted_docs =  smi->deleted_docs;
+                    FrtBitVector *deleted_docs =  smi->deleted_docs;
                     store = (si->use_compound_file && si->norm_gens[i])
                              ? smi->orig_store : smi->store;
                     is = store->open_input(store, file_name);
@@ -5877,7 +5877,7 @@ static void iw_create_compound_file(Store *store, FieldInfos *fis,
                                     Deleter *dlr)
 {
     int i;
-    CompoundWriter *cw;
+    FrtCompoundWriter *cw;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *ext;
     int seg_len = strlen(si->name);
@@ -6148,8 +6148,8 @@ void iw_close(IndexWriter *iw)
     free(iw);
 }
 
-IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
-                     const Config *config)
+IndexWriter *iw_open(Store *store, FrtAnalyzer *volatile analyzer,
+                     const FrtConfig *config)
 {
     IndexWriter *iw = FRT_ALLOC_AND_ZERO(IndexWriter);
     mutex_init(&iw->mutex, NULL);
@@ -6176,12 +6176,12 @@ IndexWriter *iw_open(Store *store, Analyzer *volatile analyzer,
             iw->write_lock = NULL;
         }
         if (iw->sis) sis_destroy(iw->sis);
-        if (analyzer) a_deref((Analyzer *)analyzer);
+        if (analyzer) a_deref((FrtAnalyzer *)analyzer);
         free(iw);
     FRT_XENDTRY
 
     iw->similarity = sim_create_default();
-    iw->analyzer = analyzer ? (Analyzer *)analyzer
+    iw->analyzer = analyzer ? (FrtAnalyzer *)analyzer
                             : mb_standard_analyzer_new(true);
 
     iw->deleter = deleter_new(iw->sis, store);

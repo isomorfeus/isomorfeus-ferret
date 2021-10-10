@@ -212,9 +212,9 @@ static char *rfilt_to_s(Filter *filt)
     return rfstr;
 }
 
-static BitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *rfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
-    BitVector *bv = bv_new_capa(ir->max_doc(ir));
+    FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
     FieldInfo *fi = fis_get_field(ir->fis, range->field);
     /* the field info exists we need to add docs to the bit vector, otherwise
@@ -339,7 +339,7 @@ do {\
 } while (te->next(te))
 
 
-static BitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
+static FrtBitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
 {
     Range *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
@@ -349,7 +349,7 @@ static BitVector *trfilt_get_bv_i(Filter *filt, IndexReader *ir)
     if ((!lt || (sscanf(lt, "%lg%n", &lnum, &len) && (int)strlen(lt) == len)) &&
         (!ut || (sscanf(ut, "%lg%n", &unum, &len) && (int)strlen(ut) == len)))
     {
-        BitVector *bv = bv_new_capa(ir->max_doc(ir));
+        FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
         FieldInfo *fi = fis_get_field(ir->fis, range->field);
         /* the field info exists we need to add docs to the bit vector,
          * otherwise we just return an empty bit vector */
@@ -462,7 +462,7 @@ static void rq_destroy(Query *self)
 static MatchVector *rq_get_matchv_i(Query *self, MatchVector *mv,
                                     TermVector *tv)
 {
-    Range *range = RQ(((ConstantScoreQuery *)self)->original)->range;
+    Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (strcmp(tv->field, range->field) == 0) {
         const int term_cnt = tv->term_cnt;
         int i, j;
@@ -500,7 +500,7 @@ static Query *rq_rewrite(Query *self, IndexReader *ir)
                                r->include_lower, r->include_upper);
     (void)ir;
     csq = csq_new_nr(filter);
-    ((ConstantScoreQuery *)csq)->original = self;
+    ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &rq_get_matchv_i;
     return (Query *)csq;
 }
@@ -572,7 +572,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
 static MatchVector *trq_get_matchv_i(Query *self, MatchVector *mv,
                                      TermVector *tv)
 {
-    Range *range = RQ(((ConstantScoreQuery *)self)->original)->range;
+    Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (strcmp(tv->field, range->field) == 0) {
         double lnum = 0.0, unum = 0.0;
         int len = 0;
@@ -642,7 +642,7 @@ static Query *trq_rewrite(Query *self, IndexReader *ir)
                                 r->include_lower, r->include_upper);
     (void)ir;
     csq = csq_new_nr(filter);
-    ((ConstantScoreQuery *)csq)->original = self;
+    ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &trq_get_matchv_i;
     return (Query *)csq;
 }

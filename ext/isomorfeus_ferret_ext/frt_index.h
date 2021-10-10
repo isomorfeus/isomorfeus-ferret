@@ -782,20 +782,6 @@ struct FrtMultiReader {
 extern int frt_mr_get_field_num(FrtMultiReader *mr, int ir_num, int f_num);
 extern FrtIndexReader *frt_mr_open(FrtIndexReader **sub_readers, const int r_cnt);
 
-
-/****************************************************************************
- *
- * FrtBoost
- *
- ****************************************************************************/
-
-typedef struct FrtBoost
-{
-    float val;
-    int doc_num;
-    struct FrtBoost *next;
-} FrtBoost;
-
 /****************************************************************************
  *
  * FrtFieldInverter

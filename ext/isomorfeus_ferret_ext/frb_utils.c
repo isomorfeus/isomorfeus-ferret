@@ -12,22 +12,22 @@ static void
 frb_bv_free(void *p)
 {
     object_del(p);
-    bv_destroy((BitVector *)p);
+    bv_destroy((FrtBitVector *)p);
 }
 
 static VALUE
 frb_bv_alloc(VALUE klass)
 {
-    BitVector *bv = bv_new();
+    FrtBitVector *bv = bv_new();
     VALUE rbv = Data_Wrap_Struct(klass, NULL, &frb_bv_free, bv);
     object_add(bv, rbv);
     return rbv;
 }
 
-#define GET_BV(bv, self) Data_Get_Struct(self, BitVector, bv)
+#define GET_BV(bv, self) Data_Get_Struct(self, FrtBitVector, bv)
 
 VALUE
-frb_get_bv(BitVector *bv)
+frb_get_bv(FrtBitVector *bv)
 {
     VALUE rbv;
     if ((rbv = object_get(bv)) == Qnil) {
@@ -60,7 +60,7 @@ frb_bv_init(VALUE self)
 VALUE
 frb_bv_set(VALUE self, VALUE rindex, VALUE rstate)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int index = FIX2INT(rindex);
     GET_BV(bv, self);
     if (index < 0) {
@@ -112,7 +112,7 @@ frb_bv_set_off(VALUE self, VALUE rindex)
 VALUE
 frb_bv_get(VALUE self, VALUE rindex)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int index = FIX2INT(rindex);
     GET_BV(bv, self);
     if (index < 0) {
@@ -133,7 +133,7 @@ frb_bv_get(VALUE self, VALUE rindex)
 VALUE
 frb_bv_count(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     return INT2FIX(bv->count);
 }
@@ -148,7 +148,7 @@ frb_bv_count(VALUE self)
 VALUE
 frb_bv_clear(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     bv_clear(bv);
     bv_scan_reset(bv);
@@ -167,7 +167,7 @@ frb_bv_clear(VALUE self)
 VALUE
 frb_bv_eql(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     return bv_eq(bv1, bv2) ? Qtrue : Qfalse;
@@ -183,7 +183,7 @@ frb_bv_eql(VALUE self, VALUE other)
 VALUE
 frb_bv_hash(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     return ULONG2NUM(bv_hash(bv));
 }
@@ -199,7 +199,7 @@ frb_bv_hash(VALUE self)
 VALUE
 frb_bv_and(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_and(bv1, bv2));
@@ -215,7 +215,7 @@ frb_bv_and(VALUE self, VALUE other)
 VALUE
 frb_bv_and_x(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     bv_and_x(bv1, bv2);
@@ -233,7 +233,7 @@ frb_bv_and_x(VALUE self, VALUE other)
 VALUE
 frb_bv_or(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_or(bv1, bv2));
@@ -249,7 +249,7 @@ frb_bv_or(VALUE self, VALUE other)
 VALUE
 frb_bv_or_x(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     bv_or_x(bv1, bv2);
@@ -267,7 +267,7 @@ frb_bv_or_x(VALUE self, VALUE other)
 VALUE
 frb_bv_xor(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_xor(bv1, bv2));
@@ -283,7 +283,7 @@ frb_bv_xor(VALUE self, VALUE other)
 VALUE
 frb_bv_xor_x(VALUE self, VALUE other)
 {
-    BitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
     bv_xor_x(bv1, bv2);
@@ -300,7 +300,7 @@ frb_bv_xor_x(VALUE self, VALUE other)
 VALUE
 frb_bv_not(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_not(bv));
 }
@@ -314,7 +314,7 @@ frb_bv_not(VALUE self)
 VALUE
 frb_bv_not_x(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     bv_not_x(bv);
     return self;
@@ -331,7 +331,7 @@ frb_bv_not_x(VALUE self)
 VALUE
 frb_bv_reset_scan(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     bv_scan_reset(bv);
     return self;
@@ -349,7 +349,7 @@ frb_bv_reset_scan(VALUE self)
 VALUE
 frb_bv_next(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     return INT2FIX(bv_scan_next(bv));
 }
@@ -367,7 +367,7 @@ frb_bv_next(VALUE self)
 VALUE
 frb_bv_next_unset(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     GET_BV(bv, self);
     return INT2FIX(bv_scan_next_unset(bv));
 }
@@ -385,7 +385,7 @@ frb_bv_next_unset(VALUE self)
 VALUE
 frb_bv_next_from(VALUE self, VALUE rfrom)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int from = FIX2INT(rfrom);
     GET_BV(bv, self);
     if (from < 0) {
@@ -407,7 +407,7 @@ frb_bv_next_from(VALUE self, VALUE rfrom)
 VALUE
 frb_bv_next_unset_from(VALUE self, VALUE rfrom)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int from = FIX2INT(rfrom);
     GET_BV(bv, self);
     if (from < 0) {
@@ -426,7 +426,7 @@ frb_bv_next_unset_from(VALUE self, VALUE rfrom)
 VALUE
 frb_bv_each(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int bit;
     GET_BV(bv, self);
     bv_scan_reset(bv);
@@ -457,7 +457,7 @@ frb_bv_each(VALUE self)
 VALUE
 frb_bv_to_a(VALUE self)
 {
-    BitVector *bv;
+    FrtBitVector *bv;
     int bit;
     VALUE ary;
     GET_BV(bv, self);

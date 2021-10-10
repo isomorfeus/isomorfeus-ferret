@@ -6,7 +6,7 @@
 
 extern VALUE cStateError;
 
-#define BQ(query) ((BooleanQuery *)(query))
+#define BQ(query) ((FrtBooleanQuery *)(query))
 #define BW(weight) ((BooleanWeight *)(weight))
 
 /***************************************************************************
@@ -1107,7 +1107,7 @@ typedef struct BooleanWeight
 
 static float bw_sum_of_squared_weights(Weight *self)
 {
-    BooleanQuery *bq = BQ(self->query);
+    FrtBooleanQuery *bq = BQ(self->query);
     float sum = 0.0f;
     int i;
 
@@ -1126,7 +1126,7 @@ static float bw_sum_of_squared_weights(Weight *self)
 
 static void bw_normalize(Weight *self, float normalization_factor)
 {
-    BooleanQuery *bq = BQ(self->query);
+    FrtBooleanQuery *bq = BQ(self->query);
     int i;
 
     normalization_factor *= self->value; /* multiply by query boost */
@@ -1143,11 +1143,11 @@ static void bw_normalize(Weight *self, float normalization_factor)
 static Scorer *bw_scorer(Weight *self, IndexReader *ir)
 {
     Scorer *bsc = bsc_new(self->similarity);
-    BooleanQuery *bq = BQ(self->query);
+    FrtBooleanQuery *bq = BQ(self->query);
     int i;
 
     for (i = 0; i < BW(self)->w_cnt; i++) {
-        BooleanClause *clause = bq->clauses[i];
+        FrtBooleanClause *clause = bq->clauses[i];
         Weight *weight = BW(self)->weights[i];
         Scorer *sub_scorer = weight->scorer(weight, ir);
         if (sub_scorer) {
@@ -1181,7 +1181,7 @@ static void bw_destroy(Weight *self)
 
 static Explanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
 {
-    BooleanQuery *bq = BQ(self->query);
+    FrtBooleanQuery *bq = BQ(self->query);
     Explanation *sum_expl = expl_new(0.0f, "sum of:");
     Explanation *explanation;
     int coord = 0;
@@ -1191,7 +1191,7 @@ static Explanation *bw_explain(Weight *self, IndexReader *ir, int doc_num)
     int i;
     for (i = 0; i < BW(self)->w_cnt; i++) {
         Weight *weight = BW(self)->weights[i];
-        BooleanClause *clause = bq->clauses[i];
+        FrtBooleanClause *clause = bq->clauses[i];
         explanation = weight->explain(weight, ir, doc_num);
         if (!clause->is_prohibited) {
             max_coord++;
@@ -1263,7 +1263,7 @@ static Weight *bw_new(Query *query, Searcher *searcher)
  *
  ***************************************************************************/
 
-void bc_set_occur(BooleanClause *self, BCType occur)
+void bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
 {
     self->occur = occur;
     switch (occur) {
@@ -1285,7 +1285,7 @@ void bc_set_occur(BooleanClause *self, BCType occur)
     }
 }
 
-void bc_deref(BooleanClause *self)
+void bc_deref(FrtBooleanClause *self)
 {
     if (--self->ref_cnt <= 0) {
         q_deref(self->query);
@@ -1293,19 +1293,19 @@ void bc_deref(BooleanClause *self)
     }
 }
 
-static unsigned long long bc_hash(BooleanClause *self)
+static unsigned long long bc_hash(FrtBooleanClause *self)
 {
     return ((q_hash(self->query) << 2) | self->occur);
 }
 
-static int  bc_eq(BooleanClause *self, BooleanClause *o)
+static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o)
 {
     return ((self->occur == o->occur) && q_eq(self->query, o->query));
 }
 
-BooleanClause *bc_new(Query *query, BCType occur)
+FrtBooleanClause *bc_new(Query *query, FrtBCType occur)
 {
-    BooleanClause *self = FRT_ALLOC(BooleanClause);
+    FrtBooleanClause *self = FRT_ALLOC(FrtBooleanClause);
     self->ref_cnt = 1;
     self->query = query;
     bc_set_occur(self, occur);
@@ -1340,7 +1340,7 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
 
     if (clause_cnt == 1) {
         /* optimize 1-clause queries */
-        BooleanClause *clause = BQ(self)->clauses[0];
+        FrtBooleanClause *clause = BQ(self)->clauses[0];
         if (! clause->is_prohibited) {
             /* just return clause. Re-write first. */
             Query *q = clause->query->rewrite(clause->query, ir);
@@ -1367,19 +1367,19 @@ static Query *bq_rewrite(Query *self, IndexReader *ir)
     self->ref_cnt++;
     /* replace each clause's query with its rewritten query */
     for (i = 0; i < clause_cnt; i++) {
-        BooleanClause *clause = BQ(self)->clauses[i];
+        FrtBooleanClause *clause = BQ(self)->clauses[i];
         Query *rq = clause->query->rewrite(clause->query, ir);
         /* check for at least one non-prohibited clause */
         if (clause->is_prohibited == false) has_non_prohibited_clause = true;
         if (rq != clause->query) {
             if (!rewritten) {
                 int j;
-                Query *new_self = q_new(BooleanQuery);
-                memcpy(new_self, self, sizeof(BooleanQuery));
-                BQ(new_self)->clauses = FRT_ALLOC_N(BooleanClause *,
+                Query *new_self = q_new(FrtBooleanQuery);
+                memcpy(new_self, self, sizeof(FrtBooleanQuery));
+                BQ(new_self)->clauses = FRT_ALLOC_N(FrtBooleanClause *,
                                                 BQ(self)->clause_capa);
                 memcpy(BQ(new_self)->clauses, BQ(self)->clauses,
-                       BQ(self)->clause_capa * sizeof(BooleanClause *));
+                       BQ(self)->clause_capa * sizeof(FrtBooleanClause *));
                 for (j = 0; j < clause_cnt; j++) {
                     FRT_REF(BQ(self)->clauses[j]);
                 }
@@ -1405,7 +1405,7 @@ static void bq_extract_terms(Query *self, HashSet *terms)
 {
     int i;
     for (i = 0; i < BQ(self)->clause_cnt; i++) {
-        BooleanClause *clause = BQ(self)->clauses[i];
+        FrtBooleanClause *clause = BQ(self)->clauses[i];
         clause->query->extract_terms(clause->query, terms);
     }
 }
@@ -1413,7 +1413,7 @@ static void bq_extract_terms(Query *self, HashSet *terms)
 static char *bq_to_s(Query *self, Symbol field)
 {
     int i;
-    BooleanClause *clause;
+    FrtBooleanClause *clause;
     Query *sub_query;
     char *buffer;
     char *clause_str;
@@ -1520,8 +1520,8 @@ static unsigned long long bq_hash(Query *self)
 static int  bq_eq(Query *self, Query *o)
 {
     int i;
-    BooleanQuery *bq1 = BQ(self);
-    BooleanQuery *bq2 = BQ(o);
+    FrtBooleanQuery *bq1 = BQ(self);
+    FrtBooleanQuery *bq2 = BQ(o);
     if ((bq1->coord_disabled != bq2->coord_disabled)
         || (bq1->max_clause_cnt != bq2->max_clause_cnt)
         || (bq1->clause_cnt != bq2->clause_cnt)) {
@@ -1538,7 +1538,7 @@ static int  bq_eq(Query *self, Query *o)
 
 Query *bq_new(bool coord_disabled)
 {
-    Query *self = q_new(BooleanQuery);
+    Query *self = q_new(FrtBooleanQuery);
     BQ(self)->coord_disabled = coord_disabled;
     if (coord_disabled) {
         self->get_similarity = &bq_get_similarity;
@@ -1546,7 +1546,7 @@ Query *bq_new(bool coord_disabled)
     BQ(self)->max_clause_cnt = FRT_DEFAULT_MAX_CLAUSE_COUNT;
     BQ(self)->clause_cnt = 0;
     BQ(self)->clause_capa = FRT_BOOLEAN_CLAUSES_START_CAPA;
-    BQ(self)->clauses = FRT_ALLOC_N(BooleanClause *, FRT_BOOLEAN_CLAUSES_START_CAPA);
+    BQ(self)->clauses = FRT_ALLOC_N(FrtBooleanClause *, FRT_BOOLEAN_CLAUSES_START_CAPA);
     BQ(self)->similarity = NULL;
     BQ(self)->original_boost = 0.0f;
 
@@ -1570,7 +1570,7 @@ Query *bq_new_max(bool coord_disabled, int max)
     return q;
 }
 
-BooleanClause *bq_add_clause_nr(Query *self, BooleanClause *bc)
+FrtBooleanClause *bq_add_clause_nr(Query *self, FrtBooleanClause *bc)
 {
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
         rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
@@ -1580,22 +1580,22 @@ BooleanClause *bq_add_clause_nr(Query *self, BooleanClause *bc)
     }
     if (BQ(self)->clause_cnt >= BQ(self)->clause_capa) {
         BQ(self)->clause_capa *= 2;
-        FRT_REALLOC_N(BQ(self)->clauses, BooleanClause *, BQ(self)->clause_capa);
+        FRT_REALLOC_N(BQ(self)->clauses, FrtBooleanClause *, BQ(self)->clause_capa);
     }
     BQ(self)->clauses[BQ(self)->clause_cnt] = bc;
     BQ(self)->clause_cnt++;
     return bc;
 }
 
-BooleanClause *bq_add_clause(Query *self, BooleanClause *bc)
+FrtBooleanClause *bq_add_clause(Query *self, FrtBooleanClause *bc)
 {
     FRT_REF(bc);
     return bq_add_clause_nr(self, bc);
 }
 
-BooleanClause *bq_add_query_nr(Query *self, Query *sub_query, BCType occur)
+FrtBooleanClause *bq_add_query_nr(Query *self, Query *sub_query, FrtBCType occur)
 {
-    BooleanClause *bc;
+    FrtBooleanClause *bc;
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
         rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
               "<%d> but your query has <%d> clauses. You can try increasing "
@@ -1608,7 +1608,7 @@ BooleanClause *bq_add_query_nr(Query *self, Query *sub_query, BCType occur)
     return bc;
 }
 
-BooleanClause *bq_add_query(Query *self, Query *sub_query, BCType occur)
+FrtBooleanClause *bq_add_query(Query *self, Query *sub_query, FrtBCType occur)
 {
     FRT_REF(sub_query);
     return bq_add_query_nr(self, sub_query, occur);

@@ -365,7 +365,7 @@ Weight *q_weight(Query *self, Searcher *searcher)
     return self->weight = weight;
 }
 
-#define BQ(query) ((BooleanQuery *)(query))
+#define BQ(query) ((FrtBooleanQuery *)(query))
 Query *q_combine(Query **queries, int q_cnt)
 {
     int i;
@@ -1046,7 +1046,7 @@ static TopDocs *isea_search_w(Searcher *self,
     float score = 0.0f;
     float filter_factor = 1.0f;
 
-    BitVector *bits = (filter ? filt_get_bv(filter, ISEA(self)->ir) : NULL);
+    FrtBitVector *bits = (filter ? filt_get_bv(filter, ISEA(self)->ir) : NULL);
 
     sea_check_args(num_docs, first_doc);
 
@@ -1132,7 +1132,7 @@ static void isea_search_each_w(Searcher *self, Weight *weight, Filter *filter,
 {
     Scorer *scorer;
     float filter_factor = 1.0f;
-    BitVector *bits = (filter
+    FrtBitVector *bits = (filter
                        ? filt_get_bv(filter, ISEA(self)->ir)
                        : NULL);
 

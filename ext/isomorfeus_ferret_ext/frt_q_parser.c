@@ -109,7 +109,7 @@ typedef struct Phrase {
 typedef struct BCArray {
     int size;
     int capa;
-    BooleanClause **clauses;
+    FrtBooleanClause **clauses;
 } BCArray;
 
 float qp_default_fuzzy_min_sim = 0.5;
@@ -140,7 +140,7 @@ typedef union YYSTYPE
 #line 113 "src/q_parser.y"
 {
     Query *query;
-    BooleanClause *bcls;
+    FrtBooleanClause *bcls;
     BCArray *bclss;
     HashSet *hashset;
     Phrase *phrase;
@@ -165,14 +165,14 @@ static int yyerror(QParser *qp, char const *msg);
 #define PHRASE_INIT_CAPA 4
 static Query *get_bool_q(BCArray *bca);
 
-static BCArray *first_cls(BooleanClause *boolean_clause);
-static BCArray *add_and_cls(BCArray *bca, BooleanClause *clause);
-static BCArray *add_or_cls(BCArray *bca, BooleanClause *clause);
+static BCArray *first_cls(FrtBooleanClause *boolean_clause);
+static BCArray *add_and_cls(BCArray *bca, FrtBooleanClause *clause);
+static BCArray *add_or_cls(BCArray *bca, FrtBooleanClause *clause);
 static BCArray *add_default_cls(QParser *qp, BCArray *bca,
-                                BooleanClause *clause);
+                                FrtBooleanClause *clause);
 static void bca_destroy(BCArray *bca);
 
-static BooleanClause *get_bool_cls(Query *q, BCType occur);
+static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur);
 
 static Query *get_term_q(QParser *qp, Symbol field, char *word);
 static Query *get_fuzzy_q(QParser *qp, Symbol field, char *word,
@@ -222,7 +222,7 @@ static void qp_pop_fields(QParser *self);
                   if (sq) q_deref(sq);\
                 FRT_XENDTRY\
             }\
-            if (((BooleanQuery *)q)->clause_cnt == 0) {\
+            if (((FrtBooleanQuery *)q)->clause_cnt == 0) {\
                 q_deref(q);\
                 q = NULL;\
             }\
@@ -2192,7 +2192,7 @@ static int yyerror(QParser *qp, char const *msg)
     return 0;
 }
 
-#define BQ(query) ((BooleanQuery *)(query))
+#define BQ(query) ((FrtBooleanQuery *)(query))
 
 /**
  * The QueryParser caches a tokenizer for each field so that it doesn't need
@@ -2237,7 +2237,7 @@ static Query *get_bool_q(BCArray *bca)
         free(bca->clauses);
     }
     else if (clause_count == 1) {
-        BooleanClause *bc = bca->clauses[0];
+        FrtBooleanClause *bc = bca->clauses[0];
         if (bc->is_prohibited) {
             q = bq_new(false);
             bq_add_query_nr(q, bc->query, FRT_BC_MUST_NOT);
@@ -2266,11 +2266,11 @@ static Query *get_bool_q(BCArray *bca)
  * Base method for appending BooleanClauses to a BooleanClause array. This
  * method doesn't care about the type of clause (MUST, SHOULD, MUST_NOT).
  */
-static void bca_add_clause(BCArray *bca, BooleanClause *clause)
+static void bca_add_clause(BCArray *bca, FrtBooleanClause *clause)
 {
     if (bca->size >= bca->capa) {
         bca->capa <<= 1;
-        FRT_REALLOC_N(bca->clauses, BooleanClause *, bca->capa);
+        FRT_REALLOC_N(bca->clauses, FrtBooleanClause *, bca->capa);
     }
     bca->clauses[bca->size] = clause;
     bca->size++;
@@ -2280,11 +2280,11 @@ static void bca_add_clause(BCArray *bca, BooleanClause *clause)
  * Add the first clause to a BooleanClause array. This method is also
  * responsible for allocating a new BooleanClause array.
  */
-static BCArray *first_cls(BooleanClause *clause)
+static BCArray *first_cls(FrtBooleanClause *clause)
 {
     BCArray *bca = FRT_ALLOC_AND_ZERO(BCArray);
     bca->capa = BCA_INIT_CAPA;
-    bca->clauses = FRT_ALLOC_N(BooleanClause *, BCA_INIT_CAPA);
+    bca->clauses = FRT_ALLOC_N(FrtBooleanClause *, BCA_INIT_CAPA);
     if (clause) {
         bca_add_clause(bca, clause);
     }
@@ -2297,7 +2297,7 @@ static BCArray *first_cls(BooleanClause *clause)
  * MUST clauses. (If they are currently MUST_NOT clauses they stay as they
  * are.)
  */
-static BCArray *add_and_cls(BCArray *bca, BooleanClause *clause)
+static BCArray *add_and_cls(BCArray *bca, FrtBooleanClause *clause)
 {
     if (clause) {
         if (bca->size == 1) {
@@ -2316,7 +2316,7 @@ static BCArray *add_and_cls(BCArray *bca, BooleanClause *clause)
 /**
  * Add SHOULD clause to the BooleanClause array.
  */
-static BCArray *add_or_cls(BCArray *bca, BooleanClause *clause)
+static BCArray *add_or_cls(BCArray *bca, FrtBooleanClause *clause)
 {
     if (clause) {
         bca_add_clause(bca, clause);
@@ -2329,7 +2329,7 @@ static BCArray *add_or_cls(BCArray *bca, BooleanClause *clause)
  * clause type.
  */
 static BCArray *add_default_cls(QParser *qp, BCArray *bca,
-                                BooleanClause *clause)
+                                FrtBooleanClause *clause)
 {
     if (qp->or_default) {
         add_or_cls(bca, clause);
@@ -2356,7 +2356,7 @@ static void bca_destroy(BCArray *bca)
 /**
  * Turn a query into a BooleanClause for addition to a BooleanQuery.
  */
-static BooleanClause *get_bool_cls(Query *q, BCType occur)
+static FrtBooleanClause *get_bool_cls(Query *q, FrtBCType occur)
 {
     if (q) {
         return bc_new(q, occur);
@@ -2871,7 +2871,7 @@ void qp_destroy(QParser *self)
  * Not also that this method ensures that all fields that exist in
  * +def_fields+ must also exist in +all_fields+. This should make sense.
  */
-QParser *qp_new(Analyzer *analyzer)
+QParser *qp_new(FrtAnalyzer *analyzer)
 {
     QParser *self = FRT_ALLOC(QParser);
     self->or_default = true;

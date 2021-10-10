@@ -2,22 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Types */
-#define Analyzer                FrtAnalyzer
-#define BCType                  FrtBCType
-#define BitVector               FrtBitVector
-#define BooleanClause           FrtBooleanClause
-#define BooleanQuery            FrtBooleanQuery
-#define Boost                   FrtBoost
-#define Buffer                  FrtBuffer
-#define CWFileEntry             FrtCWFileEntry
-#define CacheObject             FrtCacheObject
-#define CachedTokenStream       FrtCachedTokenStream
-#define Comparable              FrtComparable
-#define CompoundInStream        FrtCompoundInStream
-#define CompoundStore           FrtCompoundStore
-#define CompoundWriter          FrtCompoundWriter
-#define Config                  FrtConfig
-#define ConstantScoreQuery      FrtConstantScoreQuery
 #define DelTerm                 FrtDelTerm
 #define Deleter                 FrtDeleter
 #define DeterministicState      FrtDeterministicState

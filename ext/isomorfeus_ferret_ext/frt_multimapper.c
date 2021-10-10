@@ -152,7 +152,7 @@ void mulmap_add_mapping(MultiMapper *self, const char *pattern, const char *rep)
 }
 
 
-static void mulmap_bv_set_states(BitVector *bv, int *states, int cnt)
+static void mulmap_bv_set_states(FrtBitVector *bv, int *states, int cnt)
 {
     int i;
     for (i = cnt - 1; i >= 0; i--) {
@@ -160,7 +160,7 @@ static void mulmap_bv_set_states(BitVector *bv, int *states, int cnt)
     }
 }
 
-static DeterministicState *mulmap_process_state(MultiMapper *self, BitVector *bv)
+static DeterministicState *mulmap_process_state(MultiMapper *self, FrtBitVector *bv)
 {
     DeterministicState *current_state
         = (DeterministicState *)h_get(self->dstates_map, bv);
@@ -191,7 +191,7 @@ static DeterministicState *mulmap_process_state(MultiMapper *self, BitVector *bv
         }
         for (i = self->a_size - 1; i >= 0; i--) {
             unsigned char c = self->alphabet[i];
-            BitVector *nxt_bv = bv_new_capa(self->nsize);
+            FrtBitVector *nxt_bv = bv_new_capa(self->nsize);
             mulmap_bv_set_states(nxt_bv, self->next_states,
                                  start->next(start, (int)c, self->next_states));
             bv_scan_reset(bv);

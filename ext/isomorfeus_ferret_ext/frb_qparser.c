@@ -19,9 +19,9 @@ static VALUE sym_max_clauses;
 static VALUE sym_use_keywords;
 static VALUE sym_use_typed_range_query;
 
-extern VALUE frb_get_analyzer(Analyzer *a);
+extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern VALUE frb_get_q(Query *q);
-extern Analyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
+extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern Query *qp_parse(QParser *self, char *qstr);
 
 /****************************************************************************
@@ -153,7 +153,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
 {
     VALUE roptions = Qnil;
     VALUE rval;
-    Analyzer *analyzer = NULL;
+    FrtAnalyzer *analyzer = NULL;
     HashSet *def_fields = NULL;
     HashSet *all_fields = NULL;
     HashSet *tkz_fields = NULL;
