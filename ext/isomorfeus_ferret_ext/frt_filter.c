@@ -33,7 +33,7 @@ FrtBitVector *filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
         }
         bv = filt->get_bv_i(filt, ir);
         co = co_create(filt->cache, ir->cache, filt, ir,
-                       (free_ft)&bv_destroy, (void *)bv);
+                       (free_ft)&frt_bv_destroy, (void *)bv);
     }
     return (FrtBitVector *)co->obj;
 }
@@ -105,13 +105,13 @@ static char *qfilt_to_s(FrtFilter *filt)
 
 static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
-    FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
+    FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
     FrtSearcher *sea = isea_new(ir);
     FrtWeight *weight = q_weight(QF(filt)->query, sea);
     FrtScorer *scorer = weight->scorer(weight, ir);
     if (scorer) {
         while (scorer->next(scorer)) {
-            bv_set(bv, scorer->doc);
+            frt_bv_set(bv, scorer->doc);
         }
         scorer->destroy(scorer);
     }

@@ -156,7 +156,7 @@ static void mulmap_bv_set_states(FrtBitVector *bv, int *states, int cnt)
 {
     int i;
     for (i = cnt - 1; i >= 0; i--) {
-        bv_set(bv, states[i]);
+        frt_bv_set(bv, states[i]);
     }
 }
 
@@ -180,7 +180,7 @@ static FrtDeterministicState *mulmap_process_state(FrtMultiMapper *self, FrtBitV
         for (i = 0; i < 256; i++) {
             current_state->next[i] = start_ds;
         }
-        while ((bit = bv_scan_next(bv)) >= 0) {
+        while ((bit = frt_bv_scan_next(bv)) >= 0) {
             char *mapping;
             FrtState *st = self->nstates[bit];
             if ((match_len = -st->is_match(st, &mapping)) > max_match_len) {
@@ -191,11 +191,11 @@ static FrtDeterministicState *mulmap_process_state(FrtMultiMapper *self, FrtBitV
         }
         for (i = self->a_size - 1; i >= 0; i--) {
             unsigned char c = self->alphabet[i];
-            FrtBitVector *nxt_bv = bv_new_capa(self->nsize);
+            FrtBitVector *nxt_bv = frt_bv_new_capa(self->nsize);
             mulmap_bv_set_states(nxt_bv, self->next_states,
                                  start->next(start, (int)c, self->next_states));
-            bv_scan_reset(bv);
-            while ((bit = bv_scan_next(bv)) >= 0) {
+            frt_bv_scan_reset(bv);
+            while ((bit = frt_bv_scan_next(bv)) >= 0) {
                 FrtState *state = self->nstates[bit];
                 mulmap_bv_set_states(nxt_bv, self->next_states,
                                      state->next(state, (int)c, self->next_states));
@@ -204,7 +204,7 @@ static FrtDeterministicState *mulmap_process_state(FrtMultiMapper *self, FrtBitV
         }
     }
     else {
-        bv_destroy(bv);
+        frt_bv_destroy(bv);
     }
     return current_state;
 }
@@ -248,9 +248,9 @@ void mulmap_compile(FrtMultiMapper *self)
     self->nstates = nstates;
     self->nsize = size;
     self->next_states = FRT_ALLOC_N(int, size);
-    self->dstates_map = h_new((hash_ft)&bv_hash, (eq_ft)&bv_eq,
-                              (free_ft)&bv_destroy, (free_ft)NULL);
-    mulmap_process_state(self, bv_new_capa(0));
+    self->dstates_map = h_new((hash_ft)&frt_bv_hash, (eq_ft)&frt_bv_eq,
+                              (free_ft)&frt_bv_destroy, (free_ft)NULL);
+    mulmap_process_state(self, frt_bv_new_capa(0));
     h_destroy(self->dstates_map);
     for (i = size - 1; i >= 0; i--) {
         state_destroy(nstates[i]);

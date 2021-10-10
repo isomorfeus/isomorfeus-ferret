@@ -404,10 +404,10 @@ FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
         FRT_REF(ret_q);
     } else {
         FrtHashSetEntry *hse;
-        ret_q = bq_new(true);
+        ret_q = frt_bq_new(true);
         for (hse = uniques->first; hse; hse = hse->next) {
             q = (FrtQuery *)hse->elem;
-            bq_add_query(ret_q, q, FRT_BC_SHOULD);
+            frt_bq_add_query(ret_q, q, FRT_BC_SHOULD);
         }
     }
     hs_destroy(uniques);
@@ -1014,7 +1014,7 @@ static int isea_max_doc(FrtSearcher *self)
 }
 
 #define IS_FILTERED(bits, post_filter, scorer, searcher) \
-((bits && !bv_get(bits, scorer->doc))\
+((bits && !frt_bv_get(bits, scorer->doc))\
  || (post_filter \
      && !(filter_factor = \
           post_filter->filter_func(scorer->doc, scorer->score(scorer),\
@@ -1073,7 +1073,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     }
 
     while (scorer->next(scorer)) {
-        if (bits && !bv_get(bits, scorer->doc)) continue;
+        if (bits && !frt_bv_get(bits, scorer->doc)) continue;
         score = scorer->score(scorer);
         if (post_filter &&
             !(filter_factor = post_filter->filter_func(scorer->doc,
@@ -1143,7 +1143,7 @@ static void isea_search_each_w(FrtSearcher *self, FrtWeight *weight, FrtFilter *
 
     while (scorer->next(scorer)) {
         float score;
-        if (bits && !bv_get(bits, scorer->doc)) continue;
+        if (bits && !frt_bv_get(bits, scorer->doc)) continue;
         score = scorer->score(scorer);
         if (post_filter &&
             !(filter_factor = post_filter->filter_func(scorer->doc,

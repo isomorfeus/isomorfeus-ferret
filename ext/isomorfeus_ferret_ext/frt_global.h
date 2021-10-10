@@ -102,7 +102,6 @@ extern char *frt_get_stacktrace();
 extern void  frt_print_stacktrace();
 
 extern void frt_register_for_cleanup(void *p, frt_free_ft free_func);
-extern void frt_do_clean_up();
 
 /**
  * A dummy function which can be passed to functions which expect a free
@@ -272,7 +271,6 @@ extern bool frt_x_do_logging;
 extern void frt_init(int arc, const char *const argv[]);
 extern void frt_setprogname(const char *str);
 extern const char *frt_progname();
-extern void frt_clean_up();
 
 /**
  * For general use during testing. Switch this on and off for print statements

@@ -217,14 +217,14 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
         return;
     }
 
-    q = bq_new(false);
+    q = frt_bq_new(false);
     ensure_searcher_open(self);
 
     for (hse = key->first; hse; hse = hse->next) {
         FrtSymbol field = (FrtSymbol)hse->elem;
         df = doc_get_field(doc, field);
         if (!df) continue;
-        bq_add_query(q, tq_new(field, df->data[0]), FRT_BC_MUST);
+        frt_bq_add_query(q, tq_new(field, df->data[0]), FRT_BC_MUST);
     }
     td = searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
     if (td->total_hits > 1) {

@@ -212,12 +212,12 @@ static void qp_pop_fields(FrtQParser *self);
             q = func;\
         } else {\
             FrtQuery *volatile sq; FrtHashSetEntry *volatile hse;\
-            q = bq_new_max(false, qp->max_clauses);\
+            q = frt_bq_new_max(false, qp->max_clauses);\
             for (hse = qp->fields->first; hse; hse = hse->next) {\
                 field = (FrtSymbol)hse->elem;\
                 sq = func;\
                 FRT_TRY\
-                  if (sq) bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
+                  if (sq) frt_bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
                 FRT_XCATCHALL\
                   if (sq) q_deref(sq);\
                 FRT_XENDTRY\
@@ -1624,7 +1624,7 @@ yyreduce:
 
   case 14:
 #line 242 "src/q_parser.y"
-    { T (yyval.query) = bq_new_max(true, qp->max_clauses); E }
+    { T (yyval.query) = frt_bq_new_max(true, qp->max_clauses); E }
     break;
 
   case 15:
@@ -2239,9 +2239,9 @@ static FrtQuery *get_bool_q(BCArray *bca)
     else if (clause_count == 1) {
         FrtBooleanClause *bc = bca->clauses[0];
         if (bc->is_prohibited) {
-            q = bq_new(false);
-            bq_add_query_nr(q, bc->query, FRT_BC_MUST_NOT);
-            bq_add_query_nr(q, maq_new(), FRT_BC_MUST);
+            q = frt_bq_new(false);
+            frt_bq_add_query_nr(q, bc->query, FRT_BC_MUST_NOT);
+            frt_bq_add_query_nr(q, maq_new(), FRT_BC_MUST);
         }
         else {
             q = bc->query;
@@ -2250,7 +2250,7 @@ static FrtQuery *get_bool_q(BCArray *bca)
         free(bca->clauses);
     }
     else {
-        q = bq_new(false);
+        q = frt_bq_new(false);
         /* copy clauses into query */
 
         BQ(q)->clause_cnt = clause_count;
@@ -2302,11 +2302,11 @@ static BCArray *add_and_cls(BCArray *bca, FrtBooleanClause *clause)
     if (clause) {
         if (bca->size == 1) {
             if (!bca->clauses[0]->is_prohibited) {
-                bc_set_occur(bca->clauses[0], FRT_BC_MUST);
+                frt_bc_set_occur(bca->clauses[0], FRT_BC_MUST);
             }
         }
         if (!clause->is_prohibited) {
-            bc_set_occur(clause, FRT_BC_MUST);
+            frt_bc_set_occur(clause, FRT_BC_MUST);
         }
         bca_add_clause(bca, clause);
     }
@@ -2359,7 +2359,7 @@ static void bca_destroy(BCArray *bca)
 static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur)
 {
     if (q) {
-        return bc_new(q, occur);
+        return frt_bc_new(q, occur);
     }
     else {
         return NULL;
@@ -2676,7 +2676,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
 
             switch (term_cnt) {
                 case 0:
-                    q = bq_new(false);
+                    q = frt_bq_new(false);
                     break;
                 case 1:
                     q = tq_new(field, last_word);
@@ -3082,7 +3082,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
         rb_raise(cQueryParseException, frt_xmsg_buffer);
     }
     if (!result) {
-        result = bq_new(false);
+        result = frt_bq_new(false);
     }
     if (self->clean_str) {
         free(self->qstr);

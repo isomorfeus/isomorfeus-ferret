@@ -2634,7 +2634,7 @@ static bool stde_next(FrtTermDocEnum *tde)
         stde->count++;
 
         if (NULL == stde->deleted_docs
-            || 0 == bv_get(stde->deleted_docs, stde->doc_num)) {
+            || 0 == frt_bv_get(stde->deleted_docs, stde->doc_num)) {
             break; /* We found an undeleted doc so return */
         }
 
@@ -2663,7 +2663,7 @@ static int stde_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
         stde->count++;
 
         if (NULL == stde->deleted_docs
-            || 0 == bv_get(stde->deleted_docs, stde->doc_num)) {
+            || 0 == frt_bv_get(stde->deleted_docs, stde->doc_num)) {
             docs[i] = stde->doc_num;
             freqs[i] = stde->freq;
             i++;
@@ -3955,7 +3955,7 @@ static FrtFieldsReader *sr_fr(SegmentReader *sr)
 
 static bool sr_is_deleted_i(SegmentReader *sr, int doc_num)
 {
-    return (NULL != sr->deleted_docs && bv_get(sr->deleted_docs, doc_num));
+    return (NULL != sr->deleted_docs && frt_bv_get(sr->deleted_docs, doc_num));
 }
 
 static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
@@ -4006,13 +4006,13 @@ static void sr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, uchar 
 static void sr_delete_doc_i(FrtIndexReader *ir, int doc_num)
 {
     if (NULL == SR(ir)->deleted_docs) {
-        SR(ir)->deleted_docs = bv_new();
+        SR(ir)->deleted_docs = frt_bv_new();
     }
 
     SR(ir)->deleted_docs_dirty = true;
     SR(ir)->undelete_all = false;
     ir->has_changes = true;
-    bv_set(SR(ir)->deleted_docs, doc_num);
+    frt_bv_set(SR(ir)->deleted_docs, doc_num);
 }
 
 static void sr_undelete_all_i(FrtIndexReader *ir)
@@ -4021,7 +4021,7 @@ static void sr_undelete_all_i(FrtIndexReader *ir)
     SR(ir)->deleted_docs_dirty = false;
     ir->has_changes = true;
     if (NULL != SR(ir)->deleted_docs) {
-        bv_destroy(SR(ir)->deleted_docs);
+        frt_bv_destroy(SR(ir)->deleted_docs);
     }
     SR(ir)->deleted_docs = NULL;
 }
@@ -4056,11 +4056,11 @@ static FrtBitVector *bv_read(FrtStore *store, char *name)
         for (i = ((bv->size-1) >> 5); i >= 0; i--) {
             bv->bits[i] = is_read_u32(is);
         }
-        bv_recount(bv);
+        frt_bv_recount(bv);
         success = true;
     FRT_XFINALLY
         is_close(is);
-        if (!success && bv) bv_destroy(bv);
+        if (!success && bv) frt_bv_destroy(bv);
     FRT_XENDTRY
     return bv;
 }
@@ -4121,7 +4121,7 @@ static void sr_close_i(FrtIndexReader *ir)
     if (sr->frq_in)       is_close(sr->frq_in);
     if (sr->prx_in)       is_close(sr->prx_in);
     if (sr->norms)        h_destroy(sr->norms);
-    if (sr->deleted_docs) bv_destroy(sr->deleted_docs);
+    if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
     if (sr->cfs_store)    store_deref(sr->cfs_store);
     if (sr->fr_bucket) {
         thread_setspecific(sr->thread_fr, NULL);
@@ -5408,7 +5408,7 @@ static void smi_load_doc_map(SegmentMergeInfo *smi)
 
     smi->doc_map = FRT_ALLOC_N(int, max_doc);
     for (i = 0; i < max_doc; i++) {
-        if (bv_get(deleted_docs, i)) {
+        if (frt_bv_get(deleted_docs, i)) {
             smi->doc_map[i] = -1;
         }
         else {
@@ -5475,7 +5475,7 @@ static void smi_destroy(SegmentMergeInfo *smi)
         store_deref(smi->store);
     }
     if (smi->deleted_docs) {
-        bv_destroy(smi->deleted_docs);
+        frt_bv_destroy(smi->deleted_docs);
         free(smi->doc_map);
     }
     free(smi);
@@ -5579,7 +5579,7 @@ static void sm_merge_fields(SegmentMerger *sm)
                 end = (off_t)is_read_u64(fdx_in);
             }
             /* skip deleted docs */
-            if (!smi->deleted_docs || !bv_get(smi->deleted_docs, j)) {
+            if (!smi->deleted_docs || !frt_bv_get(smi->deleted_docs, j)) {
                 os_write_u64(fdx_out, os_pos(fdt_out));
                 os_write_u32(fdx_out, tv_idx_offset);
                 is_seek(fdt_in, start);
@@ -5802,7 +5802,7 @@ static void sm_merge_norms(SegmentMerger *sm)
                     if (deleted_docs) {
                         for (k = 0; k < max_doc; k++) {
                             byte = is_read_byte(is);
-                            if (!bv_get(deleted_docs, k)) {
+                            if (!frt_bv_get(deleted_docs, k)) {
                                 os_write_byte(os, byte);
                             }
                         }

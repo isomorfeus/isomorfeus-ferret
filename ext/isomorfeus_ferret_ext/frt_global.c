@@ -330,18 +330,6 @@ void register_for_cleanup(void *p, free_ft free_func)
     free_me->free_func = free_func;
 }
 
-void clean_up()
-{
-    int i;
-    for (i = 0; i < free_mes_size; i++) {
-        FreeMe *free_me = free_mes + i;
-        free_me->free_func(free_me->p);
-    }
-    free(free_mes);
-    free_mes = NULL;
-    free_mes_size = free_mes_capa = 0;
-}
-
 /* weprintf: print error message and don't exit */
 void weprintf(const char *fmt, ...)
 {

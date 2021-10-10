@@ -186,7 +186,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     FrtTermEnum *te;
 
     if (field_num < 0) {
-        return bq_new(true);
+        return frt_bq_new(true);
     }
     if (fuzq->pre_len >= (int)strlen(term)) {
         return tq_new(fuzq->field, term);

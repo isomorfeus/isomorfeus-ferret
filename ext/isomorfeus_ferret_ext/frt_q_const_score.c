@@ -25,12 +25,12 @@ static float cssc_score(FrtScorer *self)
 
 static bool cssc_next(FrtScorer *self)
 {
-    return ((self->doc = bv_scan_next(CScSc(self)->bv)) >= 0);
+    return ((self->doc = frt_bv_scan_next(CScSc(self)->bv)) >= 0);
 }
 
 static bool cssc_skip_to(FrtScorer *self, int doc_num)
 {
-    return ((self->doc = bv_scan_next_from(CScSc(self)->bv, doc_num)) >= 0);
+    return ((self->doc = frt_bv_scan_next_from(CScSc(self)->bv, doc_num)) >= 0);
 }
 
 static FrtExplanation *cssc_explain(FrtScorer *self, int doc_num)
@@ -73,7 +73,7 @@ static FrtExplanation *csw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     char *filter_str = filter->to_s(filter);
     FrtBitVector *bv = filt_get_bv(filter, ir);
 
-    if (bv_get(bv, doc_num)) {
+    if (frt_bv_get(bv, doc_num)) {
         expl = expl_new(self->value,
                         "ConstantScoreQuery(%s), product of:", filter_str);
         expl_add_detail(expl, expl_new(self->query->boost, "boost"));

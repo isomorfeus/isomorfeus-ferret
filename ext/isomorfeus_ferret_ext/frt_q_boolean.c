@@ -1263,7 +1263,7 @@ static FrtWeight *bw_new(FrtQuery *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-void bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
+void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
 {
     self->occur = occur;
     switch (occur) {
@@ -1303,12 +1303,12 @@ static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o)
     return ((self->occur == o->occur) && q_eq(self->query, o->query));
 }
 
-FrtBooleanClause *bc_new(FrtQuery *query, FrtBCType occur)
+FrtBooleanClause *frt_bc_new(FrtQuery *query, FrtBCType occur)
 {
     FrtBooleanClause *self = FRT_ALLOC(FrtBooleanClause);
     self->ref_cnt = 1;
     self->query = query;
-    bc_set_occur(self, occur);
+    frt_bc_set_occur(self, occur);
     return self;
 }
 
@@ -1389,13 +1389,13 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir)
                 rewritten = true;
             }
             FRT_DEREF(clause);
-            BQ(self)->clauses[i] = bc_new(rq, clause->occur);
+            BQ(self)->clauses[i] = frt_bc_new(rq, clause->occur);
         } else {
             FRT_DEREF(rq);
         }
     }
     if (clause_cnt > 0 && !has_non_prohibited_clause) {
-        bq_add_query_nr(self, maq_new(), FRT_BC_MUST);
+        frt_bq_add_query_nr(self, maq_new(), FRT_BC_MUST);
     }
 
     return self;
@@ -1536,7 +1536,7 @@ static int  bq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-FrtQuery *bq_new(bool coord_disabled)
+FrtQuery *frt_bq_new(bool coord_disabled)
 {
     FrtQuery *self = q_new(FrtBooleanQuery);
     BQ(self)->coord_disabled = coord_disabled;
@@ -1563,14 +1563,14 @@ FrtQuery *bq_new(bool coord_disabled)
     return self;
 }
 
-FrtQuery *bq_new_max(bool coord_disabled, int max)
+FrtQuery *frt_bq_new_max(bool coord_disabled, int max)
 {
-    FrtQuery *q = bq_new(coord_disabled);
+    FrtQuery *q = frt_bq_new(coord_disabled);
     BQ(q)->max_clause_cnt = max;
     return q;
 }
 
-FrtBooleanClause *bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *bc)
+FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *bc)
 {
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
         rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
@@ -1587,13 +1587,13 @@ FrtBooleanClause *bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *bc)
     return bc;
 }
 
-FrtBooleanClause *bq_add_clause(FrtQuery *self, FrtBooleanClause *bc)
+FrtBooleanClause *frt_bq_add_clause(FrtQuery *self, FrtBooleanClause *bc)
 {
     FRT_REF(bc);
-    return bq_add_clause_nr(self, bc);
+    return frt_bq_add_clause_nr(self, bc);
 }
 
-FrtBooleanClause *bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur)
+FrtBooleanClause *frt_bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur)
 {
     FrtBooleanClause *bc;
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
@@ -1602,15 +1602,15 @@ FrtBooleanClause *bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBCType
               ":max_clause_count for the BooleanQuery or using a different "
               "type of query.", BQ(self)->clause_cnt, BQ(self)->max_clause_cnt);
     }
-    bc = bc_new(sub_query, occur);
-    bq_add_clause(self, bc);
+    bc = frt_bc_new(sub_query, occur);
+    frt_bq_add_clause(self, bc);
     frt_bc_deref(bc); /* bc was referenced unnecessarily */
     return bc;
 }
 
-FrtBooleanClause *bq_add_query(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur)
+FrtBooleanClause *frt_bq_add_query(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur)
 {
     FRT_REF(sub_query);
-    return bq_add_query_nr(self, sub_query, occur);
+    return frt_bq_add_query_nr(self, sub_query, occur);
 }
 

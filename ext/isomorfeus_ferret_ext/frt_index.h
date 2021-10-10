@@ -55,7 +55,6 @@ typedef struct FrtCacheObject {
     void (*destroy)(void *p);
 } FrtCacheObject;
 
-extern void frt_cache_destroy(FrtCacheObject *co);
 extern FrtCacheObject *frt_co_create(FrtHash *ref_tab1,
                               FrtHash *ref_tab2,
             void *ref1, void *ref2, frt_free_ft destroy, void *obj);

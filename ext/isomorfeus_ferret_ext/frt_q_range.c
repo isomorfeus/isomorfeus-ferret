@@ -214,7 +214,7 @@ static char *rfilt_to_s(FrtFilter *filt)
 
 static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
-    FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
+    FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
     FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
     /* the field info exists we need to add docs to the bit vector, otherwise
@@ -259,7 +259,7 @@ static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
                 /* text is already pointing to term buffer text */
                 tde->seek_te(tde, te);
                 while (tde->next(tde)) {
-                    bv_set(bv, tde->doc_num(tde));
+                    frt_bv_set(bv, tde->doc_num(tde));
                     /* printf("Setting %d\n", tde->doc_num(tde)); */
                 }
             }
@@ -332,7 +332,7 @@ do {\
         if (cond) {\
             tde->seek_te(tde, te);\
             while (tde->next(tde)) {\
-                bv_set(bv, tde->doc_num(tde));\
+                frt_bv_set(bv, tde->doc_num(tde));\
             }\
         }\
     }\
@@ -349,7 +349,7 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
     if ((!lt || (sscanf(lt, "%lg%n", &lnum, &len) && (int)strlen(lt) == len)) &&
         (!ut || (sscanf(ut, "%lg%n", &unum, &len) && (int)strlen(ut) == len)))
     {
-        FrtBitVector *bv = bv_new_capa(ir->max_doc(ir));
+        FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
         FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
         /* the field info exists we need to add docs to the bit vector,
          * otherwise we just return an empty bit vector */

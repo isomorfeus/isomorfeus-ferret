@@ -823,7 +823,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
     }
     Data_Get_Struct(rquery, FrtQuery, sub_q);
     FRT_REF(sub_q);
-    bc = bc_new(sub_q, occur);
+    bc = frt_bc_new(sub_q, occur);
     Frt_Wrap_Struct(self, &frb_bc_mark, &frb_bc_free, bc);
     object_add(bc, self);
     return self;
@@ -897,7 +897,7 @@ frb_bc_set_occur(VALUE self, VALUE roccur)
 {
     GET_BC();
     FrtBCType occur = frb_get_occur(roccur);
-    bc_set_occur(bc, occur);
+    frt_bc_set_occur(bc, occur);
 
     return roccur;
 }
@@ -975,7 +975,7 @@ frb_bq_init(int argc, VALUE *argv, VALUE self)
     if (rb_scan_args(argc, argv, "01", &rcoord_disabled)) {
         coord_disabled = RTEST(rcoord_disabled);
     }
-    q = bq_new(coord_disabled);
+    q = frt_bq_new(coord_disabled);
     Frt_Wrap_Struct(self, &frb_bq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1021,11 +1021,11 @@ frb_bq_add_query(int argc, VALUE *argv, VALUE self)
             rb_warning("Second argument to BooleanQuery#add is ignored "
                        "when adding BooleanClause");
         }
-        bq_add_clause(q, bc);
+        frt_bq_add_clause(q, bc);
         return rquery;
     } else if (TYPE(rquery) == T_DATA) {
         Data_Get_Struct(rquery, FrtQuery, sub_q);
-        return frb_bc_wrap(bq_add_query(q, sub_q, occur));
+        return frb_bc_wrap(frt_bq_add_query(q, sub_q, occur));
     } else {
         rb_raise(rb_eArgError, "Cannot add %s to a BooleanQuery",
                  rb_class2name(klass));

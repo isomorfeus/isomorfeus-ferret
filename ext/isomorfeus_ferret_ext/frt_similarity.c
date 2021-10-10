@@ -143,7 +143,7 @@ FrtSimilarity *sim_create_default()
     int i;
     if (!default_similarity.data) {
         for (i = 0; i < 256; i++) {
-            default_similarity.norm_table[i] = byte2float((unsigned char)i);
+            default_similarity.norm_table[i] = frt_byte2float((unsigned char)i);
         }
 
         default_similarity.data = &default_similarity;

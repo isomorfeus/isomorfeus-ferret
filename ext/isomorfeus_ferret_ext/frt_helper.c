@@ -25,7 +25,7 @@ float int2float(i32 v)
     return tmp.f;
 }
 
-float byte2float(unsigned char b)
+float frt_byte2float(unsigned char b)
 {
     if (b == 0) {
         return 0.0;

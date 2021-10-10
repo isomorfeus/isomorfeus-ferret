@@ -30,7 +30,7 @@ static bool fqsc_next(FrtScorer *self)
     FrtBitVector *bv = FQSc(self)->bv;
     while (sub_sc->next(sub_sc)) {
         self->doc = sub_sc->doc;
-        if (bv_get(bv, self->doc)) return true;
+        if (frt_bv_get(bv, self->doc)) return true;
     }
     return false;
 }
@@ -42,7 +42,7 @@ static bool fqsc_skip_to(FrtScorer *self, int doc_num)
     if (sub_sc->skip_to(sub_sc, doc_num)) {
         do {
             self->doc = sub_sc->doc;
-            if (bv_get(bv, self->doc)) {
+            if (frt_bv_get(bv, self->doc)) {
                 return true;
             }
         } while (sub_sc->next(sub_sc));

@@ -12,13 +12,13 @@ static void
 frb_bv_free(void *p)
 {
     object_del(p);
-    bv_destroy((FrtBitVector *)p);
+    frt_bv_destroy((FrtBitVector *)p);
 }
 
 static VALUE
 frb_bv_alloc(VALUE klass)
 {
-    FrtBitVector *bv = bv_new();
+    FrtBitVector *bv = frt_bv_new();
     VALUE rbv = Data_Wrap_Struct(klass, NULL, &frb_bv_free, bv);
     object_add(bv, rbv);
     return rbv;
@@ -67,10 +67,10 @@ frb_bv_set(VALUE self, VALUE rindex, VALUE rstate)
         rb_raise(rb_eIndexError, "%d < 0", index);
     }
     if (RTEST(rstate)) {
-        bv_set(bv, index);
+        frt_bv_set(bv, index);
     }
     else {
-        bv_unset(bv, index);
+        frt_bv_unset(bv, index);
     }
 
     return rstate;
@@ -119,7 +119,7 @@ frb_bv_get(VALUE self, VALUE rindex)
         rb_raise(rb_eIndexError, "%d < 0", index);
     }
 
-    return bv_get(bv, index) ? Qtrue : Qfalse;
+    return frt_bv_get(bv, index) ? Qtrue : Qfalse;
 }
 
 /*
@@ -150,8 +150,8 @@ frb_bv_clear(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    bv_clear(bv);
-    bv_scan_reset(bv);
+    frt_bv_clear(bv);
+    frt_bv_scan_reset(bv);
     return self;
 }
 
@@ -170,7 +170,7 @@ frb_bv_eql(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return bv_eq(bv1, bv2) ? Qtrue : Qfalse;
+    return frt_bv_eq(bv1, bv2) ? Qtrue : Qfalse;
 }
 
 /*
@@ -185,7 +185,7 @@ frb_bv_hash(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    return ULONG2NUM(bv_hash(bv));
+    return ULONG2NUM(frt_bv_hash(bv));
 }
 
 /*
@@ -202,7 +202,7 @@ frb_bv_and(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_and(bv1, bv2));
+    return Data_Wrap_Struct(cBitVector, NULL, &frt_bv_destroy, frt_bv_and(bv1, bv2));
 }
 
 /*
@@ -218,7 +218,7 @@ frb_bv_and_x(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    bv_and_x(bv1, bv2);
+    frt_bv_and_x(bv1, bv2);
     return self;
 }
 
@@ -236,7 +236,7 @@ frb_bv_or(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_or(bv1, bv2));
+    return Data_Wrap_Struct(cBitVector, NULL, &frt_bv_destroy, frt_bv_or(bv1, bv2));
 }
 
 /*
@@ -252,7 +252,7 @@ frb_bv_or_x(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    bv_or_x(bv1, bv2);
+    frt_bv_or_x(bv1, bv2);
     return self;
 }
 
@@ -270,7 +270,7 @@ frb_bv_xor(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_xor(bv1, bv2));
+    return Data_Wrap_Struct(cBitVector, NULL, &frt_bv_destroy, frt_bv_xor(bv1, bv2));
 }
 
 /*
@@ -286,7 +286,7 @@ frb_bv_xor_x(VALUE self, VALUE other)
     FrtBitVector *bv1, *bv2;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    bv_xor_x(bv1, bv2);
+    frt_bv_xor_x(bv1, bv2);
     return self;
 }
 
@@ -302,7 +302,7 @@ frb_bv_not(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    return Data_Wrap_Struct(cBitVector, NULL, &bv_destroy, bv_not(bv));
+    return Data_Wrap_Struct(cBitVector, NULL, &frt_bv_destroy, frt_bv_not(bv));
 }
 
 /*
@@ -316,7 +316,7 @@ frb_bv_not_x(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    bv_not_x(bv);
+    frt_bv_not_x(bv);
     return self;
 }
 
@@ -333,7 +333,7 @@ frb_bv_reset_scan(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    bv_scan_reset(bv);
+    frt_bv_scan_reset(bv);
     return self;
 }
 
@@ -351,7 +351,7 @@ frb_bv_next(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    return INT2FIX(bv_scan_next(bv));
+    return INT2FIX(frt_bv_scan_next(bv));
 }
 
 /*
@@ -369,7 +369,7 @@ frb_bv_next_unset(VALUE self)
 {
     FrtBitVector *bv;
     GET_BV(bv, self);
-    return INT2FIX(bv_scan_next_unset(bv));
+    return INT2FIX(frt_bv_scan_next_unset(bv));
 }
 
 /*
@@ -391,7 +391,7 @@ frb_bv_next_from(VALUE self, VALUE rfrom)
     if (from < 0) {
         from = 0;
     }
-    return INT2FIX(bv_scan_next_from(bv, from));
+    return INT2FIX(frt_bv_scan_next_from(bv, from));
 }
 
 /*
@@ -413,7 +413,7 @@ frb_bv_next_unset_from(VALUE self, VALUE rfrom)
     if (from < 0) {
         from = 0;
     }
-    return INT2FIX(bv_scan_next_unset_from(bv, from));
+    return INT2FIX(frt_bv_scan_next_unset_from(bv, from));
 }
 
 /*
@@ -429,14 +429,14 @@ frb_bv_each(VALUE self)
     FrtBitVector *bv;
     int bit;
     GET_BV(bv, self);
-    bv_scan_reset(bv);
+    frt_bv_scan_reset(bv);
     if (bv->extends_as_ones) {
-        while ((bit = bv_scan_next_unset(bv)) >= 0) {
+        while ((bit = frt_bv_scan_next_unset(bv)) >= 0) {
             rb_yield(INT2FIX(bit));
         }
     }
     else {
-        while ((bit = bv_scan_next(bv)) >= 0) {
+        while ((bit = frt_bv_scan_next(bv)) >= 0) {
             rb_yield(INT2FIX(bit));
         }
     }
@@ -462,14 +462,14 @@ frb_bv_to_a(VALUE self)
     VALUE ary;
     GET_BV(bv, self);
     ary = rb_ary_new();
-    bv_scan_reset(bv);
+    frt_bv_scan_reset(bv);
     if (bv->extends_as_ones) {
-        while ((bit = bv_scan_next_unset(bv)) >= 0) {
+        while ((bit = frt_bv_scan_next_unset(bv)) >= 0) {
             rb_ary_push(ary, INT2FIX(bit));
         }
     }
     else {
-        while ((bit = bv_scan_next(bv)) >= 0) {
+        while ((bit = frt_bv_scan_next(bv)) >= 0) {
             rb_ary_push(ary, INT2FIX(bit));
         }
     }

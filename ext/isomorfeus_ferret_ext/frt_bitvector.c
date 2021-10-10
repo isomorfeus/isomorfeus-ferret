@@ -5,7 +5,7 @@
 
 extern VALUE cStateError;
 
-FrtBitVector *bv_new_capa(int capa)
+FrtBitVector *frt_bv_new_capa(int capa)
 {
     FrtBitVector *bv = FRT_ALLOC_AND_ZERO(FrtBitVector);
 
@@ -18,12 +18,12 @@ FrtBitVector *bv_new_capa(int capa)
     return bv;
 }
 
-FrtBitVector *bv_new()
+FrtBitVector *frt_bv_new()
 {
-    return bv_new_capa(FRT_BV_INIT_CAPA);
+    return frt_bv_new_capa(FRT_BV_INIT_CAPA);
 }
 
-void bv_destroy(FrtBitVector *bv)
+void frt_bv_destroy(FrtBitVector *bv)
 {
     if (--(bv->ref_cnt) == 0) {
         free(bv->bits);
@@ -31,7 +31,7 @@ void bv_destroy(FrtBitVector *bv)
     }
 }
 
-void bv_clear(FrtBitVector *bv)
+void frt_bv_clear(FrtBitVector *bv)
 {
     memset(bv->bits, 0, bv->capa * sizeof(u32));
     bv->extends_as_ones = 0;
@@ -39,12 +39,12 @@ void bv_clear(FrtBitVector *bv)
     bv->size = 0;
 }
 
-void bv_scan_reset(FrtBitVector *bv)
+void frt_bv_scan_reset(FrtBitVector *bv)
 {
     bv->curr_bit = -1;
 }
 
-int bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
+int frt_bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
 {
     u32 *bits, *bits2;
     int min_size, word_size, ext_word_size = 0, i;
@@ -85,7 +85,7 @@ int bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
     return true;
 }
 
-unsigned long long bv_hash(FrtBitVector *bv)
+unsigned long long frt_bv_hash(FrtBitVector *bv)
 {
     unsigned long long hash = 0;
     const u32 empty_word = bv->extends_as_ones ? 0xFFFFFFFF : 0;
