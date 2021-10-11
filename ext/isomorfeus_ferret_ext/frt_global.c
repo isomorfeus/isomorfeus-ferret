@@ -21,14 +21,14 @@ bool  frt_x_abort_on_exception = true;
 bool  frt_x_has_aborted = false;
 FILE *frt_x_exception_stream = NULL;
 
-int scmp(const void *p1, const void *p2)
+int frt_scmp(const void *p1, const void *p2)
 {
     return strcmp(*(char **) p1, *(char **) p2);
 }
 
 void frt_strsort(char **str_array, int size)
 {
-    qsort(str_array, size, sizeof(char *), &scmp);
+    qsort(str_array, size, sizeof(char *), &frt_scmp);
 }
 
 int icmp(const void *p1, const void *p2)
@@ -285,7 +285,7 @@ static FreeMe *free_mes = NULL;
 static int free_mes_size = 0;
 static int free_mes_capa = 0;
 
-void register_for_cleanup(void *p, free_ft free_func)
+void frt_register_for_cleanup(void *p, free_ft free_func)
 {
     FreeMe *free_me;
     if (free_mes_capa == 0) {
@@ -304,8 +304,8 @@ void register_for_cleanup(void *p, free_ft free_func)
 #define MAX_PROG_NAME 200
 static char name[MAX_PROG_NAME]; /* program name for error msgs */
 
-/* setprogname: set stored name of program */
-void setprogname(const char *str)
+/* frt_setprogname: set stored name of program */
+void frt_setprogname(const char *str)
 {
     strncpy(name, str, sizeof(name) - 1);
 }
@@ -345,7 +345,7 @@ static void sighandler_crash(int signum)
 void init(int argc, const char *const argv[])
 {
     if (argc > 0) {
-        setprogname(argv[0]);
+        frt_setprogname(argv[0]);
     }
 
     SETSIG_IF_UNSET(SIGILL , sighandler_crash);

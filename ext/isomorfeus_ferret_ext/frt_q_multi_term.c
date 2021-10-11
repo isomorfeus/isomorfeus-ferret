@@ -158,7 +158,7 @@ typedef struct MultiTermScorer
 static float multi_tsc_score(FrtScorer *self)
 {
     return MTSc(self)->total_score * MTSc(self)->weight_value
-        * sim_decode_norm(self->similarity, MTSc(self)->norms[self->doc]);
+        * frt_sim_decode_norm(self->similarity, MTSc(self)->norms[self->doc]);
 }
 
 static bool multi_tsc_next(FrtScorer *self)
@@ -192,7 +192,7 @@ static bool multi_tsc_next(FrtScorer *self)
             total_score += mtsc->score_cache[freq] * tdew->boost;
         }
         else {
-            total_score += sim_tf(self->similarity, (float)freq) * tdew->boost;
+            total_score += frt_sim_tf(self->similarity, (float)freq) * tdew->boost;
         }
 
         if (tdew_next(tdew)) {
@@ -262,11 +262,11 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
         do {
             int freq = tdew->freq;
             frt_expl_add_detail(expl,
-                frt_expl_new(sim_tf(self->similarity, (float)freq) * tdew->boost,
+                frt_expl_new(frt_sim_tf(self->similarity, (float)freq) * tdew->boost,
                          "tf(term_freq(%s:%s)=%d)^%f",
                          mtsc->field, tdew->term, freq, tdew->boost));
 
-            total_score += sim_tf(self->similarity, (float)freq) * tdew->boost;
+            total_score += frt_sim_tf(self->similarity, (float)freq) * tdew->boost;
 
             /* maintain tdew queue, even though it probably won't get used
              * again */
@@ -296,7 +296,7 @@ static void multi_tsc_destroy(FrtScorer *self)
     }
     free(tdew_a);
     if (MTSc(self)->tdew_pq) pq_destroy(MTSc(self)->tdew_pq);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
@@ -304,7 +304,7 @@ static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
                              frt_uchar *norms)
 {
     int i;
-    FrtScorer *self = scorer_new(MultiTermScorer, weight->similarity);
+    FrtScorer *self = frt_scorer_new(MultiTermScorer, weight->similarity);
 
     MTSc(self)->weight          = weight;
     MTSc(self)->field           = field;
@@ -314,7 +314,7 @@ static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
     MTSc(self)->norms           = norms;
 
     for (i = 0; i < SCORE_CACHE_SIZE; i++) {
-        MTSc(self)->score_cache[i] = sim_tf(self->similarity, (float)i);
+        MTSc(self)->score_cache[i] = frt_sim_tf(self->similarity, (float)i);
     }
 
     self->score                 = &multi_tsc_score;
@@ -453,7 +453,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms != NULL)
-        ? sim_decode_norm(self->similarity, field_norms[doc_num])
+        ? frt_sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0f;
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, doc_num);
@@ -493,7 +493,7 @@ static FrtWeight *multi_tw_new(FrtQuery *query, FrtSearcher *searcher)
         doc_freq += searcher->doc_freq(searcher, MTQ(query)->field,
                                        ((BoostedTerm *)bt_pq->heap[i])->term);
     }
-    self->idf += sim_idf(self->similarity, doc_freq,
+    self->idf += frt_sim_idf(self->similarity, doc_freq,
                          searcher->max_doc(searcher));
 
     return self;

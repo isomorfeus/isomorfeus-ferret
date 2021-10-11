@@ -17,7 +17,7 @@
 
 static unsigned long long spanq_hash(FrtQuery *self)
 {
-    return SpQ(self)->field ? frt_sort_add_sort_field : 0;
+    return SpQ(self)->field ? frt_sort_add_sort_field : 0ull;
 }
 
 static int spanq_eq(FrtQuery *self, FrtQuery *o)
@@ -201,10 +201,10 @@ typedef struct SpanScorer
 static float spansc_score(FrtScorer *self)
 {
     SpanScorer *spansc = SpSc(self);
-    float raw = sim_tf(spansc->sim, spansc->freq) * spansc->value;
+    float raw = frt_sim_tf(spansc->sim, spansc->freq) * spansc->value;
 
     /* normalize */
-    return raw * sim_decode_norm(self->similarity, spansc->norms[self->doc]);
+    return raw * frt_sim_decode_norm(self->similarity, spansc->norms[self->doc]);
 }
 
 static bool spansc_next(FrtScorer *self)
@@ -227,7 +227,7 @@ static bool spansc_next(FrtScorer *self)
 
     do {
         match_length = se->end(se) - se->start(se);
-        spansc->freq += sim_sloppy_freq(spansc->sim, match_length);
+        spansc->freq += frt_sim_sloppy_freq(spansc->sim, match_length);
         spansc->more = se->next(se);
     } while (spansc->more && (self->doc == se->doc(se)));
 
@@ -248,7 +248,7 @@ static bool spansc_skip_to(FrtScorer *self, int target)
     self->doc = se->doc(se);
 
     while (spansc->more && (se->doc(se) == target)) {
-        spansc->freq += sim_sloppy_freq(spansc->sim, se->end(se) - se->start(se));
+        spansc->freq += frt_sim_sloppy_freq(spansc->sim, se->end(se) - se->start(se));
         spansc->more = se->next(se);
         if (spansc->first_time) {
             spansc->first_time = false;
@@ -266,7 +266,7 @@ static FrtExplanation *spansc_explain(FrtScorer *self, int target)
     self->skip_to(self, target);
     phrase_freq = (self->doc == target) ? spansc->freq : (float)0.0;
 
-    tf_explanation = frt_expl_new(sim_tf(self->similarity, phrase_freq),
+    tf_explanation = frt_expl_new(frt_sim_tf(self->similarity, phrase_freq),
                               "tf(phrase_freq(%f)", phrase_freq);
 
     return tf_explanation;
@@ -278,7 +278,7 @@ static void spansc_destroy(FrtScorer *self)
     if (spansc->spans) {
         spansc->spans->destroy(spansc->spans);
     }
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *spansc_new(FrtWeight *weight, FrtIndexReader *ir)
@@ -287,7 +287,7 @@ static FrtScorer *spansc_new(FrtWeight *weight, FrtIndexReader *ir)
     const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
     if (field_num >= 0) {
         FrtQuery *spanq = weight->query;
-        self = scorer_new(SpanScorer, weight->similarity);
+        self = frt_scorer_new(SpanScorer, weight->similarity);
 
         SpSc(self)->first_time  = true;
         SpSc(self)->more        = true;
@@ -1468,7 +1468,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms
-                  ? sim_decode_norm(self->similarity, field_norms[target])
+                  ? frt_sim_decode_norm(self->similarity, field_norms[target])
                   : (float)0.0);
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, target);
@@ -1516,7 +1516,7 @@ static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)
     self->idf           = 0.0f;
 
     for (hse = terms->first; hse; hse = hse->next) {
-        self->idf += sim_idf_term(self->similarity, SpQ(query)->field,
+        self->idf += frt_sim_idf_term(self->similarity, SpQ(query)->field,
                                   (char *)hse->elem, searcher);
     }
 

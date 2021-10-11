@@ -60,12 +60,12 @@ static void fqsc_destroy(FrtScorer *self)
 {
     FilteredQueryScorer *fqsc = FQSc(self);
     fqsc->sub_scorer->destroy(fqsc->sub_scorer);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *fqsc_new(FrtScorer *scorer, FrtBitVector *bv, FrtSimilarity *sim)
 {
-    FrtScorer *self            = scorer_new(FilteredQueryScorer, sim);
+    FrtScorer *self            = frt_scorer_new(FilteredQueryScorer, sim);
 
     FQSc(self)->sub_scorer  = scorer;
     FQSc(self)->bv          = bv;

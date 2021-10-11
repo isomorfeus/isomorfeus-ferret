@@ -370,14 +370,6 @@ extern FrtStore *frt_open_cmpd_store(FrtStore *store, const char *filename);
  */
 
 /**
- * Return the length of the FrtOutStream in bytes.
- *
- * @param os the FrtOutStream who's length you want
- * @return the length of +os+ in bytes
- */
-extern off_t frt_ramo_length(FrtOutStream *os);
-
-/**
  * Reset the FrtOutStream removing any data written to it. Since it is a RAM
  * file, all that needs to be done is set the length to 0.
  *

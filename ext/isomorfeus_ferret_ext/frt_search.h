@@ -454,10 +454,6 @@ extern FrtQuery *frt_maq_new();
 extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
                      const char *upper_term, bool include_lower,
                      bool include_upper);
-extern FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term,
-                          bool include_upper);
-extern FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term,
-                          bool include_lower);
 
 /***************************************************************************
  * FrtTypedRangeQuery
@@ -627,7 +623,6 @@ struct FrtScorer
 /* Internal FrtScorer Function */
 extern void frt_scorer_destroy_i(FrtScorer *self);
 extern FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity);
-extern bool frt_scorer_less_than(void *p1, void *p2);
 extern bool frt_scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2);
 extern int frt_scorer_doc_cmp(const void *p1, const void *p2);
 
@@ -810,26 +805,13 @@ struct FrtSearcher
     void         (*close)(FrtSearcher *self);
 };
 
-#define frt_searcher_doc_freq(s, t)         s->doc_freq(s, t)
-#define frt_searcher_get_doc(s, dn)         s->get_doc(s, dn)
-#define frt_searcher_get_lazy_doc(s, dn)    s->get_lazy_doc(s, dn)
-#define frt_searcher_max_doc(s)             s->max_doc(s)
-#define frt_searcher_rewrite(s, q)          s->rewrite(s, q)
 #define frt_searcher_explain(s, q, dn)      s->explain(s, q, dn)
-#define frt_searcher_explain_w(s, q, dn)    s->explain_w(s, q, dn)
-#define frt_searcher_get_similarity(s)      s->get_similarity(s)
 #define frt_searcher_close(s)               s->close(s)
 #define frt_searcher_search(s, q, fd, nd, filt, sort, ff)\
     s->search(s, q, fd, nd, filt, sort, ff, false)
-#define frt_searcher_search_fd(s, q, fd, nd, filt, sort, ff)\
-    s->search(s, q, fd, nd, filt, sort, ff, true)
 #define frt_searcher_search_each(s, q, filt, ff, fn, arg)\
     s->search_each(s, q, filt, ff, fn, arg)
 
-extern FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
-                                              FrtQuery *query,
-                                              const int doc_num,
-                                              FrtSymbol field);
 extern char **frt_searcher_highlight(FrtSearcher *self,
                                  FrtQuery *query,
                                  const int doc_num,

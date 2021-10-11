@@ -229,9 +229,9 @@ static bool phsc_do_next(FrtScorer *self)
 static float phsc_score(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
-    float raw_score = sim_tf(self->similarity, phsc->freq) * phsc->value;
+    float raw_score = frt_sim_tf(self->similarity, phsc->freq) * phsc->value;
     /* normalize */
-    return raw_score * sim_decode_norm(
+    return raw_score * frt_sim_decode_norm(
         self->similarity,
         phsc->norms[self->doc]);
 }
@@ -275,7 +275,7 @@ static FrtExplanation *phsc_explain(FrtScorer *self, int doc_num)
     phsc_skip_to(self, doc_num);
 
     phrase_freq = (self->doc == doc_num) ? phsc->freq : 0.0f;
-    return frt_expl_new(sim_tf(self->similarity, phrase_freq),
+    return frt_expl_new(frt_sim_tf(self->similarity, phrase_freq),
                     "tf(phrase_freq=%f)", phrase_freq);
 }
 
@@ -287,7 +287,7 @@ static void phsc_destroy(FrtScorer *self)
         pp_destroy(phsc->phrase_pos[i]);
     }
     free(phsc->phrase_pos);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *phsc_new(FrtWeight *weight,
@@ -298,7 +298,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
                         int slop)
 {
     int i;
-    FrtScorer *self                = scorer_new(PhraseScorer, similarity);
+    FrtScorer *self                = frt_scorer_new(PhraseScorer, similarity);
     FrtHashSet *term_set           = NULL;
 
 
@@ -486,7 +486,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
         match_length = last_pos - start;
         if (match_length <= phsc->slop) {
             /* score match */
-            freq += sim_sloppy_freq(self->similarity, match_length);
+            freq += frt_sim_sloppy_freq(self->similarity, match_length);
         }
         if (pp->position > last_pos) {
             last_pos = pp->position;
@@ -658,7 +658,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms != NULL)
-        ? sim_decode_norm(self->similarity, field_norms[doc_num])
+        ? frt_sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0;
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, doc_num);
@@ -689,7 +689,7 @@ static FrtWeight *phw_new(FrtQuery *query, FrtSearcher *searcher)
 
     self->similarity    = query->get_similarity(query, searcher);
     self->value         = query->boost;
-    self->idf           = sim_idf_phrase(self->similarity, PhQ(query)->field,
+    self->idf           = frt_sim_idf_phrase(self->similarity, PhQ(query)->field,
                                          PhQ(query)->positions,
                                          PhQ(query)->pos_cnt, searcher);
     return self;

@@ -358,7 +358,7 @@ FrtWeight *q_weight(FrtQuery *self, FrtSearcher *searcher)
     FrtWeight     *weight  = query->create_weight_i(query, searcher);
     float       sum     = weight->sum_of_squared_weights(weight);
     FrtSimilarity *sim     = query->get_similarity(query, searcher);
-    float       norm    = sim_query_norm(sim, sum);
+    float       norm    = frt_sim_query_norm(sim, sum);
     q_deref(query);
 
     weight->normalize(weight, norm);
@@ -460,12 +460,12 @@ FrtQuery *q_create(size_t size)
  *
  ***************************************************************************/
 
-void scorer_destroy_i(FrtScorer *scorer)
+void frt_scorer_destroy_i(FrtScorer *scorer)
 {
     free(scorer);
 }
 
-FrtScorer *scorer_create(size_t size, FrtSimilarity *similarity)
+FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity)
 {
     FrtScorer *self        = (FrtScorer *)frt_ecalloc(size);
 #ifdef DEBUG
@@ -474,24 +474,17 @@ FrtScorer *scorer_create(size_t size, FrtSimilarity *similarity)
               (int)size, (int)sizeof(FrtScorer));
     }
 #endif
-    self->destroy       = &scorer_destroy_i;
+    self->destroy       = &frt_scorer_destroy_i;
     self->similarity    = similarity;
     return self;
 }
 
-bool scorer_less_than(void *p1, void *p2)
-{
-    FrtScorer *s1 = (FrtScorer *)p1;
-    FrtScorer *s2 = (FrtScorer *)p2;
-    return s1->score(s1) < s2->score(s2);
-}
-
-bool scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2)
+bool frt_scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2)
 {
     return s1->doc < s2->doc;
 }
 
-int scorer_doc_cmp(const void *p1, const void *p2)
+int frt_scorer_doc_cmp(const void *p1, const void *p2)
 {
     return (*(FrtScorer **)p1)->doc - (*(FrtScorer **)p2)->doc;
 }
@@ -616,27 +609,6 @@ void matchv_destroy(FrtMatchVector *self)
  * Searcher
  *
  ***************************************************************************/
-
-FrtMatchVector *searcher_get_match_vector(FrtSearcher *self,
-                                       FrtQuery *query,
-                                       const int doc_num,
-                                       FrtSymbol field)
-{
-    FrtMatchVector *mv = matchv_new();
-    bool rewrite = query->get_matchv_i == q_get_matchv_i;
-    FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
-    if (rewrite) {
-        query = self->rewrite(self, query);
-    }
-    if (tv && tv->term_cnt > 0 && tv->terms[0].positions != NULL) {
-        mv = query->get_matchv_i(query, mv, tv);
-        frt_tv_destroy(tv);
-    }
-    if (rewrite) {
-        q_deref(query);
-    }
-    return mv;
-}
 
 typedef struct Excerpt
 {
@@ -829,7 +801,7 @@ static char *highlight_field(FrtMatchVector *mv,
     return excerpt_str;
 }
 
-char **searcher_highlight(FrtSearcher *self,
+char **frt_searcher_highlight(FrtSearcher *self,
                           FrtQuery *query,
                           const int doc_num,
                           FrtSymbol field,
@@ -1259,7 +1231,7 @@ FrtSearcher *isea_new(FrtIndexReader *ir)
     ISEA(self)->ir          = ir;
     ISEA(self)->close_ir    = true;
 
-    self->similarity        = sim_create_default();
+    self->similarity        = frt_sim_create_default();
     self->doc_freq          = &isea_doc_freq;
     self->get_doc           = &isea_get_doc;
     self->get_lazy_doc      = &isea_get_lazy_doc;
@@ -1408,7 +1380,7 @@ static FrtSearcher *cdfsea_new(FrtHash *df_map, int max_doc)
     CDFSEA(self)->df_map    = df_map;
     CDFSEA(self)->max_doc   = max_doc;
 
-    self->similarity        = sim_create_default();
+    self->similarity        = frt_sim_create_default();
     self->doc_freq          = &cdfsea_doc_freq;
     self->get_doc           = &cdfsea_get_doc;
     self->max_doc           = &cdfsea_max_doc;
@@ -1835,7 +1807,7 @@ FrtSearcher *msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs)
     MSEA(self)->max_doc         = max_doc;
     MSEA(self)->close_subs      = close_subs;
 
-    self->similarity            = sim_create_default();
+    self->similarity            = frt_sim_create_default();
     self->doc_freq              = &msea_doc_freq;
     self->get_doc               = &msea_get_doc;
     self->get_lazy_doc          = &msea_get_lazy_doc;

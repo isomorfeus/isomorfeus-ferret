@@ -41,7 +41,7 @@ static FrtExplanation *cssc_explain(FrtScorer *self, int doc_num)
 
 static FrtScorer *cssc_new(FrtWeight *weight, FrtIndexReader *ir)
 {
-    FrtScorer *self    = scorer_new(ConstantScoreScorer, weight->similarity);
+    FrtScorer *self    = frt_scorer_new(ConstantScoreScorer, weight->similarity);
     FrtFilter *filter  = CScQ(weight->query)->filter;
 
     CScSc(self)->score  = weight->value;
@@ -51,7 +51,7 @@ static FrtScorer *cssc_new(FrtWeight *weight, FrtIndexReader *ir)
     self->next      = &cssc_next;
     self->skip_to   = &cssc_skip_to;
     self->explain   = &cssc_explain;
-    self->destroy   = &scorer_destroy_i;
+    self->destroy   = &frt_scorer_destroy_i;
     return self;
 }
 

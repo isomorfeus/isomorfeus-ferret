@@ -483,7 +483,7 @@ FrtStore *open_fs_store(const char *pathname)
 
     if (!stores) {
         stores = h_new_str(NULL, (free_ft)fs_destroy);
-        register_for_cleanup(stores, (free_ft)h_destroy);
+        frt_register_for_cleanup(stores, (free_ft)h_destroy);
     }
 
     mutex_lock(&stores_mutex);

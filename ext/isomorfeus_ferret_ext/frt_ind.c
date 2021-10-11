@@ -9,7 +9,7 @@ static const char *NON_UNIQUE_KEY_ERROR_MSG =
 
 #define INDEX_CLOSE_READER(self) do { \
     if (self->sea) {                  \
-        searcher_close(self->sea);    \
+        frt_searcher_close(self->sea);    \
         self->sea = NULL;             \
         self->ir = NULL;              \
     } else if (self->ir) {            \
@@ -226,7 +226,7 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
         if (!df) continue;
         frt_bq_add_query(q, frt_tq_new(field, df->data[0]), FRT_BC_MUST);
     }
-    td = searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
+    td = frt_searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
     if (td->total_hits > 1) {
         frt_td_destroy(td);
         rb_raise(rb_eArgError, "%s", NON_UNIQUE_KEY_ERROR_MSG);
@@ -295,7 +295,7 @@ FrtTopDocs *index_search_str(FrtIndex *self, char *qstr, int first_doc,
     FrtQuery *query;
     FrtTopDocs *td;
     query = index_get_query(self, qstr); /* will ensure_searcher is open */
-    td = searcher_search(self->sea, query, first_doc, num_docs,
+    td = frt_searcher_search(self->sea, query, first_doc, num_docs,
                          filter, sort, post_filter);
     q_deref(query);
     return td;
@@ -407,7 +407,7 @@ void index_delete_query(FrtIndex *self, FrtQuery *q, FrtFilter *f,
     mutex_lock(&self->mutex);
     {
         frt_ensure_searcher_open(self);
-        searcher_search_each(self->sea, q, f, post_filter, &index_qdel_i, 0);
+        frt_searcher_search_each(self->sea, q, f, post_filter, &index_qdel_i, 0);
         AUTOFLUSH_IR(self);
     }
     mutex_unlock(&self->mutex);
@@ -427,7 +427,7 @@ FrtExplanation *index_explain(FrtIndex *self, FrtQuery *q, int doc_num)
     mutex_lock(&self->mutex);
     {
         frt_ensure_searcher_open(self);
-        expl = searcher_explain(self->sea, q, doc_num);
+        expl = frt_searcher_explain(self->sea, q, doc_num);
     }
     mutex_unlock(&self->mutex);
     return expl;

@@ -181,7 +181,6 @@ typedef struct FrtSegmentInfo
 extern FrtSegmentInfo *frt_si_new(char *name, int doc_cnt, FrtStore *store);
 extern void frt_si_deref(FrtSegmentInfo *si);
 extern bool frt_si_has_deletions(FrtSegmentInfo *si);
-extern bool frt_si_uses_compound_file(FrtSegmentInfo *si);
 extern bool frt_si_has_separate_norms(FrtSegmentInfo *si);
 extern void frt_si_advance_norm_gen(FrtSegmentInfo *si, int field_num);
 
@@ -212,9 +211,7 @@ extern char *frt_fn_for_generation(char *buf,
 extern FrtSegmentInfos *frt_sis_new(FrtFieldInfos *fis);
 extern FrtSegmentInfo *frt_sis_new_segment(FrtSegmentInfos *sis, int dcnt, FrtStore *store);
 extern FrtSegmentInfo *frt_sis_add_si(FrtSegmentInfos *sis, FrtSegmentInfo *si);
-extern void frt_sis_del_at(FrtSegmentInfos *sis, int at);
 extern void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to);
-extern void frt_sis_clear(FrtSegmentInfos *sis);
 extern FrtSegmentInfos *frt_sis_read(FrtStore *store);
 extern void frt_sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter);
 extern frt_u64 frt_sis_read_current_version(FrtStore *store);

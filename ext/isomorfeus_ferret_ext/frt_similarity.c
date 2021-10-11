@@ -87,7 +87,7 @@ static float simdef_idf_phrase(struct FrtSimilarity *s, FrtSymbol field,
     for (i = 0; i < pp_cnt; i++) {
         char **terms = positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
-            idf += sim_idf_term(s, field, terms[j], searcher);
+            idf += frt_sim_idf_term(s, field, terms[j], searcher);
         }
     }
     return idf;
@@ -138,7 +138,7 @@ static FrtSimilarity default_similarity = {
     &simdef_destroy
 };
 
-FrtSimilarity *sim_create_default()
+FrtSimilarity *frt_sim_create_default()
 {
     int i;
     if (!default_similarity.data) {

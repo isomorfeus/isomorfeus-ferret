@@ -2800,7 +2800,7 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
 
     rq = qp->use_typed_range_query ?
         frt_trq_new(field, from, to, inc_lower, inc_upper) :
-        rq_new(field, from, to, inc_lower, inc_upper);
+        frt_rq_new(field, from, to, inc_lower, inc_upper);
     return rq;
 }
 

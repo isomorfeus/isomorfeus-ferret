@@ -282,7 +282,7 @@ static int rfilt_eq(FrtFilter *filt, FrtFilter *o)
     return range_eq(RF(filt)->range, RF(o)->range);
 }
 
-FrtFilter *rfilt_new(FrtSymbol field,
+FrtFilter *frt_rfilt_new(FrtSymbol field,
                   const char *lower_term, const char *upper_term,
                   bool include_lower, bool include_upper)
 {
@@ -496,7 +496,7 @@ static FrtQuery *rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;
-    FrtFilter *filter = rfilt_new(r->field, r->lower_term, r->upper_term,
+    FrtFilter *filter = frt_rfilt_new(r->field, r->lower_term, r->upper_term,
                                r->include_lower, r->include_upper);
     (void)ir;
     csq = frt_csq_new_nr(filter);
@@ -515,19 +515,7 @@ static int rq_eq(FrtQuery *self, FrtQuery *o)
     return range_eq(RQ(self)->range, RQ(o)->range);
 }
 
-FrtQuery *rq_new_less(FrtSymbol field, const char *upper_term,
-                   bool include_upper)
-{
-    return rq_new(field, NULL, upper_term, false, include_upper);
-}
-
-FrtQuery *rq_new_more(FrtSymbol field, const char *lower_term,
-                   bool include_lower)
-{
-    return rq_new(field, lower_term, NULL, include_lower, false);
-}
-
-FrtQuery *rq_new(FrtSymbol field, const char *lower_term,
+FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
               const char *upper_term, bool include_lower, bool include_upper)
 {
     FrtQuery *self;

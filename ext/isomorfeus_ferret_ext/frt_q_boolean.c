@@ -41,7 +41,7 @@ static Coordinator *coord_init(Coordinator *self)
 
     for (i = 0; i <= self->max_coord; i++) {
         self->coord_factors[i]
-            = sim_coord(self->similarity, i, self->max_coord);
+            = frt_sim_coord(self->similarity, i, self->max_coord);
     }
 
     return self;
@@ -75,7 +75,7 @@ static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc)
     int i;
     FrtScorer *sub_scorer;
     FrtPriorityQueue *pq = dssc->scorer_queue
-        = pq_new(dssc->ss_cnt, (lt_ft)&scorer_doc_less_than, NULL);
+        = pq_new(dssc->ss_cnt, (lt_ft)&frt_scorer_doc_less_than, NULL);
 
     for (i = 0; i < dssc->ss_cnt; i++) {
         sub_scorer = dssc->sub_scorers[i];
@@ -205,13 +205,13 @@ static void dssc_destroy(FrtScorer *self)
     if (dssc->scorer_queue) {
         pq_destroy(dssc->scorer_queue);
     }
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *disjunction_sum_scorer_new(FrtScorer **sub_scorers, int ss_cnt,
                                           int min_num_matches)
 {
-    FrtScorer *self = scorer_new(DisjunctionSumScorer, NULL);
+    FrtScorer *self = frt_scorer_new(DisjunctionSumScorer, NULL);
     DSSc(self)->ss_cnt = ss_cnt;
 
     /* The document number of the current match */
@@ -296,7 +296,7 @@ static void csc_sort_scorers(ConjunctionScorer *csc)
             }
         }
     }
-    /*qsort(csc->sub_scorers, csc->ss_cnt, sizeof(FrtScorer *), &scorer_doc_cmp);*/
+    /*qsort(csc->sub_scorers, csc->ss_cnt, sizeof(FrtScorer *), &frt_scorer_doc_cmp);*/
     csc->first_idx = 0;
 }
 
@@ -306,7 +306,7 @@ static void csc_init(FrtScorer *self, bool init_scorers)
     const int sub_sc_cnt = csc->ss_cnt;
 
     /* compute coord factor */
-    csc->coord = sim_coord(self->similarity, sub_sc_cnt, sub_sc_cnt);
+    csc->coord = frt_sim_coord(self->similarity, sub_sc_cnt, sub_sc_cnt);
 
     csc->more = (sub_sc_cnt > 0);
 
@@ -417,12 +417,12 @@ static void csc_destroy(FrtScorer *self)
         csc->sub_scorers[i]->destroy(csc->sub_scorers[i]);
     }
     free(csc->sub_scorers);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *conjunction_scorer_new(FrtSimilarity *similarity)
 {
-    FrtScorer *self = scorer_new(ConjunctionScorer, similarity);
+    FrtScorer *self = frt_scorer_new(ConjunctionScorer, similarity);
 
     CSc(self)->first_time   = true;
     CSc(self)->more         = true;
@@ -452,7 +452,7 @@ static float ccsc_score(FrtScorer *self)
 static FrtScorer *counting_conjunction_sum_scorer_new(
     Coordinator *coordinator, FrtScorer **sub_scorers, int ss_cnt)
 {
-    FrtScorer *self = conjunction_scorer_new(sim_create_default());
+    FrtScorer *self = conjunction_scorer_new(frt_sim_create_default());
     ConjunctionScorer *csc = CSc(self);
     csc->coordinator = coordinator;
     csc->last_scored_doc = -1;
@@ -515,13 +515,13 @@ static void smsc_destroy(FrtScorer *self)
 {
     FrtScorer *scorer = SMSc(self)->scorer;
     scorer->destroy(scorer);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *single_match_scorer_new(Coordinator *coordinator,
                                        FrtScorer *scorer)
 {
-    FrtScorer *self = scorer_new(SingleMatchScorer, scorer->similarity);
+    FrtScorer *self = frt_scorer_new(SingleMatchScorer, scorer->similarity);
     SMSc(self)->coordinator = coordinator;
     SMSc(self)->scorer      = scorer;
 
@@ -616,13 +616,13 @@ static void rossc_destroy(FrtScorer *self)
     if (rossc->opt_scorer) {
         rossc->opt_scorer->destroy(rossc->opt_scorer);
     }
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 
 static FrtScorer *req_opt_sum_scorer_new(FrtScorer *req_scorer, FrtScorer *opt_scorer)
 {
-    FrtScorer *self = scorer_new(ReqOptSumScorer, NULL);
+    FrtScorer *self = frt_scorer_new(ReqOptSumScorer, NULL);
 
     ROSSc(self)->req_scorer     = req_scorer;
     ROSSc(self)->opt_scorer     = opt_scorer;
@@ -777,12 +777,12 @@ static void rxsc_destroy(FrtScorer *self)
     if (rxsc->excl_scorer) {
         rxsc->excl_scorer->destroy(rxsc->excl_scorer);
     }
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *req_excl_scorer_new(FrtScorer *req_scorer, FrtScorer *excl_scorer)
 {
-    FrtScorer *self            = scorer_new(ReqExclScorer, NULL);
+    FrtScorer *self            = frt_scorer_new(ReqExclScorer, NULL);
     RXSc(self)->req_scorer  = req_scorer;
     RXSc(self)->excl_scorer = excl_scorer;
     RXSc(self)->first_time  = true;
@@ -826,7 +826,7 @@ static FrtExplanation *nmsc_explain(FrtScorer *self, int doc_num)
 
 static FrtScorer *non_matching_scorer_new()
 {
-    FrtScorer *self    = scorer_new(FrtScorer, NULL);
+    FrtScorer *self    = frt_scorer_new(FrtScorer, NULL);
     self->score     = &nmsc_score;
     self->next      = &nmsc_next;
     self->skip_to   = &nmsc_skip_to;
@@ -1068,7 +1068,7 @@ static void bsc_destroy(FrtScorer *self)
     free(bsc->required_scorers);
     free(bsc->optional_scorers);
     free(bsc->prohibited_scorers);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtExplanation *bsc_explain(FrtScorer *self, int doc_num)
@@ -1079,7 +1079,7 @@ static FrtExplanation *bsc_explain(FrtScorer *self, int doc_num)
 
 static FrtScorer *bsc_new(FrtSimilarity *similarity)
 {
-    FrtScorer *self = scorer_new(BooleanScorer, similarity);
+    FrtScorer *self = frt_scorer_new(BooleanScorer, similarity);
     BSc(self)->coordinator          = coord_new(similarity);
     BSc(self)->counting_sum_scorer  = NULL;
 
@@ -1221,7 +1221,7 @@ static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
         sum_expl = sum_expl->details[0];
         frt_expl_destroy(explanation);
     }
-    coord_factor = sim_coord(self->similarity, coord, max_coord);
+    coord_factor = frt_sim_coord(self->similarity, coord, max_coord);
     if (coord_factor == 1.0) {       /* coord is no-op */
         return sum_expl;             /* eliminate wrapper */
     } else {

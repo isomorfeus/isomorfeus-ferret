@@ -49,7 +49,7 @@ static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
 
 static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
 {
-    FrtScorer *self        = scorer_new(MatchAllScorer, weight->similarity);
+    FrtScorer *self        = frt_scorer_new(MatchAllScorer, weight->similarity);
 
     MASc(self)->ir      = ir;
     MASc(self)->max_doc = ir->max_doc(ir);
@@ -60,7 +60,7 @@ static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
     self->next          = &masc_next;
     self->skip_to       = &masc_skip_to;
     self->explain       = &masc_explain;
-    self->destroy       = &scorer_destroy_i;
+    self->destroy       = &frt_scorer_destroy_i;
 
     return self;
 }

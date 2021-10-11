@@ -656,7 +656,7 @@ char *frt_store_to_s(FrtStore *store)
     fnl.files = FRT_ALLOC_N(char *, 16);
 
     store->each(store, &add_file_name, &fnl);
-    qsort(fnl.files, fnl.count, sizeof(char *), &scmp);
+    qsort(fnl.files, fnl.count, sizeof(char *), &frt_scmp);
     b = buf = FRT_ALLOC_N(char, fnl.total_len);
 
     for (i = 0; i < fnl.count; i++) {

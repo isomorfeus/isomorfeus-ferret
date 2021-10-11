@@ -181,11 +181,6 @@ static off_t ram_length(FrtStore *store, const char *filename)
     }
 }
 
-off_t ramo_length(FrtOutStream *os)
-{
-    return os->file.rf->len;
-}
-
 static void ramo_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
     frt_uchar *buffer;
@@ -225,7 +220,7 @@ static void ramo_seek_i(FrtOutStream *os, off_t pos)
     os->pointer = pos;
 }
 
-void ramo_reset(FrtOutStream *os)
+void frt_ramo_reset(FrtOutStream *os)
 {
     os_seek(os, 0);
     os->file.rf->len = 0;
@@ -238,7 +233,7 @@ static void ramo_close_i(FrtOutStream *os)
     rf_close(rf);
 }
 
-void ramo_write_to(FrtOutStream *os, FrtOutStream *other_o)
+void frt_ramo_write_to(FrtOutStream *os, FrtOutStream *other_o)
 {
     int i, len;
     FrtRAMFile *rf = os->file.rf;
@@ -260,7 +255,7 @@ static const struct FrtOutStreamMethods RAM_OUT_STREAM_METHODS = {
     ramo_close_i
 };
 
-FrtOutStream *ram_new_buffer()
+FrtOutStream *frt_ram_new_buffer()
 {
     FrtRAMFile *rf = rf_new("");
     FrtOutStream *os = os_new();
@@ -272,7 +267,7 @@ FrtOutStream *ram_new_buffer()
     return os;
 }
 
-void ram_destroy_buffer(FrtOutStream *os)
+void frt_ram_destroy_buffer(FrtOutStream *os)
 {
     rf_close(os->file.rf);
     free(os);
@@ -362,7 +357,7 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
         for (i = 0; i <= ht->mask; i++) {
             if (ht->table[i].value)
                 printf("%s, %ld  --  %ld\n", (char *)ht->table[i].key,
-                       frt_str_hash(ht->table[i].key), ht->table[i].hash);
+                       str_hash(ht->table[i].key), ht->table[i].hash);
         }
         */
         rb_raise(cFileNotFoundError,

@@ -1130,7 +1130,7 @@ frb_rq_init(VALUE self, VALUE rfield, VALUE roptions)
     bool include_upper = false;
 
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    q = rq_new(frb_field(rfield),
+    q = frt_rq_new(frb_field(rfield),
                lterm, uterm,
                include_lower, include_upper);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
@@ -2024,7 +2024,7 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
     bool include_upper = false;
 
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    f = rfilt_new(frb_field(rfield), lterm, uterm,
+    f = frt_rfilt_new(frb_field(rfield), lterm, uterm,
                   include_lower, include_upper);
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
@@ -2991,7 +2991,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
         }
     }
 
-    if ((excerpts = searcher_highlight(sea,
+    if ((excerpts = frt_searcher_highlight(sea,
                                        query,
                                        FIX2INT(rdoc_id),
                                        frb_field(rfield),
@@ -3086,7 +3086,7 @@ frb_ms_free(void *p)
     FrtMultiSearcher *msea = (FrtMultiSearcher *)sea;
     free(msea->searchers);
     object_del(sea);
-    searcher_close(sea);
+    frt_searcher_close(sea);
 }
 
 static void

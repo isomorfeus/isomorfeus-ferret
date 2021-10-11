@@ -551,7 +551,7 @@ static bool fis_has_vectors(FrtFieldInfos *fis)
  *
  ****************************************************************************/
 
-FrtSegmentInfo *si_new(char *name, int doc_cnt, FrtStore *store)
+FrtSegmentInfo *frt_si_new(char *name, int doc_cnt, FrtStore *store)
 {
     FrtSegmentInfo *si = FRT_ALLOC(FrtSegmentInfo);
     si->name = name;
@@ -605,7 +605,7 @@ static void si_write(FrtSegmentInfo *si, FrtOutStream *os)
     os_write_byte(os, (frt_uchar)si->use_compound_file);
 }
 
-void si_deref(FrtSegmentInfo *si)
+void frt_si_deref(FrtSegmentInfo *si)
 {
     if (--si->ref_cnt <= 0) {
         free(si->name);
@@ -614,7 +614,7 @@ void si_deref(FrtSegmentInfo *si)
     }
 }
 
-bool si_has_deletions(FrtSegmentInfo *si)
+bool frt_si_has_deletions(FrtSegmentInfo *si)
 {
     return si->del_gen >= 0;
 }
@@ -632,7 +632,7 @@ static char *si_del_file_name(FrtSegmentInfo *si, char *buf)
 }
 */
 
-bool si_has_separate_norms(FrtSegmentInfo *si)
+bool frt_si_has_separate_norms(FrtSegmentInfo *si)
 {
     if (si->use_compound_file && si->norm_gens) {
         int i;
@@ -643,7 +643,7 @@ bool si_has_separate_norms(FrtSegmentInfo *si)
     return false;
 }
 
-void si_advance_norm_gen(FrtSegmentInfo *si, int field_num)
+void frt_si_advance_norm_gen(FrtSegmentInfo *si, int field_num)
 {
     if (field_num >= si->norm_gens_size) {
         int i;
@@ -761,7 +761,7 @@ static void si_put(FrtSegmentInfo *si, FILE *stream)
     fprintf(stream, "\t}\n");
 }
 
-void sis_put(FrtSegmentInfos *sis, FILE *stream)
+void frt_sis_put(FrtSegmentInfos *sis, FILE *stream)
 {
     int i;
     fprintf(stream, "SegmentInfos {\n");
@@ -782,7 +782,7 @@ void sis_put(FrtSegmentInfos *sis, FILE *stream)
  *
  * @param store - the Store to look in
  */
-i64 sis_current_segment_generation(FrtStore *store)
+i64 frt_sis_current_segment_generation(FrtStore *store)
 {
     i64 current_generation = -1;
     store->each(store, &which_gen_i, &current_generation);
@@ -796,9 +796,9 @@ i64 sis_current_segment_generation(FrtStore *store)
  * @param store - the Store to look in
  * @return segments_N where N is the current generation
  */
-char *sis_curr_seg_file_name(char *buf, FrtStore *store)
+char *frt_sis_curr_seg_file_name(char *buf, FrtStore *store)
 {
-    return segfn_for_generation(buf, sis_current_segment_generation(store));
+    return segfn_for_generation(buf, frt_sis_current_segment_generation(store));
 }
 
 /*
@@ -812,7 +812,7 @@ char *sis_curr_seg_file_name(char *buf, FrtStore *store)
 FIXME: not used
 static char *sis_next_seg_file_name(char *buf, FrtStore *store)
 {
-    return segfn_for_generation(buf, sis_current_segment_generation(store) + 1);
+    return segfn_for_generation(buf, frt_sis_current_segment_generation(store) + 1);
 }
 */
 
@@ -843,7 +843,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
          * This method works well as long as there is no stale caching on the
          * directory contents: */
         if (0 == method) {
-            gen = sis_current_segment_generation(store);
+            gen = frt_sis_current_segment_generation(store);
             if (gen == -1) {
                 // fprintf(stderr, ">>\n%s\n>>\n", frt_store_to_s(store));
                 rb_raise(cFileNotFoundError, "couldn't find segments file");
@@ -932,9 +932,9 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
         case FRT_IO_ERROR: case FRT_FILE_NOT_FOUND_ERROR: case FRT_EOF_ERROR:
             FRT_HANDLED();
             /*
-            if (gen != sis_current_segment_generation(store)) {
+            if (gen != frt_sis_current_segment_generation(store)) {
                 fprintf(stderr, "%lld != %lld\n",
-                        gen, sis_current_segment_generation(store));
+                        gen, frt_sis_current_segment_generation(store));
                 fprintf(stderr, "%s\n", xcontext.msg);
             }
             else {
@@ -944,7 +944,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                 free(sl);
                 while (!done) {
                     FRT_TRY
-                        sis_put(sis_read(store), stderr);
+                        frt_sis_put(frt_sis_read(store), stderr);
                         done = true;
                     FRT_XCATCHALL
                         FRT_HANDLED();
@@ -991,7 +991,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
     }
 }
 
-FrtSegmentInfos *sis_new(FrtFieldInfos *fis)
+FrtSegmentInfos *frt_sis_new(FrtFieldInfos *fis)
 {
     FrtSegmentInfos *sis = FRT_ALLOC_AND_ZERO(FrtSegmentInfos);
     FRT_REF(fis);
@@ -1006,24 +1006,24 @@ FrtSegmentInfos *sis_new(FrtFieldInfos *fis)
     return sis;
 }
 
-FrtSegmentInfo *sis_new_segment(FrtSegmentInfos *sis, int doc_cnt, FrtStore *store)
+FrtSegmentInfo *frt_sis_new_segment(FrtSegmentInfos *sis, int doc_cnt, FrtStore *store)
 {
-    return sis_add_si(sis, si_new(new_segment(sis->counter++), doc_cnt, store));
+    return frt_sis_add_si(sis, frt_si_new(new_segment(sis->counter++), doc_cnt, store));
 }
 
-void sis_destroy(FrtSegmentInfos *sis)
+void frt_sis_destroy(FrtSegmentInfos *sis)
 {
     int i;
     const int sis_size = sis->size;
     for (i = 0; i < sis_size; i++) {
-        si_deref(sis->segs[i]);
+        frt_si_deref(sis->segs[i]);
     }
     if (sis->fis) fis_deref(sis->fis);
     free(sis->segs);
     free(sis);
 }
 
-FrtSegmentInfo *sis_add_si(FrtSegmentInfos *sis, FrtSegmentInfo *si)
+FrtSegmentInfo *frt_sis_add_si(FrtSegmentInfos *sis, FrtSegmentInfo *si)
 {
     if (sis->size >= sis->capa) {
         sis->capa <<= 1;
@@ -1033,39 +1033,19 @@ FrtSegmentInfo *sis_add_si(FrtSegmentInfos *sis, FrtSegmentInfo *si)
     return si;
 }
 
-void sis_del_at(FrtSegmentInfos *sis, int at)
-{
-    int i;
-    const int sis_size = --(sis->size);
-    si_deref(sis->segs[at]);
-    for (i = at; i < sis_size; i++) {
-        sis->segs[i] = sis->segs[i+1];
-    }
-}
-
-void sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
+void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
 {
     int i, num_to_del = to - from;
     const int sis_size = sis->size -= num_to_del;
     for (i = from; i < to; i++) {
-        si_deref(sis->segs[i]);
+        frt_si_deref(sis->segs[i]);
     }
     for (i = from; i < sis_size; i++) {
         sis->segs[i] = sis->segs[i+num_to_del];
     }
 }
 
-void sis_clear(FrtSegmentInfos *sis)
-{
-    int i;
-    const int sis_size = sis->size;
-    for (i = 0; i < sis_size; i++) {
-        si_deref(sis->segs[i]);
-    }
-    sis->size = 0;
-}
-
-static void sis_read_i(FrtStore *store, FindSegmentsFile *fsf)
+static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf)
 {
     int seg_cnt;
     int i;
@@ -1088,27 +1068,27 @@ static void sis_read_i(FrtStore *store, FindSegmentsFile *fsf)
         sis->size = 0;
         sis->segs = FRT_ALLOC_N(FrtSegmentInfo *, sis->capa);
         for (i = 0; i < seg_cnt; i++) {
-            sis_add_si(sis, si_read(store, is));
+            frt_sis_add_si(sis, si_read(store, is));
         }
         sis->fis = fis_read(is);
         success = true;
     FRT_XFINALLY
         if (is) is_close(is);
         if (!success) {
-            sis_destroy(sis);
+            frt_sis_destroy(sis);
         }
     FRT_XENDTRY
     fsf->ret.sis = sis;
 }
 
-FrtSegmentInfos *sis_read(FrtStore *store)
+FrtSegmentInfos *frt_sis_read(FrtStore *store)
 {
     FindSegmentsFile fsf;
-    sis_find_segments_file(store, &fsf, &sis_read_i);
+    sis_find_segments_file(store, &fsf, &frt_sis_read_i);
     return fsf.ret.sis;
 }
 
-void sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
+void frt_sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
 {
     int i;
     FrtOutStream *volatile os = NULL;
@@ -1144,7 +1124,7 @@ void sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
     }
 }
 
-static void sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
+static void frt_sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
 {
     FrtInStream *is;
     frt_u64 version;
@@ -1164,10 +1144,10 @@ static void sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
     fsf->ret.uint64 = version;
 }
 
-frt_u64 sis_read_current_version(FrtStore *store)
+frt_u64 frt_sis_read_current_version(FrtStore *store)
 {
     FindSegmentsFile fsf;
-    sis_find_segments_file(store, &fsf, &sis_read_ver_i);
+    sis_find_segments_file(store, &fsf, &frt_sis_read_ver_i);
     return fsf.ret.uint64;
 }
 
@@ -1564,7 +1544,7 @@ FrtFieldsWriter *fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fi
     strcpy(file_name + segment_len, ".fdx");
     fw->fdx_out = store->new_output(store, file_name);
 
-    fw->buffer = ram_new_buffer();
+    fw->buffer = frt_ram_new_buffer();
 
     fw->fis = fis;
     fw->tv_fields = frt_ary_new_type_capa(FrtTVField, FRT_TV_FIELD_INIT_CAPA);
@@ -1576,7 +1556,7 @@ void fw_close(FrtFieldsWriter *fw)
 {
     os_close(fw->fdt_out);
     os_close(fw->fdx_out);
-    ram_destroy_buffer(fw->buffer);
+    frt_ram_destroy_buffer(fw->buffer);
     frt_ary_free(fw->tv_fields);
     free(fw);
 }
@@ -1600,7 +1580,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
     frt_ary_size(fw->tv_fields) = 0;
     os_write_u64(fdx_out, fw->start_ptr);
     os_write_vint(fdt_out, stored_cnt);
-    ramo_reset(fw->buffer);
+    frt_ramo_reset(fw->buffer);
 
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
@@ -1619,7 +1599,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
             }
         }
     }
-    ramo_write_to(fw->buffer, fdt_out);
+    frt_ramo_write_to(fw->buffer, fdt_out);
 }
 
 void fw_write_tv_index(FrtFieldsWriter *fw)
@@ -1823,7 +1803,7 @@ static int sti_get_index_offset(FrtSegmentTermIndex *sti, const char *term)
     }\
 } while (0)
 
-FrtSegmentFieldIndex *sfi_open(FrtStore *store, const char *segment)
+FrtSegmentFieldIndex *frt_sfi_open(FrtStore *store, const char *segment)
 {
     int field_count;
     FrtSegmentFieldIndex *sfi = FRT_ALLOC(FrtSegmentFieldIndex);
@@ -1857,7 +1837,7 @@ FrtSegmentFieldIndex *sfi_open(FrtStore *store, const char *segment)
     return sfi;
 }
 
-void sfi_close(FrtSegmentFieldIndex *sfi)
+void frt_sfi_close(FrtSegmentFieldIndex *sfi)
 {
     mutex_destroy(&sfi->mutex);
     frt_ste_close(sfi->index_te);
@@ -1994,44 +1974,6 @@ void frt_ste_close(FrtTermEnum *te)
 {
     is_close(STE(te)->is);
     free(te);
-}
-
-/*
-static TermInfo *ste_scan_for_term_info(FrtSegmentTermEnum *ste, const char *term)
-{
-    ste_scan_to(ste, term);
-
-    if (0 == strcmp(TE(ste)->curr_term, term)) {
-        return frt_te_get_ti((FrtTermEnum *)ste);
-    }
-    else {
-        return NULL;
-    }
-}
-*/
-
-static char *ste_get_term(FrtTermEnum *te, int pos)
-{
-    FrtSegmentTermEnum *ste = STE(te);
-    if (pos >= ste->size) {
-        return NULL;
-    }
-    else if (pos != ste->pos) {
-        int idx_int = ste->sfi->index_interval;
-        if ((pos < ste->pos) || pos > (1 + ste->pos / idx_int) * idx_int) {
-            FrtSegmentTermIndex *sti = (FrtSegmentTermIndex *)h_get_int(
-                ste->sfi->field_dict, te->field_num);
-            SFI_ENSURE_INDEX_IS_READ(ste->sfi, sti);
-            ste_index_seek(te, sti, pos / idx_int);
-        }
-        while (ste->pos < pos) {
-            if (NULL == ste_next(te)) {
-                return NULL;
-            }
-        }
-
-    }
-    return te->curr_term;
 }
 
 FrtTermEnum *frt_ste_new(FrtInStream *is, FrtSegmentFieldIndex *sfi)
@@ -3291,7 +3233,7 @@ static void file_name_filter_init()
     for (i = 0; i < FRT_NELEMS(INDEX_EXTENSIONS); i++) {
       h_set(fn_extensions, INDEX_EXTENSIONS[i], (char *)INDEX_EXTENSIONS[i]);
     }
-    register_for_cleanup(fn_extensions, (free_ft)&h_destroy);
+    frt_register_for_cleanup(fn_extensions, (free_ft)&h_destroy);
 }
 
 bool frt_file_name_filter_is_index_file(const char *file_name, bool include_locks)
@@ -3501,7 +3443,7 @@ void frt_deleter_find_deletable_files(FrtDeleter *dlr)
     FrtStore *store = dlr->store;
     struct DelFilesArg dfa;
     FrtHash *current = dfa.current
-                       = h_new_str((free_ft)NULL, (free_ft)si_deref);
+                       = h_new_str((free_ft)NULL, (free_ft)frt_si_deref);
     dfa.dlr = dlr;
 
     for(i = 0; i < sis->size; i++) {
@@ -3513,7 +3455,7 @@ void frt_deleter_find_deletable_files(FrtDeleter *dlr)
     /* Then go through all files in the Directory that are Ferret index files,
      * and add to deletable if they are not referenced by the current segments
      * info: */
-    sis_curr_seg_file_name(dfa.curr_seg_file_name, store);
+    frt_sis_curr_seg_file_name(dfa.curr_seg_file_name, store);
 
     store->each(store, &frt_deleter_find_deletable_files_i, &dfa);
     h_destroy(dfa.current);
@@ -3567,7 +3509,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
 
         /* we have to check whether index has changed since this reader was
          * opened.  if so, this reader is no longer valid for deletion */
-        if (sis_read_current_version(ir->store) > ir->sis->version) {
+        if (frt_sis_read_current_version(ir->store) > ir->sis->version) {
             ir->is_stale = true;
             ir->write_lock->release(ir->write_lock);
             frt_close_lock(ir->write_lock);
@@ -3578,7 +3520,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
                                "readers version is <%"I64_PFX"llu>. To perform "
                                "any of these operations on the index you need "
                                "to close and reopen the index",
-                               sis_read_current_version(ir->store),
+                               frt_sis_read_current_version(ir->store),
                                ir->sis->version);
         }
     }
@@ -3611,7 +3553,7 @@ static FrtIndexReader *ir_setup(FrtIndexReader *ir, FrtStore *store, FrtSegmentI
 
 bool ir_index_exists(FrtStore *store)
 {
-    return sis_current_segment_generation(store) != 1;
+    return frt_sis_current_segment_generation(store) != 1;
 }
 
 int ir_get_field_num(FrtIndexReader *ir, FrtSymbol field)
@@ -3775,10 +3717,10 @@ static void ir_commit_i(FrtIndexReader *ir)
             char curr_seg_fn[FRT_MAX_FILE_PATH];
             mutex_lock(&ir->store->mutex);
 
-            sis_curr_seg_file_name(curr_seg_fn, ir->store);
+            frt_sis_curr_seg_file_name(curr_seg_fn, ir->store);
 
             ir->commit_i(ir);
-            sis_write(ir->sis, ir->store, ir->deleter);
+            frt_sis_write(ir->sis, ir->store, ir->deleter);
 
             if (ir->deleter) frt_deleter_delete_file(ir->deleter, curr_seg_fn);
 
@@ -3815,7 +3757,7 @@ void ir_close(FrtIndexReader *ir)
             frt_store_deref(ir->store);
         }
         if (ir->is_owner && ir->sis) {
-            sis_destroy(ir->sis);
+            frt_sis_destroy(ir->sis);
         }
         if (ir->cache) {
             h_destroy(ir->cache);
@@ -3895,7 +3837,7 @@ static void norm_rewrite(Norm *norm, FrtStore *store, FrtDeleter *dlr,
     if (si_norm_file_name(si, norm_file_name, field_num)) {
         deleter_queue_file(dlr, norm_file_name);
     }
-    si_advance_norm_gen(si, field_num);
+    frt_si_advance_norm_gen(si, field_num);
     si_norm_file_name(si, norm_file_name, field_num);
     os = store->new_output(store, norm_file_name);
     os_write_bytes(os, norm->bytes, doc_count);
@@ -4057,7 +3999,7 @@ static FrtBitVector *bv_read(FrtStore *store, char *name)
 
 static bool sr_is_latest_i(FrtIndexReader *ir)
 {
-    return (sis_read_current_version(ir->store) == ir->sis->version);
+    return (frt_sis_read_current_version(ir->store) == ir->sis->version);
 }
 
 static void sr_commit_i(FrtIndexReader *ir)
@@ -4107,7 +4049,7 @@ static void sr_close_i(FrtIndexReader *ir)
 
     if (sr->fr)           fr_close(sr->fr);
     if (sr->tir)          frt_tir_close(sr->tir);
-    if (sr->sfi)          sfi_close(sr->sfi);
+    if (sr->sfi)          frt_sfi_close(sr->sfi);
     if (sr->frq_in)       is_close(sr->frq_in);
     if (sr->prx_in)       is_close(sr->prx_in);
     if (sr->norms)        h_destroy(sr->norms);
@@ -4315,13 +4257,13 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         }
 
         sr->fr = fr_open(store, sr_segment, ir->fis);
-        sr->sfi = sfi_open(store, sr_segment);
+        sr->sfi = frt_sfi_open(store, sr_segment);
         sr->tir = frt_tir_open(store, sr->sfi, sr_segment);
 
         sr->deleted_docs = NULL;
         sr->deleted_docs_dirty = false;
         sr->undelete_all = false;
-        if (si_has_deletions(sr->si)) {
+        if (frt_si_has_deletions(sr->si)) {
             fn_for_generation(file_name, sr_segment, "del", sr->si->del_gen);
             sr->deleted_docs = bv_read(sr->si->store, file_name);
         }
@@ -4774,7 +4716,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf)
     do {
         FrtFieldInfos *fis;
         mutex_lock(&store->mutex);
-        sis_read_i(store, fsf);
+        frt_sis_read_i(store, fsf);
         sis = fsf->ret.sis;
         fis = sis->fis;
         if (sis->size == 1) {
@@ -4805,7 +4747,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf)
                 ir_close(ir);
             }
             else if (sis) {
-                sis_destroy(sis);
+                frt_sis_destroy(sis);
             }
         }
         mutex_unlock(&store->mutex);
@@ -4948,7 +4890,7 @@ typedef struct SkipBuffer
 
 static void skip_buf_reset(SkipBuffer *skip_buf)
 {
-    ramo_reset(skip_buf->buf);
+    frt_ramo_reset(skip_buf->buf);
     skip_buf->last_doc = 0;
     skip_buf->last_frq_ptr = os_pos(skip_buf->frq_out);
     skip_buf->last_prx_ptr = os_pos(skip_buf->prx_out);
@@ -4957,7 +4899,7 @@ static void skip_buf_reset(SkipBuffer *skip_buf)
 static SkipBuffer *skip_buf_new(FrtOutStream *frq_out, FrtOutStream *prx_out)
 {
     SkipBuffer *skip_buf = FRT_ALLOC(SkipBuffer);
-    skip_buf->buf = ram_new_buffer();
+    skip_buf->buf = frt_ram_new_buffer();
     skip_buf->frq_out = frq_out;
     skip_buf->prx_out = prx_out;
     return skip_buf;
@@ -4980,13 +4922,13 @@ static void skip_buf_add(SkipBuffer *skip_buf, int doc)
 static off_t skip_buf_write(SkipBuffer *skip_buf)
 {
   off_t skip_ptr = os_pos(skip_buf->frq_out);
-  ramo_write_to(skip_buf->buf, skip_buf->frq_out);
+  frt_ramo_write_to(skip_buf->buf, skip_buf->frq_out);
   return skip_ptr;
 }
 
 static void skip_buf_destroy(SkipBuffer *skip_buf)
 {
-    ram_destroy_buffer(skip_buf->buf);
+    frt_ram_destroy_buffer(skip_buf->buf);
     free(skip_buf);
 }
 
@@ -5000,7 +4942,7 @@ static void dw_write_norms(FrtDocWriter *dw, FrtFieldInverter *fld_inv)
 {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtOutStream *norms_out;
-    si_advance_norm_gen(dw->si, fld_inv->fi->number);
+    frt_si_advance_norm_gen(dw->si, fld_inv->fi->number);
     si_norm_file_name(dw->si, file_name, fld_inv->fi->number);
     norms_out = dw->store->new_output(dw->store, file_name);
     os_write_bytes(norms_out, fld_inv->norms, dw->doc_num);
@@ -5339,9 +5281,9 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
 
         if (fld_inv->has_norms) {
             boost = fld_inv->fi->boost * doc->boost * df->boost *
-                sim_length_norm(dw->similarity, fi->name, fld_inv->length);
+                frt_sim_length_norm(dw->similarity, fi->name, fld_inv->length);
             fld_inv->norms[dw->doc_num] =
-                sim_encode_norm(dw->similarity, boost);
+                frt_sim_encode_norm(dw->similarity, boost);
         }
         frt_dw_reset_postings(postings);
         if (dw->offsets_size > 0) {
@@ -5439,7 +5381,7 @@ static void smi_load_term_input(SegmentMergeInfo *smi)
     FrtStore *store = smi->store;
     char *segment = smi->si->name;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
-    smi->sfi = sfi_open(store, segment);
+    smi->sfi = frt_sfi_open(store, segment);
     sprintf(file_name, "%s.tis", segment);
     smi->te = TE(frt_ste_new(store->open_input(store, file_name), smi->sfi));
     sprintf(file_name, "%s.frq", segment);
@@ -5453,7 +5395,7 @@ static void smi_load_term_input(SegmentMergeInfo *smi)
 static void smi_close_term_input(SegmentMergeInfo *smi)
 {
     frt_ste_close(smi->te);
-    sfi_close(smi->sfi);
+    frt_sfi_close(smi->sfi);
     stpe_close(smi->tde);
     is_close(smi->frq_in);
     is_close(smi->prx_in);
@@ -5777,7 +5719,7 @@ static void sm_merge_norms(SegmentMerger *sm)
         fi = sm->fis->fields[i];
         if (fi_has_norms(fi))  {
             si = sm->si;
-            si_advance_norm_gen(si, i);
+            frt_si_advance_norm_gen(si, i);
             si_norm_file_name(si, file_name, i);
             os = sm->store->new_output(sm->store, file_name);
             for (j = 0; j < seg_cnt; j++) {
@@ -5830,10 +5772,10 @@ static int sm_merge(SegmentMerger *sm)
 /* prepare an index ready for writing */
 void index_create(FrtStore *store, FrtFieldInfos *fis)
 {
-    FrtSegmentInfos *sis = sis_new(fis);
+    FrtSegmentInfos *sis = frt_sis_new(fis);
     store->clear_all(store);
-    sis_write(sis, store, NULL);
-    sis_destroy(sis);
+    frt_sis_write(sis, store, NULL);
+    frt_sis_destroy(sis);
 }
 
 bool index_is_locked(FrtStore *store)
@@ -5907,7 +5849,7 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg,
 {
     int i;
     FrtSegmentInfos *sis = iw->sis;
-    FrtSegmentInfo *si = sis_new_segment(sis, 0, iw->store);
+    FrtSegmentInfo *si = frt_sis_new_segment(sis, 0, iw->store);
 
     SegmentMerger *merger = sm_create(iw, si, &sis->segs[min_seg],
                                       max_seg - min_seg);
@@ -5921,14 +5863,14 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg,
         si_delete_files(sis->segs[i], iw->fis, iw->deleter);
     }
 
-    sis_del_from_to(sis, min_seg, max_seg);
+    frt_sis_del_from_to(sis, min_seg, max_seg);
 
     if (iw->config.use_compound_file) {
         iw_commit_compound_file(iw, si);
         si->use_compound_file = true;
     }
 
-    sis_write(sis, iw->store, iw->deleter);
+    frt_sis_write(sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
 
     mutex_unlock(&iw->store->mutex);
@@ -5985,7 +5927,7 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
         si->use_compound_file = true;
     }
     /* commit the segments file and the fields file */
-    sis_write(iw->sis, iw->store, iw->deleter);
+    frt_sis_write(iw->sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
     mutex_unlock(&iw->store->mutex);
     iw_maybe_merge_segments(iw);
@@ -5995,10 +5937,10 @@ void iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc)
 {
     mutex_lock(&iw->mutex);
     if (NULL == iw->dw) {
-        iw->dw = frt_dw_open(iw, sis_new_segment(iw->sis, 0, iw->store));
+        iw->dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
     }
     else if (NULL == iw->dw->fw) {
-        frt_dw_new_segment(iw->dw, sis_new_segment(iw->sis, 0, iw->store));
+        frt_dw_new_segment(iw->dw, frt_sis_new_segment(iw->sis, 0, iw->store));
     }
     frt_dw_add_doc(iw->dw, doc);
     if (mp_used(iw->dw->mp) > iw->config.max_buffer_memory
@@ -6048,7 +5990,7 @@ void iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
             }
             if (did_delete) {
                 mutex_lock(&iw->store->mutex);
-                sis_write(iw->sis, iw->store, iw->deleter);
+                frt_sis_write(iw->sis, iw->store, iw->deleter);
                 mutex_unlock(&iw->store->mutex);
             }
         } while (0);
@@ -6087,7 +6029,7 @@ void iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field,
             }
             if (did_delete) {
                 mutex_lock(&iw->store->mutex);
-                sis_write(iw->sis, iw->store, iw->deleter);
+                frt_sis_write(iw->sis, iw->store, iw->deleter);
                 mutex_unlock(&iw->store->mutex);
             }
         } while (0);
@@ -6101,11 +6043,11 @@ static void iw_optimize_i(FrtIndexWriter *iw)
     iw_commit_i(iw);
     while (iw->sis->size > 1
            || (iw->sis->size == 1
-               && (si_has_deletions(iw->sis->segs[0])
+               && (frt_si_has_deletions(iw->sis->segs[0])
                    || (iw->sis->segs[0]->store != iw->store)
                    || (iw->config.use_compound_file
                        && (!iw->sis->segs[0]->use_compound_file
-                           || si_has_separate_norms(iw->sis->segs[0])))))) {
+                           || frt_si_has_separate_norms(iw->sis->segs[0])))))) {
         min_segment = iw->sis->size - iw->config.merge_factor;
         iw_merge_segments_from(iw, min_segment < 0 ? 0 : min_segment);
     }
@@ -6126,9 +6068,9 @@ void iw_close(FrtIndexWriter *iw)
         frt_dw_close(iw->dw);
     }
     frt_a_deref(iw->analyzer);
-    sis_destroy(iw->sis);
+    frt_sis_destroy(iw->sis);
     fis_deref(iw->fis);
-    sim_destroy(iw->similarity);
+    frt_sim_destroy(iw->similarity);
     iw->write_lock->release(iw->write_lock);
     frt_close_lock(iw->write_lock);
     iw->write_lock = NULL;
@@ -6156,7 +6098,7 @@ FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
                   "Couldn't obtain write lock when opening IndexWriter");
         }
 
-        iw->sis = sis_read(store);
+        iw->sis = frt_sis_read(store);
         iw->fis = iw->sis->fis;
         FRT_REF(iw->fis);
     FRT_XCATCHALL
@@ -6165,12 +6107,12 @@ FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
             frt_close_lock(iw->write_lock);
             iw->write_lock = NULL;
         }
-        if (iw->sis) sis_destroy(iw->sis);
+        if (iw->sis) frt_sis_destroy(iw->sis);
         if (analyzer) frt_a_deref((FrtAnalyzer *)analyzer);
         free(iw);
     FRT_XENDTRY
 
-    iw->similarity = sim_create_default();
+    iw->similarity = frt_sim_create_default();
     iw->analyzer = analyzer ? (FrtAnalyzer *)analyzer
                             : mb_standard_analyzer_new(true);
 
@@ -6361,7 +6303,7 @@ static void iw_cp_norms(FrtIndexWriter *iw, SegmentReader *sr,
             int field_num = map ? map[i] : i;
 
             norms_in = store->open_input(store, file_name_in);
-            si_advance_norm_gen(si, field_num);
+            frt_si_advance_norm_gen(si, field_num);
             si_norm_file_name(si, file_name_out, field_num);
             norms_out = store_out->new_output(store_out, file_name_out);
             is2os_copy_bytes(norms_in, norms_out, is_length(norms_in));
@@ -6401,7 +6343,7 @@ static void iw_cp_files(FrtIndexWriter *iw, SegmentReader *sr,
 
 static void iw_add_segment(FrtIndexWriter *iw, SegmentReader *sr)
 {
-    FrtSegmentInfo *si = sis_new_segment(iw->sis, 0, iw->store);
+    FrtSegmentInfo *si = frt_sis_new_segment(iw->sis, 0, iw->store);
     FrtFieldInfos *fis = iw->fis;
     FrtFieldInfos *sub_fis = sr->ir.fis;
     int j;
@@ -6460,7 +6402,7 @@ void iw_add_readers(FrtIndexWriter *iw, FrtIndexReader **readers, const int r_cn
     mutex_lock(&iw->store->mutex);
 
     /* commit the segments file and the fields file */
-    sis_write(iw->sis, iw->store, iw->deleter);
+    frt_sis_write(iw->sis, iw->store, iw->deleter);
     mutex_unlock(&iw->store->mutex);
 
     iw_optimize_i(iw);

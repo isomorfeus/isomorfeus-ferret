@@ -40,10 +40,10 @@ static float tsc_score(FrtScorer *self)
     }
     else {
         /* cache miss */
-        score = sim_tf(self->similarity, (float)freq) * ts->weight_value;
+        score = frt_sim_tf(self->similarity, (float)freq) * ts->weight_value;
     }
     /* normalize for field */
-    score *= sim_decode_norm(self->similarity, ts->norms[self->doc]);
+    score *= frt_sim_decode_norm(self->similarity, ts->norms[self->doc]);
     return score;
 }
 
@@ -103,7 +103,7 @@ static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
     if (self->doc == doc_num) {
         tf = ts->freqs[ts->pointer];
     }
-    return frt_expl_new(sim_tf(self->similarity, (float)tf),
+    return frt_expl_new(frt_sim_tf(self->similarity, (float)tf),
                     "tf(term_freq(%s:%s)=%d)",
                     TQ(query)->field, TQ(query)->term, tf);
 }
@@ -111,13 +111,13 @@ static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
 static void tsc_destroy(FrtScorer *self)
 {
     TSc(self)->tde->close(TSc(self)->tde);
-    scorer_destroy_i(self);
+    frt_scorer_destroy_i(self);
 }
 
 static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, frt_uchar *norms)
 {
     int i;
-    FrtScorer *self            = scorer_new(TermScorer, weight->similarity);
+    FrtScorer *self            = frt_scorer_new(TermScorer, weight->similarity);
     TSc(self)->weight       = weight;
     TSc(self)->tde          = tde;
     TSc(self)->norms        = norms;
@@ -125,7 +125,7 @@ static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, frt_uchar *nor
 
     for (i = 0; i < SCORE_CACHE_SIZE; i++) {
         TSc(self)->score_cache[i]
-            = sim_tf(self->similarity, (float)i) * TSc(self)->weight_value;
+            = frt_sim_tf(self->similarity, (float)i) * TSc(self)->weight_value;
     }
 
     self->score             = &tsc_score;
@@ -190,7 +190,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     frt_expl_add_detail(field_expl, idf_expl2);
 
     field_norms = ir_get_norms(ir, tq->field);
-    field_norm = (field_norms ? sim_decode_norm(self->similarity, field_norms[doc_num]) : (float)0.0);
+    field_norm = (field_norms ? frt_sim_decode_norm(self->similarity, field_norms[doc_num]) : (float)0.0);
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)", tq->field, doc_num);
     frt_expl_add_detail(field_expl, field_norm_expl);
     field_expl->value = tf_expl->value * idf_expl2->value * field_norm_expl->value;
@@ -218,7 +218,7 @@ static FrtWeight *tw_new(FrtQuery *query, FrtSearcher *searcher)
     self->to_s      = &tw_to_s;
 
     self->similarity = query->get_similarity(query, searcher);
-    self->idf = sim_idf(self->similarity,
+    self->idf = frt_sim_idf(self->similarity,
                         searcher->doc_freq(searcher,
                                            TQ(query)->field,
                                            TQ(query)->term),
