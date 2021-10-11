@@ -184,7 +184,7 @@ static char *fq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static void fq_destroy(FrtQuery *self)
 {
-    filt_deref(FQQ(self)->filter);
+    frt_filt_deref(FQQ(self)->filter);
     q_deref(FQQ(self)->query);
     q_destroy_i(self);
 }

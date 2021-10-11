@@ -10,7 +10,7 @@ FrtMemoryPool *mp_new_capa(int chuck_size, int init_buf_capa)
     mp->buf_capa = init_buf_capa;
     mp->buffers = FRT_ALLOC_N(char *, init_buf_capa);
 
-    mp->buffers[0] = mp->curr_buffer = (char *)emalloc(mp->chunk_size);
+    mp->buffers[0] = mp->curr_buffer = (char *)frt_emalloc(mp->chunk_size);
     mp->buf_alloc = 1;
     mp->buf_pointer = 0;
     mp->pointer = 0;
@@ -39,7 +39,7 @@ void *mp_alloc(FrtMemoryPool *mp, int size)
                 mp->buf_capa <<= 1;
                 FRT_REALLOC_N(mp->buffers, char *, mp->buf_capa);
             }
-            mp->buffers[mp->buf_pointer] = (char *)emalloc(mp->chunk_size);
+            mp->buffers[mp->buf_pointer] = (char *)frt_emalloc(mp->chunk_size);
         }
         p = mp->curr_buffer = mp->buffers[mp->buf_pointer];
         mp->pointer = size;

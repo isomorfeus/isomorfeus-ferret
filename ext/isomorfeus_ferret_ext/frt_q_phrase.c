@@ -282,7 +282,7 @@ static FrtExplanation *phsc_explain(FrtScorer *self, int doc_num)
     phsc_skip_to(self, doc_num);
 
     phrase_freq = (self->doc == doc_num) ? phsc->freq : 0.0f;
-    return expl_new(sim_tf(self->similarity, phrase_freq),
+    return frt_expl_new(sim_tf(self->similarity, phrase_freq),
                     "tf(phrase_freq=%f)", phrase_freq);
 }
 
@@ -604,12 +604,12 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     const char *field = phq->field;
 
     if (field_num < 0) {
-        return expl_new(0.0, "field \"%s\" does not exist in the index", field);
+        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field);
     }
 
     query_str = self->query->to_s(self->query, NULL);
 
-    expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
+    expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
 
     /* ensure the phrase positions are in order for explanation */
     qsort(positions, pos_cnt, sizeof(FrtPhrasePosition), &phrase_pos_cmp);
@@ -633,55 +633,55 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     pos -= 2; /* remove ", " from the end */
     doc_freqs[pos] = 0;
 
-    idf_expl1 = expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
-    idf_expl2 = expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
     free(doc_freqs);
 
     /* explain query weight */
-    query_expl = expl_new(0.0, "query_weight(%s), product of:", query_str);
+    query_expl = frt_expl_new(0.0, "query_weight(%s), product of:", query_str);
 
     if (self->query->boost != 1.0) {
-        expl_add_detail(query_expl, expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(query_expl, frt_expl_new(self->query->boost, "boost"));
     }
-    expl_add_detail(query_expl, idf_expl1);
+    frt_expl_add_detail(query_expl, idf_expl1);
 
-    qnorm_expl = expl_new(self->qnorm, "query_norm");
-    expl_add_detail(query_expl, qnorm_expl);
+    qnorm_expl = frt_expl_new(self->qnorm, "query_norm");
+    frt_expl_add_detail(query_expl, qnorm_expl);
 
     query_expl->value = self->query->boost * self->idf * self->qnorm;
 
-    expl_add_detail(expl, query_expl);
+    frt_expl_add_detail(expl, query_expl);
 
     /* explain field weight */
-    field_expl = expl_new(0.0, "field_weight(%s in %d), product of:",
+    field_expl = frt_expl_new(0.0, "field_weight(%s in %d), product of:",
                           query_str, doc_num);
     free(query_str);
 
     scorer = self->scorer(self, ir);
     tf_expl = scorer->explain(scorer, doc_num);
     scorer->destroy(scorer);
-    expl_add_detail(field_expl, tf_expl);
-    expl_add_detail(field_expl, idf_expl2);
+    frt_expl_add_detail(field_expl, tf_expl);
+    frt_expl_add_detail(field_expl, idf_expl2);
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms != NULL)
         ? sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0;
-    field_norm_expl = expl_new(field_norm, "field_norm(field=%s, doc=%d)",
+    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, doc_num);
 
-    expl_add_detail(field_expl, field_norm_expl);
+    frt_expl_add_detail(field_expl, field_norm_expl);
 
     field_expl->value = tf_expl->value * self->idf * field_norm;
 
     /* combine them */
     if (query_expl->value == 1.0) {
-        expl_destroy(expl);
+        frt_expl_destroy(expl);
         return field_expl;
     }
     else {
         expl->value = (query_expl->value * field_expl->value);
-        expl_add_detail(expl, field_expl);
+        frt_expl_add_detail(expl, field_expl);
         return expl;
     }
 }
@@ -755,7 +755,7 @@ static bool tvpe_lt(TVPosEnum *tvpe1, TVPosEnum *tvpe2)
 
 static TVPosEnum *tvpe_new(int *positions, int size, int offset)
 {
-    TVPosEnum *self = (TVPosEnum*)emalloc(sizeof(TVPosEnum) + size*sizeof(int));
+    TVPosEnum *self = (TVPosEnum*)frt_emalloc(sizeof(TVPosEnum) + size*sizeof(int));
     memcpy(self->positions, positions, size * sizeof(int));
     self->size = size;
     self->offset = offset;
@@ -787,7 +787,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
     }
     else {
         int index = 0;
-        self = (TVPosEnum *)emalloc(sizeof(TVPosEnum)
+        self = (TVPosEnum *)frt_emalloc(sizeof(TVPosEnum)
                                     + total_positions * sizeof(int));
         self->size = total_positions;
         self->offset = offset;
@@ -977,7 +977,7 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
             return strfmt("%s:\"\"", field);
         }
         else {
-            return estrdup("\"\"");
+            return frt_estrdup("\"\"");
         }
     }
 
@@ -1047,7 +1047,7 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     if (self->boost != 1.0) {
         buffer[buf_index++] = '^';
-        dbl_to_s(buffer + buf_index, self->boost);
+        frt_dbl_to_s(buffer + buf_index, self->boost);
     }
 
     return buffer;
@@ -1166,7 +1166,7 @@ void phq_add_term_abs(FrtQuery *self, const char *term, int position)
     }
     pp = &(phq->positions[index]);
     pp->terms = frt_ary_new_type_capa(char *, 2);
-    frt_ary_push(pp->terms, estrdup(term));
+    frt_ary_push(pp->terms, frt_estrdup(term));
     pp->pos = position;
     phq->pos_cnt++;
 }
@@ -1193,7 +1193,7 @@ void phq_append_multi_term(FrtQuery *self, const char *term)
         phq_add_term(self, term, 0);
     }
     else {
-        frt_ary_push(phq->positions[index].terms, estrdup(term));
+        frt_ary_push(phq->positions[index].terms, frt_estrdup(term));
     }
 }
 

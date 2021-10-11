@@ -45,7 +45,7 @@ static void boosted_term_destroy(BoostedTerm *self)
 static BoostedTerm *boosted_term_new(const char *term, float boost)
 {
     BoostedTerm *self = FRT_ALLOC(BoostedTerm);
-    self->term = estrdup(term);
+    self->term = frt_estrdup(term);
     self->boost = boost;
     return self;
 }
@@ -255,14 +255,14 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
         (tdew = (TermDocEnumWrapper *)pq_top(mtsc->tdew_pq))->doc == doc_num) {
 
         FrtPriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
-        FrtExplanation *expl = expl_new(0.0f, "The sum of:");
+        FrtExplanation *expl = frt_expl_new(0.0f, "The sum of:");
         int curr_doc = self->doc = tdew->doc;
         float total_score = 0.0f;
 
         do {
             int freq = tdew->freq;
-            expl_add_detail(expl,
-                expl_new(sim_tf(self->similarity, (float)freq) * tdew->boost,
+            frt_expl_add_detail(expl,
+                frt_expl_new(sim_tf(self->similarity, (float)freq) * tdew->boost,
                          "tf(term_freq(%s:%s)=%d)^%f",
                          mtsc->field, tdew->term, freq, tdew->boost));
 
@@ -283,7 +283,7 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
         return expl;
     }
     else {
-        return expl_new(0.0f, "None of the required terms exist in the index");
+        return frt_expl_new(0.0f, "None of the required terms exist in the index");
     }
 }
 
@@ -395,13 +395,13 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
     const int field_num = fis_get_field_num(ir->fis, mtq->field);
 
     if (field_num < 0) {
-        return expl_new(0.0f, "field \"%s\" does not exist in the index",
+        return frt_expl_new(0.0f, "field \"%s\" does not exist in the index",
                         field);
     }
 
     query_str = self->query->to_s(self->query, NULL);
 
-    expl = expl_new(0.0f, "weight(%s in %d), product of:", query_str, doc_num);
+    expl = frt_expl_new(0.0f, "weight(%s in %d), product of:", query_str, doc_num);
 
     len = 30;
     for (i = bt_pq->size; i > 0; i--) {
@@ -417,27 +417,27 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
     pos -= 2; /* remove " + " from the end */
     sprintf(doc_freqs + pos, "= %d", total_doc_freqs);
 
-    idf_expl1 = expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
-    idf_expl2 = expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
     free(doc_freqs);
 
     /* explain query weight */
-    query_expl = expl_new(0.0f, "query_weight(%s), product of:", query_str);
+    query_expl = frt_expl_new(0.0f, "query_weight(%s), product of:", query_str);
 
     if (self->query->boost != 1.0f) {
-        expl_add_detail(query_expl, expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(query_expl, frt_expl_new(self->query->boost, "boost"));
     }
-    expl_add_detail(query_expl, idf_expl1);
+    frt_expl_add_detail(query_expl, idf_expl1);
 
-    qnorm_expl = expl_new(self->qnorm, "query_norm");
-    expl_add_detail(query_expl, qnorm_expl);
+    qnorm_expl = frt_expl_new(self->qnorm, "query_norm");
+    frt_expl_add_detail(query_expl, qnorm_expl);
 
     query_expl->value = self->query->boost * self->idf * self->qnorm;
 
-    expl_add_detail(expl, query_expl);
+    frt_expl_add_detail(expl, query_expl);
 
     /* explain field weight */
-    field_expl = expl_new(0.0f, "field_weight(%s in %d), product of:",
+    field_expl = frt_expl_new(0.0f, "field_weight(%s in %d), product of:",
                           query_str, doc_num);
     free(query_str);
 
@@ -446,30 +446,30 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
         scorer->destroy(scorer);
     }
     else {
-        tf_expl = expl_new(0.0f, "no terms were found");
+        tf_expl = frt_expl_new(0.0f, "no terms were found");
     }
-    expl_add_detail(field_expl, tf_expl);
-    expl_add_detail(field_expl, idf_expl2);
+    frt_expl_add_detail(field_expl, tf_expl);
+    frt_expl_add_detail(field_expl, idf_expl2);
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms != NULL)
         ? sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0f;
-    field_norm_expl = expl_new(field_norm, "field_norm(field=%s, doc=%d)",
+    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, doc_num);
 
-    expl_add_detail(field_expl, field_norm_expl);
+    frt_expl_add_detail(field_expl, field_norm_expl);
 
     field_expl->value = tf_expl->value * self->idf * field_norm;
 
     /* combine them */
     if (query_expl->value == 1.0f) {
-        expl_destroy(expl);
+        frt_expl_destroy(expl);
         return field_expl;
     }
     else {
         expl->value = (query_expl->value * field_expl->value);
-        expl_add_detail(expl, field_expl);
+        frt_expl_add_detail(expl, field_expl);
         return expl;
     }
 }
@@ -532,7 +532,7 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
         if (bt->boost != 1.0f) {
             *bptr = '^';
-            dbl_to_s(++bptr, bt->boost);
+            frt_dbl_to_s(++bptr, bt->boost);
             bptr += (int)strlen(bptr);
         }
 
@@ -548,7 +548,7 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     if (self->boost != 1.0f) {
         *bptr = '^';
-        dbl_to_s(++bptr, self->boost);
+        frt_dbl_to_s(++bptr, self->boost);
     }
     return buffer;
 }

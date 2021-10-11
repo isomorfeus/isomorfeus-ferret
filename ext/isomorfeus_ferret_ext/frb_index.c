@@ -71,7 +71,7 @@ static void
 frb_fi_free(void *p)
 {
     object_del(p);
-    fi_deref((FrtFieldInfo *)p);
+    frt_fi_deref((FrtFieldInfo *)p);
 }
 
 static void
@@ -186,7 +186,7 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     if (argc > 1) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
-    fi = fi_new(frb_field(rname), store, index, term_vector);
+    fi = frt_fi_new(frb_field(rname), store, index, term_vector);
     fi->boost = boost;
     Frt_Wrap_Struct(self, NULL, &frb_fi_free, fi);
     object_add(fi, self);
@@ -345,7 +345,7 @@ static VALUE
 frb_fi_to_s(VALUE self)
 {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    char *fi_s = fi_to_s(fi);
+    char *fi_s = frt_fi_to_s(fi);
     VALUE rfi_s = rb_str_new2(fi_s);
     free(fi_s);
     return rfi_s;
@@ -525,7 +525,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
     if (argc > 1) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
-    fi = fi_new(frb_field(rname), store, index, term_vector);
+    fi = frt_fi_new(frb_field(rname), store, index, term_vector);
     fi->boost = boost;
     fis_add_field(fis, fi);
     return self;
@@ -1312,7 +1312,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     FrtStore *store = NULL;
     FrtAnalyzer *analyzer = NULL;
     FrtIndexWriter *volatile iw = NULL;
-    FrtConfig config = default_config;
+    FrtConfig config = frt_default_config;
 
     rb_scan_args(argc, argv, "01", &roptions);
     if (argc > 0) {
@@ -1413,8 +1413,8 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
         FrtSymbol field = frb_field(key);
         VALUE val;
         FrtDocField *df;
-        if (NULL == (df = doc_get_field(doc, field))) {
-            df = df_new(field);
+        if (NULL == (df = frt_doc_get_field(doc, field))) {
+            df = frt_df_new(field);
         }
         if (rb_respond_to(value, id_boost)) {
             df->boost = (float)NUM2DBL(rb_funcall(value, id_boost, 0));
@@ -1426,20 +1426,20 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
                     df->destroy_data = true;
                     for (i = 0; i < RARRAY_LEN(value); i++) {
                         val = rb_obj_as_string(RARRAY_PTR(value)[i]);
-                        df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                        frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
                     }
                 }
                 break;
             case T_STRING:
-                df_add_data_len(df, rs2s(value), RSTRING_LEN(value));
+                frt_df_add_data_len(df, rs2s(value), RSTRING_LEN(value));
                 break;
             default:
                 val = rb_obj_as_string(value);
                 df->destroy_data = true;
-                df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
                 break;
         }
-        doc_add_field(doc, df);
+        frt_doc_add_field(doc, df);
     }
     return ST_CONTINUE;
 }
@@ -1448,7 +1448,7 @@ static FrtDocument *
 frb_get_doc(VALUE rdoc)
 {
     VALUE val;
-    FrtDocument *doc = doc_new();
+    FrtDocument *doc = frt_doc_new();
     FrtDocField *df;
 
     if (rb_respond_to(rdoc, id_boost)) {
@@ -1462,31 +1462,31 @@ frb_get_doc(VALUE rdoc)
         case T_ARRAY:
             {
                 int i;
-                df = df_new(fsym_content);
+                df = frt_df_new(fsym_content);
                 df->destroy_data = true;
                 for (i = 0; i < RARRAY_LEN(rdoc); i++) {
                     val = rb_obj_as_string(RARRAY_PTR(rdoc)[i]);
-                    df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                    frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
                 }
-                doc_add_field(doc, df);
+                frt_doc_add_field(doc, df);
             }
             break;
         case T_SYMBOL:
             /* TODO: clean up this ugly cast */
-            df = df_add_data(df_new(fsym_content), (char *)rb_id2name(SYM2ID(rdoc)));
-            doc_add_field(doc, df);
+            df = frt_df_add_data(frt_df_new(fsym_content), (char *)rb_id2name(SYM2ID(rdoc)));
+            frt_doc_add_field(doc, df);
             break;
         case T_STRING:
-            df = df_add_data_len(df_new(fsym_content), rs2s(rdoc),
+            df = frt_df_add_data_len(frt_df_new(fsym_content), rs2s(rdoc),
                                  RSTRING_LEN(rdoc));
-            doc_add_field(doc, df);
+            frt_doc_add_field(doc, df);
             break;
         default:
             val = rb_obj_as_string(rdoc);
-            df = df_add_data_len(df_new(fsym_content), rstrdup(val),
+            df = frt_df_add_data_len(frt_df_new(fsym_content), rstrdup(val),
                                  RSTRING_LEN(val));
             df->destroy_data = true;
-            doc_add_field(doc, df);
+            frt_doc_add_field(doc, df);
             break;
     }
     return doc;
@@ -1506,7 +1506,7 @@ frb_iw_add_doc(VALUE self, VALUE rdoc)
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     FrtDocument *doc = frb_get_doc(rdoc);
     iw_add_doc(iw, doc);
-    doc_destroy(doc);
+    frt_doc_destroy(doc);
     return self;
 }
 
@@ -3222,23 +3222,23 @@ Init_IndexWriter(void)
     rb_define_const(cIndexWriter, "COMMIT_LOCK_NAME",
                     rb_str_new2(FRT_COMMIT_LOCK_NAME));
     rb_define_const(cIndexWriter, "DEFAULT_CHUNK_SIZE",
-                    INT2FIX(default_config.chunk_size));
+                    INT2FIX(frt_default_config.chunk_size));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_BUFFER_MEMORY",
-                    INT2FIX(default_config.max_buffer_memory));
+                    INT2FIX(frt_default_config.max_buffer_memory));
     rb_define_const(cIndexWriter, "DEFAULT_TERM_INDEX_INTERVAL",
-                    INT2FIX(default_config.index_interval));
+                    INT2FIX(frt_default_config.index_interval));
     rb_define_const(cIndexWriter, "DEFAULT_DOC_SKIP_INTERVAL",
-                    INT2FIX(default_config.skip_interval));
+                    INT2FIX(frt_default_config.skip_interval));
     rb_define_const(cIndexWriter, "DEFAULT_MERGE_FACTOR",
-                    INT2FIX(default_config.merge_factor));
+                    INT2FIX(frt_default_config.merge_factor));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_BUFFERED_DOCS",
-                    INT2FIX(default_config.max_buffered_docs));
+                    INT2FIX(frt_default_config.max_buffered_docs));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_MERGE_DOCS",
-                    INT2FIX(default_config.max_merge_docs));
+                    INT2FIX(frt_default_config.max_merge_docs));
     rb_define_const(cIndexWriter, "DEFAULT_MAX_FIELD_LENGTH",
-                    INT2FIX(default_config.max_field_length));
+                    INT2FIX(frt_default_config.max_field_length));
     rb_define_const(cIndexWriter, "DEFAULT_USE_COMPOUND_FILE",
-                    default_config.use_compound_file ? Qtrue : Qfalse);
+                    frt_default_config.use_compound_file ? Qtrue : Qfalse);
 
     rb_define_method(cIndexWriter, "initialize",    frb_iw_init, -1);
     rb_define_method(cIndexWriter, "doc_count",     frb_iw_get_doc_count, 0);

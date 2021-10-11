@@ -129,7 +129,7 @@ static void fs_each(FrtStore *store, void (*func)(const char *fname, void *arg),
 
     while ((de = readdir(d)) != NULL) {
         if (de->d_name[0] > '/' /* skip ., .., / and '\0'*/
-                && !file_is_lock(de->d_name)) {
+                && !frt_file_is_lock(de->d_name)) {
             func(de->d_name, arg);
         }
     }
@@ -147,7 +147,7 @@ static void fs_clear_locks(FrtStore *store)
     }
 
     while ((de = readdir(d)) != NULL) {
-        if (file_is_lock(de->d_name)) {
+        if (frt_file_is_lock(de->d_name)) {
             char path[FRT_MAX_FILE_PATH];
             remove(join_path(path, store->dir.path, de->d_name));
         }
@@ -164,7 +164,7 @@ static void remove_if_index_file(const char *base_path, const char *file_name)
     basename = strrchr(path, DIR_SEPARATOR_CHAR);
     basename = (basename ? basename + 1 : path);
     /* we don't want to delete non-index files here */
-    if (file_name_filter_is_index_file(basename, true)) {
+    if (frt_file_name_filter_is_index_file(basename, true)) {
         remove(path);
     }
 }
@@ -181,7 +181,7 @@ static void fs_clear(FrtStore *store)
 
     while ((de = readdir(d)) != NULL) {
         if (de->d_name[0] > '/' /* skip ., .., / and '\0'*/
-                && !file_is_lock(de->d_name)) {
+                && !frt_file_is_lock(de->d_name)) {
             remove_if_index_file(store->dir.path, de->d_name);
         }
     }
@@ -346,7 +346,7 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
     }
     is = is_new();
     is->file.fd = fd;
-    is->d.path = estrdup(path);
+    is->d.path = frt_estrdup(path);
     is->m = &FS_IN_STREAM_METHODS;
     return is;
 }
@@ -400,7 +400,7 @@ static FrtLock *fs_open_lock_i(FrtStore *store, const char *lockname)
     char lname[100];
     char path[FRT_MAX_FILE_PATH];
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
-    lock->name = estrdup(join_path(path, store->dir.path, lname));
+    lock->name = frt_estrdup(join_path(path, store->dir.path, lname));
     lock->store = store;
     lock->obtain = &fs_lock_obtain;
     lock->release = &fs_lock_release;
@@ -458,7 +458,7 @@ static FrtStore *fs_store_new(const char *pathname)
     }
 #endif
 
-    new_store->dir.path      = estrdup(pathname);
+    new_store->dir.path      = frt_estrdup(pathname);
     new_store->touch         = &fs_touch;
     new_store->exists        = &fs_exists;
     new_store->remove        = &fs_remove;

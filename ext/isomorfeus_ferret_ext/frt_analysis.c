@@ -115,7 +115,7 @@ static FrtTokenStream *ts_reset(FrtTokenStream *ts, char *text)
 
 FrtTokenStream *ts_clone_size(FrtTokenStream *orig_ts, size_t size)
 {
-    FrtTokenStream *ts = (FrtTokenStream *)ecalloc(size);
+    FrtTokenStream *ts = (FrtTokenStream *)frt_ecalloc(size);
     memcpy(ts, orig_ts, size);
     ts->ref_cnt = 1;
     return ts;
@@ -123,7 +123,7 @@ FrtTokenStream *ts_clone_size(FrtTokenStream *orig_ts, size_t size)
 
 FrtTokenStream *ts_new_i(size_t size)
 {
-    FrtTokenStream *ts = (FrtTokenStream *)ecalloc(size);
+    FrtTokenStream *ts = (FrtTokenStream *)frt_ecalloc(size);
 
     ts->destroy_i = (void (*)(FrtTokenStream *))&free;
     ts->reset = &ts_reset;
@@ -1102,7 +1102,7 @@ static void filter_destroy_i(FrtTokenStream *ts)
 
 FrtTokenStream *tf_new_i(size_t size, FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts     = (FrtTokenStream *)ecalloc(size);
+    FrtTokenStream *ts     = (FrtTokenStream *)frt_ecalloc(size);
 
     TkFilt(ts)->sub_ts  = sub_ts;
 
@@ -1161,7 +1161,7 @@ FrtTokenStream *stop_filter_new_with_words_len(FrtTokenStream *sub_ts,
     FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
 
     for (i = 0; i < len; i++) {
-        word = estrdup(words[i]);
+        word = frt_estrdup(words[i]);
         h_set(word_table, word, word);
     }
     StopFilt(ts)->words = word_table;
@@ -1179,7 +1179,7 @@ FrtTokenStream *stop_filter_new_with_words(FrtTokenStream *sub_ts,
     FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
 
     while (*words) {
-        word = estrdup(*words);
+        word = frt_estrdup(*words);
         h_set(word_table, word, word);
         words++;
     }
@@ -1438,9 +1438,9 @@ static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts)
     stemf->stemmer =
         sb_stemmer_new(orig_stemf->algorithm, orig_stemf->charenc);
     stemf->algorithm =
-        orig_stemf->algorithm ? estrdup(orig_stemf->algorithm) : NULL;
+        orig_stemf->algorithm ? frt_estrdup(orig_stemf->algorithm) : NULL;
     stemf->charenc =
-        orig_stemf->charenc ? estrdup(orig_stemf->charenc) : NULL;
+        orig_stemf->charenc ? frt_estrdup(orig_stemf->charenc) : NULL;
     return new_ts;
 }
 
@@ -1453,7 +1453,7 @@ FrtTokenStream *stem_filter_new(FrtTokenStream *ts, const char *algorithm,
     char *s = NULL;
 
     if (algorithm) {
-        my_algorithm = estrdup(algorithm);
+        my_algorithm = frt_estrdup(algorithm);
 
         /* algorithms are lowercase */
         s = my_algorithm;
@@ -1465,7 +1465,7 @@ FrtTokenStream *stem_filter_new(FrtTokenStream *ts, const char *algorithm,
     }
 
     if (charenc) {
-        my_charenc   = estrdup(charenc);
+        my_charenc   = frt_estrdup(charenc);
 
         /* encodings are uppercase and use '_' instead of '-' */
         s = my_charenc;
@@ -1677,7 +1677,7 @@ void pfa_add_field(FrtAnalyzer *self,
 
 FrtAnalyzer *per_field_analyzer_new(FrtAnalyzer *default_a)
 {
-    FrtAnalyzer *a = (FrtAnalyzer *)ecalloc(sizeof(FrtPerFieldAnalyzer));
+    FrtAnalyzer *a = (FrtAnalyzer *)frt_ecalloc(sizeof(FrtPerFieldAnalyzer));
 
     PFA(a)->default_a = default_a;
     PFA(a)->dict = h_new_str(NULL, &pfa_sub_a_destroy_i);

@@ -44,7 +44,7 @@ static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
 {
     (void)self;
     (void)doc_num;
-    return expl_new(1.0, "MatchAllScorer");
+    return frt_expl_new(1.0, "MatchAllScorer");
 }
 
 static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
@@ -80,11 +80,11 @@ static FrtExplanation *maw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
 {
     FrtExplanation *expl;
     if (!ir->is_deleted(ir, doc_num)) {
-        expl = expl_new(self->value, "MatchAllQuery: product of:");
-        expl_add_detail(expl, expl_new(self->query->boost, "boost"));
-        expl_add_detail(expl, expl_new(self->qnorm, "query_norm"));
+        expl = frt_expl_new(self->value, "MatchAllQuery: product of:");
+        frt_expl_add_detail(expl, frt_expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(expl, frt_expl_new(self->qnorm, "query_norm"));
     } else {
-        expl = expl_new(self->value,
+        expl = frt_expl_new(self->value,
                         "MatchAllQuery: doc %d was deleted", doc_num);
     }
 
@@ -115,7 +115,7 @@ static char *maq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     (void)default_field;
     if (self->boost == 1.0) {
-        return estrdup("*");
+        return frt_estrdup("*");
     } else {
         return strfmt("*^%f", self->boost);
     }

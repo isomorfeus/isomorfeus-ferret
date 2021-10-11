@@ -673,10 +673,8 @@ struct FrtDeleter
 
 extern FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store);
 extern void frt_deleter_destroy(FrtDeleter *dlr);
-extern void frt_deleter_clear_pending_files(FrtDeleter *dlr);
 extern void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name);
 extern void frt_deleter_find_deletable_files(FrtDeleter *dlr);
-extern void frt_deleter_commit_pending_files(FrtDeleter *dlr);
 extern void frt_deleter_delete_files(FrtDeleter *dlr, char **files, int file_cnt);
 
 /****************************************************************************

@@ -155,7 +155,7 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         /* FIXME What is going on here? Need to document this! */
         ir->fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
         fis_add_field(ir->fis,
-                      fi_new(tv->field, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+                      frt_fi_new(tv->field, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
         ir->store = (FrtStore *)tv;
         ir->term_positions = &spanq_ir_term_positions;
         sp_enum = SpQ(self)->get_spans(self, ir);
@@ -266,7 +266,7 @@ static FrtExplanation *spansc_explain(FrtScorer *self, int target)
     self->skip_to(self, target);
     phrase_freq = (self->doc == target) ? spansc->freq : (float)0.0;
 
-    tf_explanation = expl_new(sim_tf(self->similarity, phrase_freq),
+    tf_explanation = frt_expl_new(sim_tf(self->similarity, phrase_freq),
                               "tf(phrase_freq(%f)", phrase_freq);
 
     return tf_explanation;
@@ -1409,7 +1409,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     FrtHashSetEntry *hse;
 
     if (field_num < 0) {
-        return expl_new(0.0, "field \"%s\" does not exist in the index", field);
+        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field);
     }
 
     query_str = self->query->to_s(self->query, NULL);
@@ -1426,64 +1426,64 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
         doc_freqs[df_i] = '\0';
     }
     else {
-        doc_freqs = estrdup("");
+        doc_freqs = frt_estrdup("");
     }
 
-    expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, target);
+    expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, target);
 
     /* We need two of these as it's included in both the query explanation
      * and the field explanation */
-    idf_expl1 = expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
-    idf_expl2 = expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
     if (terms->size > 0) {
         free(doc_freqs); /* only free if allocated */
     }
 
     /* explain query weight */
-    query_expl = expl_new(0.0, "query_weight(%s), product of:", query_str);
+    query_expl = frt_expl_new(0.0, "query_weight(%s), product of:", query_str);
 
     if (self->query->boost != 1.0) {
-        expl_add_detail(query_expl, expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(query_expl, frt_expl_new(self->query->boost, "boost"));
     }
 
-    expl_add_detail(query_expl, idf_expl1);
+    frt_expl_add_detail(query_expl, idf_expl1);
 
-    qnorm_expl = expl_new(self->qnorm, "query_norm");
-    expl_add_detail(query_expl, qnorm_expl);
+    qnorm_expl = frt_expl_new(self->qnorm, "query_norm");
+    frt_expl_add_detail(query_expl, qnorm_expl);
 
     query_expl->value = self->query->boost * idf_expl1->value * qnorm_expl->value;
 
-    expl_add_detail(expl, query_expl);
+    frt_expl_add_detail(expl, query_expl);
 
     /* explain field weight */
-    field_expl = expl_new(0.0, "field_weight(%s:%s in %d), product of:",
+    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:",
                           field, query_str, target);
     free(query_str);
 
     scorer = self->scorer(self, ir);
     tf_expl = scorer->explain(scorer, target);
     scorer->destroy(scorer);
-    expl_add_detail(field_expl, tf_expl);
-    expl_add_detail(field_expl, idf_expl2);
+    frt_expl_add_detail(field_expl, tf_expl);
+    frt_expl_add_detail(field_expl, idf_expl2);
 
     field_norms = ir->get_norms(ir, field_num);
     field_norm = (field_norms
                   ? sim_decode_norm(self->similarity, field_norms[target])
                   : (float)0.0);
-    field_norm_expl = expl_new(field_norm, "field_norm(field=%s, doc=%d)",
+    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
                                field, target);
-    expl_add_detail(field_expl, field_norm_expl);
+    frt_expl_add_detail(field_expl, field_norm_expl);
 
     field_expl->value = tf_expl->value * idf_expl2->value * field_norm_expl->value;
 
     /* combine them */
     if (query_expl->value == 1.0) {
-        expl_destroy(expl);
+        frt_expl_destroy(expl);
         return field_expl;
     }
     else {
         expl->value = (query_expl->value * field_expl->value);
-        expl_add_detail(expl, field_expl);
+        frt_expl_add_detail(expl, field_expl);
         return expl;
     }
 }
@@ -1551,7 +1551,7 @@ static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static FrtHashSet *spantq_get_terms(FrtQuery *self)
 {
     FrtHashSet *terms = hs_new_str(&free);
-    hs_add(terms, estrdup(SpTQ(self)->term));
+    hs_add(terms, frt_estrdup(SpTQ(self)->term));
     return terms;
 }
 
@@ -1569,7 +1569,7 @@ FrtQuery *spantq_new(FrtSymbol field, const char *term)
 {
     FrtQuery *self             = q_new(FrtSpanTermQuery);
 
-    SpTQ(self)->term        = estrdup(term);
+    SpTQ(self)->term        = frt_estrdup(term);
     SpQ(self)->field        = field;
     SpQ(self)->get_spans    = &spante_new;
     SpQ(self)->get_terms    = &spantq_get_terms;
@@ -1643,7 +1643,7 @@ static FrtHashSet *spanmtq_get_terms(FrtQuery *self)
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
-        hs_add(terms, estrdup(smtq->terms[i]));
+        hs_add(terms, frt_estrdup(smtq->terms[i]));
     }
     return terms;
 }
@@ -1705,7 +1705,7 @@ void spanmtq_add_term(FrtQuery *self, const char *term)
 {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     if (smtq->term_cnt < smtq->term_capa) {
-        smtq->terms[smtq->term_cnt++] = estrdup(term);
+        smtq->terms[smtq->term_cnt++] = frt_estrdup(term);
     }
 }
 
@@ -2317,7 +2317,7 @@ static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
     bptr += sprintf(bptr, "%s*", prefix);
     if (self->boost != 1.0) {
         *bptr = '^';
-        dbl_to_s(++bptr, self->boost);
+        frt_dbl_to_s(++bptr, self->boost);
     }
 
     return buffer;
@@ -2372,7 +2372,7 @@ FrtQuery *spanprq_new(FrtSymbol field, const char *prefix)
     FrtQuery *self = q_new(FrtSpanPrefixQuery);
 
     SpQ(self)->field        = field;
-    SpPfxQ(self)->prefix    = estrdup(prefix);
+    SpPfxQ(self)->prefix    = frt_estrdup(prefix);
     SpPfxQ(self)->max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
 
     self->type              = SPAN_PREFIX_QUERY;

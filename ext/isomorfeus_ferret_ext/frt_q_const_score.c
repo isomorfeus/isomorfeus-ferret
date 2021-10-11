@@ -36,7 +36,7 @@ static bool cssc_skip_to(FrtScorer *self, int doc_num)
 static FrtExplanation *cssc_explain(FrtScorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
-    return expl_new(1.0, "ConstantScoreScorer");
+    return frt_expl_new(1.0, "ConstantScoreScorer");
 }
 
 static FrtScorer *cssc_new(FrtWeight *weight, FrtIndexReader *ir)
@@ -74,13 +74,13 @@ static FrtExplanation *csw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     FrtBitVector *bv = filt_get_bv(filter, ir);
 
     if (frt_bv_get(bv, doc_num)) {
-        expl = expl_new(self->value,
+        expl = frt_expl_new(self->value,
                         "ConstantScoreQuery(%s), product of:", filter_str);
-        expl_add_detail(expl, expl_new(self->query->boost, "boost"));
-        expl_add_detail(expl, expl_new(self->qnorm, "query_norm"));
+        frt_expl_add_detail(expl, frt_expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(expl, frt_expl_new(self->qnorm, "query_norm"));
     }
     else {
-        expl = expl_new(self->value,
+        expl = frt_expl_new(self->value,
                         "ConstantScoreQuery(%s), does not match id %d",
                         filter_str, doc_num);
     }
@@ -126,7 +126,7 @@ static char *csq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static void csq_destroy(FrtQuery *self)
 {
-    filt_deref(CScQ(self)->filter);
+    frt_filt_deref(CScQ(self)->filter);
     q_destroy_i(self);
 }
 

@@ -741,8 +741,6 @@ typedef struct FrtFieldDoc
     FrtComparable comparables[1];
 } FrtFieldDoc;
 
-extern void frt_fd_destroy(FrtFieldDoc *fd);
-
 /***************************************************************************
  * FieldDocSortedHitQueue
  ***************************************************************************/

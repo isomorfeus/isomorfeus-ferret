@@ -27,7 +27,7 @@ static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
     bptr += sprintf(bptr, "%s*", prefix);
     if (self->boost != 1.0) {
         *bptr = '^';
-        dbl_to_s(++bptr, self->boost);
+        frt_dbl_to_s(++bptr, self->boost);
     }
 
     return buffer;
@@ -83,7 +83,7 @@ FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
     FrtQuery *self = q_new(FrtPrefixQuery);
 
     PfxQ(self)->field       = field;
-    PfxQ(self)->prefix      = estrdup(prefix);
+    PfxQ(self)->prefix      = frt_estrdup(prefix);
     FrtMTQMaxTerms(self)       = PREFIX_QUERY_MAX_TERMS;
 
     self->type              = PREFIX_QUERY;

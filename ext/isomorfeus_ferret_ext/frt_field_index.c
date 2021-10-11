@@ -32,7 +32,7 @@ static void field_index_destroy(void *p)
     free(self);
 }
 
-FrtFieldIndex *field_index_get(FrtIndexReader *ir, FrtSymbol field,
+FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
                             const FrtFieldIndexClass *klass)
 {
     int length = 0;
@@ -237,7 +237,7 @@ static void string_handle_term(void *index_ptr,
         index->v_capa *= 2;
         FRT_REALLOC_N(index->values, char *, index->v_capa);
     }
-    index->values[index->v_size] = estrdup(text);
+    index->values[index->v_size] = frt_estrdup(text);
     while (tde->next(tde)) {
         index->index[tde->doc_num(tde)] = index->v_size;
     }

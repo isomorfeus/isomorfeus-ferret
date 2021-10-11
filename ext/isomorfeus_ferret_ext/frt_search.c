@@ -10,7 +10,7 @@
  *
  ***************************************************************************/
 
-FrtExplanation *expl_new(float value, const char *description, ...)
+FrtExplanation *frt_expl_new(float value, const char *description, ...)
 {
     FrtExplanation *expl = FRT_ALLOC(FrtExplanation);
 
@@ -25,20 +25,20 @@ FrtExplanation *expl_new(float value, const char *description, ...)
     return expl;
 }
 
-void expl_destroy(FrtExplanation *expl)
+void frt_expl_destroy(FrtExplanation *expl)
 {
-    frt_ary_destroy((void **)expl->details, (free_ft)expl_destroy);
+    frt_ary_destroy((void **)expl->details, (free_ft)frt_expl_destroy);
     free(expl->description);
     free(expl);
 }
 
-FrtExplanation *expl_add_detail(FrtExplanation *expl, FrtExplanation *detail)
+FrtExplanation *frt_expl_add_detail(FrtExplanation *expl, FrtExplanation *detail)
 {
     frt_ary_push(expl->details, detail);
     return expl;
 }
 
-char *expl_to_s_depth(FrtExplanation *expl, int depth)
+char *frt_expl_to_s_depth(FrtExplanation *expl, int depth)
 {
     int i;
     char *buffer = FRT_ALLOC_N(char, depth * 2 + 1);
@@ -47,16 +47,16 @@ char *expl_to_s_depth(FrtExplanation *expl, int depth)
     memset(buffer, ' ', sizeof(char) * depth * 2);
     buffer[depth*2] = 0;
 
-    buffer = estrcat(buffer, strfmt("%f = %s\n",
+    buffer = frt_estrcat(buffer, strfmt("%f = %s\n",
                                     expl->value, expl->description));
     for (i = 0; i < num_details; i++) {
-        buffer = estrcat(buffer, expl_to_s_depth(expl->details[i], depth + 1));
+        buffer = frt_estrcat(buffer, frt_expl_to_s_depth(expl->details[i], depth + 1));
     }
 
     return buffer;
 }
 
-char *expl_to_html(FrtExplanation *expl)
+char *frt_expl_to_html(FrtExplanation *expl)
 {
     int i;
     char *buffer;
@@ -65,7 +65,7 @@ char *expl_to_html(FrtExplanation *expl)
     buffer = strfmt("<ul>\n<li>%f = %s</li>\n", expl->value, expl->description);
 
     for (i = 0; i < num_details; i++) {
-        estrcat(buffer, expl_to_html(expl->details[i]));
+        frt_estrcat(buffer, frt_expl_to_html(expl->details[i]));
     }
 
     FRT_REALLOC_N(buffer, char, strlen(buffer) + 10);
@@ -214,7 +214,7 @@ char *td_to_s(FrtTopDocs *td)
                           td->total_hits);
     for (i = 0; i < td->size; i++) {
         hit = td->hits[i];
-        estrcat(buffer, strfmt("\t%d:%f\n", hit->doc, hit->score));
+        frt_estrcat(buffer, strfmt("\t%d:%f\n", hit->doc, hit->score));
     }
     return buffer;
 }
@@ -256,7 +256,7 @@ void w_destroy(FrtWeight *self)
 
 FrtWeight *w_create(size_t size, FrtQuery *query)
 {
-    FrtWeight *self                    = (FrtWeight *)ecalloc(size);
+    FrtWeight *self                    = (FrtWeight *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtWeight)) {
         rb_raise(rb_eArgError, "size of weight <%d> should be at least <%d>",
@@ -370,7 +370,7 @@ FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
 {
     int i;
     FrtQuery *q, *ret_q;
-    FrtHashSet *uniques = hs_new((hash_ft)&q_hash, (eq_ft)&q_eq, NULL);
+    FrtHashSet *uniques = hs_new((hash_ft)&q_hash, (frt_eq_ft)&q_eq, NULL);
     for (i = 0; i < q_cnt; i++) {
         q = queries[i];
         if (q->type == BOOLEAN_QUERY) {
@@ -437,7 +437,7 @@ static FrtMatchVector *q_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTer
 
 FrtQuery *q_create(size_t size)
 {
-    FrtQuery *self = (FrtQuery *)ecalloc(size);
+    FrtQuery *self = (FrtQuery *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtQuery)) {
         rb_raise(rb_eArgError, "Size of a query <%d> should never be smaller than "
@@ -467,7 +467,7 @@ void scorer_destroy_i(FrtScorer *scorer)
 
 FrtScorer *scorer_create(size_t size, FrtSimilarity *similarity)
 {
-    FrtScorer *self        = (FrtScorer *)ecalloc(size);
+    FrtScorer *self        = (FrtScorer *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtScorer)) {
         rb_raise(rb_eArgError, "size of scorer <%d> should be at least <%d>",
@@ -1512,13 +1512,13 @@ static FrtWeight *msea_create_weight(FrtSearcher *self, FrtQuery *query)
     FrtSearcher *cdfsea;
     FrtWeight *w;
     FrtHash *df_map = h_new((hash_ft)&term_hash,
-                         (eq_ft)&term_eq,
+                         (frt_eq_ft)&term_eq,
                          (free_ft)term_destroy,
                          free);
     FrtQuery *rewritten_query = self->rewrite(self, query);
     /* terms get copied directly to df_map so no need to free here */
     FrtHashSet *terms = hs_new((hash_ft)&term_hash,
-                            (eq_ft)&term_eq,
+                            (frt_eq_ft)&term_eq,
                             (free_ft)NULL);
     FrtHashSetEntry *hse;
 
@@ -1678,7 +1678,7 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = pq_new(max_size, (lt_ft)fdshq_lt, &free);
+        hq = pq_new(max_size, (lt_ft)frt_fdshq_lt, &free);
         hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&pq_insert;
         hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&pq_pop;
     } else {

@@ -618,7 +618,7 @@ void os_write_string(FrtOutStream *os, const char *str)
  * @param filename the name of the file to check
  * @return 1 (true) if the file is a lock file, 0 (false) otherwise
  */
-int file_is_lock(const char *filename)
+int frt_file_is_lock(const char *filename)
 {
     int start = (int) strlen(filename) - 4;
     return ((start > 0) && (strcmp(FRT_LOCK_EXT, &filename[start]) == 0));
@@ -668,7 +668,7 @@ static void add_file_name(const char *fname, void *arg)
         fnl->size *= 2;
         FRT_REALLOC_N(fnl->files, char *, fnl->size);
     }
-    fnl->files[fnl->count++] = estrdup(fname);
+    fnl->files[fnl->count++] = frt_estrdup(fname);
     fnl->total_len += strlen(fname) + 2;
 }
 

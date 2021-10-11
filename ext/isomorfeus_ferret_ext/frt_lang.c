@@ -13,7 +13,7 @@ void micro_sleep(const int micro_seconds) {
 }
 
 /* emalloc: malloc and report if error */
-void *emalloc(size_t size)
+void *frt_emalloc(size_t size)
 {
     void *p = malloc(size);
 
@@ -24,8 +24,8 @@ void *emalloc(size_t size)
     return p;
 }
 
-/* ecalloc: malloc, zeroset and report if error */
-void *ecalloc(size_t size)
+/* frt_ecalloc: malloc, zeroset and report if error */
+void *frt_ecalloc(size_t size)
 {
     void *p = calloc(1, size);
 
@@ -36,8 +36,8 @@ void *ecalloc(size_t size)
     return p;
 }
 
-/* erealloc: realloc and report if error */
-void *erealloc(void *ptr, size_t size)
+/* frt_erealloc: realloc and report if error */
+void *frt_erealloc(void *ptr, size_t size)
 {
     void *p = realloc(ptr, size);
 

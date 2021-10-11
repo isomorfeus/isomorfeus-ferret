@@ -2569,7 +2569,7 @@ static Phrase *ph_first_word(char *word)
     Phrase *self = ph_new();
     if (word) { /* no point in adding NULL in start */
         self->positions[0].terms = frt_ary_new_type_capa(char *, 1);
-        frt_ary_push(self->positions[0].terms, estrdup(word));
+        frt_ary_push(self->positions[0].terms, frt_estrdup(word));
         self->size = 1;
     }
     return self;
@@ -2590,7 +2590,7 @@ static Phrase *ph_add_word(Phrase *self, char *word)
         }
         pp[index].pos = self->pos_inc;
         pp[index].terms = frt_ary_new_type_capa(char *, 1);
-        frt_ary_push(pp[index].terms, estrdup(word));
+        frt_ary_push(pp[index].terms, frt_estrdup(word));
         self->size++;
         self->pos_inc = 0;
     }
@@ -2610,7 +2610,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
     FrtPhrasePosition *pp = self->positions;
 
     if (word) {
-        frt_ary_push(pp[index].terms, estrdup(word));
+        frt_ary_push(pp[index].terms, frt_estrdup(word));
     }
     return self;
 }
@@ -2665,7 +2665,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                 token = ts_next(get_cached_ts(qp, field, words[i]));
                 if (token) {
                     free(words[i]);
-                    last_word = words[i] = estrdup(token->text);
+                    last_word = words[i] = frt_estrdup(token->text);
                     ++term_cnt;
                 }
                 else {
@@ -2789,12 +2789,12 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
     if (from) {
         FrtTokenStream *stream = get_cached_ts(qp, field, from);
         FrtToken *token = ts_next(stream);
-        from = token ? estrdup(token->text) : NULL;
+        from = token ? frt_estrdup(token->text) : NULL;
     }
     if (to) {
         FrtTokenStream *stream = get_cached_ts(qp, field, to);
         FrtToken *token = ts_next(stream);
-        to = token ? estrdup(token->text) : NULL;
+        to = token ? frt_estrdup(token->text) : NULL;
     }
 */
 

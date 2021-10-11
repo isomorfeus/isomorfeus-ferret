@@ -15,7 +15,7 @@ FrtPriorityQueue *pq_new(int capa, lt_ft less_than, free_ft free_elem)
     pq->less_than_i = less_than;
 
     /* need to set this yourself if you want to change it */
-    pq->free_elem_i = free_elem ? free_elem : &dummy_free;
+    pq->free_elem_i = free_elem ? free_elem : &frt_dummy_free;
     return pq;
 }
 

@@ -19,7 +19,7 @@ FrtTerm *term_new(FrtSymbol field, const char *text)
 {
     FrtTerm *t = FRT_ALLOC(FrtTerm);
     t->field = field;
-    t->text = estrdup(text);
+    t->text = frt_estrdup(text);
     return t;
 }
 

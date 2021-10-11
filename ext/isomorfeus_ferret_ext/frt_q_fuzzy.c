@@ -162,13 +162,13 @@ static char *fuzq_to_s(FrtQuery *self, FrtSymbol curr_field)
 
     bptr += sprintf(bptr, "%s~", term);
     if (FzQ(self)->min_sim != 0.5) {
-        dbl_to_s(bptr, FzQ(self)->min_sim);
+        frt_dbl_to_s(bptr, FzQ(self)->min_sim);
         bptr += strlen(bptr);
     }
 
     if (self->boost != 1.0) {
         *bptr = '^';
-        dbl_to_s(++bptr, self->boost);
+        frt_dbl_to_s(++bptr, self->boost);
     }
 
     return buffer;
@@ -258,7 +258,7 @@ FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
     FrtQuery *self = q_new(FrtFuzzyQuery);
 
     FzQ(self)->field      = field;
-    FzQ(self)->term       = estrdup(term);
+    FzQ(self)->term       = frt_estrdup(term);
     FzQ(self)->pre_len    = pre_len ? pre_len : FRT_DEF_PRE_LEN;
     FzQ(self)->min_sim    = min_sim ? min_sim : FRT_DEF_MIN_SIM;
     FzQ(self)->da         = NULL;

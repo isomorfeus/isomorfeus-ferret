@@ -402,7 +402,7 @@ static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir)
             }
         }
         mutex_lock(&ir->field_index_mutex);
-        field_index = field_index_get(ir, sf->field, sf->field_index_class);
+        field_index = frt_field_index_get(ir, sf->field, sf->field_index_class);
         mutex_unlock(&ir->field_index_mutex);
         index = field_index->index;
     }
@@ -580,7 +580,7 @@ FrtHit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
         pq->size--;
         fshq_pq_down(pq);                   /* adjust heap */
 
-        field_doc = (FrtFieldDoc *)emalloc(sizeof(FrtFieldDoc)
+        field_doc = (FrtFieldDoc *)frt_emalloc(sizeof(FrtFieldDoc)
                                         + sizeof(FrtComparable) * cmp_cnt);
         comparables = field_doc->comparables;
         memcpy(field_doc, hit, sizeof(FrtHit));
@@ -599,19 +599,10 @@ FrtHit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
 }
 
 /***************************************************************************
- * FrtFieldDoc
- ***************************************************************************/
-
-void fd_destroy(FrtFieldDoc *fd)
-{
-    free(fd);
-}
-
-/***************************************************************************
  * FieldDocSortedHitQueue
  ***************************************************************************/
 
-bool fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
+bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
 {
     int c = 0, i;
     FrtComparable *cmps1 = fd1->comparables;

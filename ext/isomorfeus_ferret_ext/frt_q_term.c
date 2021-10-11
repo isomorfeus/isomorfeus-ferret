@@ -103,7 +103,7 @@ static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
     if (self->doc == doc_num) {
         tf = ts->freqs[ts->pointer];
     }
-    return expl_new(sim_tf(self->similarity, (float)tf),
+    return frt_expl_new(sim_tf(self->similarity, (float)tf),
                     "tf(term_freq(%s:%s)=%d)",
                     TQ(query)->field, TQ(query)->term, tf);
 }
@@ -164,43 +164,43 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     char *query_str = self->query->to_s(self->query, NULL);
     FrtTermQuery *tq = TQ(self->query);
     char *term = tq->term;
-    FrtExplanation *expl = expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
+    FrtExplanation *expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
     /* We need two of these as it's included in both the query explanation
      * and the field explanation */
-    FrtExplanation *idf_expl1 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
-    FrtExplanation *idf_expl2 = expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl1 = frt_expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl2 = frt_expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
     /* explain query weight */
-    FrtExplanation *query_expl = expl_new(0.0, "query_weight(%s), product of:", query_str);
+    FrtExplanation *query_expl = frt_expl_new(0.0, "query_weight(%s), product of:", query_str);
     free(query_str);
     if (self->query->boost != 1.0) {
-        expl_add_detail(query_expl, expl_new(self->query->boost, "boost"));
+        frt_expl_add_detail(query_expl, frt_expl_new(self->query->boost, "boost"));
     }
-    expl_add_detail(query_expl, idf_expl1);
-    qnorm_expl = expl_new(self->qnorm, "query_norm");
-    expl_add_detail(query_expl, qnorm_expl);
+    frt_expl_add_detail(query_expl, idf_expl1);
+    qnorm_expl = frt_expl_new(self->qnorm, "query_norm");
+    frt_expl_add_detail(query_expl, qnorm_expl);
     query_expl->value = self->query->boost
         * idf_expl1->value * qnorm_expl->value;
-    expl_add_detail(expl, query_expl);
+    frt_expl_add_detail(expl, query_expl);
     /* explain field weight */
-    field_expl = expl_new(0.0, "field_weight(%s:%s in %d), product of:", tq->field, term, doc_num);
+    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:", tq->field, term, doc_num);
     scorer = self->scorer(self, ir);
     tf_expl = scorer->explain(scorer, doc_num);
     scorer->destroy(scorer);
-    expl_add_detail(field_expl, tf_expl);
-    expl_add_detail(field_expl, idf_expl2);
+    frt_expl_add_detail(field_expl, tf_expl);
+    frt_expl_add_detail(field_expl, idf_expl2);
 
     field_norms = ir_get_norms(ir, tq->field);
     field_norm = (field_norms ? sim_decode_norm(self->similarity, field_norms[doc_num]) : (float)0.0);
-    field_norm_expl = expl_new(field_norm, "field_norm(field=%s, doc=%d)", tq->field, doc_num);
-    expl_add_detail(field_expl, field_norm_expl);
+    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)", tq->field, doc_num);
+    frt_expl_add_detail(field_expl, field_norm_expl);
     field_expl->value = tf_expl->value * idf_expl2->value * field_norm_expl->value;
     /* combine them */
     if (query_expl->value == 1.0) {
-        expl_destroy(expl);
+        frt_expl_destroy(expl);
         return field_expl;
     } else {
         expl->value = (query_expl->value * field_expl->value);
-        expl_add_detail(expl, field_expl);
+        frt_expl_add_detail(expl, field_expl);
         return expl;
     }
 }
@@ -257,7 +257,7 @@ static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
     *b = 0;
     if (self->boost != 1.0) {
         *b = '^';
-        dbl_to_s(b+1, self->boost);
+        frt_dbl_to_s(b+1, self->boost);
     }
     return buffer;
 }
@@ -299,7 +299,7 @@ FrtQuery *tq_new(FrtSymbol field, const char *term)
     FrtQuery *self             = q_new(FrtTermQuery);
 
     TQ(self)->field         = field;
-    TQ(self)->term          = estrdup(term);
+    TQ(self)->term          = frt_estrdup(term);
 
     self->type              = TERM_QUERY;
     self->extract_terms     = &tq_extract_terms;

@@ -187,10 +187,10 @@ static FrtExplanation *dssc_explain(FrtScorer *self, int doc_num)
     DisjunctionSumScorer *dssc = DSSc(self);
     FrtScorer *sub_scorer;
     FrtExplanation *e
-        = expl_new(0.0, "At least %d of:", dssc->min_num_matches);
+        = frt_expl_new(0.0, "At least %d of:", dssc->min_num_matches);
     for (i = 0; i < dssc->ss_cnt; i++) {
         sub_scorer = dssc->sub_scorers[i];
-        expl_add_detail(e, sub_scorer->explain(sub_scorer, doc_num));
+        frt_expl_add_detail(e, sub_scorer->explain(sub_scorer, doc_num));
     }
     return e;
 }
@@ -601,9 +601,9 @@ static FrtExplanation *rossc_explain(FrtScorer *self, int doc_num)
     FrtScorer *req_scorer = ROSSc(self)->req_scorer;
     FrtScorer *opt_scorer = ROSSc(self)->opt_scorer;
 
-    FrtExplanation *e = expl_new(self->score(self),"required, optional:");
-    expl_add_detail(e, req_scorer->explain(req_scorer, doc_num));
-    expl_add_detail(e, opt_scorer->explain(opt_scorer, doc_num));
+    FrtExplanation *e = frt_expl_new(self->score(self),"required, optional:");
+    frt_expl_add_detail(e, req_scorer->explain(req_scorer, doc_num));
+    frt_expl_add_detail(e, opt_scorer->explain(opt_scorer, doc_num));
     return e;
 }
 
@@ -759,11 +759,11 @@ static FrtExplanation *rxsc_explain(FrtScorer *self, int doc_num)
 
     if (excl_scorer->skip_to(excl_scorer, doc_num)
         && excl_scorer->doc == doc_num) {
-        e = expl_new(0.0, "excluded:");
+        e = frt_expl_new(0.0, "excluded:");
     }
     else {
-        e = expl_new(0.0, "not excluded:");
-        expl_add_detail(e, req_scorer->explain(req_scorer, doc_num));
+        e = frt_expl_new(0.0, "not excluded:");
+        frt_expl_add_detail(e, req_scorer->explain(req_scorer, doc_num));
     }
     return e;
 }
@@ -821,7 +821,7 @@ static bool nmsc_skip_to(FrtScorer *self, int doc_num)
 static FrtExplanation *nmsc_explain(FrtScorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
-    return expl_new(0.0, "No documents matched");
+    return frt_expl_new(0.0, "No documents matched");
 }
 
 static FrtScorer *non_matching_scorer_new()
@@ -1074,7 +1074,7 @@ static void bsc_destroy(FrtScorer *self)
 static FrtExplanation *bsc_explain(FrtScorer *self, int doc_num)
 {
     (void)self; (void)doc_num;
-    return expl_new(0.0, "This explanation is not supported");
+    return frt_expl_new(0.0, "This explanation is not supported");
 }
 
 static FrtScorer *bsc_new(FrtSimilarity *similarity)
@@ -1182,7 +1182,7 @@ static void bw_destroy(FrtWeight *self)
 static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
 {
     FrtBooleanQuery *bq = BQ(self->query);
-    FrtExplanation *sum_expl = expl_new(0.0f, "sum of:");
+    FrtExplanation *sum_expl = frt_expl_new(0.0f, "sum of:");
     FrtExplanation *explanation;
     int coord = 0;
     int max_coord = 0;
@@ -1198,20 +1198,20 @@ static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
         }
         if (explanation->value > 0.0f) {
             if (!clause->is_prohibited) {
-                expl_add_detail(sum_expl, explanation);
+                frt_expl_add_detail(sum_expl, explanation);
                 sum += explanation->value;
                 coord++;
             } else {
-                expl_destroy(explanation);
-                expl_destroy(sum_expl);
-                return expl_new(0.0, "match prohibited");
+                frt_expl_destroy(explanation);
+                frt_expl_destroy(sum_expl);
+                return frt_expl_new(0.0, "match prohibited");
             }
         } else if (clause->is_required) {
-            expl_destroy(explanation);
-            expl_destroy(sum_expl);
-            return expl_new(0.0, "match required");
+            frt_expl_destroy(explanation);
+            frt_expl_destroy(sum_expl);
+            return frt_expl_new(0.0, "match required");
         } else {
-            expl_destroy(explanation);
+            frt_expl_destroy(explanation);
         }
     }
     sum_expl->value = sum;
@@ -1219,15 +1219,15 @@ static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
         explanation = sum_expl;      /* eliminate wrapper */
         frt_ary_size(sum_expl->details) = 0;
         sum_expl = sum_expl->details[0];
-        expl_destroy(explanation);
+        frt_expl_destroy(explanation);
     }
     coord_factor = sim_coord(self->similarity, coord, max_coord);
     if (coord_factor == 1.0) {       /* coord is no-op */
         return sum_expl;             /* eliminate wrapper */
     } else {
-        explanation = expl_new(sum * coord_factor, "product of:");
-        expl_add_detail(explanation, sum_expl);
-        expl_add_detail(explanation, expl_new(coord_factor, "coord(%d/%d)",
+        explanation = frt_expl_new(sum * coord_factor, "product of:");
+        frt_expl_add_detail(explanation, sum_expl);
+        frt_expl_add_detail(explanation, frt_expl_new(coord_factor, "coord(%d/%d)",
                                               coord, max_coord));
         return explanation;
     }

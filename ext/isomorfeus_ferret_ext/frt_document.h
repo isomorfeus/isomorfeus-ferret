@@ -48,7 +48,6 @@ typedef struct FrtDocument
 extern FrtDocument *frt_doc_new();
 extern FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df);
 extern FrtDocField *frt_doc_get_field(FrtDocument *doc, FrtSymbol name);
-extern char *frt_doc_to_s(FrtDocument *doc);
 extern void frt_doc_destroy(FrtDocument *doc);
 
 #endif

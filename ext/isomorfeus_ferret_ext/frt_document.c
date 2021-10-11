@@ -9,7 +9,7 @@
  *
  ****************************************************************************/
 
-FrtDocField *df_new(FrtSymbol name)
+FrtDocField *frt_df_new(FrtSymbol name)
 {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
@@ -22,7 +22,7 @@ FrtDocField *df_new(FrtSymbol name)
     return df;
 }
 
-FrtDocField *df_add_data_len(FrtDocField *df, char *data, int len)
+FrtDocField *frt_df_add_data_len(FrtDocField *df, char *data, int len)
 {
     if (df->size >= df->capa) {
         df->capa <<= 2;
@@ -35,12 +35,12 @@ FrtDocField *df_add_data_len(FrtDocField *df, char *data, int len)
     return df;
 }
 
-FrtDocField *df_add_data(FrtDocField *df, char *data)
+FrtDocField *frt_df_add_data(FrtDocField *df, char *data)
 {
-    return df_add_data_len(df, data, strlen(data));
+    return frt_df_add_data_len(df, data, strlen(data));
 }
 
-void df_destroy(FrtDocField *df)
+void frt_df_destroy(FrtDocField *df)
 {
     if (df->destroy_data) {
         int i;
@@ -57,7 +57,7 @@ void df_destroy(FrtDocField *df)
  * Format for one item is: name: "data"
  *        for more items : name: ["data", "data", "data"]
  */
-char *df_to_s(FrtDocField *df)
+char *frt_df_to_s(FrtDocField *df)
 {
     int i, len = 0, namelen = strlen(df->name);
     char *str, *s;
@@ -95,10 +95,10 @@ char *df_to_s(FrtDocField *df)
  *
  ****************************************************************************/
 
-FrtDocument *doc_new()
+FrtDocument *frt_doc_new()
 {
     FrtDocument *doc = FRT_ALLOC(FrtDocument);
-    doc->field_dict = h_new_str(NULL, (free_ft)&df_destroy);
+    doc->field_dict = h_new_str(NULL, (free_ft)&frt_df_destroy);
     doc->size = 0;
     doc->capa = FRT_DOC_INIT_CAPA;
     doc->fields = FRT_ALLOC_N(FrtDocField *, doc->capa);
@@ -106,7 +106,7 @@ FrtDocument *doc_new()
     return doc;
 }
 
-FrtDocField *doc_add_field(FrtDocument *doc, FrtDocField *df)
+FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 {
     if (!h_set_safe(doc->field_dict, df->name, df)) {
         rb_raise(rb_eException, "tried to add %s field which alread existed\n",
@@ -121,33 +121,12 @@ FrtDocField *doc_add_field(FrtDocument *doc, FrtDocField *df)
     return df;
 }
 
-FrtDocField *doc_get_field(FrtDocument *doc, FrtSymbol name)
+FrtDocField *frt_doc_get_field(FrtDocument *doc, FrtSymbol name)
 {
     return (FrtDocField *)h_get(doc->field_dict, name);
 }
 
-char *doc_to_s(FrtDocument *doc)
-{
-    int i;
-    int len = 0;
-    char **fields = FRT_ALLOC_N(char *, doc->size);
-    char *buf, *s;
-
-    for (i = 0; i < doc->size; i++) {
-        fields[i] = df_to_s(doc->fields[i]);
-        len += strlen(fields[i]) + 5;
-    }
-    s = buf = FRT_ALLOC_N(char, len + 12);
-    s += sprintf(buf, "Document [\n");
-    for (i = 0; i < doc->size; i++) {
-        s += sprintf(s, "  =>%s\n", fields[i]);
-        free(fields[i]);
-    }
-    free(fields);
-    return buf;
-}
-
-void doc_destroy(FrtDocument *doc)
+void frt_doc_destroy(FrtDocument *doc)
 {
     h_destroy(doc->field_dict);
     free(doc->fields);

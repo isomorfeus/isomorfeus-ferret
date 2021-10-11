@@ -13,11 +13,11 @@ static FrtHashSet *hs_alloc(free_ft free_func)
     FrtHashSet *hs = FRT_ALLOC(FrtHashSet);
     hs->size = 0;
     hs->first = hs->last = NULL;
-    hs->free_elem_i = free_func ? free_func : &dummy_free;
+    hs->free_elem_i = free_func ? free_func : &frt_dummy_free;
     return hs;
 }
 
-FrtHashSet *hs_new(hash_ft hash_func, eq_ft eq_func, free_ft free_func)
+FrtHashSet *hs_new(hash_ft hash_func, frt_eq_ft eq_func, free_ft free_func)
 {
     FrtHashSet *hs = hs_alloc(free_func);
     hs->ht = h_new(hash_func, eq_func, NULL, NULL);
@@ -41,7 +41,7 @@ FrtHashSet *hs_new_ptr(free_ft free_func)
 static void clear(FrtHashSet *hs, bool destroy)
 {
     FrtHashSetEntry *curr, *next = hs->first;
-    free_ft do_free = destroy ? hs->free_elem_i : &dummy_free;
+    free_ft do_free = destroy ? hs->free_elem_i : &frt_dummy_free;
     while (NULL != (curr = next)) {
         next = curr->next;
         do_free(curr->elem);

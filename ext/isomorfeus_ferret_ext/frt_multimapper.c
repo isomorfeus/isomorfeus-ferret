@@ -144,8 +144,8 @@ void mulmap_add_mapping(FrtMultiMapper *self, const char *pattern, const char *r
             self->capa <<= 1;
             FRT_REALLOC_N(self->mappings, FrtMapping *, self->capa);
         }
-        mapping->pattern = estrdup(pattern);
-        mapping->replacement = estrdup(rep);
+        mapping->pattern = frt_estrdup(pattern);
+        mapping->replacement = frt_estrdup(rep);
         self->mappings[self->size++] = mapping;
         mulmap_free_dstates(self);
     }
@@ -248,7 +248,7 @@ void mulmap_compile(FrtMultiMapper *self)
     self->nstates = nstates;
     self->nsize = size;
     self->next_states = FRT_ALLOC_N(int, size);
-    self->dstates_map = h_new((hash_ft)&frt_bv_hash, (eq_ft)&frt_bv_eq,
+    self->dstates_map = h_new((hash_ft)&frt_bv_hash, (frt_eq_ft)&frt_bv_eq,
                               (free_ft)&frt_bv_destroy, (free_ft)NULL);
     mulmap_process_state(self, frt_bv_new_capa(0));
     h_destroy(self->dstates_map);
@@ -300,7 +300,7 @@ char *mulmap_dynamic_map(FrtMultiMapper *self, char *from)
     FrtDeterministicState *start = self->dstates[0];
     FrtDeterministicState *state = start;
     int capa = strlen(from);
-    char *to = (char *)ecalloc(capa);
+    char *to = (char *)frt_ecalloc(capa);
     char *s = from, *d = to, *end = to + capa - 1;
     if (self->d_size == 0) {
         mulmap_compile(self);
@@ -325,7 +325,7 @@ char *mulmap_dynamic_map(FrtMultiMapper *self, char *from)
         }
         if (*s) {
             capa += 1024;
-            erealloc(to, capa);
+            frt_erealloc(to, capa);
             end = to + capa - 1;
         }
     } while(*s);

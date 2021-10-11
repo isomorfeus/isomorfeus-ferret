@@ -285,7 +285,7 @@ FrtCompoundWriter *open_cw(FrtStore *store, char *name)
 
 void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
 {
-    id = estrdup(id);
+    id = frt_estrdup(id);
     if (hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
         rb_raise(rb_eIOError, "Tried to add file \"%s\" which has already been "
               "added to the compound store", id);

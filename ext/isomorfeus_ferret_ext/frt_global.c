@@ -79,7 +79,7 @@ u64 *u64malloc(u64 value)
 }
 
 /* concatenate two strings freeing the second */
-char *estrcat(char *str1, char *str2)
+char *frt_estrcat(char *str1, char *str2)
 {
     size_t len1 = strlen(str1);
     size_t len2 = strlen(str2);
@@ -89,23 +89,8 @@ char *estrcat(char *str1, char *str2)
     return str1;
 }
 
-/* epstrdup: duplicate a string with a format, report if error */
-char *epstrdup(const char *fmt, int len, ...)
-{
-    char *string;
-    va_list args;
-    len += (int) strlen(fmt);
-
-    string = FRT_ALLOC_N(char, len + 1);
-    va_start(args, len);
-    vsprintf(string, fmt, args);
-    va_end(args);
-
-    return string;
-}
-
-/* estrdup: duplicate a string, report if error */
-char *estrdup(const char *s)
+/* frt_estrdup: duplicate a string, report if error */
+char *frt_estrdup(const char *s)
 {
     char *t = FRT_ALLOC_N(char, strlen(s) + 1);
     strcpy(t, s);
@@ -115,16 +100,16 @@ char *estrdup(const char *s)
 /* Pretty print a float to the buffer. The buffer should have at least 32
  * bytes available.
  */
-char *dbl_to_s(char *buf, double num)
+char *frt_dbl_to_s(char *buf, double num)
 {
     char *p, *e;
 
 #ifdef FRT_IS_C99
     if (isinf(num)) {
-        return estrdup(num < 0 ? "-Infinity" : "Infinity");
+        return frt_estrdup(num < 0 ? "-Infinity" : "Infinity");
     }
     else if (isnan(num)) {
-        return estrdup("NaN");
+        return frt_estrdup("NaN");
     }
 #endif
 
@@ -199,7 +184,7 @@ char *vstrfmt(const char *fmt, va_list args)
                 FRT_REALLOC_N(string, char, len);
                 q = string + strlen(string);
                 d = va_arg(args, double);
-                dbl_to_s(q, d);
+                frt_dbl_to_s(q, d);
                 q += strlen(q);
                 continue;
             case 'd':
@@ -234,7 +219,7 @@ char *strfmt(const char *fmt, ...)
     return str;
 }
 
-void dummy_free(void *p)
+void frt_dummy_free(void *p)
 {
     (void)p; /* suppress unused argument warning */
 }

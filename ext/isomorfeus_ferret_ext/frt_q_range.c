@@ -64,7 +64,7 @@ static char *range_to_s(Range *range, FrtSymbol default_field, float boost)
     *b = 0;
     if (boost != 1.0) {
         *b = '^';
-        dbl_to_s(b + 1, boost);
+        frt_dbl_to_s(b + 1, boost);
     }
     return buffer;
 }
@@ -123,8 +123,8 @@ static Range *range_new(FrtSymbol field, const char *lower_term,
     range = FRT_ALLOC(Range);
 
     range->field = field;
-    range->lower_term = lower_term ? estrdup(lower_term) : NULL;
-    range->upper_term = upper_term ? estrdup(upper_term) : NULL;
+    range->lower_term = lower_term ? frt_estrdup(lower_term) : NULL;
+    range->upper_term = upper_term ? frt_estrdup(upper_term) : NULL;
     range->include_lower = include_lower;
     range->include_upper = include_upper;
     return range;
@@ -177,8 +177,8 @@ static Range *trange_new(FrtSymbol field, const char *lower_term,
     range = FRT_ALLOC(Range);
 
     range->field = field;
-    range->lower_term = lower_term ? estrdup(lower_term) : NULL;
-    range->upper_term = upper_term ? estrdup(upper_term) : NULL;
+    range->lower_term = lower_term ? frt_estrdup(lower_term) : NULL;
+    range->upper_term = upper_term ? frt_estrdup(upper_term) : NULL;
     range->include_lower = include_lower;
     range->include_upper = include_upper;
     return range;
@@ -201,7 +201,7 @@ typedef struct RangeFilter
 static void rfilt_destroy_i(FrtFilter *filt)
 {
     range_destroy(RF(filt)->range);
-    filt_destroy_i(filt);
+    frt_filt_destroy_i(filt);
 }
 
 static char *rfilt_to_s(FrtFilter *filt)

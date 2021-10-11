@@ -25,7 +25,7 @@ static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     if (self->boost != 1.0) {
         *bptr = '^';
-        dbl_to_s(++bptr, self->boost);
+        frt_dbl_to_s(++bptr, self->boost);
     }
 
     return buffer;
@@ -152,7 +152,7 @@ FrtQuery *wcq_new(FrtSymbol field, const char *pattern)
     FrtQuery *self = q_new(FrtWildCardQuery);
 
     WCQ(self)->field        = field;
-    WCQ(self)->pattern      = estrdup(pattern);
+    WCQ(self)->pattern      = frt_estrdup(pattern);
     FrtMTQMaxTerms(self)       = FRT_WILD_CARD_QUERY_MAX_TERMS;
 
     self->type              = WILD_CARD_QUERY;

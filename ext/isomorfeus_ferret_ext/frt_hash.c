@@ -126,7 +126,7 @@ FrtHashEntry *h_lookup(FrtHash *self, register const void *key)
     register int i = hash & mask;
     register FrtHashEntry *he = &he0[i];
     register FrtHashEntry *freeslot = NULL;
-    eq_ft eq = self->eq_i;
+    frt_eq_ft eq = self->eq_i;
 
     if (he->key == NULL || he->key == key) {
         he->hash = hash;
@@ -180,8 +180,8 @@ FrtHash *h_new_str(free_ft free_key, free_ft free_value)
     self->eq_i = str_eq;
     self->hash_i = (hash_ft)str_hash;
 
-    self->free_key_i = free_key != NULL ? free_key : &dummy_free;
-    self->free_value_i = free_value != NULL ? free_value : &dummy_free;
+    self->free_key_i = free_key != NULL ? free_key : &frt_dummy_free;
+    self->free_value_i = free_value != NULL ? free_value : &frt_dummy_free;
     self->ref_cnt = 1;
     return self;
 }
@@ -197,7 +197,7 @@ FrtHash *h_new_int(free_ft free_value)
     return self;
 }
 
-FrtHash *h_new(hash_ft hash, eq_ft eq, free_ft free_key, free_ft free_value)
+FrtHash *h_new(hash_ft hash, frt_eq_ft eq, free_ft free_key, free_ft free_value)
 {
     FrtHash *self     = h_new_str(free_key, free_value);
 
@@ -216,7 +216,7 @@ void h_clear(FrtHash *self)
     free_ft free_value = self->free_value_i;
 
     /* Clear all the hash values and keys as necessary */
-    if (free_key != dummy_free || free_value != dummy_free) {
+    if (free_key != frt_dummy_free || free_value != frt_dummy_free) {
         for (i = 0; i <= self->mask; i++) {
             he = &self->table[i];
             if (he->key != NULL && he->key != dummy_key) {

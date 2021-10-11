@@ -12,7 +12,7 @@ void **frt_ary_new_i(int type_size, int init_capa)
     if (init_capa <= 0) {
         init_capa = FRT_ARY_INIT_CAPA;
     }
-    ary = (void **)&(((int *)ecalloc(DATA_SZ +
+    ary = (void **)&(((int *)frt_ecalloc(DATA_SZ +
                                         init_capa * type_size))[META_CNT]);
     frt_ary_type_size(ary) = type_size;
     frt_ary_capa(ary) = init_capa;
@@ -30,7 +30,7 @@ void frt_ary_resize_i(void ***ary, int size)
                 capa <<= 1;
             }
 
-            frt_ary_start = (int *)erealloc(frt_ary_start,
+            frt_ary_start = (int *)frt_erealloc(frt_ary_start,
                                         DATA_SZ + capa * frt_ary_type_size(*ary));
             *ary = (void **)&(frt_ary_start[META_CNT]);
             memset(((char *)*ary) + frt_ary_type_size(*ary) * frt_ary_sz(*ary), 0,

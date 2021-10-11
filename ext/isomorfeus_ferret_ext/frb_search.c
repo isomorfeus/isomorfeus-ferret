@@ -337,7 +337,7 @@ static VALUE
 frb_expl_to_s(VALUE self)
 {
     GET_EXPL();
-    char *str = expl_to_s(expl);
+    char *str = frt_expl_to_s(expl);
     VALUE rstr = rb_str_new2(str);
     free(str);
     return rstr;
@@ -353,7 +353,7 @@ static VALUE
 frb_expl_to_html(VALUE self)
 {
     GET_EXPL();
-    char *str = expl_to_html(expl);
+    char *str = frt_expl_to_html(expl);
     VALUE rstr = rb_str_new2(str);
     free(str);
     return rstr;
@@ -492,7 +492,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
 {
     VALUE rterms = rb_ary_new();
     FrtHashSet *terms = hs_new((hash_ft)&term_hash,
-                            (eq_ft)&term_eq,
+                            (frt_eq_ft)&term_eq,
                             (free_ft)term_destroy);
     FrtHashSetEntry *hse;
     GET_Q();
@@ -1941,7 +1941,7 @@ static void
 frb_f_free(void *p)
 {
     object_del(p);
-    filt_deref((FrtFilter *)p);
+    frt_filt_deref((FrtFilter *)p);
 }
 
 #define GET_F() FrtFilter *f = (FrtFilter *)DATA_PTR(self)
@@ -2692,7 +2692,7 @@ frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
     }
 
     td = sea->search(sea, query, offset, limit, filter, sort, post_filter, 0);
-    if (filter) filt_deref(filter);
+    if (filter) frt_filt_deref(filter);
     return td;
 }
 
@@ -2924,7 +2924,7 @@ frb_sea_explain(VALUE self, VALUE rquery, VALUE rdoc_id)
     FrtExplanation *expl;
     Data_Get_Struct(rquery, FrtQuery, query);
     expl = sea->explain(sea, query, FIX2INT(rdoc_id));
-    return Data_Wrap_Struct(cExplanation, NULL, &expl_destroy, expl);
+    return Data_Wrap_Struct(cExplanation, NULL, &frt_expl_destroy, expl);
 }
 
 /*

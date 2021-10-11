@@ -9,13 +9,13 @@
  *
  ***************************************************************************/
 
-void filt_destroy_i(FrtFilter *filt)
+void frt_filt_destroy_i(FrtFilter *filt)
 {
     h_destroy(filt->cache);
     free(filt);
 }
 
-void filt_deref(FrtFilter *filt)
+void frt_filt_deref(FrtFilter *filt)
 {
     if (--(filt->ref_cnt) == 0) {
         filt->destroy_i(filt);
@@ -40,7 +40,7 @@ FrtBitVector *filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
 
 static char *filt_to_s_i(FrtFilter *filt)
 {
-    return estrdup(filt->name);
+    return frt_estrdup(filt->name);
 }
 
 static unsigned long long filt_hash_default(FrtFilter *filt)
@@ -55,15 +55,15 @@ static int filt_eq_default(FrtFilter *filt, FrtFilter *o)
     return false;
 }
 
-FrtFilter *filt_create(size_t size, FrtSymbol name)
+FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
 {
-    FrtFilter *filt    = (FrtFilter *)emalloc(size);
+    FrtFilter *filt    = (FrtFilter *)frt_emalloc(size);
     filt->cache     = frt_co_hash_create();
     filt->name      = name;
     filt->to_s      = &filt_to_s_i;
     filt->hash      = &filt_hash_default;
     filt->eq        = &filt_eq_default;
-    filt->destroy_i = &filt_destroy_i;
+    filt->destroy_i = &frt_filt_destroy_i;
     filt->ref_cnt   = 1;
     return filt;
 }
@@ -134,7 +134,7 @@ static void qfilt_destroy_i(FrtFilter *filt)
 {
     FrtQuery *query = QF(filt)->query;
     q_deref(query);
-    filt_destroy_i(filt);
+    frt_filt_destroy_i(filt);
 }
 
 FrtFilter *qfilt_new_nr(FrtQuery *query)

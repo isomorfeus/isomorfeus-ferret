@@ -312,7 +312,7 @@ frb_qp_set_fields(VALUE self, VALUE rfields)
     if (qp->tokenized_fields) hs_safe_merge(fields, qp->tokenized_fields);
 
     /* delete old fields set */
-    assert(qp->all_fields->free_elem_i == dummy_free);
+    assert(qp->all_fields->free_elem_i == frt_dummy_free);
     hs_destroy(qp->all_fields);
 
     /* add the new fields set and add to def_fields if necessary */

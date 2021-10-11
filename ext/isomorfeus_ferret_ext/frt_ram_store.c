@@ -10,7 +10,7 @@ static FrtRAMFile *rf_new(const char *name)
     FrtRAMFile *rf = FRT_ALLOC(FrtRAMFile);
     rf->buffers = FRT_ALLOC(uchar *);
     rf->buffers[0] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
-    rf->name = estrdup(name);
+    rf->name = frt_estrdup(name);
     rf->len = 0;
     rf->bufcnt = 1;
     rf->ref_cnt = 1;
@@ -82,7 +82,7 @@ static void ram_rename(FrtStore *store, const char *from, const char *to)
 
     free(rf->name);
 
-    rf->name = estrdup(to);
+    rf->name = frt_estrdup(to);
 
     /* clean up the file we are overwriting */
     tmp = (FrtRAMFile *)h_get(store->dir.ht, to);
@@ -137,7 +137,7 @@ static void ram_clear(FrtStore *store)
     FrtHash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
-        if (rf && !file_is_lock(rf->name)) {
+        if (rf && !frt_file_is_lock(rf->name)) {
             FRT_DEREF(rf);
             h_del(ht, rf->name);
         }
@@ -150,7 +150,7 @@ static void ram_clear_locks(FrtStore *store)
     FrtHash *ht = store->dir.ht;
     for (i = 0; i <= ht->mask; i++) {
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
-        if (rf && file_is_lock(rf->name)) {
+        if (rf && frt_file_is_lock(rf->name)) {
             FRT_DEREF(rf);
             h_del(ht, rf->name);
         }
@@ -404,7 +404,7 @@ static FrtLock *ram_open_lock_i(FrtStore *store, const char *lockname)
     FrtLock *lock = FRT_ALLOC(FrtLock);
     char lname[100];
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
-    lock->name = estrdup(lname);
+    lock->name = frt_estrdup(lname);
     lock->store = store;
     lock->obtain = &ram_lock_obtain;
     lock->release = &ram_lock_release;
