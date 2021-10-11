@@ -1917,7 +1917,7 @@ frb_iw_set_use_compound_file(VALUE self, VALUE rval)
 static void
 frb_lzd_data_free(void *p)
 {
-    lazy_doc_close((FrtLazyDoc *)p);
+    frt_lazy_doc_close((FrtLazyDoc *)p);
 }
 
 static VALUE
@@ -1926,13 +1926,13 @@ frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df)
     VALUE rdata = Qnil;
     if (lazy_df) {
         if (lazy_df->size == 1) {
-            char *data = lazy_df_get_data(lazy_df, 0);
+            char *data = frt_lazy_df_get_data(lazy_df, 0);
             rdata = rb_str_new(data, lazy_df->len);
         } else {
             int i;
             rdata = rb_ary_new2(lazy_df->size);
             for (i = 0; i < lazy_df->size; i++) {
-                char *data = lazy_df_get_data(lazy_df, i);
+                char *data = frt_lazy_df_get_data(lazy_df, i);
                 rb_ary_store(rdata, i, rb_str_new(data, lazy_df->data[i].length));
             }
         }
@@ -1955,7 +1955,7 @@ frb_lzd_default(VALUE self, VALUE rkey)
     FrtSymbol field = frb_field(rkey);
     VALUE rfield = ID2SYM(rb_intern(field));
 
-    return frb_lazy_df_load(self, rfield, lazy_doc_get(lazy_doc, field));
+    return frb_lazy_df_load(self, rfield, frt_lazy_doc_get(lazy_doc, field));
 }
 
 /*

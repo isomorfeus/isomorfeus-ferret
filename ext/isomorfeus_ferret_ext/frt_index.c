@@ -1178,7 +1178,7 @@ static void lazy_df_destroy(FrtLazyDocField *self)
     free(self);
 }
 
-char *lazy_df_get_data(FrtLazyDocField *self, int i)
+char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
 {
     char *text = NULL;
     if (i < self->size && i >= 0) {
@@ -1195,7 +1195,7 @@ char *lazy_df_get_data(FrtLazyDocField *self, int i)
     return text;
 }
 
-void lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
+void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
 {
     if (start < 0 || start >= self->len) {
         rb_raise(rb_eIOError, "start out of range in LazyDocField#get_bytes. %d "
@@ -1230,7 +1230,7 @@ static FrtLazyDoc *lazy_doc_new(int size, FrtInStream *fdt_in)
     return self;
 }
 
-void lazy_doc_close(FrtLazyDoc *self)
+void frt_lazy_doc_close(FrtLazyDoc *self)
 {
     h_destroy(self->field_dictionary);
     is_close(self->fields_in);
@@ -2187,7 +2187,7 @@ FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *term)
     mte->tis            = FRT_ALLOC_AND_ZERO_N(FrtTermInfo, r_cnt);
     mte->ti_indexes     = FRT_ALLOC_AND_ZERO_N(int, r_cnt);
     mte->tews           = FRT_ALLOC_AND_ZERO_N(TermEnumWrapper, r_cnt);
-    mte->tew_queue      = frt_pq_new(r_cnt, (lt_ft)&tew_lt, (free_ft)NULL);
+    mte->tew_queue      = frt_pq_new(r_cnt, (frt_lt_ft)&tew_lt, (free_ft)NULL);
     mte->field_num_map  = mr->field_num_map;
 
     for (i = 0; i < r_cnt; i++) {
@@ -3193,7 +3193,7 @@ FrtTermDocEnum *frt_mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, i
     FrtTermDocEnum *tde = TDE(mtdpe);
     FrtPriorityQueue *pq;
 
-    pq = mtdpe->pq = frt_pq_new(t_cnt, (lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
+    pq = mtdpe->pq = frt_pq_new(t_cnt, (frt_lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
     mtdpe->pos_queue_capa = MTDPE_POS_QUEUE_INIT_CAPA;
     mtdpe->pos_queue = FRT_ALLOC_N(int, MTDPE_POS_QUEUE_INIT_CAPA);
     mtdpe->field_num = field_num;
@@ -5679,7 +5679,7 @@ static void sm_merge_terms(SegmentMerger *sm)
     sm->term_buf_size = (sm->config->index_interval + 1) * FRT_MAX_WORD_SIZE;
     sm->term_buf = FRT_ALLOC_N(char, sm->term_buf_size + FRT_MAX_WORD_SIZE);
 
-    sm->queue = frt_pq_new(sm->seg_cnt, (lt_ft)&smi_lt, NULL);
+    sm->queue = frt_pq_new(sm->seg_cnt, (frt_lt_ft)&smi_lt, NULL);
 
     sm_merge_term_infos(sm);
 

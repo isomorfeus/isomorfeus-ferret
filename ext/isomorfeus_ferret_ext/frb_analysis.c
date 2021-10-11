@@ -841,7 +841,7 @@ lower = (argc ? RTEST(rlower) : dflt)
 static VALUE
 frb_a_letter_tokenizer_init(VALUE self, VALUE rstr)
 {
-    return get_wrapped_ts(self, rstr, letter_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_letter_tokenizer_new());
 }
 
 /*
@@ -941,7 +941,7 @@ static VALUE
 frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
     FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = lowercase_filter_new(ts);
+    ts = frt_lowercase_filter_new(ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1336,7 +1336,7 @@ frb_a_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(true);
-    a = letter_analyzer_new(lower);
+    a = frt_letter_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;

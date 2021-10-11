@@ -443,7 +443,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     PhPos *pp;
-    FrtPriorityQueue *pq = frt_pq_new(phsc->pp_cnt, (lt_ft)&pp_less_than, NULL);
+    FrtPriorityQueue *pq = frt_pq_new(phsc->pp_cnt, (frt_lt_ft)&pp_less_than, NULL);
     const int pp_cnt = phsc->pp_cnt;
 
     int last_pos = 0, pos, next_pos, start, match_length, i;
@@ -761,7 +761,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
                                  int offset)
 {
     int i, total_positions = 0;
-    FrtPriorityQueue *tvpe_pq = frt_pq_new(t_cnt, (lt_ft)tvpe_lt, &free);
+    FrtPriorityQueue *tvpe_pq = frt_pq_new(t_cnt, (frt_lt_ft)tvpe_lt, &free);
     TVPosEnum *self = NULL;
 
     for (i = 0; i < t_cnt; i++) {
@@ -827,7 +827,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         bool done = false;
 
         if (slop > 0) {
-            FrtPriorityQueue *tvpe_pq = frt_pq_new(pos_cnt, (lt_ft)tvpe_lt, &free);
+            FrtPriorityQueue *tvpe_pq = frt_pq_new(pos_cnt, (frt_lt_ft)tvpe_lt, &free);
             int last_pos = 0;
             for (i = 0; i < pos_cnt; i++) {
                 FrtPhrasePosition *pp = &(PhQ(self)->positions[i]);

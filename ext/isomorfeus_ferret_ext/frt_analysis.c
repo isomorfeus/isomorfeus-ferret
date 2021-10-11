@@ -348,7 +348,7 @@ FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase)
 {
     FrtTokenStream *ts;
     if (lowercase) {
-        ts = lowercase_filter_new(frt_whitespace_tokenizer_new());
+        ts = frt_lowercase_filter_new(frt_whitespace_tokenizer_new());
     }
     else {
         ts = frt_whitespace_tokenizer_new();
@@ -392,7 +392,7 @@ static FrtToken *lt_next(FrtTokenStream *ts)
     return tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
 
-FrtTokenStream *letter_tokenizer_new()
+FrtTokenStream *frt_letter_tokenizer_new()
 {
     FrtTokenStream *ts = cts_new();
     ts->next = &lt_next;
@@ -482,14 +482,14 @@ FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
 /*
  * LetterAnalyzers
  */
-FrtAnalyzer *letter_analyzer_new(bool lowercase)
+FrtAnalyzer *frt_letter_analyzer_new(bool lowercase)
 {
     FrtTokenStream *ts;
     if (lowercase) {
-        ts = lowercase_filter_new(letter_tokenizer_new());
+        ts = frt_lowercase_filter_new(frt_letter_tokenizer_new());
     }
     else {
-        ts = letter_tokenizer_new();
+        ts = frt_letter_tokenizer_new();
     }
     return frt_analyzer_new(ts, NULL, NULL);
 }
@@ -995,7 +995,7 @@ static FrtTokenStream *legacy_std_ts_new()
     return ts;
 }
 
-FrtTokenStream *legacy_standard_tokenizer_new()
+FrtTokenStream *frt_legacy_standard_tokenizer_new()
 {
     FrtTokenStream *ts = legacy_std_ts_new();
 
@@ -1338,7 +1338,7 @@ static FrtToken *lcf_next(FrtTokenStream *ts)
     return tk;
 }
 
-FrtTokenStream *lowercase_filter_new(FrtTokenStream *sub_ts)
+FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts)
 {
     FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts);
     ts->next = &lcf_next;
@@ -1450,7 +1450,7 @@ FrtAnalyzer *frt_standard_analyzer_new_with_words_len(const char **words, int le
 {
     FrtTokenStream *ts = frt_standard_tokenizer_new();
     if (lowercase) {
-        ts = lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts);
     }
     ts = hyphen_filter_new(frt_stop_filter_new_with_words_len(ts, words, len));
     return frt_analyzer_new(ts, NULL, NULL);
@@ -1461,7 +1461,7 @@ FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words,
 {
     FrtTokenStream *ts = frt_standard_tokenizer_new();
     if (lowercase) {
-        ts = lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts);
     }
     ts = hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
     return frt_analyzer_new(ts, NULL, NULL);
@@ -1511,23 +1511,12 @@ FrtAnalyzer *frt_utf8_standard_analyzer_new(bool lowercase)
  * Legacy
  ****************************************************************************/
 
-FrtAnalyzer *legacy_standard_analyzer_new_with_words_len(const char **words, int len,
-                                                      bool lowercase)
-{
-    FrtTokenStream *ts = legacy_standard_tokenizer_new();
-    if (lowercase) {
-        ts = lowercase_filter_new(ts);
-    }
-    ts = hyphen_filter_new(frt_stop_filter_new_with_words_len(ts, words, len));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
-FrtAnalyzer *legacy_standard_analyzer_new_with_words(const char **words,
+FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words,
                                                   bool lowercase)
 {
-    FrtTokenStream *ts = legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = frt_legacy_standard_tokenizer_new();
     if (lowercase) {
-        ts = lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts);
     }
     ts = hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
     return frt_analyzer_new(ts, NULL, NULL);
@@ -1544,9 +1533,9 @@ FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(const char **words,
     return frt_analyzer_new(ts, NULL, NULL);
 }
 
-FrtAnalyzer *legacy_standard_analyzer_new(bool lowercase)
+FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase)
 {
-    return legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
+    return frt_legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                    lowercase);
 }
 

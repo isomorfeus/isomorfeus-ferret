@@ -213,9 +213,9 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
         const char *value = "";
         size_t value_len = 0;
         FrtLazyDoc *lzd = sea->get_lazy_doc(sea, doc_id);
-        FrtLazyDocField *lzdf = lazy_doc_get(lzd, field);
+        FrtLazyDocField *lzdf = frt_lazy_doc_get(lzd, field);
         if (NULL != lzdf) {
-            value = lazy_df_get_data(lzdf, 0);
+            value = frt_lazy_df_get_data(lzdf, 0);
             value_len = strlen(value);
         }
         if (p + value_len + 64 > capa) {
@@ -226,7 +226,7 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
         sprintf(str + p, "\t%d \"%s\": %0.5f\n", doc_id, value,
                 NUM2DBL(rb_funcall(rhit, id_score, 0)));
         p += strlen(str + p);
-        lazy_doc_close(lzd);
+        frt_lazy_doc_close(lzd);
     }
 
     sprintf(str + p, "]\n");
@@ -272,7 +272,7 @@ frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
         if (f->size > 1)  *(s++) = '[';
 		for (j = 0; j < f->size; j++) {
 			if (j) *(s++) = ',';
-			s = json_concat_string(s, lazy_df_get_data(f, j));
+			s = json_concat_string(s, frt_lazy_df_get_data(f, j));
 		}
         if (f->size > 1)  *(s++) = ']';
 	}
@@ -308,7 +308,7 @@ frb_td_to_json(VALUE self)
 		doc_id = FIX2INT(rb_funcall(rhit, id_doc, 0));
 		lzd = sea->get_lazy_doc(sea, doc_id);
 		s = frb_lzd_load_to_json(lzd, &str, s, &len);
-        lazy_doc_close(lzd);
+        frt_lazy_doc_close(lzd);
         *(s++) = '}';
 	}
     *(s++) = ']';

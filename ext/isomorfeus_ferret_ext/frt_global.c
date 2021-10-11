@@ -57,13 +57,6 @@ unsigned int *imalloc(unsigned int value)
   return p;
 }
 
-unsigned long *lmalloc(unsigned long value)
-{
-  unsigned long *p = FRT_ALLOC(unsigned long);
-  *p = value;
-  return p;
-}
-
 /* concatenate two strings freeing the second */
 char *frt_estrcat(char *str1, char *str2)
 {
@@ -230,7 +223,7 @@ static char *build_shell_command()
 /**
  * Call out to gdb to get our stacktrace.
  */
-char *get_stacktrace()
+char *frt_get_stacktrace()
 {
 #ifdef HAVE_GDB
     FILE *stream;
@@ -268,7 +261,7 @@ char *get_stacktrace()
 
 void frt_print_stacktrace()
 {
-    char *stack = get_stacktrace();
+    char *stack = frt_get_stacktrace();
 
     fprintf(EXCEPTION_STREAM, "Stack trace:\n%s",
             stack ? stack : "Not available\n");

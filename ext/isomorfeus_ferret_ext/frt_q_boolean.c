@@ -75,7 +75,7 @@ static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc)
     int i;
     FrtScorer *sub_scorer;
     FrtPriorityQueue *pq = dssc->scorer_queue
-        = frt_pq_new(dssc->ss_cnt, (lt_ft)&frt_scorer_doc_less_than, NULL);
+        = frt_pq_new(dssc->ss_cnt, (frt_lt_ft)&frt_scorer_doc_less_than, NULL);
 
     for (i = 0; i < dssc->ss_cnt; i++) {
         sub_scorer = dssc->sub_scorers[i];

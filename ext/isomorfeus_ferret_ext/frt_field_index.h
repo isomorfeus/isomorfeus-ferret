@@ -37,8 +37,5 @@ extern const FrtFieldIndexClass    FRT_BYTE_FIELD_INDEX_CLASS;
 
 extern FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
                                    const FrtFieldIndexClass *klass);
-extern const char *frt_get_string_value(FrtFieldIndex *field_index, long doc_num);
-extern float frt_get_float_value(FrtFieldIndex *field_index, long doc_num);
-extern long frt_get_integer_value(FrtFieldIndex *field_index, long doc_num);
 
 #endif

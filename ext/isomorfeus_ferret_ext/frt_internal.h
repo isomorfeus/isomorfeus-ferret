@@ -43,10 +43,6 @@
 #define fw_close                                       frt_fw_close
 #define fw_open                                        frt_fw_open
 #define fw_write_tv_index                              frt_fw_write_tv_index
-#define get_float_value                                frt_get_float_value
-#define get_integer_value                              frt_get_integer_value
-#define get_stacktrace                                 frt_get_stacktrace
-#define get_string_value                               frt_get_string_value
 #define h_clear                                        frt_h_clear
 #define h_clone                                        frt_h_clone
 #define h_clone_ft                                     frt_h_clone_ft
@@ -175,18 +171,5 @@
 #define iw_doc_count                                   frt_iw_doc_count
 #define iw_open                                        frt_iw_open
 #define iw_optimize                                    frt_iw_optimize
-#define lazy_df_get_bytes                              frt_lazy_df_get_bytes
-#define lazy_df_get_data                               frt_lazy_df_get_data
-#define lazy_doc_close                                 frt_lazy_doc_close
-#define lazy_doc_get                                   frt_lazy_doc_get
-#define legacy_standard_analyzer_new                   frt_legacy_standard_analyzer_new
-#define legacy_standard_analyzer_new_with_words        frt_legacy_standard_analyzer_new_with_words
-#define legacy_standard_analyzer_new_with_words_len    frt_legacy_standard_analyzer_new_with_words_len
-#define legacy_standard_tokenizer_new                  frt_legacy_standard_tokenizer_new
-#define letter_analyzer_new                            frt_letter_analyzer_new
-#define letter_tokenizer_new                           frt_letter_tokenizer_new
-#define lmalloc                                        frt_lmalloc
-#define lowercase_filter_new                           frt_lowercase_filter_new
-#define lt_ft                                          frt_lt_ft
 
 #endif

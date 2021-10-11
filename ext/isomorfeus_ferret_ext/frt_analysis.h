@@ -223,8 +223,6 @@ extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new(bool lowercase);
 
 extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
-extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words_len(
-    const char **words, int len, bool lowercase);
 extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
 

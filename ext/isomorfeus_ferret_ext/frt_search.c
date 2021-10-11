@@ -722,14 +722,14 @@ static char *excerpt_get_str(Excerpt *e, FrtMatchVector *mv,
         FrtMatchRange *mr = mv->matches + i;
         len = mr->start_offset - last_offset;
         if (len) {
-            lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
+            frt_lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
             e_ptr += len;
         }
         memcpy(e_ptr, pre_tag, pre_tag_len);
         e_ptr += pre_tag_len;
         len = mr->end_offset - mr->start_offset;
         if (len) {
-            lazy_df_get_bytes(lazy_df, e_ptr, mr->start_offset, len);
+            frt_lazy_df_get_bytes(lazy_df, e_ptr, mr->start_offset, len);
             e_ptr += len;
         }
         memcpy(e_ptr, post_tag, post_tag_len);
@@ -742,7 +742,7 @@ static char *excerpt_get_str(Excerpt *e, FrtMatchVector *mv,
     }
     len = e->end_offset - last_offset;
     if (len) {
-        lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
+        frt_lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
         e_ptr += len;
     }
     if (e->end_offset < lazy_df->len) {
@@ -773,14 +773,14 @@ static char *highlight_field(FrtMatchVector *mv,
             FrtMatchRange *mr = mv->matches + i;
             len = mr->start_offset - last_offset;
             if (len) {
-                lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
+                frt_lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
                 e_ptr += len;
             }
             memcpy(e_ptr, pre_tag, pre_len);
             e_ptr += pre_len;
             len = mr->end_offset - mr->start_offset;
             if (len) {
-                lazy_df_get_bytes(lazy_df, e_ptr, mr->start_offset, len);
+                frt_lazy_df_get_bytes(lazy_df, e_ptr, mr->start_offset, len);
                 e_ptr += len;
             }
             memcpy(e_ptr, post_tag, post_len);
@@ -789,13 +789,13 @@ static char *highlight_field(FrtMatchVector *mv,
         }
         len = lazy_df->len - last_offset;
         if (len) {
-            lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
+            frt_lazy_df_get_bytes(lazy_df, e_ptr, last_offset, len);
             e_ptr += len;
         }
         *e_ptr = '\0';
     }
     else {
-        lazy_df_get_bytes(lazy_df, excerpt_str, 0, lazy_df->len);
+        frt_lazy_df_get_bytes(lazy_df, excerpt_str, 0, lazy_df->len);
         excerpt_str[lazy_df->len] = '\0';
     }
     return excerpt_str;
@@ -816,7 +816,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
     FrtLazyDoc *lazy_doc = self->get_lazy_doc(self, doc_num);
     FrtLazyDocField *lazy_df = NULL;
     if (lazy_doc) {
-        lazy_df = lazy_doc_get(lazy_doc, field);
+        lazy_df = frt_lazy_doc_get(lazy_doc, field);
     }
     if (tv && lazy_df && tv->term_cnt > 0 && tv->terms[0].positions != NULL
         && tv->offsets != NULL) {
@@ -839,7 +839,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
 
             frt_matchv_compact_with_breaks(mv);
             matchv_set_offsets(mv, offsets);
-            excerpt_pq = frt_pq_new(mv->size, (lt_ft)&excerpt_lt, &free);
+            excerpt_pq = frt_pq_new(mv->size, (frt_lt_ft)&excerpt_lt, &free);
             /* add all possible excerpts to the priority queue */
 
             for (e_start = e_end = 0; e_start < mv->size; e_start++) {
@@ -927,7 +927,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
         frt_matchv_destroy(mv);
     }
     if (tv) frt_tv_destroy(tv);
-    if (lazy_doc) lazy_doc_close(lazy_doc);
+    if (lazy_doc) frt_lazy_doc_close(lazy_doc);
     return excerpt_strs;
 }
 
@@ -1032,7 +1032,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
             hq_pop = &fshq_pq_pop;
         }
     } else {
-        hq = frt_pq_new(max_size, (lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_less_than, &free);
         hq_pop = &hit_pq_pop;
         hq_insert = &hit_pq_insert;
         hq_destroy = &frt_pq_destroy;
@@ -1650,11 +1650,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = frt_pq_new(max_size, (lt_ft)frt_fdshq_lt, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)frt_fdshq_lt, &free);
         hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&frt_pq_insert;
         hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&frt_pq_pop;
     } else {
-        hq = frt_pq_new(max_size, (lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_less_than, &free);
         hq_insert = &hit_pq_multi_insert;
         hq_pop = &hit_pq_pop;
     }
