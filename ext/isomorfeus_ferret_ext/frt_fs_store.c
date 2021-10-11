@@ -240,7 +240,7 @@ static off_t fs_length(FrtStore *store, const char *filename)
     return stt.st_size;
 }
 
-static void fso_flush_i(FrtOutStream *os, const uchar *src, int len)
+static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
     if (len != write(os->file.fd, src, len)) {
         rb_raise(rb_eIOError, "flushing src of length %d, <%s>", len,
@@ -286,7 +286,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
     return os;
 }
 
-static void fsi_read_i(FrtInStream *is, uchar *path, int len)
+static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 {
     int fd = is->file.fd;
     off_t pos = is_pos(is);

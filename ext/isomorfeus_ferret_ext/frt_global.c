@@ -16,10 +16,10 @@
 
 const char *FRT_EMPTY_STRING = "";
 
-bool  x_do_logging = false;
-bool  x_abort_on_exception = true;
-bool  x_has_aborted = false;
-FILE *x_exception_stream = NULL;
+bool  frt_x_do_logging = false;
+bool  frt_x_abort_on_exception = true;
+bool  frt_x_has_aborted = false;
+FILE *frt_x_exception_stream = NULL;
 
 int scmp(const void *p1, const void *p2)
 {
@@ -146,7 +146,7 @@ char *strapp(char *dst, const char *src) {
 }
 
 /* strfmt: like sprintf except that it allocates memory for the string */
-char *vstrfmt(const char *fmt, va_list args)
+char *frt_vstrfmt(const char *fmt, va_list args)
 {
     char *string;
     char *p = (char *) fmt, *q;
@@ -214,7 +214,7 @@ char *strfmt(const char *fmt, ...)
     va_list args;
     char *str;
     va_start(args, fmt);
-    str = vstrfmt(fmt, args);
+    str = frt_vstrfmt(fmt, args);
     va_end(args);
     return str;
 }
@@ -313,23 +313,6 @@ void register_for_cleanup(void *p, free_ft free_func)
     free_me = free_mes + free_mes_size++;
     free_me->p = p;
     free_me->free_func = free_func;
-}
-
-/* weprintf: print error message and don't exit */
-void weprintf(const char *fmt, ...)
-{
-    va_list args;
-
-    fflush(stdout);
-    fprintf(stderr, "%s: ", progname());
-
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    if (fmt[0] != '\0' && fmt[strlen(fmt) - 1] == ':')
-        fprintf(stderr, " %s", strerror(errno));
-    fprintf(stderr, "\n");
 }
 
 #define MAX_PROG_NAME 200

@@ -2162,7 +2162,7 @@ static VALUE
 frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (uchar)NUM2CHR(rval));
+    ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (frt_uchar)NUM2CHR(rval));
     return self;
 }
 
@@ -2178,7 +2178,7 @@ static VALUE
 frb_ir_norms(VALUE self, VALUE rfield)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    uchar *norms;
+    frt_uchar *norms;
     norms = ir_get_norms(ir, frb_field(rfield));
     if (norms) {
         return rb_str_new((char *)norms, ir->max_doc(ir));
@@ -2208,7 +2208,7 @@ frb_ir_get_norms_into(VALUE self, VALUE rfield, VALUE rnorms, VALUE roffset)
     }
 
     ir_get_norms_into(ir, frb_field(rfield),
-                      (uchar *)rs2s(rnorms) + offset);
+                      (frt_uchar *)rs2s(rnorms) + offset);
     return rnorms;
 }
 

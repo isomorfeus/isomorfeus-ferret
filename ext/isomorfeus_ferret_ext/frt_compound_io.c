@@ -120,7 +120,7 @@ static off_t cmpdi_length_i(FrtInStream *is)
 /*
  * raises: FRT_EOF_ERROR
  */
-static void cmpdi_read_i(FrtInStream *is, uchar *b, int len)
+static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len)
 {
     FrtCompoundInStream *cis = is->d.cis;
     off_t start = is_pos(is);
@@ -300,7 +300,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     off_t start_ptr = os_pos(os);
     off_t end_ptr;
     off_t remainder, length, len;
-    uchar buffer[FRT_BUFFER_SIZE];
+    frt_uchar buffer[FRT_BUFFER_SIZE];
 
     FrtInStream *is = cw->store->open_input(cw->store, src->name);
 

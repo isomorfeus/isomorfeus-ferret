@@ -8,33 +8,6 @@
 
 extern VALUE cLockError;
 
-/*
- * TODO: add try finally
- */
-void with_lock(FrtLock *lock, void (*func)(void *arg), void *arg)
-{
-    if (!lock->obtain(lock)) {
-        rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
-    }
-    func(arg);
-    lock->release(lock);
-}
-
-/*
- * TODO: add try finally
- */
-void with_lock_name(FrtStore *store, const char *lock_name,
-                    void (*func)(void *arg), void *arg)
-{
-    FrtLock *lock = store->open_lock_i(store, lock_name);
-    if (!lock->obtain(lock)) {
-        rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
-    }
-    func(arg);
-    lock->release(lock);
-    store->close_lock_i(lock);
-}
-
 void store_deref(FrtStore *store)
 {
     mutex_lock(&store->mutex_i);
@@ -138,7 +111,7 @@ void os_seek(FrtOutStream *os, off_t new_pos)
  * Unsafe alternative to os_write_byte. Only use this method if you know there
  * is no chance of buffer overflow.
  */
-#define write_byte(os, b) os->buf.buf[os->buf.pos++] = (uchar)b
+#define write_byte(os, b) os->buf.buf[os->buf.pos++] = (frt_uchar)b
 
 /**
  * Write a single byte +b+ to the OutStream +os+
@@ -147,7 +120,7 @@ void os_seek(FrtOutStream *os, off_t new_pos)
  * @param b  the byte to write
  * @raise FRT_IO_ERROR if there is an IO error writing to the filesystem
  */
-void os_write_byte(FrtOutStream *os, uchar b)
+void os_write_byte(FrtOutStream *os, frt_uchar b)
 {
     if (os->buf.pos >= FRT_BUFFER_SIZE) {
         os_flush(os);
@@ -155,7 +128,7 @@ void os_write_byte(FrtOutStream *os, uchar b)
     write_byte(os, b);
 }
 
-void os_write_bytes(FrtOutStream *os, const uchar *buf, int len)
+void os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
 {
     if (os->buf.pos > 0) {      /* flush buffer */
         os_flush(os);
@@ -241,7 +214,7 @@ static void is_refill(FrtInStream *is)
  * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-uchar is_read_byte(FrtInStream *is)
+frt_uchar is_read_byte(FrtInStream *is)
 {
     if (is->buf.pos >= is->buf.len) {
         is_refill(is);
@@ -255,7 +228,7 @@ off_t is_pos(FrtInStream *is)
     return is->buf.start + is->buf.pos;
 }
 
-uchar *is_read_bytes(FrtInStream *is, uchar *buf, int len)
+frt_uchar *is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
 {
     int i;
     off_t start;
@@ -506,42 +479,42 @@ char *is_read_string_safe(FrtInStream *is)
 
 void os_write_i32(FrtOutStream *os, i32 num)
 {
-    os_write_byte(os, (uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (uchar)(num & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 void os_write_i64(FrtOutStream *os, i64 num)
 {
-    os_write_byte(os, (uchar)((num >> 56) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 48) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 40) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 32) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (uchar)(num & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 void os_write_u32(FrtOutStream *os, u32 num)
 {
-    os_write_byte(os, (uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (uchar)(num & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 void os_write_u64(FrtOutStream *os, u64 num)
 {
-    os_write_byte(os, (uchar)((num >> 56) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 48) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 40) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 32) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (uchar)(num & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 /* optimized to use an unchecked write if there is space */
@@ -549,17 +522,17 @@ void os_write_vint(FrtOutStream *os, register unsigned int num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (uchar)(num));
+        os_write_byte(os, (frt_uchar)(num));
     }
     else {
         while (num > 127) {
-            write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        write_byte(os, (uchar)(num));
+        write_byte(os, (frt_uchar)(num));
     }
 }
 
@@ -568,17 +541,17 @@ void os_write_voff_t(FrtOutStream *os, register off_t num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (uchar)num);
+        os_write_byte(os, (frt_uchar)num);
     }
     else {
         while (num > 127) {
-            write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        write_byte(os, (uchar)num);
+        write_byte(os, (frt_uchar)num);
     }
 }
 
@@ -587,24 +560,24 @@ void os_write_vll(FrtOutStream *os, register u64 num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (uchar)num);
+        os_write_byte(os, (frt_uchar)num);
     }
     else {
         while (num > 127) {
-            write_byte(os, (uchar)((num & 0x7f) | 0x80));
+            write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        write_byte(os, (uchar)num);
+        write_byte(os, (frt_uchar)num);
     }
 }
 
 void os_write_string_len(FrtOutStream *os, const char *str, int len)
 {
     os_write_vint(os, len);
-    os_write_bytes(os, (uchar *)str, len);
+    os_write_bytes(os, (frt_uchar *)str, len);
 }
 void os_write_string(FrtOutStream *os, const char *str)
 {
@@ -627,7 +600,7 @@ int frt_file_is_lock(const char *filename)
 void is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
 {
     int len;
-    uchar buf[FRT_BUFFER_SIZE];
+    frt_uchar buf[FRT_BUFFER_SIZE];
 
     for (; cnt > 0; cnt -= FRT_BUFFER_SIZE) {
         len = ((cnt > FRT_BUFFER_SIZE) ? FRT_BUFFER_SIZE : cnt);
@@ -638,7 +611,7 @@ void is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
 
 void is2os_copy_vints(FrtInStream *is, FrtOutStream *os, int cnt)
 {
-    uchar b;
+    frt_uchar b;
     for (; cnt > 0; cnt--) {
         while (((b = is_read_byte(is)) & 0x80) != 0) {
             os_write_byte(os, b);

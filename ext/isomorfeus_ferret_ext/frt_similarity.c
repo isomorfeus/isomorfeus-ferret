@@ -105,12 +105,12 @@ static float simdef_coord(struct FrtSimilarity *s, int overlap, int max_overlap)
     return (float)((double)overlap / (double)max_overlap);
 }
 
-static float simdef_decode_norm(struct FrtSimilarity *s, uchar b)
+static float simdef_decode_norm(struct FrtSimilarity *s, frt_uchar b)
 {
     return s->norm_table[b];
 }
 
-static uchar simdef_encode_norm(struct FrtSimilarity *s, float f)
+static frt_uchar simdef_encode_norm(struct FrtSimilarity *s, float f)
 {
     (void)s;
     return float2byte(f);

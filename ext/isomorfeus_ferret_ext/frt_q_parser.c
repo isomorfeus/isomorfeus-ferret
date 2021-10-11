@@ -2507,7 +2507,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
         pattern[len - 1] = '*';
     }
     else {
-        q = wcq_new(field, pattern);
+        q = frt_wcq_new(field, pattern);
     }
     FrtMTQMaxTerms(q) = qp->max_clauses;
     return q;

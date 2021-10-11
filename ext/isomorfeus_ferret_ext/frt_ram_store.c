@@ -8,8 +8,8 @@ extern VALUE cFileNotFoundError;
 static FrtRAMFile *rf_new(const char *name)
 {
     FrtRAMFile *rf = FRT_ALLOC(FrtRAMFile);
-    rf->buffers = FRT_ALLOC(uchar *);
-    rf->buffers[0] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
+    rf->buffers = FRT_ALLOC(frt_uchar *);
+    rf->buffers[0] = FRT_ALLOC_N(frt_uchar, FRT_BUFFER_SIZE);
     rf->name = frt_estrdup(name);
     rf->len = 0;
     rf->bufcnt = 1;
@@ -20,8 +20,8 @@ static FrtRAMFile *rf_new(const char *name)
 static void rf_extend_if_necessary(FrtRAMFile *rf, int buf_num)
 {
     while (rf->bufcnt <= buf_num) {
-        FRT_REALLOC_N(rf->buffers, uchar *, (rf->bufcnt + 1));
-        rf->buffers[rf->bufcnt++] = FRT_ALLOC_N(uchar, FRT_BUFFER_SIZE);
+        FRT_REALLOC_N(rf->buffers, frt_uchar *, (rf->bufcnt + 1));
+        rf->buffers[rf->bufcnt++] = FRT_ALLOC_N(frt_uchar, FRT_BUFFER_SIZE);
     }
 }
 
@@ -186,9 +186,9 @@ off_t ramo_length(FrtOutStream *os)
     return os->file.rf->len;
 }
 
-static void ramo_flush_i(FrtOutStream *os, const uchar *src, int len)
+static void ramo_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
-    uchar *buffer;
+    frt_uchar *buffer;
     FrtRAMFile *rf = os->file.rf;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
     int src_offset;
@@ -294,7 +294,7 @@ static FrtOutStream *ram_new_output(FrtStore *store, const char *filename)
     return os;
 }
 
-static void rami_read_i(FrtInStream *is, uchar *b, int len)
+static void rami_read_i(FrtInStream *is, frt_uchar *b, int len)
 {
     FrtRAMFile *rf = is->file.rf;
 
@@ -302,7 +302,7 @@ static void rami_read_i(FrtInStream *is, uchar *b, int len)
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
     int remainder = len;
     off_t start = is->d.pointer;
-    uchar *buffer;
+    frt_uchar *buffer;
 
     while (remainder > 0) {
         buffer_number = (int) (start / FRT_BUFFER_SIZE);
@@ -453,7 +453,7 @@ static void copy_files(const char *fname, void *arg)
     FrtOutStream *os = cfa->to_store->new_output(cfa->to_store, fname);
     FrtInStream *is = cfa->from_store->open_input(cfa->from_store, fname);
     int len = (int)is_length(is);
-    uchar *buffer = FRT_ALLOC_N(uchar, len + 1);
+    frt_uchar *buffer = FRT_ALLOC_N(frt_uchar, len + 1);
 
     is_read_bytes(is, buffer, len);
     os_write_bytes(os, buffer, len);

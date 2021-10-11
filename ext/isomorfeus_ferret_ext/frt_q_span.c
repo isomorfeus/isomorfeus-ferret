@@ -190,7 +190,7 @@ typedef struct SpanScorer
     FrtIndexReader    *ir;
     FrtSpanEnum       *spans;
     FrtSimilarity     *sim;
-    uchar          *norms;
+    frt_uchar          *norms;
     FrtWeight         *weight;
     float           value;
     float           freq;
@@ -1396,7 +1396,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
     FrtScorer *scorer;
-    uchar *field_norms;
+    frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
     const char *field = SpQ(self->query)->field;
@@ -1496,7 +1496,7 @@ static char *spanw_to_s(FrtWeight *self)
 static void spanw_destroy(FrtWeight *self)
 {
     hs_destroy(SpW(self)->terms);
-    w_destroy(self);
+    frt_w_destroy(self);
 }
 
 static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)

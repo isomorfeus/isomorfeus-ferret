@@ -165,7 +165,7 @@ typedef struct PhraseScorer
     FrtScorer  super;
     float (*phrase_freq)(FrtScorer *self);
     float   freq;
-    uchar  *norms;
+    frt_uchar  *norms;
     float   value;
     FrtWeight *weight;
     PhPos **phrase_pos;
@@ -301,7 +301,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
                         FrtTermDocEnum **term_pos_enum,
                         FrtPhrasePosition *positions, int pos_cnt,
                         FrtSimilarity *similarity,
-                        uchar *norms,
+                        frt_uchar *norms,
                         int slop)
 {
     int i;
@@ -401,7 +401,7 @@ static float ephsc_phrase_freq(FrtScorer *self)
 static FrtScorer *exact_phrase_scorer_new(FrtWeight *weight,
                                        FrtTermDocEnum **term_pos_enum,
                                        FrtPhrasePosition *positions, int pp_cnt,
-                                       FrtSimilarity *similarity, uchar *norms)
+                                       FrtSimilarity *similarity, frt_uchar *norms)
 {
     FrtScorer *self = phsc_new(weight,
                             term_pos_enum,
@@ -511,7 +511,7 @@ static FrtScorer *sloppy_phrase_scorer_new(FrtWeight *weight,
                                         FrtTermDocEnum **term_pos_enum,
                                         FrtPhrasePosition *positions,
                                         int pp_cnt, FrtSimilarity *similarity,
-                                        int slop, uchar *norms)
+                                        int slop, frt_uchar *norms)
 {
     FrtScorer *self = phsc_new(weight,
                             term_pos_enum,
@@ -590,7 +590,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
     FrtScorer *scorer;
-    uchar *field_norms;
+    frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
     char *query_str;

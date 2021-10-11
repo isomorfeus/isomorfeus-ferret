@@ -872,7 +872,7 @@ frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_a_whitespace_tokenizer_init(VALUE self, VALUE rstr)
 {
-    return get_wrapped_ts(self, rstr, whitespace_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_whitespace_tokenizer_new());
 }
 
 /*
@@ -1291,7 +1291,7 @@ frb_a_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(false);
-    a = whitespace_analyzer_new(lower);
+    a = frt_whitespace_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;

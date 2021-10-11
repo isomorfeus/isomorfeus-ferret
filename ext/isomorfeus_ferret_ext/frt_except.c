@@ -33,18 +33,18 @@ static void exception_stack_alloc(void)
     thread_key_create(&exception_stack_key, NULL);
 }
 
-void frt_xpush_context(xcontext_t *context)
+void frt_xpush_context(frt_xcontext_t *context)
 {
-    xcontext_t *top_context;
+    frt_xcontext_t *top_context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_context = (xcontext_t *)thread_getspecific(exception_stack_key);
+    top_context = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
     context->next = top_context;
     thread_setspecific(exception_stack_key, context);
     context->handled = true;
     context->in_finally = false;
 }
 
-static void frt_xraise_context(xcontext_t *context,
+static void frt_xraise_context(frt_xcontext_t *context,
                                     volatile int excode,
                                     const char *const msg)
 {
@@ -56,9 +56,9 @@ static void frt_xraise_context(xcontext_t *context,
 
 void frt_xraise(int excode, const char *const msg)
 {
-    xcontext_t *top_context;
+    frt_xcontext_t *top_context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_context = (xcontext_t *)thread_getspecific(exception_stack_key);
+    top_context = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
 
     if (!top_context) {
         FRT_XEXIT(ERROR_TYPES[excode], msg);
@@ -75,9 +75,9 @@ void frt_xraise(int excode, const char *const msg)
 
 void frt_xpop_context()
 {
-    xcontext_t *top_cxt, *context;
+    frt_xcontext_t *top_cxt, *context;
     thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_cxt = (xcontext_t *)thread_getspecific(exception_stack_key);
+    top_cxt = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
     context = top_cxt->next;
     thread_setspecific(exception_stack_key, context);
     if (!top_cxt->handled) {

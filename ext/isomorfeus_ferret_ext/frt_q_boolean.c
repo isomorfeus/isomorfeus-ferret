@@ -1176,7 +1176,7 @@ static void bw_destroy(FrtWeight *self)
     }
 
     free(BW(self)->weights);
-    w_destroy(self);
+    frt_w_destroy(self);
 }
 
 static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)

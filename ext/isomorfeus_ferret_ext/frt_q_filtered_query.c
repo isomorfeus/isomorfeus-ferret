@@ -134,7 +134,7 @@ static void fqw_destroy(FrtWeight *self)
 {
     FrtWeight *sub_weight = FQW(self)->sub_weight;
     sub_weight->destroy(sub_weight);
-    w_destroy(self);
+    frt_w_destroy(self);
 }
 
 static FrtWeight *fqw_new(FrtQuery *query, FrtWeight *sub_weight, FrtSimilarity *sim)

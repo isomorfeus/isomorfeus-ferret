@@ -412,35 +412,6 @@ extern FrtOutStream *frt_ram_new_buffer();
 extern void frt_ram_destroy_buffer(FrtOutStream *os);
 
 /**
- * Call the function +func+ with the +lock+ locked. The argument +arg+ will be
- * passed to +func+. If you need to pass more than one argument you should use
- * a struct. When the function is finished, release the lock.
- *
- * @param lock     lock to be locked while func is called
- * @param func     function to call with the lock locked
- * @param arg      argument to pass to the function
- * @raise FRT_IO_ERROR if the lock is already locked
- * @see frt_with_lock_name
- */
-extern void frt_with_lock(FrtLock *lock, void (*func)(void *arg), void *arg);
-
-/**
- * Create a lock in the +store+ with the name +lock_name+. Call the function
- * +func+ with the lock locked. The argument +arg+ will be passed to +func+.
- * If you need to pass more than one argument you should use a struct. When
- * the function is finished, release and destroy the lock.
- *
- * @param store     store to open the lock in
- * @param lock_name name of the lock to open
- * @param func      function to call with the lock locked
- * @param arg       argument to pass to the function
- * @raise FRT_IO_ERROR  if the lock is already locked
- * @see frt_with_lock
- */
-extern void frt_with_lock_name(FrtStore *store, const char *lock_name,
-                           void (*func)(void *arg), void *arg);
-
-/**
  * Remove a reference to the store. If the reference count gets to zero free
  * all resources used by the store.
  *

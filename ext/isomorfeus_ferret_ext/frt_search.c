@@ -16,7 +16,7 @@ FrtExplanation *frt_expl_new(float value, const char *description, ...)
 
     va_list args;
     va_start(args, description);
-    expl->description = vstrfmt(description, args);
+    expl->description = frt_vstrfmt(description, args);
     va_end(args);
 
     expl->value = value;
@@ -225,36 +225,36 @@ char *td_to_s(FrtTopDocs *td)
  *
  ***************************************************************************/
 
-FrtQuery *w_get_query(FrtWeight *self)
+FrtQuery *frt_w_get_query(FrtWeight *self)
 {
     return self->query;
 }
 
-float w_get_value(FrtWeight *self)
+float frt_w_get_value(FrtWeight *self)
 {
     return self->value;
 }
 
-float w_sum_of_squared_weights(FrtWeight *self)
+float frt_w_sum_of_squared_weights(FrtWeight *self)
 {
     self->qweight = self->idf * self->query->boost;
     return self->qweight * self->qweight;   /* square it */
 }
 
-void w_normalize(FrtWeight *self, float normalization_factor)
+void frt_w_normalize(FrtWeight *self, float normalization_factor)
 {
     self->qnorm = normalization_factor;
     self->qweight *= normalization_factor;  /* normalize query weight */
     self->value = self->qweight * self->idf;/* idf for document */
 }
 
-void w_destroy(FrtWeight *self)
+void frt_w_destroy(FrtWeight *self)
 {
     q_deref(self->query);
     free(self);
 }
 
-FrtWeight *w_create(size_t size, FrtQuery *query)
+FrtWeight *frt_w_create(size_t size, FrtQuery *query)
 {
     FrtWeight *self                    = (FrtWeight *)frt_ecalloc(size);
 #ifdef DEBUG
@@ -265,11 +265,11 @@ FrtWeight *w_create(size_t size, FrtQuery *query)
 #endif
     FRT_REF(query);
     self->query                     = query;
-    self->get_query                 = &w_get_query;
-    self->get_value                 = &w_get_value;
-    self->normalize                 = &w_normalize;
-    self->destroy                   = &w_destroy;
-    self->sum_of_squared_weights    = &w_sum_of_squared_weights;
+    self->get_query                 = &frt_w_get_query;
+    self->get_value                 = &frt_w_get_value;
+    self->normalize                 = &frt_w_normalize;
+    self->destroy                   = &frt_w_destroy;
+    self->sum_of_squared_weights    = &frt_w_sum_of_squared_weights;
     return self;
 }
 

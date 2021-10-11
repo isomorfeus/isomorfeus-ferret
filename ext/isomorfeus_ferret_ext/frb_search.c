@@ -1358,7 +1358,7 @@ frb_prq_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_wcq_init(int argc, VALUE *argv, VALUE self)
 {
-    return frb_mtq_init_specific(argc, argv, self, &wcq_new);
+    return frb_mtq_init_specific(argc, argv, self, &frt_wcq_new);
 }
 
 /****************************************************************************

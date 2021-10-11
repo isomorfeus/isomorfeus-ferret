@@ -25,7 +25,7 @@ typedef struct TermScorer
     float           score_cache[SCORE_CACHE_SIZE];
     FrtWeight         *weight;
     FrtTermDocEnum    *tde;
-    uchar          *norms;
+    frt_uchar          *norms;
     float           weight_value;
 } TermScorer;
 
@@ -114,7 +114,7 @@ static void tsc_destroy(FrtScorer *self)
     scorer_destroy_i(self);
 }
 
-static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, uchar *norms)
+static FrtScorer *tsc_new(FrtWeight *weight, FrtTermDocEnum *tde, frt_uchar *norms)
 {
     int i;
     FrtScorer *self            = scorer_new(TermScorer, weight->similarity);
@@ -158,7 +158,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     FrtExplanation *field_expl;
     FrtScorer *scorer;
     FrtExplanation *tf_expl;
-    uchar *field_norms;
+    frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
     char *query_str = self->query->to_s(self->query, NULL);

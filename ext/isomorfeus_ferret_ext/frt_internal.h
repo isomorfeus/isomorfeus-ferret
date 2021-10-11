@@ -487,30 +487,5 @@
 #define u32malloc                                      frt_u32malloc
 #define u64                                            frt_u64
 #define u64malloc                                      frt_u64malloc
-#define uchar                                          frt_uchar
-#define utf8_standard_analyzer_new                     frt_utf8_standard_analyzer_new
-#define utf8_standard_analyzer_new_with_words          frt_utf8_standard_analyzer_new_with_words
-#define utf8_standard_analyzer_new_with_words_len      frt_utf8_standard_analyzer_new_with_words_len
-#define utf8_standard_tokenizer_new                    frt_utf8_standard_tokenizer_new
-#define vexit                                          frt_vexit
-#define vstrfmt                                        frt_vstrfmt
-#define w_create                                       frt_w_create
-#define w_destroy                                      frt_w_destroy
-#define w_get_query                                    frt_w_get_query
-#define w_get_value                                    frt_w_get_value
-#define w_normalize                                    frt_w_normalize
-#define w_sum_of_squared_weights                       frt_w_sum_of_squared_weights
-#define wc_match                                       frt_wc_match
-#define wcq_new                                        frt_wcq_new
-#define weprintf                                       frt_weprintf
-#define whitespace_analyzer_new                        frt_whitespace_analyzer_new
-#define whitespace_tokenizer_new                       frt_whitespace_tokenizer_new
-#define with_lock                                      frt_with_lock
-#define with_lock_name                                 frt_with_lock_name
-#define x_abort_on_exception                           frt_x_abort_on_exception
-#define x_do_logging                                   frt_x_do_logging
-#define x_exception_stream                             frt_x_exception_stream
-#define x_has_aborted                                  frt_x_has_aborted
-#define xcontext_t                                     frt_xcontext_t
 
 #endif

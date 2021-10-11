@@ -145,7 +145,7 @@ typedef struct MultiTermScorer
 {
     FrtScorer                super;
     FrtSymbol                field;
-    uchar                *norms;
+    frt_uchar                *norms;
     FrtWeight               *weight;
     TermDocEnumWrapper  **tdew_a;
     int                   tdew_cnt;
@@ -301,7 +301,7 @@ static void multi_tsc_destroy(FrtScorer *self)
 
 static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
                              TermDocEnumWrapper **tdew_a, int tdew_cnt,
-                             uchar *norms)
+                             frt_uchar *norms)
 {
     int i;
     FrtScorer *self = scorer_new(MultiTermScorer, weight->similarity);
@@ -380,7 +380,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
     FrtExplanation *field_expl;
     FrtExplanation *tf_expl;
     FrtScorer *scorer;
-    uchar *field_norms;
+    frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
 

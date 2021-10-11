@@ -602,7 +602,7 @@ static void si_write(FrtSegmentInfo *si, FrtOutStream *os)
             os_write_vint(os, si->norm_gens[i]);
         }
     }
-    os_write_byte(os, (uchar)si->use_compound_file);
+    os_write_byte(os, (frt_uchar)si->use_compound_file);
 }
 
 void si_deref(FrtSegmentInfo *si)
@@ -1207,7 +1207,7 @@ char *lazy_df_get_data(FrtLazyDocField *self, int i)
             const int read_len = self->data[i].length + 1;
             is_seek(self->doc->fields_in, self->data[i].start);
             self->data[i].text = text = FRT_ALLOC_N(char, read_len);
-            is_read_bytes(self->doc->fields_in, (uchar *)text, read_len);
+            is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
             text[read_len - 1] = '\0';
         }
     }
@@ -1230,7 +1230,7 @@ void lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
     }
     else {
         is_seek(self->doc->fields_in, self->data[0].start + start);
-        is_read_bytes(self->doc->fields_in, (uchar *)buf, len);
+        is_read_bytes(self->doc->fields_in, (frt_uchar *)buf, len);
     }
 }
 
@@ -1362,7 +1362,7 @@ FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
         for (j = 0; j < df_size; j++) {
             const int read_len = df->lengths[j] + 1;
             df->data[j] = FRT_ALLOC_N(char, read_len);
-            is_read_bytes(fdt_in, (uchar *)df->data[j], read_len);
+            is_read_bytes(fdt_in, (frt_uchar *)df->data[j], read_len);
             df->data[j][read_len - 1] = '\0';
         }
     }
@@ -1424,7 +1424,7 @@ static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
         int i, j, delta_start, delta_len, total_len, freq;
         int store_positions = fi_store_positions(fi);
         int store_offsets = fi_store_offsets(fi);
-        uchar buffer[FRT_MAX_WORD_SIZE];
+        frt_uchar buffer[FRT_MAX_WORD_SIZE];
         FrtTVTerm *term;
 
         tv->term_cnt = num_terms;
@@ -1612,7 +1612,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
             for (j = 0; j < df_size; j++) {
                 const int length = df->lengths[j];
                 os_write_vint(fdt_out, length);
-                os_write_bytes(fw->buffer, (uchar*)df->data[j], length);
+                os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
                 /* leave a space between fields as that is how they are
                     * analyzed */
                 os_write_byte(fw->buffer, ' ');
@@ -1668,7 +1668,7 @@ void fw_add_postings(FrtFieldsWriter *fw,
         os_write_vint(fdt_out, delta_length); /* write delta length */
         /* write delta chars */
         os_write_bytes(fdt_out,
-                       (uchar *)(plist->term + delta_start),
+                       (frt_uchar *)(plist->term + delta_start),
                        delta_length);
         os_write_vint(fdt_out, posting->freq);
         last_term = plist->term;
@@ -1874,7 +1874,7 @@ static int term_read(char *buf, FrtInStream *is)
     int start = (int)is_read_vint(is);
     int length = (int)is_read_vint(is);
     int total_length = start + length;
-    is_read_bytes(is, (uchar *)(buf + start), length);
+    is_read_bytes(is, (frt_uchar *)(buf + start), length);
     buf[total_length] = '\0';
     return total_length;
 }
@@ -2442,7 +2442,7 @@ static void tw_write_term(FrtTermWriter *tw,
 
     os_write_vint(os, start);                   /* write shared prefix length */
     os_write_vint(os, length);                  /* write delta length */
-    os_write_bytes(os, (uchar *)(term + start), length); /* write delta chars */
+    os_write_bytes(os, (frt_uchar *)(term + start), length); /* write delta chars */
 
     tw->last_term = term;
 }
@@ -3645,7 +3645,7 @@ int ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term)
     }
 }
 
-static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, uchar val)
+static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val)
 {
     mutex_lock(&ir->mutex);
     ir->acquire_write_lock(ir);
@@ -3654,7 +3654,7 @@ static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, uchar 
     mutex_unlock(&ir->mutex);
 }
 
-void ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, uchar val)
+void ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, frt_uchar val)
 {
     int field_num = fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
@@ -3662,28 +3662,28 @@ void ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, uchar val)
     }
 }
 
-uchar *ir_get_norms_i(FrtIndexReader *ir, int field_num)
+frt_uchar *ir_get_norms_i(FrtIndexReader *ir, int field_num)
 {
-    uchar *norms = NULL;
+    frt_uchar *norms = NULL;
     if (field_num >= 0) {
         norms = ir->get_norms(ir, field_num);
     }
     if (!norms) {
         if (NULL == ir->fake_norms) {
-            ir->fake_norms = FRT_ALLOC_AND_ZERO_N(uchar, ir->max_doc(ir));
+            ir->fake_norms = FRT_ALLOC_AND_ZERO_N(frt_uchar, ir->max_doc(ir));
         }
         norms = ir->fake_norms;
     }
     return norms;
 }
 
-uchar *ir_get_norms(FrtIndexReader *ir, FrtSymbol field)
+frt_uchar *ir_get_norms(FrtIndexReader *ir, FrtSymbol field)
 {
     int field_num = fis_get_field_num(ir->fis, field);
     return ir_get_norms_i(ir, field_num);
 }
 
-uchar *ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, uchar *buf)
+frt_uchar *ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf)
 {
     int field_num = fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
@@ -3870,7 +3870,7 @@ bool ir_is_latest(FrtIndexReader *ir)
 typedef struct Norm {
     int field_num;
     FrtInStream *is;
-    uchar *bytes;
+    frt_uchar *bytes;
     bool is_dirty : 1;
 } Norm;
 
@@ -3959,7 +3959,7 @@ static bool sr_is_deleted_i(SegmentReader *sr, int doc_num)
 }
 
 static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
-                                       uchar *buf)
+                                       frt_uchar *buf)
 {
     Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
     if (NULL == norm) {
@@ -3977,7 +3977,7 @@ static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
     }
 }
 
-static uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
+static frt_uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
 {
     Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
     if (NULL == norm) {                           /* not an indexed field */
@@ -3985,14 +3985,14 @@ static uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
     }
 
     if (NULL == norm->bytes) {                    /* value not yet read */
-        uchar *bytes = FRT_ALLOC_N(uchar, SR_SIZE(sr));
+        frt_uchar *bytes = FRT_ALLOC_N(frt_uchar, SR_SIZE(sr));
         sr_get_norms_into_i(sr, field_num, bytes);
         norm->bytes = bytes;                        /* cache it */
     }
     return norm->bytes;
 }
 
-static void sr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, uchar b)
+static void sr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar b)
 {
     Norm *norm = (Norm *)h_get_int(SR(ir)->norms, field_num);
     if (NULL != norm) { /* has_norms */
@@ -4174,17 +4174,17 @@ static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
     return lazy_doc;
 }
 
-static uchar *sr_get_norms(FrtIndexReader *ir, int field_num)
+static frt_uchar *sr_get_norms(FrtIndexReader *ir, int field_num)
 {
-    uchar *norms;
+    frt_uchar *norms;
     mutex_lock(&ir->mutex);
     norms = sr_get_norms_i(SR(ir), field_num);
     mutex_unlock(&ir->mutex);
     return norms;
 }
 
-static uchar *sr_get_norms_into(FrtIndexReader *ir, int field_num,
-                              uchar *buf)
+static frt_uchar *sr_get_norms_into(FrtIndexReader *ir, int field_num,
+                              frt_uchar *buf)
 {
     mutex_lock(&ir->mutex);
     sr_get_norms_into_i(SR(ir), field_num, buf);
@@ -4444,17 +4444,17 @@ int mr_get_field_num(FrtMultiReader *mr, int ir_num, int f_num)
     }
 }
 
-static uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
+static frt_uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
 {
-    uchar *bytes;
+    frt_uchar *bytes;
 
     mutex_lock(&ir->mutex);
-    bytes = (uchar *)h_get_int(MR(ir)->norms_cache, field_num);
+    bytes = (frt_uchar *)h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL == bytes) {
         int i;
         const int mr_reader_cnt = MR(ir)->r_cnt;
 
-        bytes = FRT_ALLOC_AND_ZERO_N(uchar, MR(ir)->max_doc);
+        bytes = FRT_ALLOC_AND_ZERO_N(frt_uchar, MR(ir)->max_doc);
 
         for (i = 0; i < mr_reader_cnt; i++) {
             int fnum = mr_get_field_num(MR(ir), i, field_num);
@@ -4470,12 +4470,12 @@ static uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
     return bytes;
 }
 
-static uchar *mr_get_norms_into(FrtIndexReader *ir, int field_num, uchar *buf)
+static frt_uchar *mr_get_norms_into(FrtIndexReader *ir, int field_num, frt_uchar *buf)
 {
-    uchar *bytes;
+    frt_uchar *bytes;
 
     mutex_lock(&ir->mutex);
-    bytes = (uchar *)h_get_int(MR(ir)->norms_cache, field_num);
+    bytes = (frt_uchar *)h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL != bytes) {
         memcpy(buf, bytes, MR(ir)->max_doc);
     }
@@ -4552,7 +4552,7 @@ static bool mr_has_deletions(FrtIndexReader *ir)
     return MR(ir)->has_deletions;
 }
 
-static void mr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, uchar val)
+static void mr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val)
 {
     int i = mr_reader_index_i(MR(ir), doc_num);
     int fnum = mr_get_field_num(MR(ir), i, field_num);
@@ -4924,7 +4924,7 @@ static FrtFieldInverter *fld_inv_new(FrtDocWriter *dw, FrtFieldInfo *fi)
     fld_inv->store_term_vector = fi_store_term_vector(fi);
     fld_inv->store_offsets = fi_store_offsets(fi);
     if ((fld_inv->has_norms = fi_has_norms(fi)) == true) {
-        fld_inv->norms = FRT_MP_ALLOC_AND_ZERO_N(dw->mp, uchar,
+        fld_inv->norms = FRT_MP_ALLOC_AND_ZERO_N(dw->mp, frt_uchar,
                                              dw->max_buffered_docs);
     }
     fld_inv->fi = fi;
@@ -5776,7 +5776,7 @@ static void sm_merge_norms(SegmentMerger *sm)
     FrtSegmentInfo *si;
     int i, j, k;
     FrtStore *store;
-    uchar byte;
+    frt_uchar byte;
     FrtFieldInfo *fi;
     FrtOutStream *os;
     FrtInStream *is;

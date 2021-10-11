@@ -66,7 +66,7 @@ extern int unlink(const char *path);
 
 /* xexit: print error message and exit */
 # ifdef FRT_HAS_VARARGS
-void vexit(const char *file, int line_num, const char *func,
+void frt_vexit(const char *file, int line_num, const char *func,
                       const char *err_type, const char *fmt, va_list args)
 # else
 void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
@@ -89,11 +89,11 @@ void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
 
     fprintf(EXCEPTION_STREAM, "\n");
     print_stacktrace();
-    if (x_abort_on_exception) {
+    if (frt_x_abort_on_exception) {
         exit(2);                 /* conventional value for failed execution */
     }
     else {
-        x_has_aborted = true;
+        frt_x_has_aborted = true;
     }
 }
 
@@ -108,7 +108,7 @@ void FRT_XEXIT(const char *err_type, const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
 # ifdef FRT_HAS_VARARGS
-    vexit(file, line_num, func, err_type, fmt, args);
+    frt_vexit(file, line_num, func, err_type, fmt, args);
 # else
     FRT_VEXIT(err_type, fmt, args);
 # endif

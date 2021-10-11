@@ -31,7 +31,7 @@ static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field)
     return buffer;
 }
 
-bool wc_match(const char *pattern, const char *text)
+bool frt_wc_match(const char *pattern, const char *text)
 {
     const char *p = pattern, *t = text, *xt;
 
@@ -66,7 +66,7 @@ bool wc_match(const char *pattern, const char *text)
             p++;
             /* Examine the string, starting at the last character. */
             for (xt = text_last; xt >= t; xt--) {
-                if (wc_match(p, xt)) return true;
+                if (frt_wc_match(p, xt)) return true;
             }
             return false;
         }
@@ -118,7 +118,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
                         break;
                     }
 
-                    if (wc_match(pattern, pat_term)) {
+                    if (frt_wc_match(pattern, pat_term)) {
                         multi_tq_add_term(q, term);
                     }
                 } while (te->next(te) != NULL);
@@ -147,7 +147,7 @@ static int wcq_eq(FrtQuery *self, FrtQuery *o)
         && (strcmp(WCQ(self)->field, WCQ(o)->field) == 0);
 }
 
-FrtQuery *wcq_new(FrtSymbol field, const char *pattern)
+FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern)
 {
     FrtQuery *self = q_new(FrtWildCardQuery);
 
