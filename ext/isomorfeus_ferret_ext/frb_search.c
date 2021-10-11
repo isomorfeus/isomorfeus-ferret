@@ -688,7 +688,7 @@ frb_mtq_init(int argc, VALUE *argv, VALUE self)
             min_score = (float)NUM2DBL(v);
         }
     }
-    q = multi_tq_new_conf(frb_field(rfield), max_terms, min_score);
+    q = frt_multi_tq_new_conf(frb_field(rfield), max_terms, min_score);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -713,7 +713,7 @@ frb_mtq_add_term(int argc, VALUE *argv, VALUE self)
         boost = (float)NUM2DBL(rboost);
     }
     term = StringValuePtr(rterm);
-    multi_tq_add_term_boost(q, term, boost);
+    frt_multi_tq_add_term_boost(q, term, boost);
 
     return self;
 }
@@ -1560,7 +1560,7 @@ frb_fq_set_dpl(VALUE self, VALUE val)
 static VALUE
 frb_maq_alloc(VALUE klass)
 {
-    FrtQuery *q = maq_new();
+    FrtQuery *q = frt_maq_new();
     VALUE self = Data_Wrap_Struct(klass, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -3137,7 +3137,7 @@ frb_ms_init(int argc, VALUE *argv, VALUE self)
                 break;
         }
     }
-    s = msea_new(searchers, top, false);
+    s = frt_msea_new(searchers, top, false);
     Frt_Wrap_Struct(self, &frb_ms_mark, &frb_ms_free, s);
     object_add(s, self);
     return self;

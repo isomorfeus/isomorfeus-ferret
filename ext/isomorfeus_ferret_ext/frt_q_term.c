@@ -287,7 +287,7 @@ static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         if (tv_term) {
             for (i = 0; i < tv_term->freq; i++) {
                 int pos = tv_term->positions[i];
-                matchv_add(mv, pos, pos);
+                frt_matchv_add(mv, pos, pos);
             }
         }
     }

@@ -10,12 +10,12 @@ extern VALUE cLockError;
 
 void frt_store_deref(FrtStore *store)
 {
-    mutex_lock(&store->mutex_i);
+    frt_mutex_lock(&store->mutex_i);
     if (--store->ref_cnt <= 0) {
         store->close_i(store);
     }
     else {
-        mutex_unlock(&store->mutex_i);
+        frt_mutex_unlock(&store->mutex_i);
     }
 }
 
@@ -43,8 +43,8 @@ FrtStore *frt_store_new()
 {
     FrtStore *store = FRT_ALLOC(FrtStore);
     store->ref_cnt = 1;
-    mutex_init(&store->mutex_i, NULL);
-    mutex_init(&store->mutex, NULL);
+    frt_mutex_init(&store->mutex_i, NULL);
+    frt_mutex_init(&store->mutex, NULL);
     store->locks = hs_new_ptr((free_ft)&frt_close_lock_i);
     return store;
 }
@@ -56,8 +56,8 @@ FrtStore *frt_store_new()
  */
 void frt_store_destroy(FrtStore *store)
 {
-    mutex_destroy(&store->mutex_i);
-    mutex_destroy(&store->mutex);
+    frt_mutex_destroy(&store->mutex_i);
+    frt_mutex_destroy(&store->mutex);
     hs_destroy(store->locks);
     free(store);
 }

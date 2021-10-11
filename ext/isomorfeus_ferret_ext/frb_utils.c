@@ -572,13 +572,13 @@ static void
 frb_mulmap_free(void *p)
 {
     object_del(p);
-    mulmap_destroy((FrtMultiMapper *)p);
+    frt_mulmap_destroy((FrtMultiMapper *)p);
 }
 
 static VALUE
 frb_mulmap_alloc(VALUE klass)
 {
-    FrtMultiMapper *mulmap = mulmap_new();
+    FrtMultiMapper *mulmap = frt_mulmap_new();
     VALUE rmulmap = Data_Wrap_Struct(klass, NULL, &frb_mulmap_free, mulmap);
     object_add(mulmap, rmulmap);
     return rmulmap;
@@ -590,10 +590,10 @@ static void frb_mulmap_add_mapping_i(FrtMultiMapper *mulmap, VALUE from,
 {
     switch (TYPE(from)) {
         case T_STRING:
-            mulmap_add_mapping(mulmap, rs2s(from), to);
+            frt_mulmap_add_mapping(mulmap, rs2s(from), to);
             break;
         case T_SYMBOL:
-            mulmap_add_mapping(mulmap, rb_id2name(SYM2ID(from)), to);
+            frt_mulmap_add_mapping(mulmap, rb_id2name(SYM2ID(from)), to);
             break;
         default:
             rb_raise(rb_eArgError,
@@ -650,7 +650,7 @@ frb_mulmap_init(VALUE self, VALUE rmappings)
 {
     FrtMultiMapper *mulmap = DATA_PTR(self);
     rb_hash_foreach(rmappings, frb_mulmap_add_mappings_i, (VALUE)mulmap);
-    mulmap_compile(mulmap);
+    frt_mulmap_compile(mulmap);
 
     return self;
 }
@@ -666,7 +666,7 @@ frb_mulmap_map(VALUE self, VALUE rstring)
 {
     FrtMultiMapper *mulmap = DATA_PTR(self);
     char *string = rs2s(rb_obj_as_string(rstring));
-    char *mapped_string = mulmap_dynamic_map(mulmap, string);
+    char *mapped_string = frt_mulmap_dynamic_map(mulmap, string);
     VALUE rmapped_string = rb_str_new2(mapped_string);
     free(mapped_string);
     return rmapped_string;

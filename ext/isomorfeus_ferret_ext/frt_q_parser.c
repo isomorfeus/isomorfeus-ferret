@@ -2181,7 +2181,7 @@ static int yyerror(FrtQParser *qp, char const *msg)
         if (qp->clean_str) {
             free(qp->qstr);
         }
-        mutex_unlock(&qp->mutex);
+        frt_mutex_unlock(&qp->mutex);
         snprintf(frt_xmsg_buffer, FRT_XMSG_BUFFER_SIZE,
                  "couldn't parse query ``%s''. Error message "
                  " was %s", buf, (char *)msg);
@@ -2241,7 +2241,7 @@ static FrtQuery *get_bool_q(BCArray *bca)
         if (bc->is_prohibited) {
             q = frt_bq_new(false);
             frt_bq_add_query_nr(q, bc->query, FRT_BC_MUST_NOT);
-            frt_bq_add_query_nr(q, maq_new(), FRT_BC_MUST);
+            frt_bq_add_query_nr(q, frt_maq_new(), FRT_BC_MUST);
         }
         else {
             q = bc->query;
@@ -2489,7 +2489,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
      * and no other wildcard characters before it. "*" by itself will expand
      * to a MatchAllQuery */
     if (strcmp(pattern, "*") == 0) {
-        return maq_new();
+        return frt_maq_new();
     }
     if (pattern[len - 1] == '*') {
         is_prefix = true;
@@ -2682,11 +2682,11 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                     q = frt_tq_new(field, last_word);
                     break;
                 default:
-                    q = multi_tq_new_conf(field, term_cnt, 0.0);
+                    q = frt_multi_tq_new_conf(field, term_cnt, 0.0);
                     for (i = 0; i < word_count; i++) {
                         /* ignore empty words */
                         if (words[i][0]) {
-                            multi_tq_add_term(q, words[i]);
+                            frt_multi_tq_add_term(q, words[i]);
                         }
                     }
                     break;
@@ -2895,8 +2895,8 @@ FrtQParser *frt_qp_new(FrtAnalyzer *analyzer)
     self->ts_cache = h_new_str(NULL, (free_ft)&frt_ts_deref);
     self->buf_index = 0;
     self->dynbuf = NULL;
-    self->non_tokenizer = non_tokenizer_new();
-    mutex_init(&self->mutex, NULL);
+    self->non_tokenizer = frt_non_tokenizer_new();
+    frt_mutex_init(&self->mutex, NULL);
     return self;
 }
 
@@ -3056,7 +3056,7 @@ extern VALUE cQueryParseException;
 FrtQuery *qp_parse(FrtQParser *self, char *qstr)
 {
     FrtQuery *result = NULL;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     /* if qp->fields_top->next is not NULL we have a left over field-stack
      * object that was not popped during the last query parse */
     assert(NULL == self->fields_top->next);
@@ -3087,7 +3087,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
     if (self->clean_str) {
         free(self->qstr);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return result;
 }
 

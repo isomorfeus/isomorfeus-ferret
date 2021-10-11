@@ -614,7 +614,7 @@ static FrtMatchVector *multi_tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
             if (tv_term) {
                 for (j = 0; j < tv_term->freq; j++) {
                     int pos = tv_term->positions[j];
-                    matchv_add(mv, pos, pos);
+                    frt_matchv_add(mv, pos, pos);
                 }
             }
         }
@@ -622,7 +622,7 @@ static FrtMatchVector *multi_tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
     return mv;
 }
 
-FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
+FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
 {
     FrtQuery *self;
 
@@ -651,12 +651,12 @@ FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
     return self;
 }
 
-FrtQuery *multi_tq_new(FrtSymbol field)
+FrtQuery *frt_multi_tq_new(FrtSymbol field)
 {
-    return multi_tq_new_conf(field, MULTI_TERM_QUERY_MAX_TERMS, 0.0f);
+    return frt_multi_tq_new_conf(field, MULTI_TERM_QUERY_MAX_TERMS, 0.0f);
 }
 
-void multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost)
+void frt_multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost)
 {
     if (boost > MTQ(self)->min_boost && term && term[0]) {
         BoostedTerm *bt = boosted_term_new(term, boost);
@@ -668,7 +668,7 @@ void multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost)
     }
 }
 
-void multi_tq_add_term(FrtQuery *self, const char *term)
+void frt_multi_tq_add_term(FrtQuery *self, const char *term)
 {
-    multi_tq_add_term_boost(self, term, 1.0f);
+    frt_multi_tq_add_term_boost(self, term, 1.0f);
 }

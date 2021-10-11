@@ -50,7 +50,7 @@ FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fiel
     FrtHashSetEntry *hse;
     /* FIXME: need to add these to the query parser */
     self->config = frt_default_config;
-    mutex_init(&self->mutex, NULL);
+    frt_mutex_init(&self->mutex, NULL);
     self->has_writes = false;
     if (store) {
         FRT_REF(store);
@@ -63,7 +63,7 @@ FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fiel
         self->analyzer = analyzer;
         FRT_REF(analyzer);
     } else {
-        self->analyzer = mb_standard_analyzer_new(true);
+        self->analyzer = frt_mb_standard_analyzer_new(true);
     }
 
     if (create) {
@@ -95,7 +95,7 @@ FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fiel
 
 void index_destroy(FrtIndex *self)
 {
-    mutex_destroy(&self->mutex);
+    frt_mutex_destroy(&self->mutex);
     INDEX_CLOSE_READER(self);
     if (self->iw) iw_close(self->iw);
     frt_store_deref(self->store);
@@ -155,47 +155,47 @@ void frt_ensure_searcher_open(FrtIndex *self)
 int index_size(FrtIndex *self)
 {
     int size;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_reader_open(self);
         size = self->ir->num_docs(self->ir);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return size;
 }
 
 void index_optimize(FrtIndex *self)
 {
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_writer_open(self);
         iw_optimize(self->iw);
         AUTOFLUSH_IW(self);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
 }
 
 bool index_has_del(FrtIndex *self)
 {
     bool has_del;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_reader_open(self);
         has_del = self->ir->has_deletions(self->ir);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return has_del;
 }
 
 bool index_is_deleted(FrtIndex *self, int doc_num)
 {
     bool is_del;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_reader_open(self);
         is_del = self->ir->is_deleted(self->ir, doc_num);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return is_del;
 }
 
@@ -249,11 +249,11 @@ static void index_add_doc_i(FrtIndex *self, FrtDocument *doc)
 
 void index_add_doc(FrtIndex *self, FrtDocument *doc)
 {
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         index_add_doc_i(self, doc);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
 }
 
 void index_add_string(FrtIndex *self, char *str)
@@ -312,11 +312,11 @@ FrtDocument *index_get_doc(FrtIndex *self, int doc_num)
 FrtDocument *index_get_doc_ts(FrtIndex *self, int doc_num)
 {
     FrtDocument *doc;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         doc = index_get_doc(self, doc_num);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return doc;
 }
 
@@ -338,7 +338,7 @@ FrtDocument *index_get_doc_term(FrtIndex *self, FrtSymbol field,
 {
     FrtDocument *doc = NULL;
     FrtTermDocEnum *tde;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_reader_open(self);
         tde = ir_term_docs_for(self->ir, field, term);
@@ -347,7 +347,7 @@ FrtDocument *index_get_doc_term(FrtIndex *self, FrtSymbol field,
         }
         tde->close(tde);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return doc;
 }
 
@@ -358,19 +358,19 @@ FrtDocument *index_get_doc_id(FrtIndex *self, const char *id)
 
 void index_delete(FrtIndex *self, int doc_num)
 {
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_reader_open(self);
         ir_delete_doc(self->ir, doc_num);
         AUTOFLUSH_IR(self);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
 }
 
 void index_delete_term(FrtIndex *self, FrtSymbol field, const char *term)
 {
     FrtTermDocEnum *tde;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         if (self->ir) {
             tde = ir_term_docs_for(self->ir, field, term);
@@ -387,7 +387,7 @@ void index_delete_term(FrtIndex *self, FrtSymbol field, const char *term)
             iw_delete_term(self->iw, field, term);
         }
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
 }
 
 void index_delete_id(FrtIndex *self, const char *id)
@@ -404,13 +404,13 @@ static void index_qdel_i(FrtSearcher *sea, int doc_num, float score, void *arg)
 void index_delete_query(FrtIndex *self, FrtQuery *q, FrtFilter *f,
                         FrtPostFilter *post_filter)
 {
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_searcher_open(self);
         frt_searcher_search_each(self->sea, q, f, post_filter, &index_qdel_i, 0);
         AUTOFLUSH_IR(self);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
 }
 
 void index_delete_query_str(FrtIndex *self, char *qstr, FrtFilter *f,
@@ -424,11 +424,11 @@ void index_delete_query_str(FrtIndex *self, char *qstr, FrtFilter *f,
 FrtExplanation *index_explain(FrtIndex *self, FrtQuery *q, int doc_num)
 {
     FrtExplanation *expl;
-    mutex_lock(&self->mutex);
+    frt_mutex_lock(&self->mutex);
     {
         frt_ensure_searcher_open(self);
         expl = frt_searcher_explain(self->sea, q, doc_num);
     }
-    mutex_unlock(&self->mutex);
+    frt_mutex_unlock(&self->mutex);
     return expl;
 }

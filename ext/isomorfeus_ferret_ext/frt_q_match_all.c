@@ -133,7 +133,7 @@ static int maq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-FrtQuery *maq_new()
+FrtQuery *frt_maq_new()
 {
     FrtQuery *self = frt_q_new(FrtQuery);
 

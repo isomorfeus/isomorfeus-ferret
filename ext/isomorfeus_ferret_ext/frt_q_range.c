@@ -485,7 +485,7 @@ static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
             }
             for (j = 0; j < tv_term_freq; j++) {
                 int pos = tv_term->positions[j];
-                matchv_add(mv, pos, pos);
+                frt_matchv_add(mv, pos, pos);
             }
         }
     }
@@ -551,7 +551,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
             const int tv_term_freq = tv_term->freq;\
             for (j = 0; j < tv_term_freq; j++) {\
                 int pos = tv_term->positions[j];\
-                matchv_add(mv, pos, pos);\
+                frt_matchv_add(mv, pos, pos);\
             }\
         }\
     }\

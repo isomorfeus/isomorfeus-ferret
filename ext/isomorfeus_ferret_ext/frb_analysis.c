@@ -860,7 +860,7 @@ frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    return get_wrapped_ts(self, rstr, mb_letter_tokenizer_new(lower));
+    return get_wrapped_ts(self, rstr, frt_mb_letter_tokenizer_new(lower));
 }
 
 /*
@@ -891,7 +891,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    return get_wrapped_ts(self, rstr, mb_whitespace_tokenizer_new(lower));
+    return get_wrapped_ts(self, rstr, frt_mb_whitespace_tokenizer_new(lower));
 }
 
 /*
@@ -921,7 +921,7 @@ frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    return get_wrapped_ts(self, rstr, mb_standard_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_mb_standard_tokenizer_new());
 }
 
 /****************************************************************************
@@ -963,7 +963,7 @@ frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    ts = mb_lowercase_filter_new(ts);
+    ts = frt_mb_lowercase_filter_new(ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1033,10 +1033,10 @@ static void frb_add_mapping_i(FrtTokenStream *mf, VALUE from,
 {
     switch (TYPE(from)) {
         case T_STRING:
-            mapping_filter_add(mf, rs2s(from), to);
+            frt_mapping_filter_add(mf, rs2s(from), to);
             break;
         case T_SYMBOL:
-            mapping_filter_add(mf, rb_id2name(SYM2ID(from)), to);
+            frt_mapping_filter_add(mf, rb_id2name(SYM2ID(from)), to);
             break;
         default:
             rb_raise(rb_eArgError,
@@ -1109,9 +1109,9 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
 {
     FrtTokenStream *ts;
     ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = mapping_filter_new(ts);
+    ts = frt_mapping_filter_new(ts);
     rb_hash_foreach(mapping, frb_add_mappings_i, (VALUE)ts);
-    mulmap_compile(((FrtMappingFilter *)ts)->mapper);
+    frt_mulmap_compile(((FrtMappingFilter *)ts)->mapper);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1315,7 +1315,7 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    a = mb_whitespace_analyzer_new(lower);
+    a = frt_mb_whitespace_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1360,7 +1360,7 @@ frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
     if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
 #endif
-    a = mb_letter_analyzer_new(lower);
+    a = frt_mb_letter_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1438,10 +1438,10 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        a = mb_standard_analyzer_new_with_words((const char **)stop_words, lower);
+        a = frt_mb_standard_analyzer_new_with_words((const char **)stop_words, lower);
         free(stop_words);
     } else {
-        a = mb_standard_analyzer_new(lower);
+        a = frt_mb_standard_analyzer_new(lower);
     }
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);

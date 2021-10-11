@@ -3,7 +3,7 @@
 #include <string.h>
 #include "frt_internal.h"
 
-FrtMemoryPool *mp_new_capa(int chuck_size, int init_buf_capa)
+FrtMemoryPool *frt_mp_new_capa(int chuck_size, int init_buf_capa)
 {
     FrtMemoryPool *mp = FRT_ALLOC(FrtMemoryPool);
     mp->chunk_size = chuck_size;
@@ -17,12 +17,12 @@ FrtMemoryPool *mp_new_capa(int chuck_size, int init_buf_capa)
     return mp;
 }
 
-FrtMemoryPool *mp_new()
+FrtMemoryPool *frt_mp_new()
 {
-    return mp_new_capa(FRT_MP_BUF_SIZE, FRT_MP_INIT_CAPA);
+    return frt_mp_new_capa(FRT_MP_BUF_SIZE, FRT_MP_INIT_CAPA);
 }
 
-void *mp_alloc(FrtMemoryPool *mp, int size)
+void *frt_mp_alloc(FrtMemoryPool *mp, int size)
 {
     char *p;
     p = mp->curr_buffer + mp->pointer;
@@ -47,37 +47,24 @@ void *mp_alloc(FrtMemoryPool *mp, int size)
     return p;
 }
 
-char *mp_strdup(FrtMemoryPool *mp, const char *str)
+void *frt_mp_memdup(FrtMemoryPool *mp, const void *p, int len)
 {
-    int len = strlen(str) + 1;
-    return (char *)memcpy(mp_alloc(mp, len), str, len);
+    return memcpy(frt_mp_alloc(mp, len), p, len);
 }
 
-char *mp_strndup(FrtMemoryPool *mp, const char *str, int len)
-{
-    char *s = (char *)memcpy(mp_alloc(mp, len + 1), str, len);
-    s[len] = '\0';
-    return s;
-}
-
-void *mp_memdup(FrtMemoryPool *mp, const void *p, int len)
-{
-    return memcpy(mp_alloc(mp, len), p, len);
-}
-
-int mp_used(FrtMemoryPool *mp)
+int frt_mp_used(FrtMemoryPool *mp)
 {
     return mp->buf_pointer * mp->chunk_size + mp->pointer;
 }
 
-void mp_reset(FrtMemoryPool *mp)
+void frt_mp_reset(FrtMemoryPool *mp)
 {
     mp->buf_pointer = 0;
     mp->pointer = 0;
     mp->curr_buffer = mp->buffers[0];
 }
 
-void mp_destroy(FrtMemoryPool *mp)
+void frt_mp_destroy(FrtMemoryPool *mp)
 {
     int i;
     for (i = 0; i < mp->buf_alloc; i++) {

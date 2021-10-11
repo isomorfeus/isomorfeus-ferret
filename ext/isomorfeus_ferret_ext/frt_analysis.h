@@ -198,7 +198,6 @@ extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
                                                      FrtSymbol field,
                                                      char *text));
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
-extern FrtAnalyzer *frt_non_analyzer_new();
 
 extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase);
@@ -216,8 +215,6 @@ extern FrtAnalyzer *frt_standard_analyzer_new_with_words_len(
     const char **words, int len, bool lowercase);
 extern FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
-extern FrtAnalyzer *frt_mb_standard_analyzer_new_with_words_len(
-    const char **words, int len, bool lowercase);
 extern FrtAnalyzer *frt_utf8_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
 
@@ -230,8 +227,6 @@ extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words_len(
     const char **words, int len, bool lowercase);
 extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
-extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words_len(
-    const char **words, int len, bool lowercase);
 
 #define PFA(analyzer) ((FrtPerFieldAnalyzer *)(analyzer))
 typedef struct FrtPerFieldAnalyzer

@@ -91,7 +91,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     }
     else {
         const int field_num = fis_get_field_num(ir->fis, WCQ(self)->field);
-        q = multi_tq_new_conf(WCQ(self)->field, FrtMTQMaxTerms(self), 0.0);
+        q = frt_multi_tq_new_conf(WCQ(self)->field, FrtMTQMaxTerms(self), 0.0);
 
         if (field_num >= 0) {
             FrtTermEnum *te;
@@ -119,7 +119,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
                     }
 
                     if (frt_wc_match(pattern, pat_term)) {
-                        multi_tq_add_term(q, term);
+                        frt_multi_tq_add_term(q, term);
                     }
                 } while (te->next(te) != NULL);
                 te->close(te);

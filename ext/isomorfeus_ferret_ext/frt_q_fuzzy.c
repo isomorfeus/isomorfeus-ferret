@@ -192,7 +192,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         return frt_tq_new(fuzq->field, term);
     }
 
-    q = multi_tq_new_conf(fuzq->field, FrtMTQMaxTerms(self), fuzq->min_sim);
+    q = frt_multi_tq_new_conf(fuzq->field, FrtMTQMaxTerms(self), fuzq->min_sim);
     if (pre_len > 0) {
         prefix = FRT_ALLOC_N(char, pre_len + 1);
         strncpy(prefix, term, pre_len);
@@ -220,7 +220,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
             break;
 
         score = fuzq_score(fuzq, curr_suffix);
-        multi_tq_add_term_boost(q, curr_term, score);
+        frt_multi_tq_add_term_boost(q, curr_term, score);
     } while (te->next(te) != NULL);
 
     te->close(te);

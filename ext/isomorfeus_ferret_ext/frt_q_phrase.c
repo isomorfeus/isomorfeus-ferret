@@ -553,9 +553,9 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
             tpe->seek(tpe, field_num, terms[0]);
         }
         else {
-            tps[i] = mtdpe_new(ir, field_num, terms, t_cnt);
+            tps[i] = frt_mtdpe_new(ir, field_num, terms, t_cnt);
         }
-        /* neither mtdpe_new nor ir->term_positions should return NULL */
+        /* neither frt_mtdpe_new nor ir->term_positions should return NULL */
         assert(NULL != tps[i]);
     }
 
@@ -867,7 +867,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                         max = p > max ? p : max;
                         min = p < min ? p : min;
                     }
-                    matchv_add(mv, min, max);
+                    frt_matchv_add(mv, min, max);
                 }
                 if (tvpe->pos > last_pos) {
                     last_pos = tvpe->pos;
@@ -915,7 +915,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                     }
                 }
                 if (!done) {
-                    matchv_add(mv, tvpe_a[0]->pos + tvpe_a[0]->offset,
+                    frt_matchv_add(mv, tvpe_a[0]->pos + tvpe_a[0]->offset,
                                tvpe_a[pos_cnt-1]->pos + tvpe_a[pos_cnt-1]->offset);
                 }
                 if (!tvpe_next(last)) {
@@ -1071,10 +1071,10 @@ static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
             return tq;
         }
         else {
-            FrtQuery *q = multi_tq_new(phq->field);
+            FrtQuery *q = frt_multi_tq_new(phq->field);
             int i;
             for (i = 0; i < t_cnt; i++) {
-                multi_tq_add_term(q, terms[i]);
+                frt_multi_tq_add_term(q, terms[i]);
             }
             q->boost = self->boost;
             return q;

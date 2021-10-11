@@ -510,7 +510,7 @@ static int match_range_cmp(const void *p1, const void *p2)
 
 
 /* ** MatchVector ** */
-FrtMatchVector *matchv_new()
+FrtMatchVector *frt_matchv_new()
 {
     FrtMatchVector *matchv = FRT_ALLOC(FrtMatchVector);
 
@@ -521,7 +521,7 @@ FrtMatchVector *matchv_new()
     return matchv;
 }
 
-FrtMatchVector *matchv_add(FrtMatchVector *self, int start, int end)
+FrtMatchVector *frt_matchv_add(FrtMatchVector *self, int start, int end)
 {
     if (self->size >= self->capa) {
         self->capa <<= 1;
@@ -534,16 +534,16 @@ FrtMatchVector *matchv_add(FrtMatchVector *self, int start, int end)
     return self;
 }
 
-FrtMatchVector *matchv_sort(FrtMatchVector *self)
+FrtMatchVector *frt_matchv_sort(FrtMatchVector *self)
 {
     qsort(self->matches, self->size, sizeof(FrtMatchRange), &match_range_cmp);
     return self;
 }
 
-FrtMatchVector *matchv_compact(FrtMatchVector *self)
+FrtMatchVector *frt_matchv_compact(FrtMatchVector *self)
 {
     int left, right;
-    matchv_sort(self);
+    frt_matchv_sort(self);
     for (right = left = 0; right < self->size; right++) {
         /* Note the end + 1. This compacts a range 3:5 and 6:8 inleft 3:8 */
         if (self->matches[right].start > self->matches[left].end + 1) {
@@ -563,10 +563,10 @@ FrtMatchVector *matchv_compact(FrtMatchVector *self)
     return self;
 }
 
-FrtMatchVector *matchv_compact_with_breaks(FrtMatchVector *self)
+FrtMatchVector *frt_matchv_compact_with_breaks(FrtMatchVector *self)
 {
     int left, right;
-    matchv_sort(self);
+    frt_matchv_sort(self);
     for (right = left = 0; right < self->size; right++) {
         /* Note: no end + 1. Unlike above won't compact ranges 3:5 and 6:8 */
         if (self->matches[right].start > self->matches[left].end) {
@@ -598,7 +598,7 @@ static FrtMatchVector *matchv_set_offsets(FrtMatchVector *mv, FrtOffset *offsets
     return mv;
 }
 
-void matchv_destroy(FrtMatchVector *self)
+void frt_matchv_destroy(FrtMatchVector *self)
 {
     free(self->matches);
     free(self);
@@ -767,7 +767,7 @@ static char *highlight_field(FrtMatchVector *mv,
         int last_offset = 0;
         int i, len;
         char *e_ptr = excerpt_str;
-        matchv_compact_with_breaks(mv);
+        frt_matchv_compact_with_breaks(mv);
         matchv_set_offsets(mv, tv->offsets);
         for (i = 0; i < mv->size; i++) {
             FrtMatchRange *mr = mv->matches + i;
@@ -822,7 +822,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
         && tv->offsets != NULL) {
         FrtMatchVector *mv;
         query = self->rewrite(self, query);
-        mv = query->get_matchv_i(query, matchv_new(), tv);
+        mv = query->get_matchv_i(query, frt_matchv_new(), tv);
         frt_q_deref(query);
         if (lazy_df->len < (excerpt_len * num_excerpts)) {
             excerpt_strs = frt_ary_new_type_capa(char *, 1);
@@ -837,7 +837,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
             FrtOffset *offsets = tv->offsets;
             FrtPriorityQueue *excerpt_pq;
 
-            matchv_compact_with_breaks(mv);
+            frt_matchv_compact_with_breaks(mv);
             matchv_set_offsets(mv, offsets);
             excerpt_pq = frt_pq_new(mv->size, (lt_ft)&excerpt_lt, &free);
             /* add all possible excerpts to the priority queue */
@@ -924,7 +924,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
             free(excerpts);
             frt_pq_destroy(excerpt_pq);
         }
-        matchv_destroy(mv);
+        frt_matchv_destroy(mv);
     }
     if (tv) frt_tv_destroy(tv);
     if (lazy_doc) lazy_doc_close(lazy_doc);
@@ -1790,7 +1790,7 @@ static void msea_close(FrtSearcher *self)
     free(self);
 }
 
-FrtSearcher *msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs)
+FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs)
 {
     int i, max_doc = 0;
     FrtSearcher *self = (FrtSearcher *)FRT_ALLOC(FrtMultiSearcher);

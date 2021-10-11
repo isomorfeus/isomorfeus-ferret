@@ -2115,7 +2115,7 @@ frb_ir_init(VALUE self, VALUE rdir)
             }
             sub_readers[i] = ir_open(store);
         }
-        ir = mr_open(sub_readers, reader_cnt);
+        ir = frt_mr_open(sub_readers, reader_cnt);
         Frt_Wrap_Struct(self, &frb_mr_mark, &frb_ir_free, ir);
     } else {
         switch (TYPE(rdir)) {

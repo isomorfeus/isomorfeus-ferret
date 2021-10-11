@@ -162,21 +162,21 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
     FrtCompoundStore *cmpd = store->dir.cmpd;
     FrtInStream *is;
 
-    mutex_lock(&store->mutex);
+    frt_mutex_lock(&store->mutex);
     if (cmpd->stream == NULL) {
-        mutex_unlock(&store->mutex);
+        frt_mutex_unlock(&store->mutex);
         rb_raise(rb_eIOError, "Can't open compound file input stream. Parent "
               "stream is closed.");
     }
 
     entry = (FileEntry *)h_get(cmpd->entries, file_name);
     if (entry == NULL) {
-        mutex_unlock(&store->mutex);
+        frt_mutex_unlock(&store->mutex);
         rb_raise(rb_eIOError, "File %s does not exist: ", file_name);
     }
 
     is = cmpd_create_input(cmpd->stream, entry->offset, entry->length);
-    mutex_unlock(&store->mutex);
+    frt_mutex_unlock(&store->mutex);
 
     return is;
 }

@@ -36,7 +36,7 @@ static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
 static FrtQuery *prq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     const int field_num = fis_get_field_num(ir->fis, PfxQ(self)->field);
-    FrtQuery *volatile q = multi_tq_new_conf(PfxQ(self)->field,
+    FrtQuery *volatile q = frt_multi_tq_new_conf(PfxQ(self)->field,
                                           FrtMTQMaxTerms(self), 0.0);
     q->boost = self->boost;        /* set the boost */
 
@@ -51,7 +51,7 @@ static FrtQuery *prq_rewrite(FrtQuery *self, FrtIndexReader *ir)
                 if (strncmp(term, prefix, prefix_len) != 0) {
                     break;
                 }
-                multi_tq_add_term(q, term);       /* found a match */
+                frt_multi_tq_add_term(q, term);       /* found a match */
             } while (te->next(te));
         FRT_XFINALLY
             te->close(te);

@@ -1395,7 +1395,7 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         }
     }
     if (clause_cnt > 0 && !has_non_prohibited_clause) {
-        frt_bq_add_query_nr(self, maq_new(), FRT_BC_MUST);
+        frt_bq_add_query_nr(self, frt_maq_new(), FRT_BC_MUST);
     }
 
     return self;
