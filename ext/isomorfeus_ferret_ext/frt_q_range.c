@@ -419,7 +419,7 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
     }
 }
 
-FrtFilter *trfilt_new(FrtSymbol field,
+FrtFilter *frt_trfilt_new(FrtSymbol field,
                    const char *lower_term, const char *upper_term,
                    bool include_lower, bool include_upper)
 {
@@ -470,7 +470,7 @@ static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         char *lower_text = range->lower_term;
         int upper_limit = range->include_upper ? 1 : 0;
 
-        i = lower_text ? tv_scan_to_term_index(tv, lower_text) : 0;
+        i = lower_text ? frt_tv_scan_to_term_index(tv, lower_text) : 0;
         if (i < term_cnt && !range->include_lower && lower_text
             && 0 == strcmp(lower_text, tv->terms[i].text)) {
             i++;
@@ -638,7 +638,7 @@ static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;
-    FrtFilter *filter = trfilt_new(r->field, r->lower_term, r->upper_term,
+    FrtFilter *filter = frt_trfilt_new(r->field, r->lower_term, r->upper_term,
                                 r->include_lower, r->include_upper);
     (void)ir;
     csq = frt_csq_new_nr(filter);
@@ -647,19 +647,7 @@ static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return (FrtQuery *)csq;
 }
 
-FrtQuery *trq_new_less(FrtSymbol field, const char *upper_term,
-                    bool include_upper)
-{
-    return trq_new(field, NULL, upper_term, false, include_upper);
-}
-
-FrtQuery *trq_new_more(FrtSymbol field, const char *lower_term,
-                    bool include_lower)
-{
-    return trq_new(field, lower_term, NULL, include_lower, false);
-}
-
-FrtQuery *trq_new(FrtSymbol field, const char *lower_term,
+FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
                const char *upper_term, bool include_lower, bool include_upper)
 {
     FrtQuery *self;

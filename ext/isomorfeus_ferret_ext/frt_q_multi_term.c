@@ -565,7 +565,7 @@ static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-        hs_add(terms, term_new(MTQ(self)->field, bt->term));
+        hs_add(terms, frt_term_new(MTQ(self)->field, bt->term));
     }
 }
 
@@ -610,7 +610,7 @@ static FrtMatchVector *multi_tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         for (i = boosted_terms->size; i > 0; i--) {
             int j;
             BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-            FrtTVTerm *tv_term = tv_get_tv_term(tv, bt->term);
+            FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, bt->term);
             if (tv_term) {
                 for (j = 0; j < tv_term->freq; j++) {
                     int pos = tv_term->positions[j];

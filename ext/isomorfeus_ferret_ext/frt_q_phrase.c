@@ -772,7 +772,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
     TVPosEnum *self = NULL;
 
     for (i = 0; i < t_cnt; i++) {
-        FrtTVTerm *tv_term = tv_get_tv_term(tv, terms[i]);
+        FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, terms[i]);
         if (tv_term) {
             TVPosEnum *tvpe = tvpe_new(tv_term->positions, tv_term->freq, 0);
             /* got tv_term so tvpe_next should always return true once here */
@@ -813,7 +813,7 @@ static TVPosEnum *get_tvpe(FrtTermVector *tv, char **terms, int t_cnt, int offse
 {
     TVPosEnum *tvpe = NULL;
     if (t_cnt == 1) {
-        FrtTVTerm *tv_term = tv_get_tv_term(tv, terms[0]);
+        FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, terms[0]);
         if (tv_term) {
             tvpe = tvpe_new(tv_term->positions, tv_term->freq, offset);
         }
@@ -950,7 +950,7 @@ static void phq_extract_terms(FrtQuery *self, FrtHashSet *term_set)
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
-            hs_add(term_set, term_new(phq->field, terms[j]));
+            hs_add(term_set, frt_term_new(phq->field, terms[j]));
         }
     }
 }
@@ -1073,7 +1073,7 @@ static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         char **terms = phq->positions[0].terms;
         const int t_cnt = frt_ary_size(terms);
         if (t_cnt == 1) {
-            FrtQuery *tq = tq_new(phq->field, terms[0]);
+            FrtQuery *tq = frt_tq_new(phq->field, terms[0]);
             tq->boost = self->boost;
             return tq;
         }

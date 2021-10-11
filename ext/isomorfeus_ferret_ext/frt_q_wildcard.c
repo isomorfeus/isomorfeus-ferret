@@ -86,7 +86,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     const char *first_ques = strchr(pattern, FRT_WILD_CHAR);
 
     if (NULL == first_star && NULL == first_ques) {
-        q = tq_new(WCQ(self)->field, pattern);
+        q = frt_tq_new(WCQ(self)->field, pattern);
         q->boost = self->boost;
     }
     else {

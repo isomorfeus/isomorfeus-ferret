@@ -185,7 +185,7 @@ static void hit_pq_multi_insert(FrtPriorityQueue *pq, FrtHit *hit)
  *
  ***************************************************************************/
 
-FrtTopDocs *td_new(int total_hits, int size, FrtHit **hits, float max_score)
+FrtTopDocs *frt_td_new(int total_hits, int size, FrtHit **hits, float max_score)
 {
     FrtTopDocs *td = FRT_ALLOC(FrtTopDocs);
     td->total_hits = total_hits;
@@ -195,7 +195,7 @@ FrtTopDocs *td_new(int total_hits, int size, FrtHit **hits, float max_score)
     return td;
 }
 
-void td_destroy(FrtTopDocs *td)
+void frt_td_destroy(FrtTopDocs *td)
 {
     int i;
 
@@ -206,7 +206,7 @@ void td_destroy(FrtTopDocs *td)
     free(td);
 }
 
-char *td_to_s(FrtTopDocs *td)
+char *frt_td_to_s(FrtTopDocs *td)
 {
     int i;
     FrtHit *hit;
@@ -630,7 +630,7 @@ FrtMatchVector *searcher_get_match_vector(FrtSearcher *self,
     }
     if (tv && tv->term_cnt > 0 && tv->terms[0].positions != NULL) {
         mv = query->get_matchv_i(query, mv, tv);
-        tv_destroy(tv);
+        frt_tv_destroy(tv);
     }
     if (rewrite) {
         q_deref(query);
@@ -954,7 +954,7 @@ char **searcher_highlight(FrtSearcher *self,
         }
         matchv_destroy(mv);
     }
-    if (tv) tv_destroy(tv);
+    if (tv) frt_tv_destroy(tv);
     if (lazy_doc) lazy_doc_close(lazy_doc);
     return excerpt_strs;
 }
@@ -1069,7 +1069,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     scorer = weight->scorer(weight, ISEA(self)->ir);
     if (!scorer || 0 == ISEA(self)->ir->num_docs(ISEA(self)->ir)) {
         if (scorer) scorer->destroy(scorer);
-        return td_new(0, 0, NULL, 0.0);
+        return frt_td_new(0, 0, NULL, 0.0);
     }
 
     while (scorer->next(scorer)) {
@@ -1106,7 +1106,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     }
     pq_clear(hq);
     hq_destroy(hq);
-    return td_new(total_hits, num_docs, score_docs, max_score);
+    return frt_td_new(total_hits, num_docs, score_docs, max_score);
 }
 
 static FrtTopDocs *isea_search(FrtSearcher *self,
@@ -1511,14 +1511,14 @@ static FrtWeight *msea_create_weight(FrtSearcher *self, FrtQuery *query)
     int i, *doc_freqs;
     FrtSearcher *cdfsea;
     FrtWeight *w;
-    FrtHash *df_map = h_new((hash_ft)&term_hash,
-                         (frt_eq_ft)&term_eq,
-                         (free_ft)term_destroy,
+    FrtHash *df_map = h_new((hash_ft)&frt_term_hash,
+                         (frt_eq_ft)&frt_term_eq,
+                         (free_ft)frt_term_destroy,
                          free);
     FrtQuery *rewritten_query = self->rewrite(self, query);
     /* terms get copied directly to df_map so no need to free here */
-    FrtHashSet *terms = hs_new((hash_ft)&term_hash,
-                            (frt_eq_ft)&term_eq,
+    FrtHashSet *terms = hs_new((hash_ft)&frt_term_hash,
+                            (frt_eq_ft)&frt_term_eq,
                             (free_ft)NULL);
     FrtHashSetEntry *hse;
 
@@ -1707,7 +1707,7 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
             if (td->max_score > max_score) max_score = td->max_score;
         }
         total_hits += td->total_hits;
-        td_destroy(td);
+        frt_td_destroy(td);
     }
 
     if (hq->size > first_doc) {
@@ -1728,7 +1728,7 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     pq_clear(hq);
     pq_destroy(hq);
 
-    return td_new(total_hits, num_docs, score_docs, max_score);
+    return frt_td_new(total_hits, num_docs, score_docs, max_score);
 }
 
 static FrtTopDocs *msea_search(FrtSearcher *self,

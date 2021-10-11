@@ -175,7 +175,7 @@ frb_get_td(FrtTopDocs *td, VALUE rsearcher)
                               rb_float_new((double)td->max_score),
                               rsearcher,
                               NULL);
-    td_destroy(td);
+    frt_td_destroy(td);
     return rtop_docs;
 }
 
@@ -491,9 +491,9 @@ static VALUE
 frb_q_get_terms(VALUE self, VALUE searcher)
 {
     VALUE rterms = rb_ary_new();
-    FrtHashSet *terms = hs_new((hash_ft)&term_hash,
-                            (frt_eq_ft)&term_eq,
-                            (free_ft)term_destroy);
+    FrtHashSet *terms = hs_new((hash_ft)&frt_term_hash,
+                            (frt_eq_ft)&frt_term_eq,
+                            (free_ft)frt_term_destroy);
     FrtHashSetEntry *hse;
     GET_Q();
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
@@ -603,7 +603,7 @@ frb_tq_init(VALUE self, VALUE rfield, VALUE rterm)
 {
     FrtSymbol field = frb_field(rfield);
     char *term = rs2s(rb_obj_as_string(rterm));
-    FrtQuery *q = tq_new(field, term);
+    FrtQuery *q = frt_tq_new(field, term);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1182,7 +1182,7 @@ frb_trq_init(VALUE self, VALUE rfield, VALUE roptions)
     bool include_upper = false;
 
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    q = trq_new(frb_field(rfield),
+    q = frt_trq_new(frb_field(rfield),
                 lterm, uterm,
                 include_lower, include_upper);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
@@ -2071,7 +2071,7 @@ frb_trf_init(VALUE self, VALUE rfield, VALUE roptions)
     bool include_upper = false;
 
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    f = trfilt_new(frb_field(rfield), lterm, uterm,
+    f = frt_trfilt_new(frb_field(rfield), lterm, uterm,
                    include_lower, include_upper);
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
@@ -2811,7 +2811,7 @@ frb_sea_search_each(int argc, VALUE *argv, VALUE self)
     }
 
     rtotal_hits = INT2FIX(td->total_hits);
-    td_destroy(td);
+    frt_td_destroy(td);
 
     return rtotal_hits;
 }

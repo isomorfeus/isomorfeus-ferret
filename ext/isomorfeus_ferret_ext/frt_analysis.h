@@ -22,14 +22,8 @@ typedef struct FrtToken
     int pos_inc;
 } FrtToken;
 
-extern FrtToken *frt_tk_new();
 extern void frt_tk_destroy(void *p);
-extern FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end,
-                     int pos_inc);
-extern FrtToken *frt_tk_set_no_len(FrtToken *tk, char *text, off_t start, off_t end,
-                            int pos_inc);
-extern int frt_tk_eq(FrtToken *tk1, FrtToken *tk2);
-extern int frt_tk_cmp(FrtToken *tk1, FrtToken *tk2);
+extern FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end, int pos_inc);
 
 /****************************************************************************
  *

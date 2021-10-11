@@ -11,7 +11,7 @@
  *
  ****************************************************************************/
 
-void tv_destroy(FrtTermVector *tv)
+void frt_tv_destroy(FrtTermVector *tv)
 {
     int i = tv->term_cnt;
     while (i > 0) {
@@ -24,7 +24,7 @@ void tv_destroy(FrtTermVector *tv)
     free(tv);
 }
 
-int tv_scan_to_term_index(FrtTermVector *tv, const char *term)
+int frt_tv_scan_to_term_index(FrtTermVector *tv, const char *term)
 {
     int lo = 0;                 /* search starts array */
     int hi = tv->term_cnt - 1;  /* for 1st element < n, return its index */
@@ -49,9 +49,9 @@ int tv_scan_to_term_index(FrtTermVector *tv, const char *term)
     return lo;
 }
 
-int tv_get_term_index(FrtTermVector *tv, const char *term)
+int frt_tv_get_term_index(FrtTermVector *tv, const char *term)
 {
-    int index = tv_scan_to_term_index(tv, term);
+    int index = frt_tv_scan_to_term_index(tv, term);
     if (index < tv->term_cnt && (0 == strcmp(term, tv->terms[index].text))) {
         /* found term */
         return index;
@@ -61,9 +61,9 @@ int tv_get_term_index(FrtTermVector *tv, const char *term)
     }
 }
 
-FrtTVTerm *tv_get_tv_term(FrtTermVector *tv, const char *term)
+FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term)
 {
-    int index = tv_get_term_index(tv, term);
+    int index = frt_tv_get_term_index(tv, term);
     if (index >= 0) {
         return &(tv->terms[index]);
     }

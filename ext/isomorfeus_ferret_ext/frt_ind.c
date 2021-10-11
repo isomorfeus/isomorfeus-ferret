@@ -224,17 +224,17 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
         FrtSymbol field = (FrtSymbol)hse->elem;
         df = frt_doc_get_field(doc, field);
         if (!df) continue;
-        frt_bq_add_query(q, tq_new(field, df->data[0]), FRT_BC_MUST);
+        frt_bq_add_query(q, frt_tq_new(field, df->data[0]), FRT_BC_MUST);
     }
     td = searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
     if (td->total_hits > 1) {
-        td_destroy(td);
+        frt_td_destroy(td);
         rb_raise(rb_eArgError, "%s", NON_UNIQUE_KEY_ERROR_MSG);
     } else if (td->total_hits == 1) {
         ir_delete_doc(self->ir, td->hits[0]->doc);
     }
     q_deref(q);
-    td_destroy(td);
+    frt_td_destroy(td);
 }
 
 static void index_add_doc_i(FrtIndex *self, FrtDocument *doc)

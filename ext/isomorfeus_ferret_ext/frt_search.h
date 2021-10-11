@@ -466,10 +466,6 @@ extern FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term,
 extern FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
                       const char *upper_term, bool include_lower,
                       bool include_upper);
-extern FrtQuery *frt_trq_new_less(FrtSymbol field, const char *upper_term,
-                           bool include_upper);
-extern FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term,
-                           bool include_lower);
 
 /***************************************************************************
  * FrtSpanQuery

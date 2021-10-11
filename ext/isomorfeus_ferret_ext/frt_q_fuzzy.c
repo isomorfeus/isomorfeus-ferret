@@ -189,7 +189,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         return frt_bq_new(true);
     }
     if (fuzq->pre_len >= (int)strlen(term)) {
-        return tq_new(fuzq->field, term);
+        return frt_tq_new(fuzq->field, term);
     }
 
     q = multi_tq_new_conf(fuzq->field, FrtMTQMaxTerms(self), fuzq->min_sim);

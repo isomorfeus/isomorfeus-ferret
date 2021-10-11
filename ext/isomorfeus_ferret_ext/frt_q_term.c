@@ -264,7 +264,7 @@ static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
-    hs_add(terms, term_new(TQ(self)->field, TQ(self)->term));
+    hs_add(terms, frt_term_new(TQ(self)->field, TQ(self)->term));
 }
 
 static unsigned long long tq_hash(FrtQuery *self)
@@ -283,7 +283,7 @@ static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
 {
     if (strcmp(tv->field, TQ(self)->field) == 0) {
         int i;
-        FrtTVTerm *tv_term = tv_get_tv_term(tv, TQ(self)->term);
+        FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, TQ(self)->term);
         if (tv_term) {
             for (i = 0; i < tv_term->freq; i++) {
                 int pos = tv_term->positions[i];
@@ -294,7 +294,7 @@ static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
     return mv;
 }
 
-FrtQuery *tq_new(FrtSymbol field, const char *term)
+FrtQuery *frt_tq_new(FrtSymbol field, const char *term)
 {
     FrtQuery *self             = q_new(FrtTermQuery);
 

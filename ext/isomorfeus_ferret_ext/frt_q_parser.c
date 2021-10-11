@@ -2380,12 +2380,12 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
-    if ((token = ts_next(stream)) == NULL) {
+    if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
     }
     else {
-        q = tq_new(field, token->text);
-        if ((token = ts_next(stream)) != NULL) {
+        q = frt_tq_new(field, token->text);
+        if ((token = frt_ts_next(stream)) != NULL) {
             /* Less likely case, destroy the term query and create a
              * phrase query instead */
             FrtQuery *phq = phq_new(field);
@@ -2401,7 +2401,7 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
                 else {
                     phq_append_multi_term(q, token->text);
                 }
-            } while ((token = ts_next(stream)) != NULL);
+            } while ((token = frt_ts_next(stream)) != NULL);
         }
     }
     return q;
@@ -2419,7 +2419,7 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word);
 
-    if ((token = ts_next(stream)) == NULL) {
+    if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
     }
     else {
@@ -2662,7 +2662,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
             char *last_word = NULL;
 
             for (i = 0; i < word_count; i++) {
-                token = ts_next(get_cached_ts(qp, field, words[i]));
+                token = frt_ts_next(get_cached_ts(qp, field, words[i]));
                 if (token) {
                     free(words[i]);
                     last_word = words[i] = frt_estrdup(token->text);
@@ -2679,7 +2679,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                     q = frt_bq_new(false);
                     break;
                 case 1:
-                    q = tq_new(field, last_word);
+                    q = frt_tq_new(field, last_word);
                     break;
                 default:
                     q = multi_tq_new_conf(field, term_cnt, 0.0);
@@ -2715,7 +2715,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
 
             if (word_count == 1) {
                 stream = get_cached_ts(qp, field, words[0]);
-                while ((token = ts_next(stream))) {
+                while ((token = frt_ts_next(stream))) {
                     if (token->pos_inc) {
                         phq_add_term(q, token->text,
                                      pos_inc ? pos_inc : token->pos_inc);
@@ -2732,7 +2732,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
 
                 for (j = 0; j < word_count; j++) {
                     stream = get_cached_ts(qp, field, words[j]);
-                    if ((token = ts_next(stream))) {
+                    if ((token = frt_ts_next(stream))) {
                         if (!added_position) {
                             phq_add_term(q, token->text,
                                          pos_inc ? pos_inc : token->pos_inc);
@@ -2788,18 +2788,18 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
 
     if (from) {
         FrtTokenStream *stream = get_cached_ts(qp, field, from);
-        FrtToken *token = ts_next(stream);
+        FrtToken *token = frt_ts_next(stream);
         from = token ? frt_estrdup(token->text) : NULL;
     }
     if (to) {
         FrtTokenStream *stream = get_cached_ts(qp, field, to);
-        FrtToken *token = ts_next(stream);
+        FrtToken *token = frt_ts_next(stream);
         to = token ? frt_estrdup(token->text) : NULL;
     }
 */
 
     rq = qp->use_typed_range_query ?
-        trq_new(field, from, to, inc_lower, inc_upper) :
+        frt_trq_new(field, from, to, inc_lower, inc_upper) :
         rq_new(field, from, to, inc_lower, inc_upper);
     return rq;
 }
@@ -2860,7 +2860,7 @@ void qp_destroy(FrtQParser *self)
     assert(NULL == self->fields_top);
 
     h_destroy(self->ts_cache);
-    tk_destroy(self->non_tokenizer);
+    frt_tk_destroy(self->non_tokenizer);
     frt_a_deref(self->analyzer);
     free(self);
 }
@@ -2892,7 +2892,7 @@ FrtQParser *qp_new(FrtAnalyzer *analyzer)
     qp_push_fields(self, self->def_fields, false);
 
     self->analyzer = analyzer;
-    self->ts_cache = h_new_str(NULL, (free_ft)&ts_deref);
+    self->ts_cache = h_new_str(NULL, (free_ft)&frt_ts_deref);
     self->buf_index = 0;
     self->dynbuf = NULL;
     self->non_tokenizer = non_tokenizer_new();

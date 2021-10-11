@@ -120,22 +120,22 @@ void frb_thread_once(int *once_control, void (*init_routine) (void))
     }
 }
 
-void frb_thread_key_create(thread_key_t *key, void (*destr_function)(void *))
+void frb_thread_key_create(frt_thread_key_t *key, void (*destr_function)(void *))
 {
     *key = h_new(&value_hash, &value_eq, NULL, destr_function);
 }
 
-void frb_thread_key_delete(thread_key_t key)
+void frb_thread_key_delete(frt_thread_key_t key)
 {
     h_destroy(key);
 }
 
-void frb_thread_setspecific(thread_key_t key, const void *pointer)
+void frb_thread_setspecific(frt_thread_key_t key, const void *pointer)
 {
     h_set(key, (void *)rb_thread_current(), (void *)pointer);
 }
 
-void *frb_thread_getspecific(thread_key_t key)
+void *frb_thread_getspecific(frt_thread_key_t key)
 {
     return h_get(key, (void *)rb_thread_current());
 }

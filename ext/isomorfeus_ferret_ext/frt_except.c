@@ -25,21 +25,21 @@ const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
 char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
 char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
 
-static thread_key_t exception_stack_key;
-static thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
+static frt_thread_key_t exception_stack_key;
+static frt_thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
 
 static void exception_stack_alloc(void)
 {
-    thread_key_create(&exception_stack_key, NULL);
+    frt_thread_key_create(&exception_stack_key, NULL);
 }
 
 void frt_xpush_context(frt_xcontext_t *context)
 {
     frt_xcontext_t *top_context;
-    thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_context = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
+    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
     context->next = top_context;
-    thread_setspecific(exception_stack_key, context);
+    frt_thread_setspecific(exception_stack_key, context);
     context->handled = true;
     context->in_finally = false;
 }
@@ -57,8 +57,8 @@ static void frt_xraise_context(frt_xcontext_t *context,
 void frt_xraise(int excode, const char *const msg)
 {
     frt_xcontext_t *top_context;
-    thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_context = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
+    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
 
     if (!top_context) {
         FRT_XEXIT(ERROR_TYPES[excode], msg);
@@ -76,10 +76,10 @@ void frt_xraise(int excode, const char *const msg)
 void frt_xpop_context()
 {
     frt_xcontext_t *top_cxt, *context;
-    thread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_cxt = (frt_xcontext_t *)thread_getspecific(exception_stack_key);
+    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    top_cxt = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
     context = top_cxt->next;
-    thread_setspecific(exception_stack_key, context);
+    frt_thread_setspecific(exception_stack_key, context);
     if (!top_cxt->handled) {
         if (context) {
             frt_xraise_context(context, top_cxt->excode, top_cxt->msg);

@@ -36,7 +36,7 @@ static FrtMatchVector *mv_to_term_mv(FrtMatchVector *term_mv, FrtMatchVector *fu
     FrtHashSetEntry *hse;
     for (hse = terms->first; hse; hse = hse->next) {
         char *term = (char *)hse->elem;
-        FrtTVTerm *tv_term = tv_get_tv_term(tv, term);
+        FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, term);
         if (tv_term) {
             int i, m_idx = 0;
             for (i = 0; i < tv_term->freq; i++) {
@@ -76,7 +76,7 @@ typedef struct TVTermDocEnum
 static void tv_tde_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 {
     TVTermDocEnum *tv_tde = TV_TDE(tde);
-    FrtTVTerm *tv_term = tv_get_tv_term(tv_tde->tv, term);
+    FrtTVTerm *tv_term = frt_tv_get_tv_term(tv_tde->tv, term);
     (void)field_num;
     if (tv_term) {
         tv_tde->doc = -1;
@@ -1545,7 +1545,7 @@ static void spantq_destroy_i(FrtQuery *self)
 
 static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
-    hs_add(terms, term_new(SpQ(self)->field, SpTQ(self)->term));
+    hs_add(terms, frt_term_new(SpQ(self)->field, SpTQ(self)->term));
 }
 
 static FrtHashSet *spantq_get_terms(FrtQuery *self)
@@ -1633,7 +1633,7 @@ static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
-        hs_add(terms, term_new(SpQ(self)->field, smtq->terms[i]));
+        hs_add(terms, frt_term_new(SpQ(self)->field, smtq->terms[i]));
     }
 }
 

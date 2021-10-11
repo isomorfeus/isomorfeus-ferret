@@ -2431,7 +2431,7 @@ frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
     tv = ir->term_vector(ir, FIX2INT(rdoc_id), frb_field(rfield));
     if (tv) {
         rtv = frb_get_tv(tv);
-        tv_destroy(tv);
+        frt_tv_destroy(tv);
         return rtv;
     }
     else {

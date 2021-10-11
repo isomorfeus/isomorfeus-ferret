@@ -1472,7 +1472,7 @@ static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
 
 FrtHash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
 {
-    FrtHash *term_vectors = h_new_str(NULL, (free_ft)&tv_destroy);
+    FrtHash *term_vectors = h_new_str(NULL, (free_ft)&frt_tv_destroy);
     int i;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
@@ -1707,13 +1707,13 @@ void fw_add_postings(FrtFieldsWriter *fw,
 
 #define TE(ste) ((FrtTermEnum *)ste)
 
-char *te_get_term(FrtTermEnum *te)
+char *frt_te_get_term(FrtTermEnum *te)
 {
     return (char *)memcpy(FRT_ALLOC_N(char, te->curr_term_len + 1),
                           te->curr_term, te->curr_term_len + 1);
 }
 
-FrtTermInfo *te_get_ti(FrtTermEnum *te)
+FrtTermInfo *frt_te_get_ti(FrtTermEnum *te)
 {
     return (FrtTermInfo*)memcpy(FRT_ALLOC(FrtTermInfo), &(te->curr_ti), sizeof(FrtTermInfo));
 }
@@ -1779,7 +1779,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti,
                 rb_raise(rb_eIndexError, "index term enum read too many terms");
             }
 #endif
-            sti->index_terms[i] = te_get_term(index_te);
+            sti->index_terms[i] = frt_te_get_term(index_te);
             sti->index_term_lens[i] = index_te->curr_term_len;
             sti->index_term_infos[i] = index_te->curr_ti;
             index_ptr += is_read_voff_t(STE(index_te)->is);
@@ -2002,7 +2002,7 @@ static TermInfo *ste_scan_for_term_info(FrtSegmentTermEnum *ste, const char *ter
     ste_scan_to(ste, term);
 
     if (0 == strcmp(TE(ste)->curr_term, term)) {
-        return te_get_ti((FrtTermEnum *)ste);
+        return frt_te_get_ti((FrtTermEnum *)ste);
     }
     else {
         return NULL;
@@ -2291,7 +2291,7 @@ FrtTermEnum *mte_new(FrtMultiReader *mr, int field_num, const char *term)
  *
  ****************************************************************************/
 
-FrtTermInfosReader *tir_open(FrtStore *store,
+FrtTermInfosReader *frt_tir_open(FrtStore *store,
                           FrtSegmentFieldIndex *sfi, const char *segment)
 {
     FrtTermInfosReader *tir = FRT_ALLOC(FrtTermInfosReader);
@@ -2299,7 +2299,7 @@ FrtTermInfosReader *tir_open(FrtStore *store,
 
     sprintf(file_name, "%s.tis", segment);
     tir->orig_te = ste_new(store->open_input(store, file_name), sfi);
-    thread_key_create(&tir->thread_te, NULL);
+    frt_thread_key_create(&tir->thread_te, NULL);
     tir->te_bucket = frt_ary_new();
     tir->field_num = -1;
 
@@ -2309,16 +2309,16 @@ FrtTermInfosReader *tir_open(FrtStore *store,
 static FrtTermEnum *tir_enum(FrtTermInfosReader *tir)
 {
     FrtTermEnum *te;
-    if (NULL == (te = (FrtTermEnum *)thread_getspecific(tir->thread_te))) {
+    if (NULL == (te = (FrtTermEnum *)frt_thread_getspecific(tir->thread_te))) {
         te = ste_clone(tir->orig_te);
         ste_set_field(te, tir->field_num);
         frt_ary_push(tir->te_bucket, te);
-        thread_setspecific(tir->thread_te, te);
+        frt_thread_setspecific(tir->thread_te, te);
     }
     return te;
 }
 
-FrtTermInfosReader *tir_set_field(FrtTermInfosReader *tir, int field_num)
+FrtTermInfosReader *frt_tir_set_field(FrtTermInfosReader *tir, int field_num)
 {
     if (field_num != tir->field_num) {
         ste_set_field(tir_enum(tir), field_num);
@@ -2327,7 +2327,7 @@ FrtTermInfosReader *tir_set_field(FrtTermInfosReader *tir, int field_num)
     return tir;
 }
 
-FrtTermInfo *tir_get_ti(FrtTermInfosReader *tir, const char *term)
+FrtTermInfo *frt_tir_get_ti(FrtTermInfosReader *tir, const char *term)
 {
     FrtTermEnum *te = tir_enum(tir);
     char *match;
@@ -2357,25 +2357,15 @@ static FrtTermInfo *tir_get_ti_field(FrtTermInfosReader *tir, int field_num,
     return NULL;
 }
 
-char *tir_get_term(FrtTermInfosReader *tir, int pos)
-{
-    if (pos < 0) {
-        return NULL;
-    }
-    else {
-        return ste_get_term(tir_enum(tir), pos);
-    }
-}
-
-void tir_close(FrtTermInfosReader *tir)
+void frt_tir_close(FrtTermInfosReader *tir)
 {
     frt_ary_destroy(tir->te_bucket, (free_ft)&ste_close);
     ste_close(tir->orig_te);
 
     /* fix for some dodgy old versions of pthread */
-    thread_setspecific(tir->thread_te, NULL);
+    frt_thread_setspecific(tir->thread_te, NULL);
 
-    thread_key_delete(tir->thread_te);
+    frt_thread_key_delete(tir->thread_te);
     free(tir);
 }
 
@@ -2399,7 +2389,7 @@ static void tw_close(FrtTermWriter *tw)
     free(tw);
 }
 
-FrtTermInfosWriter *tiw_open(FrtStore *store,
+FrtTermInfosWriter *frt_tiw_open(FrtStore *store,
                           const char *segment,
                           int index_interval,
                           int skip_interval)
@@ -2424,7 +2414,7 @@ FrtTermInfosWriter *tiw_open(FrtStore *store,
     os_write_u32(tiw->tfx_out, 0); /* make space for field_count */
 
     /* The following two numbers are the first numbers written to the field
-     * index when tiw_start_field is called. But they'll be zero to start with
+     * index when frt_tiw_start_field is called. But they'll be zero to start with
      * so we'll write index interval and skip interval instead. */
     tiw->tix_writer->counter = tiw->index_interval;
     tiw->tis_writer->counter = tiw->skip_interval;
@@ -2482,7 +2472,7 @@ static void tw_add(FrtTermWriter *tw,
     tw->counter++;
 }
 
-void tiw_add(FrtTermInfosWriter *tiw,
+void frt_tiw_add(FrtTermInfosWriter *tiw,
              const char *term,
              int term_len,
              FrtTermInfo *ti)
@@ -2515,7 +2505,7 @@ static void tw_reset(FrtTermWriter *tw)
     FRT_ZEROSET(&(tw->last_term_info), FrtTermInfo);
 }
 
-void tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
+void frt_tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
 {
     FrtOutStream *tfx_out = tiw->tfx_out;
     os_write_vint(tfx_out, tiw->tix_writer->counter);    /* write tix size */
@@ -2529,7 +2519,7 @@ void tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
     tiw->field_count++;
 }
 
-void tiw_close(FrtTermInfosWriter *tiw)
+void frt_tiw_close(FrtTermInfosWriter *tiw)
 {
     FrtOutStream *tfx_out = tiw->tfx_out;
     os_write_vint(tfx_out, tiw->tix_writer->counter);
@@ -3927,7 +3917,7 @@ typedef struct SegmentReader {
     FrtInStream *prx_in;
     FrtSegmentFieldIndex *sfi;
     FrtTermInfosReader *tir;
-    thread_key_t thread_fr;
+    frt_thread_key_t thread_fr;
     void **fr_bucket;
     FrtHash *norms;
     FrtStore *cfs_store;
@@ -3945,10 +3935,10 @@ static FrtFieldsReader *sr_fr(SegmentReader *sr)
 {
     FrtFieldsReader *fr;
 
-    if (NULL == (fr = (FrtFieldsReader *)thread_getspecific(sr->thread_fr))) {
+    if (NULL == (fr = (FrtFieldsReader *)frt_thread_getspecific(sr->thread_fr))) {
         fr = fr_clone(sr->fr);
         frt_ary_push(sr->fr_bucket, fr);
-        thread_setspecific(sr->thread_fr, fr);
+        frt_thread_setspecific(sr->thread_fr, fr);
     }
     return fr;
 }
@@ -4116,7 +4106,7 @@ static void sr_close_i(FrtIndexReader *ir)
     SegmentReader *sr = SR(ir);
 
     if (sr->fr)           fr_close(sr->fr);
-    if (sr->tir)          tir_close(sr->tir);
+    if (sr->tir)          frt_tir_close(sr->tir);
     if (sr->sfi)          sfi_close(sr->sfi);
     if (sr->frq_in)       is_close(sr->frq_in);
     if (sr->prx_in)       is_close(sr->prx_in);
@@ -4124,8 +4114,8 @@ static void sr_close_i(FrtIndexReader *ir)
     if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
     if (sr->cfs_store)    store_deref(sr->cfs_store);
     if (sr->fr_bucket) {
-        thread_setspecific(sr->thread_fr, NULL);
-        thread_key_delete(sr->thread_fr);
+        frt_thread_setspecific(sr->thread_fr, NULL);
+        frt_thread_key_delete(sr->thread_fr);
         frt_ary_destroy(sr->fr_bucket, (free_ft)&fr_close);
     }
 }
@@ -4210,7 +4200,7 @@ static FrtTermEnum *sr_terms_from(FrtIndexReader *ir, int field_num, const char 
 
 static int sr_doc_freq(FrtIndexReader *ir, int field_num, const char *term)
 {
-    FrtTermInfo *ti = tir_get_ti(tir_set_field(SR(ir)->tir, field_num), term);
+    FrtTermInfo *ti = frt_tir_get_ti(frt_tir_set_field(SR(ir)->tir, field_num), term);
     return ti ? ti->doc_freq : 0;
 }
 
@@ -4326,7 +4316,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
 
         sr->fr = fr_open(store, sr_segment, ir->fis);
         sr->sfi = sfi_open(store, sr_segment);
-        sr->tir = tir_open(store, sr->sfi, sr_segment);
+        sr->tir = frt_tir_open(store, sr->sfi, sr_segment);
 
         sr->deleted_docs = NULL;
         sr->deleted_docs_dirty = false;
@@ -4343,7 +4333,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         sr->norms = h_new_int((free_ft)&norm_destroy);
         sr_open_norms(ir, store);
         if (fis_has_vectors(ir->fis)) {
-            thread_key_create(&sr->thread_fr, NULL);
+            frt_thread_key_create(&sr->thread_fr, NULL);
             sr->fr_bucket = frt_ary_new();
         }
     FRT_XCATCHALL
@@ -5059,7 +5049,7 @@ static void dw_flush(FrtDocWriter *dw)
     FrtPosting *p;
     FrtOccurence *occ;
     FrtStore *store = dw->store;
-    FrtTermInfosWriter *tiw = tiw_open(store, dw->si->name,
+    FrtTermInfosWriter *tiw = frt_tiw_open(store, dw->si->name,
                                     dw->index_interval, skip_interval);
     FrtTermInfo ti;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -5083,7 +5073,7 @@ static void dw_flush(FrtDocWriter *dw)
         }
 
         pls = dw_sort_postings(fld_inv->plists);
-        tiw_start_field(tiw, fi->number);
+        frt_tiw_start_field(tiw, fi->number);
         posting_count = fld_inv->plists->size;
         for (j = 0; j < posting_count; j++) {
             pl = pls[j];
@@ -5117,12 +5107,12 @@ static void dw_flush(FrtDocWriter *dw)
             }
             ti.skip_offset = skip_buf_write(skip_buf) - ti.frq_ptr;
             ti.doc_freq = doc_freq;
-            tiw_add(tiw, pl->term, pl->term_len, &ti);
+            frt_tiw_add(tiw, pl->term, pl->term_len, &ti);
         }
     }
     os_close(prx_out);
     os_close(frq_out);
-    tiw_close(tiw);
+    frt_tiw_close(tiw);
     skip_buf_destroy(skip_buf);
     dw_flush_streams(dw);
 }
@@ -5285,7 +5275,7 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
                     }
                 }
             }
-            ts_deref(ts);
+            frt_ts_deref(ts);
             start_offset += df->lengths[i] + 1;
         }
         fld_inv->length = num_terms;
@@ -5672,9 +5662,9 @@ static void sm_merge_term_info(SegmentMerger *sm, SegmentMergeInfo **matches,
         SegmentMergeInfo *first_match = matches[0];
         int term_len = first_match->te->curr_term_len;
 
-        ti_set(sm->ti, df, frq_ptr, prx_ptr,
+        frt_ti_set(sm->ti, df, frq_ptr, prx_ptr,
                (skip_ptr - frq_ptr));
-        tiw_add(sm->tiw, sm_cache_term(sm, first_match->term, term_len),
+        frt_tiw_add(sm->tiw, sm_cache_term(sm, first_match->term, term_len),
                 term_len, &sm->ti);
     }
 }
@@ -5694,7 +5684,7 @@ static void sm_merge_term_infos(SegmentMerger *sm)
     }
 
     for (i = 0; i < fis_size; i++) {
-        tiw_start_field(sm->tiw, i);
+        frt_tiw_start_field(sm->tiw, i);
         for (j = 0; j < seg_cnt; j++) {
             smi = sm->smis[j];
             ste_set_field(smi->te, i);
@@ -5747,7 +5737,7 @@ static void sm_merge_terms(SegmentMerger *sm)
     sprintf(file_name, "%s.prx", sm->si->name);
     sm->prx_out = sm->store->new_output(sm->store, file_name);
 
-    sm->tiw = tiw_open(sm->store, sm->si->name, sm->config->index_interval,
+    sm->tiw = frt_tiw_open(sm->store, sm->si->name, sm->config->index_interval,
                        sm->config->skip_interval);
     sm->skip_buf = skip_buf_new(sm->frq_out, sm->prx_out);
 
@@ -5765,7 +5755,7 @@ static void sm_merge_terms(SegmentMerger *sm)
 
     os_close(sm->frq_out);
     os_close(sm->prx_out);
-    tiw_close(sm->tiw);
+    frt_tiw_close(sm->tiw);
     pq_destroy(sm->queue);
     skip_buf_destroy(sm->skip_buf);
     free(sm->term_buf);

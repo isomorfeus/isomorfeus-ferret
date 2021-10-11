@@ -345,7 +345,6 @@ extern FrtTermInfosReader *frt_tir_open(FrtStore *store,
                                  const char *segment);
 extern FrtTermInfosReader *frt_tir_set_field(FrtTermInfosReader *tir, int field_num);
 extern FrtTermInfo *frt_tir_get_ti(FrtTermInfosReader *tir, const char *term);
-extern char *frt_tir_get_term(FrtTermInfosReader *tir, int pos);
 extern void frt_tir_close(FrtTermInfosReader *tir);
 
 /****************************************************************************

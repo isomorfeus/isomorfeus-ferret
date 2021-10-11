@@ -138,7 +138,7 @@ frb_set_token(FrtToken *tk, VALUE rt)
     if (rt == Qnil) return NULL;
 
     Data_Get_Struct(rt, RToken, rtk);
-    tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text),
+    frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text),
            rtk->start, rtk->end, rtk->pos_inc);
     return tk;
 }
@@ -406,7 +406,7 @@ frb_ts_free(FrtTokenStream *ts)
         object_del(&ts->text);
     }
     object_del(ts);
-    ts_deref(ts);
+    frt_ts_deref(ts);
 }
 
 static void frb_rets_free(FrtTokenStream *ts);
@@ -528,7 +528,7 @@ frb_tf_free(FrtTokenStream *ts)
         object_del(&TkFilt(ts)->sub_ts);
     }
     object_del(ts);
-    ts_deref(ts);
+    frt_ts_deref(ts);
 }
 
 
@@ -573,7 +573,7 @@ cwrts_reset(FrtTokenStream *ts, char *text)
 static FrtTokenStream *
 cwrts_clone_i(FrtTokenStream *orig_ts)
 {
-    FrtTokenStream *new_ts = ts_clone_size(orig_ts, sizeof(CWrappedTokenStream));
+    FrtTokenStream *new_ts = frt_ts_clone_size(orig_ts, sizeof(CWrappedTokenStream));
     VALUE rts = CWTS(new_ts)->rts = rb_funcall(CWTS(orig_ts)->rts, id_clone, 0);
     rb_hash_aset(object_space, ((VALUE)new_ts)|1, rts);
     return new_ts;
@@ -588,7 +588,7 @@ frb_get_cwrapped_rts(VALUE rts)
         FRT_REF(ts);
     }
     else {
-        ts = ts_new(CWrappedTokenStream);
+        ts = frt_ts_new(CWrappedTokenStream);
         CWTS(ts)->rts = rts;
         ts->next = &cwrts_next;
         ts->reset = &cwrts_reset;
@@ -648,7 +648,7 @@ frb_rets_free(FrtTokenStream *ts)
         object_del(&ts->text);
     }
     object_del(ts);
-    ts_deref(ts);
+    frt_ts_deref(ts);
 }
 
 static void
@@ -745,12 +745,12 @@ static FrtToken *
   end = RETS(ts)->curr_ind;
 
   if (NIL_P(RETS(ts)->proc)) {
-    return tk_set(&(CachedTS(ts)->token), rs2s(ret), rtok_len,
+    return frt_tk_set(&(CachedTS(ts)->token), rs2s(ret), rtok_len,
       beg, end, 1);
   } else {
     VALUE rtok;
     rtok = rb_funcall(RETS(ts)->proc, id_call, 1, ret);
-    return tk_set(&(CachedTS(ts)->token), rs2s(rtok),
+    return frt_tk_set(&(CachedTS(ts)->token), rs2s(rtok),
       RSTRING_LEN(rtok), beg, end, 1);
   }
 }
@@ -766,14 +766,14 @@ rets_reset(FrtTokenStream *ts, char *text)
 static FrtTokenStream *
 rets_clone_i(FrtTokenStream *orig_ts)
 {
-    FrtTokenStream *ts = ts_clone_size(orig_ts, sizeof(RegExpTokenStream));
+    FrtTokenStream *ts = frt_ts_clone_size(orig_ts, sizeof(RegExpTokenStream));
     return ts;
 }
 
 static FrtTokenStream *
 rets_new(VALUE rtext, VALUE regex, VALUE proc)
 {
-    FrtTokenStream *ts = ts_new(RegExpTokenStream);
+    FrtTokenStream *ts = frt_ts_new(RegExpTokenStream);
 
     if (rtext != Qnil) {
         rtext = StringValue(rtext);
@@ -1547,7 +1547,7 @@ frb_re_analyzer_mark(FrtAnalyzer *a)
 static void
 re_analyzer_destroy_i(FrtAnalyzer *a)
 {
-    ts_deref(a->current_ts);
+    frt_ts_deref(a->current_ts);
     free(a);
 }
 

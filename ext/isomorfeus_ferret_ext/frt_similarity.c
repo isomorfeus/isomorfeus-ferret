@@ -15,7 +15,7 @@
  *
  ****************************************************************************/
 
-FrtTerm *term_new(FrtSymbol field, const char *text)
+FrtTerm *frt_term_new(FrtSymbol field, const char *text)
 {
     FrtTerm *t = FRT_ALLOC(FrtTerm);
     t->field = field;
@@ -23,19 +23,19 @@ FrtTerm *term_new(FrtSymbol field, const char *text)
     return t;
 }
 
-void term_destroy(FrtTerm *self)
+void frt_term_destroy(FrtTerm *self)
 {
     free(self->text);
     free(self);
 }
 
-int term_eq(const void *t1, const void *t2)
+int frt_term_eq(const void *t1, const void *t2)
 {
     return ((strcmp(((FrtTerm *)t1)->text, ((FrtTerm *)t2)->text) == 0) &&
         (strcmp(((FrtTerm *)t1)->field, ((FrtTerm *)t2)->field) == 0));
 }
 
-unsigned long long term_hash(const void *t)
+unsigned long long frt_term_hash(const void *t)
 {
     return str_hash(((FrtTerm *)t)->text) * sym_hash(((FrtTerm *)t)->field);
 }
