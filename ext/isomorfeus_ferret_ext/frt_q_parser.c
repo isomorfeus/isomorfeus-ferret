@@ -2388,18 +2388,18 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
         if ((token = frt_ts_next(stream)) != NULL) {
             /* Less likely case, destroy the term query and create a
              * phrase query instead */
-            FrtQuery *phq = phq_new(field);
-            phq_add_term(phq, ((FrtTermQuery *)q)->term, 0);
+            FrtQuery *phq = frt_phq_new(field);
+            frt_phq_add_term(phq, ((FrtTermQuery *)q)->term, 0);
             q->destroy_i(q);
             q = phq;
             do {
                 if (token->pos_inc) {
-                    phq_add_term(q, token->text, token->pos_inc);
+                    frt_phq_add_term(q, token->text, token->pos_inc);
                     /* add some slop since single term  was expected */
                     ((FrtPhraseQuery *)q)->slop++;
                 }
                 else {
-                    phq_append_multi_term(q, token->text);
+                    frt_phq_append_multi_term(q, token->text);
                 }
             } while ((token = frt_ts_next(stream)) != NULL);
         }
@@ -2503,7 +2503,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
     if (is_prefix) {
         /* chop off the '*' temporarily to create the query */
         pattern[len - 1] = 0;
-        q = prefixq_new(field, pattern);
+        q = frt_prefixq_new(field, pattern);
         pattern[len - 1] = '*';
     }
     else {
@@ -2698,7 +2698,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
         FrtTokenStream *stream;
         int i, j;
         int pos_inc = 0;
-        q = phq_new(field);
+        q = frt_phq_new(field);
         if (slop_str) {
             int slop;
             sscanf(slop_str,"%d",&slop);
@@ -2717,11 +2717,11 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                 stream = get_cached_ts(qp, field, words[0]);
                 while ((token = frt_ts_next(stream))) {
                     if (token->pos_inc) {
-                        phq_add_term(q, token->text,
+                        frt_phq_add_term(q, token->text,
                                      pos_inc ? pos_inc : token->pos_inc);
                     }
                     else {
-                        phq_append_multi_term(q, token->text);
+                        frt_phq_append_multi_term(q, token->text);
                         ((FrtPhraseQuery *)q)->slop++;
                     }
                     pos_inc = 0;
@@ -2734,13 +2734,13 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
                     stream = get_cached_ts(qp, field, words[j]);
                     if ((token = frt_ts_next(stream))) {
                         if (!added_position) {
-                            phq_add_term(q, token->text,
+                            frt_phq_add_term(q, token->text,
                                          pos_inc ? pos_inc : token->pos_inc);
                             added_position = true;
                             pos_inc = 0;
                         }
                         else {
-                            phq_append_multi_term(q, token->text);
+                            frt_phq_append_multi_term(q, token->text);
                         }
                     }
                 }

@@ -1209,7 +1209,7 @@ frb_phq_init(int argc, VALUE *argv, VALUE self)
     VALUE rfield, rslop;
     FrtQuery *q;
     rb_scan_args(argc, argv, "11", &rfield, &rslop);
-    q = phq_new(frb_field(rfield));
+    q = frt_phq_new(frb_field(rfield));
     if (argc == 2) {
         ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
     }
@@ -1246,7 +1246,7 @@ frb_phq_add(int argc, VALUE *argv, VALUE self)
     switch (TYPE(rterm)) {
         case T_STRING:
             {
-                phq_add_term(q, StringValuePtr(rterm), pos_inc);
+                frt_phq_add_term(q, StringValuePtr(rterm), pos_inc);
                 break;
             }
         case T_ARRAY:
@@ -1259,10 +1259,10 @@ frb_phq_add(int argc, VALUE *argv, VALUE self)
                              "an array of strings");
                 }
                 t = StringValuePtr(RARRAY_PTR(rterm)[0]);
-                phq_add_term(q, t, pos_inc);
+                frt_phq_add_term(q, t, pos_inc);
                 for (i = 1; i < RARRAY_LEN(rterm); i++) {
                     t = StringValuePtr(RARRAY_PTR(rterm)[i]);
-                    phq_append_multi_term(q, t);
+                    frt_phq_append_multi_term(q, t);
                 }
                 break;
             }
@@ -1328,7 +1328,7 @@ frb_phq_set_slop(VALUE self, VALUE rslop)
 static VALUE
 frb_prq_init(int argc, VALUE *argv, VALUE self)
 {
-    return frb_mtq_init_specific(argc, argv, self, &prefixq_new);
+    return frb_mtq_init_specific(argc, argv, self, &frt_prefixq_new);
 }
 
 /****************************************************************************
@@ -3050,7 +3050,7 @@ frb_sea_init(VALUE self, VALUE obj)
     FrtSearcher *sea;
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
-        store = open_fs_store(rs2s(obj));
+        store = frt_open_fs_store(rs2s(obj));
         ir = ir_open(store);
         FRT_DEREF(store);
         FRT_GET_IR(obj, ir);

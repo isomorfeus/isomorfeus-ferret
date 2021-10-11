@@ -19,7 +19,7 @@ void frt_store_deref(FrtStore *store)
     }
 }
 
-FrtLock *open_lock(FrtStore *store, const char *lockname)
+FrtLock *frt_open_lock(FrtStore *store, const char *lockname)
 {
     FrtLock *lock = store->open_lock_i(store, lockname);
     hs_add(store->locks, lock);
@@ -67,7 +67,7 @@ void frt_store_destroy(FrtStore *store)
  *
  * @return a newly allocated and initialized OutStream object
  */
-FrtOutStream *os_new()
+FrtOutStream *frt_os_new()
 {
     FrtOutStream *os = FRT_ALLOC(FrtOutStream);
     os->buf.start = 0;
@@ -81,28 +81,28 @@ FrtOutStream *os_new()
  *
  * @param the OutStream to flush
  */
-void os_flush(FrtOutStream *os)
+void frt_os_flush(FrtOutStream *os)
 {
     os->m->flush_i(os, os->buf.buf, os->buf.pos);
     os->buf.start += os->buf.pos;
     os->buf.pos = 0;
 }
 
-void os_close(FrtOutStream *os)
+void frt_os_close(FrtOutStream *os)
 {
-    os_flush(os);
+    frt_os_flush(os);
     os->m->close_i(os);
     free(os);
 }
 
-off_t os_pos(FrtOutStream *os)
+off_t frt_os_pos(FrtOutStream *os)
 {
     return os->buf.start + os->buf.pos;
 }
 
-void os_seek(FrtOutStream *os, off_t new_pos)
+void frt_os_seek(FrtOutStream *os, off_t new_pos)
 {
-    os_flush(os);
+    frt_os_flush(os);
     os->buf.start = new_pos;
     os->m->seek_i(os, new_pos);
 }
@@ -120,18 +120,18 @@ void os_seek(FrtOutStream *os, off_t new_pos)
  * @param b  the byte to write
  * @raise FRT_IO_ERROR if there is an IO error writing to the filesystem
  */
-void os_write_byte(FrtOutStream *os, frt_uchar b)
+void frt_os_write_byte(FrtOutStream *os, frt_uchar b)
 {
     if (os->buf.pos >= FRT_BUFFER_SIZE) {
-        os_flush(os);
+        frt_os_flush(os);
     }
     write_byte(os, b);
 }
 
-void os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
+void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
 {
     if (os->buf.pos > 0) {      /* flush buffer */
-        os_flush(os);
+        frt_os_flush(os);
     }
 
     if (len < FRT_BUFFER_SIZE) {
@@ -477,55 +477,35 @@ char *is_read_string_safe(FrtInStream *is)
     return str;
 }
 
-void os_write_i32(FrtOutStream *os, i32 num)
+void frt_os_write_u32(FrtOutStream *os, frt_u32 num)
 {
-    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (frt_uchar)(num & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
-void os_write_i64(FrtOutStream *os, i64 num)
+void frt_os_write_u64(FrtOutStream *os, frt_u64 num)
 {
-    os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (frt_uchar)(num & 0xFF));
-}
-
-void os_write_u32(FrtOutStream *os, frt_u32 num)
-{
-    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (frt_uchar)(num & 0xFF));
-}
-
-void os_write_u64(FrtOutStream *os, frt_u64 num)
-{
-    os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
-    os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
-    os_write_byte(os, (frt_uchar)(num & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_vint(FrtOutStream *os, register unsigned int num)
+void frt_os_write_vint(FrtOutStream *os, register unsigned int num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
+            frt_os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (frt_uchar)(num));
+        frt_os_write_byte(os, (frt_uchar)(num));
     }
     else {
         while (num > 127) {
@@ -537,14 +517,14 @@ void os_write_vint(FrtOutStream *os, register unsigned int num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_voff_t(FrtOutStream *os, register off_t num)
+void frt_os_write_voff_t(FrtOutStream *os, register off_t num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
+            frt_os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (frt_uchar)num);
+        frt_os_write_byte(os, (frt_uchar)num);
     }
     else {
         while (num > 127) {
@@ -556,14 +536,14 @@ void os_write_voff_t(FrtOutStream *os, register off_t num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_vll(FrtOutStream *os, register frt_u64 num)
+void frt_os_write_vll(FrtOutStream *os, register frt_u64 num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {
-            os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
+            frt_os_write_byte(os, (frt_uchar)((num & 0x7f) | 0x80));
             num >>= 7;
         }
-        os_write_byte(os, (frt_uchar)num);
+        frt_os_write_byte(os, (frt_uchar)num);
     }
     else {
         while (num > 127) {
@@ -574,14 +554,14 @@ void os_write_vll(FrtOutStream *os, register frt_u64 num)
     }
 }
 
-void os_write_string_len(FrtOutStream *os, const char *str, int len)
+void frt_os_write_string_len(FrtOutStream *os, const char *str, int len)
 {
-    os_write_vint(os, len);
-    os_write_bytes(os, (frt_uchar *)str, len);
+    frt_os_write_vint(os, len);
+    frt_os_write_bytes(os, (frt_uchar *)str, len);
 }
-void os_write_string(FrtOutStream *os, const char *str)
+void frt_os_write_string(FrtOutStream *os, const char *str)
 {
-    os_write_string_len(os, str, (int)strlen(str));
+    frt_os_write_string_len(os, str, (int)strlen(str));
 }
 
 /**
@@ -605,7 +585,7 @@ void is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
     for (; cnt > 0; cnt -= FRT_BUFFER_SIZE) {
         len = ((cnt > FRT_BUFFER_SIZE) ? FRT_BUFFER_SIZE : cnt);
         is_read_bytes(is, buf, len);
-        os_write_bytes(os, buf, len);
+        frt_os_write_bytes(os, buf, len);
     }
 }
 
@@ -614,9 +594,9 @@ void is2os_copy_vints(FrtInStream *is, FrtOutStream *os, int cnt)
     frt_uchar b;
     for (; cnt > 0; cnt--) {
         while (((b = is_read_byte(is)) & 0x80) != 0) {
-            os_write_byte(os, b);
+            frt_os_write_byte(os, b);
         }
-        os_write_byte(os, b);
+        frt_os_write_byte(os, b);
     }
 }
 

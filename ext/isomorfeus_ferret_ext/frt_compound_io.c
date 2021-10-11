@@ -203,7 +203,7 @@ static void cmpd_close_lock_i(FrtLock *lock)
     rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-FrtStore *open_cmpd_store(FrtStore *store, const char *name)
+FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
 {
     int count, i;
     off_t offset;
@@ -273,7 +273,7 @@ FrtStore *open_cmpd_store(FrtStore *store, const char *name)
  *
  ****************************************************************************/
 
-FrtCompoundWriter *open_cw(FrtStore *store, char *name)
+FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name)
 {
     FrtCompoundWriter *cw = FRT_ALLOC(FrtCompoundWriter);
     cw->store = store;
@@ -297,7 +297,7 @@ void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
 
 static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os)
 {
-    off_t start_ptr = os_pos(os);
+    off_t start_ptr = frt_os_pos(os);
     off_t end_ptr;
     off_t remainder, length, len;
     frt_uchar buffer[FRT_BUFFER_SIZE];
@@ -309,7 +309,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     while (remainder > 0) {
         len = FRT_MIN(remainder, FRT_BUFFER_SIZE);
         is_read_bytes(is, buffer, len);
-        os_write_bytes(os, buffer, len);
+        frt_os_write_bytes(os, buffer, len);
         remainder -= len;
     }
 
@@ -321,7 +321,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     }
 
     /* Verify that the output length diff is equal to original file */
-    end_ptr = os_pos(os);
+    end_ptr = frt_os_pos(os);
     len = end_ptr - start_ptr;
     if (len != length) {
         rb_raise(rb_eIOError, "Difference in compound file output file offsets "
@@ -343,32 +343,32 @@ void frt_cw_close(FrtCompoundWriter *cw)
 
     os = cw->store->new_output(cw->store, cw->name);
 
-    os_write_vint(os, frt_ary_size(cw->file_entries));
+    frt_os_write_vint(os, frt_ary_size(cw->file_entries));
 
     /* Write the directory with all offsets at 0.
      * Remember the positions of directory entries so that we can adjust the
      * offsets later */
     for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        cw->file_entries[i].dir_offset = os_pos(os);
-        os_write_u64(os, 0);  /* for now */
-        os_write_string(os, cw->file_entries[i].name);
+        cw->file_entries[i].dir_offset = frt_os_pos(os);
+        frt_os_write_u64(os, 0);  /* for now */
+        frt_os_write_string(os, cw->file_entries[i].name);
     }
 
     /* Open the files and copy their data into the stream.  Remember the
      * locations of each file's data section. */
     for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        cw->file_entries[i].data_offset = os_pos(os);
+        cw->file_entries[i].data_offset = frt_os_pos(os);
         cw_copy_file(cw, &cw->file_entries[i], os);
     }
 
     /* Write the data offsets into the directory of the compound stream */
     for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        os_seek(os, cw->file_entries[i].dir_offset);
-        os_write_u64(os, cw->file_entries[i].data_offset);
+        frt_os_seek(os, cw->file_entries[i].dir_offset);
+        frt_os_write_u64(os, cw->file_entries[i].data_offset);
     }
 
     if (os) {
-        os_close(os);
+        frt_os_close(os);
     }
 
     hs_destroy(cw->ids);

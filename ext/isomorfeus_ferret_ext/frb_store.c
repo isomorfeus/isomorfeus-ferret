@@ -285,7 +285,7 @@ frb_dir_make_lock(VALUE self, VALUE rlock_name)
     FrtLock *lock;
     FrtStore *store = DATA_PTR(self);
     StringValue(rlock_name);
-    lock = open_lock(store, rs2s(rlock_name));
+    lock = frt_open_lock(store, rs2s(rlock_name));
     rlock = Data_Wrap_Struct(cLock, &frb_lock_mark, &frb_lock_free, lock);
     object_add(lock, rlock);
     return rlock;
@@ -318,10 +318,10 @@ frb_ramdir_init(int argc, VALUE *argv, VALUE self)
         case 1: {
                     FrtStore *ostore;
                     Data_Get_Struct(rdir, FrtStore, ostore);
-                    store = open_ram_store_and_copy(ostore, false);
+                    store = frt_open_ram_store_and_copy(ostore, false);
                     break;
                 }
-        default: store = open_ram_store();
+        default: store = frt_open_ram_store();
     }
     Frt_Wrap_Struct(self, NULL, &frb_dir_free, store);
     object_add(store, self);
@@ -366,7 +366,7 @@ frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
         rb_raise(rb_eIOError, "No directory <%s> found. Use :create => true"
                  " to create one.", rs2s(rpath));
     }
-    store = open_fs_store(rs2s(rpath));
+    store = frt_open_fs_store(rs2s(rpath));
     if (create) store->clear_all(store);
     if ((self = object_get(store)) == Qnil) {
         self = Data_Wrap_Struct(klass, NULL, &frb_dir_free, store);

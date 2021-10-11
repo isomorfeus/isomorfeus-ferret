@@ -222,7 +222,7 @@ static void ramo_seek_i(FrtOutStream *os, off_t pos)
 
 void frt_ramo_reset(FrtOutStream *os)
 {
-    os_seek(os, 0);
+    frt_os_seek(os, 0);
     os->file.rf->len = 0;
 }
 
@@ -240,12 +240,12 @@ void frt_ramo_write_to(FrtOutStream *os, FrtOutStream *other_o)
     int last_buffer_number;
     int last_buffer_offset;
 
-    os_flush(os);
+    frt_os_flush(os);
     last_buffer_number = (int) (rf->len / FRT_BUFFER_SIZE);
     last_buffer_offset = rf->len % FRT_BUFFER_SIZE;
     for (i = 0; i <= last_buffer_number; i++) {
         len = (i == last_buffer_number ? last_buffer_offset : FRT_BUFFER_SIZE);
-        os_write_bytes(other_o, rf->buffers[i], len);
+        frt_os_write_bytes(other_o, rf->buffers[i], len);
     }
 }
 
@@ -258,7 +258,7 @@ static const struct FrtOutStreamMethods RAM_OUT_STREAM_METHODS = {
 FrtOutStream *frt_ram_new_buffer()
 {
     FrtRAMFile *rf = rf_new("");
-    FrtOutStream *os = os_new();
+    FrtOutStream *os = frt_os_new();
 
     FRT_DEREF(rf);
     os->file.rf = rf;
@@ -276,7 +276,7 @@ void frt_ram_destroy_buffer(FrtOutStream *os)
 static FrtOutStream *ram_new_output(FrtStore *store, const char *filename)
 {
     FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
-    FrtOutStream *os = os_new();
+    FrtOutStream *os = frt_os_new();
 
     if (rf == NULL) {
         rf = rf_new(filename);
@@ -414,7 +414,7 @@ static void ram_close_lock_i(FrtLock *lock)
 }
 
 
-FrtStore *open_ram_store()
+FrtStore *frt_open_ram_store()
 {
     FrtStore *new_store = frt_store_new();
 
@@ -451,16 +451,16 @@ static void copy_files(const char *fname, void *arg)
     frt_uchar *buffer = FRT_ALLOC_N(frt_uchar, len + 1);
 
     is_read_bytes(is, buffer, len);
-    os_write_bytes(os, buffer, len);
+    frt_os_write_bytes(os, buffer, len);
 
     is_close(is);
-    os_close(os);
+    frt_os_close(os);
     free(buffer);
 }
 
-FrtStore *open_ram_store_and_copy(FrtStore *from_store, bool close_dir)
+FrtStore *frt_open_ram_store_and_copy(FrtStore *from_store, bool close_dir)
 {
-    FrtStore *store = open_ram_store();
+    FrtStore *store = frt_open_ram_store();
     struct CopyFileArg cfa;
     cfa.to_store = store;
     cfa.from_store = from_store;

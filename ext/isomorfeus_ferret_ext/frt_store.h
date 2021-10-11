@@ -461,25 +461,6 @@ extern void frt_os_write_byte(FrtOutStream *os, frt_uchar b);
 extern void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len);
 
 /**
- * Write a 32-bit signed integer to the FrtOutStream
- *
- * @param os FrtOutStream to write to
- * @param num the 32-bit signed integer to write
- * @raise FRT_IO_ERROR if there is an error writing to the file-system
- */
-extern void frt_os_write_i32(FrtOutStream *os, frt_i32 num);
-
-/**
- * Write a 64-bit signed integer to the FrtOutStream
- *
- *
- * @param os FrtOutStream to write to
- * @param num the 64-bit signed integer to write
- * @raise FRT_IO_ERROR if there is an error writing to the file-system
- */
-extern void frt_os_write_i64(FrtOutStream *os, frt_i64 num);
-
-/**
  * Write a 32-bit unsigned integer to the FrtOutStream
  *
  * @param os FrtOutStream to write to

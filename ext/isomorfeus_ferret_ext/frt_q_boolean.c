@@ -75,12 +75,12 @@ static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc)
     int i;
     FrtScorer *sub_scorer;
     FrtPriorityQueue *pq = dssc->scorer_queue
-        = pq_new(dssc->ss_cnt, (lt_ft)&frt_scorer_doc_less_than, NULL);
+        = frt_pq_new(dssc->ss_cnt, (lt_ft)&frt_scorer_doc_less_than, NULL);
 
     for (i = 0; i < dssc->ss_cnt; i++) {
         sub_scorer = dssc->sub_scorers[i];
         if (sub_scorer->next(sub_scorer)) {
-            pq_insert(pq, sub_scorer);
+            frt_pq_insert(pq, sub_scorer);
         }
     }
 }
@@ -92,17 +92,17 @@ static bool dssc_advance_after_current(FrtScorer *self)
 
     /* repeat until minimum number of matches is found */
     while (true) {
-        FrtScorer *top = (FrtScorer *)pq_top(scorer_queue);
+        FrtScorer *top = (FrtScorer *)frt_pq_top(scorer_queue);
         self->doc = top->doc;
         dssc->cum_score = top->score(top);
         dssc->num_matches = 1;
         /* Until all sub-scorers are after self->doc */
         while (true) {
             if (top->next(top)) {
-                pq_down(scorer_queue);
+                frt_pq_down(scorer_queue);
             }
             else {
-                pq_pop(scorer_queue);
+                frt_pq_pop(scorer_queue);
                 if (scorer_queue->size
                     < (dssc->min_num_matches - dssc->num_matches)) {
                     /* Not enough subscorers left for a match on this
@@ -114,7 +114,7 @@ static bool dssc_advance_after_current(FrtScorer *self)
                     break;
                 }
             }
-            top = (FrtScorer *)pq_top(scorer_queue);
+            top = (FrtScorer *)frt_pq_top(scorer_queue);
             if (top->doc != self->doc) {
                 /* All remaining subscorers are after self->doc */
                 break;
@@ -165,15 +165,15 @@ static bool dssc_skip_to(FrtScorer *self, int doc_num)
         doc_num = self->doc + 1;
     }
     while (true) {
-        FrtScorer *top = (FrtScorer *)pq_top(scorer_queue);
+        FrtScorer *top = (FrtScorer *)frt_pq_top(scorer_queue);
         if (top->doc >= doc_num) {
             return dssc_advance_after_current(self);
         }
         else if (top->skip_to(top, doc_num)) {
-            pq_down(scorer_queue);
+            frt_pq_down(scorer_queue);
         }
         else {
-            pq_pop(scorer_queue);
+            frt_pq_pop(scorer_queue);
             if (scorer_queue->size < dssc->min_num_matches) {
                 return false;
             }
@@ -203,7 +203,7 @@ static void dssc_destroy(FrtScorer *self)
         dssc->sub_scorers[i]->destroy(dssc->sub_scorers[i]);
     }
     if (dssc->scorer_queue) {
-        pq_destroy(dssc->scorer_queue);
+        frt_pq_destroy(dssc->scorer_queue);
     }
     frt_scorer_destroy_i(self);
 }

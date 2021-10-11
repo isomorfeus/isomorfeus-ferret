@@ -1477,7 +1477,7 @@ static VALUE
 frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer)
 {
     FrtAnalyzer *def = frb_get_cwrapped_analyzer(ranalyzer);
-    FrtAnalyzer *a = per_field_analyzer_new(def);
+    FrtAnalyzer *a = frt_per_field_analyzer_new(def);
     Frt_Wrap_Struct(self, &frb_pfa_mark, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1501,7 +1501,7 @@ frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
     Data_Get_Struct(self, FrtAnalyzer, pfa);
     a = frb_get_cwrapped_analyzer(ranalyzer);
 
-    pfa_add_field(pfa, frb_field(rfield), a);
+    frt_pfa_add_field(pfa, frb_field(rfield), a);
     return self;
 }
 

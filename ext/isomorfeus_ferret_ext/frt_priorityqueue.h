@@ -57,7 +57,7 @@ extern void frt_pq_clear(FrtPriorityQueue *self);
 /**
  * Free the memory allocated to the PriorityQueue. This function does nothing
  * to the elements in the PriorityQueue itself. To destroy them also, use
- * pq_destroy.
+ * frt_pq_destroy.
  *
  * @param self the PriorityQueue to free
  */
@@ -66,7 +66,7 @@ extern void frt_pq_free(FrtPriorityQueue *self);
 /**
  * Destroy the PriorityQueue, freeing all memory allocated to it and also
  * destroying all the elements contained by it. This method is equivalent to
- * calling pq_clear followed by pq_free.
+ * calling frt_pq_clear followed by frt_pq_free.
  *
  * @param the PriorityQueue to destroy
  */
@@ -86,7 +86,7 @@ extern void frt_pq_down(FrtPriorityQueue *self);
  * Add another element to the PriorityQueue. This method should only be used
  * when the PriorityQueue has enough space allocated to hold all elements
  * added. If there is a chance that you will add more than the amount you have
- * allocated then you should use pq_insert. pq_insert will handle insertion
+ * allocated then you should use frt_pq_insert. frt_pq_insert will handle insertion
  * overflow.
  *
  * @param self the PriorityQueue to add the element to
@@ -101,7 +101,7 @@ typedef enum {
 } FrtPriorityQueueInsertEnum;
 
 /**
- * Add another element to the PriorityQueue. Unlike pq_push, this method
+ * Add another element to the PriorityQueue. Unlike frt_pq_push, this method
  * handles insertion overflow. That is, when you insert more elements than the
  * capacity of the PriorityQueue, the elements are dropped off the bottom and
  * freed using the free_elem function.

@@ -460,8 +460,6 @@ typedef struct FrtOffset
     off_t end;
 } FrtOffset;
 
-extern FrtOffset *frt_offset_new(off_t start, off_t end);
-
 /****************************************************************************
  *
  * FrtOccurence

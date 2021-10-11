@@ -839,7 +839,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
 
             matchv_compact_with_breaks(mv);
             matchv_set_offsets(mv, offsets);
-            excerpt_pq = pq_new(mv->size, (lt_ft)&excerpt_lt, &free);
+            excerpt_pq = frt_pq_new(mv->size, (lt_ft)&excerpt_lt, &free);
             /* add all possible excerpts to the priority queue */
 
             for (e_start = e_end = 0; e_start < mv->size; e_start++) {
@@ -853,14 +853,14 @@ char **frt_searcher_highlight(FrtSearcher *self,
                     running_score += matches[e_end].score;
                     e_end++;
                 }
-                pq_push(excerpt_pq,
+                frt_pq_push(excerpt_pq,
                         excerpt_new(e_start, e_end - 1, running_score));
                 /* - 0.1 so that earlier matches take priority */
                 running_score -= matches[e_start].score;
             }
 
             for (i = 0; i < num_excerpts && excerpt_pq->size > 0; i++) {
-                excerpts[i] = (Excerpt *)pq_pop(excerpt_pq);
+                excerpts[i] = (Excerpt *)frt_pq_pop(excerpt_pq);
                 if (i < num_excerpts - 1) {
                     /* set match ranges alread included to 0 */
                     Excerpt *e = excerpts[i];
@@ -868,10 +868,10 @@ char **frt_searcher_highlight(FrtSearcher *self,
                         matches[j].score = 0.0;
                     }
                     e = NULL;
-                    while (e != (Excerpt *)pq_top(excerpt_pq)) {
-                        e = (Excerpt *)pq_top(excerpt_pq);
+                    while (e != (Excerpt *)frt_pq_top(excerpt_pq)) {
+                        e = (Excerpt *)frt_pq_top(excerpt_pq);
                         excerpt_recalc_score(e, mv);
-                        pq_down(excerpt_pq);
+                        frt_pq_down(excerpt_pq);
                     }
                 }
             }
@@ -922,7 +922,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
                 free(excerpts[i]);
             }
             free(excerpts);
-            pq_destroy(excerpt_pq);
+            frt_pq_destroy(excerpt_pq);
         }
         matchv_destroy(mv);
     }
@@ -1032,10 +1032,10 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
             hq_pop = &fshq_pq_pop;
         }
     } else {
-        hq = pq_new(max_size, (lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (lt_ft)&hit_less_than, &free);
         hq_pop = &hit_pq_pop;
         hq_insert = &hit_pq_insert;
-        hq_destroy = &pq_destroy;
+        hq_destroy = &frt_pq_destroy;
     }
 
     scorer = weight->scorer(weight, ISEA(self)->ir);
@@ -1076,7 +1076,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     } else {
         num_docs = 0;
     }
-    pq_clear(hq);
+    frt_pq_clear(hq);
     hq_destroy(hq);
     return frt_td_new(total_hits, num_docs, score_docs, max_score);
 }
@@ -1650,11 +1650,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = pq_new(max_size, (lt_ft)frt_fdshq_lt, &free);
-        hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&pq_insert;
-        hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&pq_pop;
+        hq = frt_pq_new(max_size, (lt_ft)frt_fdshq_lt, &free);
+        hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&frt_pq_insert;
+        hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&frt_pq_pop;
     } else {
-        hq = pq_new(max_size, (lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (lt_ft)&hit_less_than, &free);
         hq_insert = &hit_pq_multi_insert;
         hq_pop = &hit_pq_pop;
     }
@@ -1697,8 +1697,8 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     } else {
         num_docs = 0;
     }
-    pq_clear(hq);
-    pq_destroy(hq);
+    frt_pq_clear(hq);
+    frt_pq_destroy(hq);
 
     return frt_td_new(total_hits, num_docs, score_docs, max_score);
 }

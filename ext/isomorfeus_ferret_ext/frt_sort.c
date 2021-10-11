@@ -542,12 +542,12 @@ void fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
 void fshq_pq_destroy(FrtPriorityQueue *self)
 {
     sorter_destroy((Sorter *)self->heap[0]);
-    pq_destroy(self);
+    frt_pq_destroy(self);
 }
 
 FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
 {
-    FrtPriorityQueue *self = pq_new(size, &fshq_less_than, &free);
+    FrtPriorityQueue *self = frt_pq_new(size, &fshq_less_than, &free);
     int i;
     Sorter *sorter = sorter_new(sort);
     FrtSortField *sf;

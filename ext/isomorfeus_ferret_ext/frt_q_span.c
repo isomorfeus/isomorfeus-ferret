@@ -526,16 +526,16 @@ static bool spanmte_next(FrtSpanEnum *self)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = pq_new(mte->tpew_cnt, (lt_ft)tpew_less_than, (free_ft)NULL);
+        tpew_pq = frt_pq_new(mte->tpew_cnt, (lt_ft)tpew_less_than, (free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             if (tpew_next(tpews[i])) {
-                pq_push(tpew_pq, tpews[i]);
+                frt_pq_push(tpew_pq, tpews[i]);
             }
         }
         mte->tpew_pq = tpew_pq;
     }
 
-    tpew = (TermPosEnumWrapper *)pq_top(tpew_pq);
+    tpew = (TermPosEnumWrapper *)frt_pq_top(tpew_pq);
     if (tpew == NULL) {
         return false;
     }
@@ -545,12 +545,12 @@ static bool spanmte_next(FrtSpanEnum *self)
 
     do {
         if (tpew_next(tpew)) {
-            pq_down(tpew_pq);
+            frt_pq_down(tpew_pq);
         }
         else {
-            pq_pop(tpew_pq);
+            frt_pq_pop(tpew_pq);
         }
-    } while (((tpew = (TermPosEnumWrapper *)pq_top(tpew_pq)) != NULL)
+    } while (((tpew = (TermPosEnumWrapper *)frt_pq_top(tpew_pq)) != NULL)
              && tpew->doc == curr_doc && tpew->pos == curr_pos);
     return true;
 }
@@ -563,10 +563,10 @@ static bool spanmte_skip_to(FrtSpanEnum *self, int target)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = pq_new(mte->tpew_cnt, (lt_ft)tpew_less_than, (free_ft)NULL);
+        tpew_pq = frt_pq_new(mte->tpew_cnt, (lt_ft)tpew_less_than, (free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             tpew_skip_to(tpews[i], target);
-            pq_push(tpew_pq, tpews[i]);
+            frt_pq_push(tpew_pq, tpews[i]);
         }
         mte->tpew_pq = tpew_pq;
     }
@@ -574,13 +574,13 @@ static bool spanmte_skip_to(FrtSpanEnum *self, int target)
         mte->doc = -1;
         return false;
     }
-    while ((tpew = (TermPosEnumWrapper *)pq_top(tpew_pq)) != NULL
+    while ((tpew = (TermPosEnumWrapper *)frt_pq_top(tpew_pq)) != NULL
            && (target > tpew->doc)) {
         if (tpew_skip_to(tpew, target)) {
-            pq_down(tpew_pq);
+            frt_pq_down(tpew_pq);
         }
         else {
-            pq_pop(tpew_pq);
+            frt_pq_pop(tpew_pq);
         }
     }
     return spanmte_next(self);
@@ -605,7 +605,7 @@ static void spanmte_destroy(FrtSpanEnum *self)
 {
     SpanMultiTermEnum *mte = SpMTEn(self);
     int i;
-    if (mte->tpew_pq) pq_destroy(mte->tpew_pq);
+    if (mte->tpew_pq) frt_pq_destroy(mte->tpew_pq);
     for (i = 0; i < mte->tpew_cnt; i++) {
         tpew_destroy(mte->tpews[i]);
     }
@@ -785,7 +785,7 @@ static bool spanoe_next(FrtSpanEnum *self)
         for (i = 0; i < soe->s_cnt; i++) {
             se = soe->span_enums[i];
             if (se->next(se)) { /* move to first entry */
-                pq_push(soe->queue, se);
+                frt_pq_push(soe->queue, se);
             }
         }
         soe->first_time = false;
@@ -796,13 +796,13 @@ static bool spanoe_next(FrtSpanEnum *self)
         return false; /* all done */
     }
 
-    se = (FrtSpanEnum *)pq_top(soe->queue);
+    se = (FrtSpanEnum *)frt_pq_top(soe->queue);
     if (se->next(se)) { /* move to next */
-        pq_down(soe->queue);
+        frt_pq_down(soe->queue);
         return true;
     }
 
-    pq_pop(soe->queue); /* exhausted a clause */
+    frt_pq_pop(soe->queue); /* exhausted a clause */
 
     return soe->queue->size != 0;
 }
@@ -817,20 +817,20 @@ static bool spanoe_skip_to(FrtSpanEnum *self, int target)
         for (i = 0; i < soe->s_cnt; i++) {
             se = soe->span_enums[i];
             if (se->skip_to(se, target)) {/* move to target */
-                pq_push(soe->queue, se);
+                frt_pq_push(soe->queue, se);
             }
         }
         soe->first_time = false;
     }
     else {
         while ((soe->queue->size != 0) &&
-               ((se = (FrtSpanEnum *)pq_top(soe->queue)) != NULL) &&
+               ((se = (FrtSpanEnum *)frt_pq_top(soe->queue)) != NULL) &&
                (se->doc(se) < target)) {
             if (se->skip_to(se, target)) {
-                pq_down(soe->queue);
+                frt_pq_down(soe->queue);
             }
             else {
-                pq_pop(soe->queue);
+                frt_pq_pop(soe->queue);
             }
         }
     }
@@ -838,7 +838,7 @@ static bool spanoe_skip_to(FrtSpanEnum *self, int target)
     return soe->queue->size != 0;
 }
 
-#define SpOEn_Top_SE(self) (FrtSpanEnum *)pq_top(SpOEn(self)->queue)
+#define SpOEn_Top_SE(self) (FrtSpanEnum *)frt_pq_top(SpOEn(self)->queue)
 
 static int spanoe_doc(FrtSpanEnum *self)
 {
@@ -888,7 +888,7 @@ static void spanoe_destroy(FrtSpanEnum *self)
     FrtSpanEnum *se;
     SpanOrEnum *soe = SpOEn(self);
     int i;
-    pq_destroy(soe->queue);
+    frt_pq_destroy(soe->queue);
     for (i = 0; i < soe->s_cnt; i++) {
         se = soe->span_enums[i];
         se->destroy(se);
@@ -913,7 +913,7 @@ static FrtSpanEnum *spanoe_new(FrtQuery *query, FrtIndexReader *ir)
         SpOEn(self)->span_enums[i] = SpQ(clause)->get_spans(clause, ir);
     }
 
-    SpOEn(self)->queue      = pq_new(SpOEn(self)->s_cnt, (lt_ft)&span_less_than,
+    SpOEn(self)->queue      = frt_pq_new(SpOEn(self)->s_cnt, (lt_ft)&span_less_than,
                                      (free_ft)NULL);
 
     self->query             = query;

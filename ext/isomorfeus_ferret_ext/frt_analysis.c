@@ -1616,14 +1616,14 @@ static void pfa_sub_a_destroy_i(void *p)
     frt_a_deref(a);
 }
 
-void pfa_add_field(FrtAnalyzer *self,
+void frt_pfa_add_field(FrtAnalyzer *self,
                    FrtSymbol field,
                    FrtAnalyzer *analyzer)
 {
     h_set(PFA(self)->dict, field, analyzer);
 }
 
-FrtAnalyzer *per_field_analyzer_new(FrtAnalyzer *default_a)
+FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *default_a)
 {
     FrtAnalyzer *a = (FrtAnalyzer *)frt_ecalloc(sizeof(FrtPerFieldAnalyzer));
 

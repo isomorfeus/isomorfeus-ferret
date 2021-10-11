@@ -32,12 +32,12 @@ unsigned long long frt_str_hash(const char *const str)
     return h;
 }
 
-unsigned long long ptr_hash(const void *const ptr)
+unsigned long long frt_ptr_hash(const void *const ptr)
 {
     return (unsigned long long)ptr;
 }
 
-int ptr_eq(const void *q1, const void *q2)
+int frt_ptr_eq(const void *q1, const void *q2)
 {
     return q1 == q2;
 }

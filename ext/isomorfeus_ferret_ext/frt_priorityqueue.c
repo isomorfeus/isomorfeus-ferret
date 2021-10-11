@@ -4,7 +4,7 @@
 
 #define START_CAPA 127
 
-FrtPriorityQueue *pq_new(int capa, lt_ft less_than, free_ft free_elem)
+FrtPriorityQueue *frt_pq_new(int capa, lt_ft less_than, free_ft free_elem)
 {
     FrtPriorityQueue *pq = FRT_ALLOC(FrtPriorityQueue);
     pq->size = 0;
@@ -19,7 +19,7 @@ FrtPriorityQueue *pq_new(int capa, lt_ft less_than, free_ft free_elem)
     return pq;
 }
 
-FrtPriorityQueue *pq_clone(FrtPriorityQueue *pq)
+FrtPriorityQueue *frt_pq_clone(FrtPriorityQueue *pq)
 {
     FrtPriorityQueue *new_pq = FRT_ALLOC(FrtPriorityQueue);
     memcpy(new_pq, pq, sizeof(FrtPriorityQueue));
@@ -29,7 +29,7 @@ FrtPriorityQueue *pq_clone(FrtPriorityQueue *pq)
     return new_pq;
 }
 
-void pq_clear(FrtPriorityQueue *pq)
+void frt_pq_clear(FrtPriorityQueue *pq)
 {
     int i;
     for (i = 1; i <= pq->size; i++) {
@@ -39,24 +39,24 @@ void pq_clear(FrtPriorityQueue *pq)
     pq->size = 0;
 }
 
-void pq_free(FrtPriorityQueue *pq)
+void frt_pq_free(FrtPriorityQueue *pq)
 {
     free(pq->heap);
     free(pq);
 }
 
-void pq_destroy(FrtPriorityQueue *pq)
+void frt_pq_destroy(FrtPriorityQueue *pq)
 {
-    pq_clear(pq);
-    pq_free(pq);
+    frt_pq_clear(pq);
+    frt_pq_free(pq);
 }
 
 
 
 
 /**
- * This method is used internally by pq_push. It is similar to pq_down except
- * that where pq_down reorders the elements from the top, pq_up reorders from
+ * This method is used internally by frt_pq_push. It is similar to frt_pq_down except
+ * that where frt_pq_down reorders the elements from the top, pq_up reorders from
  * the bottom.
  *
  * @param pq the PriorityQueue to reorder
@@ -78,7 +78,7 @@ static void pq_up(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-void pq_down(FrtPriorityQueue *pq)
+void frt_pq_down(FrtPriorityQueue *pq)
 {
     register int i = 1;
     register int j = 2;         /* i << 1; */
@@ -103,7 +103,7 @@ void pq_down(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-void pq_push(FrtPriorityQueue *pq, void *elem)
+void frt_pq_push(FrtPriorityQueue *pq, void *elem)
 {
     pq->size++;
     if (pq->size >= pq->mem_capa) {
@@ -114,18 +114,18 @@ void pq_push(FrtPriorityQueue *pq, void *elem)
     pq_up(pq);
 }
 
-FrtPriorityQueueInsertEnum pq_insert(FrtPriorityQueue *pq,
+FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *pq,
                                   void *elem)
 {
     if (pq->size < pq->capa) {
-        pq_push(pq, elem);
+        frt_pq_push(pq, elem);
         return FRT_PQ_ADDED;
     }
 
     if (pq->size > 0 && pq->less_than_i(pq->heap[1], elem)) {
         pq->free_elem_i(pq->heap[1]);
         pq->heap[1] = elem;
-        pq_down(pq);
+        frt_pq_down(pq);
         return FRT_PQ_INSERTED;
     }
 
@@ -133,19 +133,19 @@ FrtPriorityQueueInsertEnum pq_insert(FrtPriorityQueue *pq,
     return FRT_PQ_DROPPED;
 }
 
-void *pq_top(FrtPriorityQueue *pq)
+void *frt_pq_top(FrtPriorityQueue *pq)
 {
     return pq->size ? pq->heap[1] : NULL;
 }
 
-void *pq_pop(FrtPriorityQueue *pq)
+void *frt_pq_pop(FrtPriorityQueue *pq)
 {
     if (pq->size > 0) {
         void *result = pq->heap[1];       /* save first value */
         pq->heap[1] = pq->heap[pq->size]; /* move last to first */
         pq->heap[pq->size] = NULL;
         pq->size--;
-        pq_down(pq);                      /* adjust heap */
+        frt_pq_down(pq);                      /* adjust heap */
         return result;
     }
     return NULL;

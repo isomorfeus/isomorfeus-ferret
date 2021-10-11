@@ -599,7 +599,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
     } else {
         StringValue(rdir);
         frb_create_dir(rdir);
-        store = open_fs_store(rs2s(rdir));
+        store = frt_open_fs_store(rs2s(rdir));
     }
     index_create(store, fis);
     frt_store_deref(store);
@@ -1324,7 +1324,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
         } else if ((rval = rb_hash_aref(roptions, sym_path)) != Qnil) {
             StringValue(rval);
             frb_create_dir(rval);
-            store = open_fs_store(rs2s(rval));
+            store = frt_open_fs_store(rs2s(rval));
             FRT_DEREF(store);
         }
 
@@ -1357,7 +1357,7 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
         SET_INT_ATTR(max_field_length);
     }
     if (NULL == store) {
-        store = open_ram_store();
+        store = frt_open_ram_store();
         FRT_DEREF(store);
     }
     if (!create && create_if_missing && !store->exists(store, "segments")) {
@@ -2103,7 +2103,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                     break;
                 case T_STRING:
                     frb_create_dir(rdir);
-                    store = open_fs_store(rs2s(rdir));
+                    store = frt_open_fs_store(rs2s(rdir));
                     FRT_DEREF(store);
                     break;
                 default:
@@ -2124,7 +2124,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                 break;
             case T_STRING:
                 frb_create_dir(rdir);
-                store = open_fs_store(rs2s(rdir));
+                store = frt_open_fs_store(rs2s(rdir));
                 FRT_DEREF(store);
                 break;
             default:

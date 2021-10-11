@@ -13,7 +13,7 @@ extern VALUE cLockError;
 extern VALUE cStateError;
 
 #define GET_LOCK(lock, name, store, err_msg) do {\
-    lock = store->open_lock(store, name);\
+    lock = store->frt_open_lock(store, name);\
     if (!lock->obtain(lock)) {\
         rb_raise(cLockError, err_msg);\
     }\
@@ -434,18 +434,18 @@ void fis_write(FrtFieldInfos *fis, FrtOutStream *os)
     FrtFieldInfo *fi;
     const int fis_size = fis->size;
 
-    os_write_vint(os, fis->store);
-    os_write_vint(os, fis->index);
-    os_write_vint(os, fis->term_vector);
-    os_write_vint(os, fis->size);
+    frt_os_write_vint(os, fis->store);
+    frt_os_write_vint(os, fis->index);
+    frt_os_write_vint(os, fis->term_vector);
+    frt_os_write_vint(os, fis->size);
 
     for (i = 0; i < fis_size; i++) {
         fi = fis->fields[i];
 
-        os_write_string(os, fi->name);
+        frt_os_write_string(os, fi->name);
         tmp.f = fi->boost;
-        os_write_u32(os, tmp.i);
-        os_write_vint(os, fi->bits);
+        frt_os_write_u32(os, tmp.i);
+        frt_os_write_vint(os, fi->bits);
     }
 }
 
@@ -592,17 +592,17 @@ static FrtSegmentInfo *si_read(FrtStore *store, FrtInStream *is)
 
 static void si_write(FrtSegmentInfo *si, FrtOutStream *os)
 {
-    os_write_string(os, si->name);
-    os_write_vint(os, si->doc_cnt);
-    os_write_vint(os, si->del_gen);
-    os_write_vint(os, si->norm_gens_size);
+    frt_os_write_string(os, si->name);
+    frt_os_write_vint(os, si->doc_cnt);
+    frt_os_write_vint(os, si->del_gen);
+    frt_os_write_vint(os, si->norm_gens_size);
     if (0 < si->norm_gens_size) {
         int i;
         for (i = si->norm_gens_size - 1; i >= 0; i--) {
-            os_write_vint(os, si->norm_gens[i]);
+            frt_os_write_vint(os, si->norm_gens[i]);
         }
     }
-    os_write_byte(os, (frt_uchar)si->use_compound_file);
+    frt_os_write_byte(os, (frt_uchar)si->use_compound_file);
 }
 
 void frt_si_deref(FrtSegmentInfo *si)
@@ -1097,27 +1097,27 @@ void frt_sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
     sis->generation++;
     FRT_TRY
         os = store->new_output(store, segfn_for_generation(buf, sis->generation));
-        os_write_u32(os, FORMAT);
-        os_write_u64(os, ++(sis->version)); /* every write changes the index */
-        os_write_u64(os, sis->counter);
-        os_write_vint(os, sis->size);
+        frt_os_write_u32(os, FORMAT);
+        frt_os_write_u64(os, ++(sis->version)); /* every write changes the index */
+        frt_os_write_u64(os, sis->counter);
+        frt_os_write_vint(os, sis->size);
         for (i = 0; i < sis_size; i++) {
             si_write(sis->segs[i], os);
         }
         fis_write(sis->fis, os);
     FRT_XFINALLY
-        os_close(os);
+        frt_os_close(os);
     FRT_XENDTRY
 
     FRT_TRY
         os = store->new_output(store, SEGMENTS_GEN_FILE_NAME);
-        os_write_u64(os, sis->generation);
-        os_write_u64(os, sis->generation);
+        frt_os_write_u64(os, sis->generation);
+        frt_os_write_u64(os, sis->generation);
     FRT_XFINALLY
         /* It's OK if we fail to write this file since it's
          * used only as one of the retry fallbacks. */
         FRT_HANDLED();
-        os_close(os);
+        frt_os_close(os);
     FRT_XENDTRY
     if (deleter && sis->generation > 0) {
         frt_deleter_delete_file(deleter, segfn_for_generation(buf, sis->generation - 1));
@@ -1554,8 +1554,8 @@ FrtFieldsWriter *fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fi
 
 void fw_close(FrtFieldsWriter *fw)
 {
-    os_close(fw->fdt_out);
-    os_close(fw->fdx_out);
+    frt_os_close(fw->fdt_out);
+    frt_os_close(fw->fdx_out);
     frt_ram_destroy_buffer(fw->buffer);
     frt_ary_free(fw->tv_fields);
     free(fw);
@@ -1576,10 +1576,10 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
         }
     }
 
-    fw->start_ptr = os_pos(fdt_out);
+    fw->start_ptr = frt_os_pos(fdt_out);
     frt_ary_size(fw->tv_fields) = 0;
-    os_write_u64(fdx_out, fw->start_ptr);
-    os_write_vint(fdt_out, stored_cnt);
+    frt_os_write_u64(fdx_out, fw->start_ptr);
+    frt_os_write_vint(fdt_out, stored_cnt);
     frt_ramo_reset(fw->buffer);
 
     for (i = 0; i < doc_size; i++) {
@@ -1587,15 +1587,15 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
         fi = fis_get_field(fw->fis, df->name);
         if (fi_is_stored(fi)) {
             const int df_size = df->size;
-            os_write_vint(fdt_out, fi->number);
-            os_write_vint(fdt_out, df_size);
+            frt_os_write_vint(fdt_out, fi->number);
+            frt_os_write_vint(fdt_out, df_size);
             for (j = 0; j < df_size; j++) {
                 const int length = df->lengths[j];
-                os_write_vint(fdt_out, length);
-                os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
+                frt_os_write_vint(fdt_out, length);
+                frt_os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
                 /* leave a space between fields as that is how they are
                     * analyzed */
-                os_write_byte(fw->buffer, ' ');
+                frt_os_write_byte(fw->buffer, ' ');
             }
         }
     }
@@ -1607,13 +1607,13 @@ void fw_write_tv_index(FrtFieldsWriter *fw)
     int i;
     const int tv_cnt = frt_ary_size(fw->tv_fields);
     FrtOutStream *fdt_out = fw->fdt_out;
-    os_write_u32(fw->fdx_out, (frt_u32)(os_pos(fdt_out) - fw->start_ptr));
-    os_write_vint(fdt_out, tv_cnt);
+    frt_os_write_u32(fw->fdx_out, (frt_u32)(frt_os_pos(fdt_out) - fw->start_ptr));
+    frt_os_write_vint(fdt_out, tv_cnt);
     /* write in reverse order so we can count back from the start position to
      * the beginning of the TermVector's data */
     for (i = tv_cnt - 1; i >= 0; i--) {
-        os_write_vint(fdt_out, fw->tv_fields[i].field_num);
-        os_write_vint(fdt_out, fw->tv_fields[i].size);
+        frt_os_write_vint(fdt_out, fw->tv_fields[i].field_num);
+        frt_os_write_vint(fdt_out, fw->tv_fields[i].size);
     }
 }
 
@@ -1627,7 +1627,7 @@ void fw_add_postings(FrtFieldsWriter *fw,
     int i, delta_start, delta_length;
     const char *last_term = FRT_EMPTY_STRING;
     FrtOutStream *fdt_out = fw->fdt_out;
-    off_t fdt_start_pos = os_pos(fdt_out);
+    off_t fdt_start_pos = frt_os_pos(fdt_out);
     FrtPostingList *plist;
     FrtPosting *posting;
     FrtOccurence *occ;
@@ -1637,27 +1637,27 @@ void fw_add_postings(FrtFieldsWriter *fw,
     frt_ary_grow(fw->tv_fields);
     frt_ary_last(fw->tv_fields).field_num = field_num;
 
-    os_write_vint(fdt_out, posting_count);
+    frt_os_write_vint(fdt_out, posting_count);
     for (i = 0; i < posting_count; i++) {
         plist = plists[i];
         posting = plist->last;
         delta_start = hlp_string_diff(last_term, plist->term);
         delta_length = plist->term_len - delta_start;
 
-        os_write_vint(fdt_out, delta_start);  /* write shared prefix length */
-        os_write_vint(fdt_out, delta_length); /* write delta length */
+        frt_os_write_vint(fdt_out, delta_start);  /* write shared prefix length */
+        frt_os_write_vint(fdt_out, delta_length); /* write delta length */
         /* write delta chars */
-        os_write_bytes(fdt_out,
+        frt_os_write_bytes(fdt_out,
                        (frt_uchar *)(plist->term + delta_start),
                        delta_length);
-        os_write_vint(fdt_out, posting->freq);
+        frt_os_write_vint(fdt_out, posting->freq);
         last_term = plist->term;
 
         if (store_positions) {
             /* use delta encoding for positions */
             int last_pos = 0;
             for (occ = posting->first_occ; occ; occ = occ->next) {
-                os_write_vint(fdt_out, occ->pos - last_pos);
+                frt_os_write_vint(fdt_out, occ->pos - last_pos);
                 last_pos = occ->pos;
             }
         }
@@ -1667,16 +1667,16 @@ void fw_add_postings(FrtFieldsWriter *fw,
     if (fi_store_offsets(fi)) {
         /* use delta encoding for offsets */
         i64 last_end = 0;
-        os_write_vint(fdt_out, offset_count);  /* write shared prefix length */
+        frt_os_write_vint(fdt_out, offset_count);  /* write shared prefix length */
         for (i = 0; i < offset_count; i++) {
             i64 start = (i64)offsets[i].start;
             i64 end = (i64)offsets[i].end;
-            os_write_vll(fdt_out, (frt_u64)(start - last_end));
-            os_write_vll(fdt_out, (frt_u64)(end - start));
+            frt_os_write_vll(fdt_out, (frt_u64)(start - last_end));
+            frt_os_write_vll(fdt_out, (frt_u64)(end - start));
             last_end = end;
         }
     }
-    frt_ary_last(fw->tv_fields).size = os_pos(fdt_out) - fdt_start_pos;
+    frt_ary_last(fw->tv_fields).size = frt_os_pos(fdt_out) - fdt_start_pos;
 }
 
 /****************************************************************************
@@ -2081,7 +2081,7 @@ static TermEnumWrapper *tew_setup(TermEnumWrapper *tew, int index, FrtTermEnum *
 static char *mte_next(FrtTermEnum *te)
 {
     TermEnumWrapper *top =
-        (TermEnumWrapper *)pq_top(MTE(te)->tew_queue);
+        (TermEnumWrapper *)frt_pq_top(MTE(te)->tew_queue);
 
     if (NULL == top) {
         te->curr_term[0] = '\0';
@@ -2097,14 +2097,14 @@ static char *mte_next(FrtTermEnum *te)
 
     MTE(te)->ti_cnt = 0;
     while ((NULL != top) && (0 == strcmp(te->curr_term, top->term))) {
-        pq_pop(MTE(te)->tew_queue);
+        frt_pq_pop(MTE(te)->tew_queue);
         te->curr_ti.doc_freq += top->te->curr_ti.doc_freq;/* increment freq */
         MTE(te)->ti_indexes[MTE(te)->ti_cnt] = top->index;
         MTE(te)->tis[MTE(te)->ti_cnt++] = top->te->curr_ti;
         if (tew_next(top)) {
-            pq_push(MTE(te)->tew_queue, top); /* restore queue */
+            frt_pq_push(MTE(te)->tew_queue, top); /* restore queue */
         }
-        top = (TermEnumWrapper *)pq_top(MTE(te)->tew_queue);
+        top = (TermEnumWrapper *)frt_pq_top(MTE(te)->tew_queue);
     }
     return te->curr_term;
 }
@@ -2127,7 +2127,7 @@ static FrtTermEnum *mte_set_field(FrtTermEnum *te, int field_num)
             sub_te->set_field(sub_te, fnum);
 
             if (tew_next(tew)) {
-                pq_push(mte->tew_queue, tew); /* initialize queue */
+                frt_pq_push(mte->tew_queue, tew); /* initialize queue */
             }
         }
         else {
@@ -2149,7 +2149,7 @@ static char *mte_skip_to(FrtTermEnum *te, const char *term)
         TermEnumWrapper *tew = &(mte->tews[i]);
 
         if (tew->te->field_num >= 0 && tew_skip_to(tew, term)) {
-            pq_push(mte->tew_queue, tew); /* initialize queue */
+            frt_pq_push(mte->tew_queue, tew); /* initialize queue */
         }
     }
     return mte_next(te);
@@ -2165,7 +2165,7 @@ static void mte_close(FrtTermEnum *te)
     free(MTE(te)->tews);
     free(MTE(te)->tis);
     free(MTE(te)->ti_indexes);
-    pq_destroy(MTE(te)->tew_queue);
+    frt_pq_destroy(MTE(te)->tew_queue);
     free(te);
 }
 
@@ -2187,7 +2187,7 @@ FrtTermEnum *mte_new(FrtMultiReader *mr, int field_num, const char *term)
     mte->tis            = FRT_ALLOC_AND_ZERO_N(FrtTermInfo, r_cnt);
     mte->ti_indexes     = FRT_ALLOC_AND_ZERO_N(int, r_cnt);
     mte->tews           = FRT_ALLOC_AND_ZERO_N(TermEnumWrapper, r_cnt);
-    mte->tew_queue      = pq_new(r_cnt, (lt_ft)&tew_lt, (free_ft)NULL);
+    mte->tew_queue      = frt_pq_new(r_cnt, (lt_ft)&tew_lt, (free_ft)NULL);
     mte->field_num_map  = mr->field_num_map;
 
     for (i = 0; i < r_cnt; i++) {
@@ -2208,7 +2208,7 @@ FrtTermEnum *mte_new(FrtMultiReader *mr, int field_num, const char *term)
             tew = tew_setup(&(mte->tews[i]), i, sub_te, reader);
             if (((NULL == term) && tew_next(tew))
                 || (tew->term && (tew->term[0] != '\0'))) {
-                pq_push(mte->tew_queue, tew);          /* initialize queue */
+                frt_pq_push(mte->tew_queue, tew);          /* initialize queue */
             }
         }
         else {
@@ -2327,7 +2327,7 @@ static FrtTermWriter *tw_new(FrtStore *store, char *file_name)
 
 static void tw_close(FrtTermWriter *tw)
 {
-    os_close(tw->os);
+    frt_os_close(tw->os);
     free(tw);
 }
 
@@ -2353,7 +2353,7 @@ FrtTermInfosWriter *frt_tiw_open(FrtStore *store,
     tiw->tis_writer = tw_new(store, file_name);
     strcpy(file_name + segment_len, ".tfx");
     tiw->tfx_out = store->new_output(store, file_name);
-    os_write_u32(tiw->tfx_out, 0); /* make space for field_count */
+    frt_os_write_u32(tiw->tfx_out, 0); /* make space for field_count */
 
     /* The following two numbers are the first numbers written to the field
      * index when frt_tiw_start_field is called. But they'll be zero to start with
@@ -2372,9 +2372,9 @@ static void tw_write_term(FrtTermWriter *tw,
     int start = hlp_string_diff(tw->last_term, term);
     int length = term_len - start;
 
-    os_write_vint(os, start);                   /* write shared prefix length */
-    os_write_vint(os, length);                  /* write delta length */
-    os_write_bytes(os, (frt_uchar *)(term + start), length); /* write delta chars */
+    frt_os_write_vint(os, start);                   /* write shared prefix length */
+    frt_os_write_vint(os, length);                  /* write delta length */
+    frt_os_write_bytes(os, (frt_uchar *)(term + start), length); /* write delta chars */
 
     tw->last_term = term;
 }
@@ -2403,11 +2403,11 @@ static void tw_add(FrtTermWriter *tw,
 #endif
 
     tw_write_term(tw, os, term, term_len);  /* write term */
-    os_write_vint(os, ti->doc_freq);        /* write doc freq */
-    os_write_voff_t(os, ti->frq_ptr - tw->last_term_info.frq_ptr);
-    os_write_voff_t(os, ti->prx_ptr - tw->last_term_info.prx_ptr);
+    frt_os_write_vint(os, ti->doc_freq);        /* write doc freq */
+    frt_os_write_voff_t(os, ti->frq_ptr - tw->last_term_info.frq_ptr);
+    frt_os_write_voff_t(os, ti->prx_ptr - tw->last_term_info.prx_ptr);
     if (ti->doc_freq >= skip_interval) {
-        os_write_voff_t(os, ti->skip_offset);
+        frt_os_write_voff_t(os, ti->skip_offset);
     }
 
     tw->last_term_info = *ti;
@@ -2432,8 +2432,8 @@ void frt_tiw_add(FrtTermInfosWriter *tiw,
                strlen(tiw->tis_writer->last_term),
                &(tiw->tis_writer->last_term_info),
                tiw->skip_interval);
-        tis_pos = os_pos(tiw->tis_writer->os);
-        os_write_voff_t(tiw->tix_writer->os, tis_pos - tiw->last_index_ptr);
+        tis_pos = frt_os_pos(tiw->tis_writer->os);
+        frt_os_write_voff_t(tiw->tix_writer->os, tis_pos - tiw->last_index_ptr);
         tiw->last_index_ptr = tis_pos;  /* write ptr */
     }
 
@@ -2450,11 +2450,11 @@ static void tw_reset(FrtTermWriter *tw)
 void frt_tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
 {
     FrtOutStream *tfx_out = tiw->tfx_out;
-    os_write_vint(tfx_out, tiw->tix_writer->counter);    /* write tix size */
-    os_write_vint(tfx_out, tiw->tis_writer->counter);    /* write tis size */
-    os_write_vint(tfx_out, field_num);
-    os_write_voff_t(tfx_out, os_pos(tiw->tix_writer->os)); /* write tix ptr */
-    os_write_voff_t(tfx_out, os_pos(tiw->tis_writer->os)); /* write tis ptr */
+    frt_os_write_vint(tfx_out, tiw->tix_writer->counter);    /* write tix size */
+    frt_os_write_vint(tfx_out, tiw->tis_writer->counter);    /* write tis size */
+    frt_os_write_vint(tfx_out, field_num);
+    frt_os_write_voff_t(tfx_out, frt_os_pos(tiw->tix_writer->os)); /* write tix ptr */
+    frt_os_write_voff_t(tfx_out, frt_os_pos(tiw->tis_writer->os)); /* write tis ptr */
     tw_reset(tiw->tix_writer);
     tw_reset(tiw->tis_writer);
     tiw->last_index_ptr = 0;
@@ -2464,11 +2464,11 @@ void frt_tiw_start_field(FrtTermInfosWriter *tiw, int field_num)
 void frt_tiw_close(FrtTermInfosWriter *tiw)
 {
     FrtOutStream *tfx_out = tiw->tfx_out;
-    os_write_vint(tfx_out, tiw->tix_writer->counter);
-    os_write_vint(tfx_out, tiw->tis_writer->counter);
-    os_seek(tfx_out, 0);
-    os_write_u32(tfx_out, tiw->field_count);
-    os_close(tfx_out);
+    frt_os_write_vint(tfx_out, tiw->tix_writer->counter);
+    frt_os_write_vint(tfx_out, tiw->tis_writer->counter);
+    frt_os_seek(tfx_out, 0);
+    frt_os_write_u32(tfx_out, tiw->field_count);
+    frt_os_close(tfx_out);
 
     tw_close(tiw->tix_writer);
     tw_close(tiw->tis_writer);
@@ -3104,7 +3104,7 @@ static bool mtdpe_next(FrtTermDocEnum *tde)
         return false;
     }
 
-    sub_tde = (FrtTermDocEnum *)pq_top(mtdpe->pq);
+    sub_tde = (FrtTermDocEnum *)frt_pq_top(mtdpe->pq);
     doc = sub_tde->doc_num(sub_tde);
 
     do {
@@ -3122,13 +3122,13 @@ static bool mtdpe_next(FrtTermDocEnum *tde)
         }
 
         if (sub_tde->next(sub_tde)) {
-            pq_down(mtdpe->pq);
+            frt_pq_down(mtdpe->pq);
         }
         else {
-            sub_tde = (FrtTermDocEnum *)pq_pop(mtdpe->pq);
+            sub_tde = (FrtTermDocEnum *)frt_pq_pop(mtdpe->pq);
             sub_tde->close(sub_tde);
         }
-        sub_tde = (FrtTermDocEnum *)pq_top(mtdpe->pq);
+        sub_tde = (FrtTermDocEnum *)frt_pq_top(mtdpe->pq);
     } while ((mtdpe->pq->size > 0) && (sub_tde->doc_num(sub_tde) == doc));
 
     qsort(mtdpe->pos_queue, freq, sizeof(int), &icmp_risky);
@@ -3150,13 +3150,13 @@ static bool mtdpe_skip_to(FrtTermDocEnum *tde, int target_doc_num)
     FrtTermDocEnum *sub_tde;
     FrtPriorityQueue *mtdpe_pq = MTDPE(tde)->pq;
 
-    while (NULL != (sub_tde = (FrtTermDocEnum *)pq_top(mtdpe_pq))
+    while (NULL != (sub_tde = (FrtTermDocEnum *)frt_pq_top(mtdpe_pq))
            && (target_doc_num > sub_tde->doc_num(sub_tde))) {
         if (sub_tde->skip_to(sub_tde, target_doc_num)) {
-            pq_down(mtdpe_pq);
+            frt_pq_down(mtdpe_pq);
         }
         else {
-            sub_tde = (FrtTermDocEnum *)pq_pop(mtdpe_pq);
+            sub_tde = (FrtTermDocEnum *)frt_pq_pop(mtdpe_pq);
             sub_tde->close(sub_tde);
         }
     }
@@ -3180,8 +3180,8 @@ static int mtdpe_next_position(FrtTermDocEnum *tde)
 
 static void mtdpe_close(FrtTermDocEnum *tde)
 {
-    pq_clear(MTDPE(tde)->pq);
-    pq_destroy(MTDPE(tde)->pq);
+    frt_pq_clear(MTDPE(tde)->pq);
+    frt_pq_destroy(MTDPE(tde)->pq);
     free(MTDPE(tde)->pos_queue);
     free(tde);
 }
@@ -3193,7 +3193,7 @@ FrtTermDocEnum *mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, int t
     FrtTermDocEnum *tde = TDE(mtdpe);
     FrtPriorityQueue *pq;
 
-    pq = mtdpe->pq = pq_new(t_cnt, (lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
+    pq = mtdpe->pq = frt_pq_new(t_cnt, (lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
     mtdpe->pos_queue_capa = MTDPE_POS_QUEUE_INIT_CAPA;
     mtdpe->pos_queue = FRT_ALLOC_N(int, MTDPE_POS_QUEUE_INIT_CAPA);
     mtdpe->field_num = field_num;
@@ -3201,7 +3201,7 @@ FrtTermDocEnum *mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, int t
         FrtTermDocEnum *tpe = ir->term_positions(ir);
         tpe->seek(tpe, field_num, terms[i]);
         if (tpe->next(tpe)) {
-            pq_push(pq, tpe);
+            frt_pq_push(pq, tpe);
         }
         else {
             tpe->close(tpe);
@@ -3497,7 +3497,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
     }
 
     if (NULL == ir->write_lock) {
-        ir->write_lock = open_lock(ir->store, FRT_WRITE_LOCK_NAME);
+        ir->write_lock = frt_open_lock(ir->store, FRT_WRITE_LOCK_NAME);
         if (!ir->write_lock->obtain(ir->write_lock)) {/* obtain write lock */
             rb_raise(cLockError, "Could not obtain write lock when trying to "
                               "write changes to the index. Check that there "
@@ -3840,8 +3840,8 @@ static void norm_rewrite(Norm *norm, FrtStore *store, FrtDeleter *dlr,
     frt_si_advance_norm_gen(si, field_num);
     si_norm_file_name(si, norm_file_name, field_num);
     os = store->new_output(store, norm_file_name);
-    os_write_bytes(os, norm->bytes, doc_count);
-    os_close(os);
+    frt_os_write_bytes(os, norm->bytes, doc_count);
+    frt_os_close(os);
     norm->is_dirty = false;
 }
 
@@ -3967,11 +3967,11 @@ static void bv_write(FrtBitVector *bv, FrtStore *store, char *name)
 {
     int i;
     FrtOutStream *os = store->new_output(store, name);
-    os_write_vint(os, bv->size);
+    frt_os_write_vint(os, bv->size);
     for (i = ((bv->size-1) >> 5); i >= 0; i--) {
-        os_write_u32(os, bv->bits[i]);
+        frt_os_write_u32(os, bv->bits[i]);
     }
-    os_close(os);
+    frt_os_close(os);
 }
 
 static FrtBitVector *bv_read(FrtStore *store, char *name)
@@ -4252,7 +4252,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
     FRT_TRY
         if (sr->si->use_compound_file) {
             sprintf(file_name, "%s.cfs", sr_segment);
-            sr->cfs_store = open_cmpd_store(store, file_name);
+            sr->cfs_store = frt_open_cmpd_store(store, file_name);
             store = sr->cfs_store;
         }
 
@@ -4765,19 +4765,7 @@ FrtIndexReader *ir_open(FrtStore *store)
     return fsf.ret.ir;
 }
 
-/****************************************************************************
- *
- * Offset
- *
- ****************************************************************************/
 
-FrtOffset *offset_new(off_t start, off_t end)
-{
-    FrtOffset *offset = FRT_ALLOC(FrtOffset);
-    offset->start = start;
-    offset->end = end;
-    return offset;
-}
 
 /****************************************************************************
  *
@@ -4799,7 +4787,7 @@ static FrtOccurence *occ_new(FrtMemoryPool *mp, int pos)
  *
  ****************************************************************************/
 
-FrtPosting *p_new(FrtMemoryPool *mp, int doc_num, int pos)
+FrtPosting *frt_p_new(FrtMemoryPool *mp, int doc_num, int pos)
 {
     FrtPosting *p = FRT_MP_ALLOC(mp, FrtPosting);
     p->doc_num = doc_num;
@@ -4815,7 +4803,7 @@ FrtPosting *p_new(FrtMemoryPool *mp, int doc_num, int pos)
  *
  ****************************************************************************/
 
-FrtPostingList *pl_new(FrtMemoryPool *mp, const char *term,
+FrtPostingList *frt_pl_new(FrtMemoryPool *mp, const char *term,
                            int term_len, FrtPosting *p)
 {
     FrtPostingList *pl = FRT_MP_ALLOC(mp, FrtPostingList);
@@ -4826,7 +4814,7 @@ FrtPostingList *pl_new(FrtMemoryPool *mp, const char *term,
     return pl;
 }
 
-void pl_add_occ(FrtMemoryPool *mp, FrtPostingList *pl, int pos)
+void frt_pl_add_occ(FrtMemoryPool *mp, FrtPostingList *pl, int pos)
 {
     pl->last_occ = pl->last_occ->next = occ_new(mp, pos);
     pl->last->freq++;
@@ -4838,7 +4826,7 @@ static void pl_add_posting(FrtPostingList *pl, FrtPosting *p)
     pl->last_occ = p->first_occ;
 }
 
-int pl_cmp(const FrtPostingList **pl1, const FrtPostingList **pl2)
+int frt_pl_cmp(const FrtPostingList **pl1, const FrtPostingList **pl2)
 {
     return strcmp((*pl1)->term, (*pl2)->term);
 }
@@ -4892,8 +4880,8 @@ static void skip_buf_reset(SkipBuffer *skip_buf)
 {
     frt_ramo_reset(skip_buf->buf);
     skip_buf->last_doc = 0;
-    skip_buf->last_frq_ptr = os_pos(skip_buf->frq_out);
-    skip_buf->last_prx_ptr = os_pos(skip_buf->prx_out);
+    skip_buf->last_frq_ptr = frt_os_pos(skip_buf->frq_out);
+    skip_buf->last_prx_ptr = frt_os_pos(skip_buf->prx_out);
 }
 
 static SkipBuffer *skip_buf_new(FrtOutStream *frq_out, FrtOutStream *prx_out)
@@ -4907,12 +4895,12 @@ static SkipBuffer *skip_buf_new(FrtOutStream *frq_out, FrtOutStream *prx_out)
 
 static void skip_buf_add(SkipBuffer *skip_buf, int doc)
 {
-    off_t frq_ptr = os_pos(skip_buf->frq_out);
-    off_t prx_ptr = os_pos(skip_buf->prx_out);
+    off_t frq_ptr = frt_os_pos(skip_buf->frq_out);
+    off_t prx_ptr = frt_os_pos(skip_buf->prx_out);
 
-    os_write_vint(skip_buf->buf, doc - skip_buf->last_doc);
-    os_write_vint(skip_buf->buf, frq_ptr - skip_buf->last_frq_ptr);
-    os_write_vint(skip_buf->buf, prx_ptr - skip_buf->last_prx_ptr);
+    frt_os_write_vint(skip_buf->buf, doc - skip_buf->last_doc);
+    frt_os_write_vint(skip_buf->buf, frq_ptr - skip_buf->last_frq_ptr);
+    frt_os_write_vint(skip_buf->buf, prx_ptr - skip_buf->last_prx_ptr);
 
     skip_buf->last_doc = doc;
     skip_buf->last_frq_ptr = frq_ptr;
@@ -4921,7 +4909,7 @@ static void skip_buf_add(SkipBuffer *skip_buf, int doc)
 
 static off_t skip_buf_write(SkipBuffer *skip_buf)
 {
-  off_t skip_ptr = os_pos(skip_buf->frq_out);
+  off_t skip_ptr = frt_os_pos(skip_buf->frq_out);
   frt_ramo_write_to(skip_buf->buf, skip_buf->frq_out);
   return skip_ptr;
 }
@@ -4945,8 +4933,8 @@ static void dw_write_norms(FrtDocWriter *dw, FrtFieldInverter *fld_inv)
     frt_si_advance_norm_gen(dw->si, fld_inv->fi->number);
     si_norm_file_name(dw->si, file_name, fld_inv->fi->number);
     norms_out = dw->store->new_output(dw->store, file_name);
-    os_write_bytes(norms_out, fld_inv->norms, dw->doc_num);
-    os_close(norms_out);
+    frt_os_write_bytes(norms_out, fld_inv->norms, dw->doc_num);
+    frt_os_close(norms_out);
 }
 
 /* we'll use the postings Hash's table area to sort the postings as it is
@@ -4965,7 +4953,7 @@ static FrtPostingList **dw_sort_postings(FrtHash *plists_ht)
     }
 
     qsort(plists, plists_ht->size, sizeof(FrtPostingList *),
-          (int (*)(const void *, const void *))&pl_cmp);
+          (int (*)(const void *, const void *))&frt_pl_cmp);
 
     return plists;
 }
@@ -5019,8 +5007,8 @@ static void dw_flush(FrtDocWriter *dw)
         posting_count = fld_inv->plists->size;
         for (j = 0; j < posting_count; j++) {
             pl = pls[j];
-            ti.frq_ptr = os_pos(frq_out);
-            ti.prx_ptr = os_pos(prx_out);
+            ti.frq_ptr = frt_os_pos(frq_out);
+            ti.prx_ptr = frt_os_pos(prx_out);
             last_doc = 0;
             doc_freq = 0;
             skip_buf_reset(skip_buf);
@@ -5034,16 +5022,16 @@ static void dw_flush(FrtDocWriter *dw)
                 last_doc = p->doc_num;
 
                 if (p->freq == 1) {
-                    os_write_vint(frq_out, 1|doc_code);
+                    frt_os_write_vint(frq_out, 1|doc_code);
                 }
                 else {
-                    os_write_vint(frq_out, doc_code);
-                    os_write_vint(frq_out, p->freq);
+                    frt_os_write_vint(frq_out, doc_code);
+                    frt_os_write_vint(frq_out, p->freq);
                 }
 
                 last_pos = 0;
                 for (occ = p->first_occ; NULL != occ; occ = occ->next) {
-                    os_write_vint(prx_out, occ->pos - last_pos);
+                    frt_os_write_vint(prx_out, occ->pos - last_pos);
                     last_pos = occ->pos;
                 }
             }
@@ -5052,8 +5040,8 @@ static void dw_flush(FrtDocWriter *dw)
             frt_tiw_add(tiw, pl->term, pl->term_len, &ti);
         }
     }
-    os_close(prx_out);
-    os_close(frq_out);
+    frt_os_close(prx_out);
+    frt_os_close(frq_out);
     frt_tiw_close(tiw);
     skip_buf_destroy(skip_buf);
     dw_flush_streams(dw);
@@ -5133,12 +5121,12 @@ static void dw_add_posting(FrtMemoryPool *mp,
 {
     FrtHashEntry *pl_he;
     if (h_set_ext(curr_plists, text, &pl_he)) {
-        FrtPosting *p =  p_new(mp, doc_num, pos);
+        FrtPosting *p =  frt_p_new(mp, doc_num, pos);
         FrtHashEntry *fld_pl_he;
         FrtPostingList *pl;
 
         if (h_set_ext(fld_plists, text, &fld_pl_he)) {
-            fld_pl_he->value = pl = pl_new(mp, text, len, p);
+            fld_pl_he->value = pl = frt_pl_new(mp, text, len, p);
             pl_he->key = fld_pl_he->key = (char *)pl->term;
         }
         else {
@@ -5149,7 +5137,7 @@ static void dw_add_posting(FrtMemoryPool *mp,
         pl_he->value = pl;
     }
     else {
-        pl_add_occ(mp, (FrtPostingList *)pl_he->value, pos);
+        frt_pl_add_occ(mp, (FrtPostingList *)pl_he->value, pos);
     }
 }
 
@@ -5360,7 +5348,7 @@ static SegmentMergeInfo *smi_new(int base, FrtStore *store, FrtSegmentInfo *si)
     smi->orig_store = smi->store = store;
     sprintf(file_name, "%s.cfs", segment);
     if (store->exists(store, file_name)) {
-        smi->store = open_cmpd_store(store, file_name);
+        smi->store = frt_open_cmpd_store(store, file_name);
     }
 
 
@@ -5512,8 +5500,8 @@ static void sm_merge_fields(SegmentMerger *sm)
             }
             /* skip deleted docs */
             if (!smi->deleted_docs || !frt_bv_get(smi->deleted_docs, j)) {
-                os_write_u64(fdx_out, os_pos(fdt_out));
-                os_write_u32(fdx_out, tv_idx_offset);
+                frt_os_write_u64(fdx_out, frt_os_pos(fdt_out));
+                frt_os_write_u32(fdx_out, tv_idx_offset);
                 is_seek(fdt_in, start);
                 is2os_copy_bytes(fdt_in, fdt_out, end - start);
             }
@@ -5521,8 +5509,8 @@ static void sm_merge_fields(SegmentMerger *sm)
         is_close(fdt_in);
         is_close(fdx_in);
     }
-    os_close(fdt_out);
-    os_close(fdx_out);
+    frt_os_close(fdt_out);
+    frt_os_close(fdx_out);
 }
 
 static int sm_append_postings(SegmentMerger *sm, SegmentMergeInfo **matches,
@@ -5565,11 +5553,11 @@ static int sm_append_postings(SegmentMerger *sm, SegmentMergeInfo **matches,
 
             freq = stde_freq(tde);
             if (freq == 1) {
-                os_write_vint(sm->frq_out, doc_code | 1); /* doc & freq=1 */
+                frt_os_write_vint(sm->frq_out, doc_code | 1); /* doc & freq=1 */
             }
             else {
-                os_write_vint(sm->frq_out, doc_code); /* write doc */
-                os_write_vint(sm->frq_out, freq);     /* write freqency in doc */
+                frt_os_write_vint(sm->frq_out, doc_code); /* write doc */
+                frt_os_write_vint(sm->frq_out, freq);     /* write freqency in doc */
             }
 
             /* copy position deltas */
@@ -5592,8 +5580,8 @@ static char *sm_cache_term(SegmentMerger *sm, char *term, int term_len)
 static void sm_merge_term_info(SegmentMerger *sm, SegmentMergeInfo **matches,
                                int match_size)
 {
-    off_t frq_ptr = os_pos(sm->frq_out);
-    off_t prx_ptr = os_pos(sm->prx_out);
+    off_t frq_ptr = frt_os_pos(sm->frq_out);
+    off_t prx_ptr = frt_os_pos(sm->prx_out);
 
     int df = sm_append_postings(sm, matches, match_size); /* append posting data */
 
@@ -5631,7 +5619,7 @@ static void sm_merge_term_infos(SegmentMerger *sm)
             smi = sm->smis[j];
             ste_set_field(smi->te, i);
             if (NULL != smi_next(smi)) {
-                pq_push(sm->queue, smi); /* initialize @queue */
+                frt_pq_push(sm->queue, smi); /* initialize @queue */
             }
         }
         while (sm->queue->size > 0) {
@@ -5642,14 +5630,14 @@ static void sm_merge_term_infos(SegmentMerger *sm)
                }printf("\n\n");
                */
             match_size = 0;     /* pop matching terms */
-            matches[0] = (SegmentMergeInfo *)pq_pop(sm->queue);
+            matches[0] = (SegmentMergeInfo *)frt_pq_pop(sm->queue);
             match_size++;
             term = matches[0]->term;
-            top = (SegmentMergeInfo *)pq_top(sm->queue);
+            top = (SegmentMergeInfo *)frt_pq_top(sm->queue);
             while ((NULL != top) && (0 == strcmp(term, top->term))) {
-                matches[match_size] = (SegmentMergeInfo *)pq_pop(sm->queue);
+                matches[match_size] = (SegmentMergeInfo *)frt_pq_pop(sm->queue);
                 match_size++;
-                top = (SegmentMergeInfo *)pq_top(sm->queue);
+                top = (SegmentMergeInfo *)frt_pq_top(sm->queue);
             }
 
             /* printf(">%s:%s<\n", matches[0]->tb->field, matches[0]->tb->text); */
@@ -5659,7 +5647,7 @@ static void sm_merge_term_infos(SegmentMerger *sm)
                 match_size--;
                 smi = matches[match_size];
                 if (NULL != smi_next(smi)) {
-                    pq_push(sm->queue, smi);   /* restore queue */
+                    frt_pq_push(sm->queue, smi);   /* restore queue */
                 }
             }
         }
@@ -5691,14 +5679,14 @@ static void sm_merge_terms(SegmentMerger *sm)
     sm->term_buf_size = (sm->config->index_interval + 1) * FRT_MAX_WORD_SIZE;
     sm->term_buf = FRT_ALLOC_N(char, sm->term_buf_size + FRT_MAX_WORD_SIZE);
 
-    sm->queue = pq_new(sm->seg_cnt, (lt_ft)&smi_lt, NULL);
+    sm->queue = frt_pq_new(sm->seg_cnt, (lt_ft)&smi_lt, NULL);
 
     sm_merge_term_infos(sm);
 
-    os_close(sm->frq_out);
-    os_close(sm->prx_out);
+    frt_os_close(sm->frq_out);
+    frt_os_close(sm->prx_out);
     frt_tiw_close(sm->tiw);
-    pq_destroy(sm->queue);
+    frt_pq_destroy(sm->queue);
     skip_buf_destroy(sm->skip_buf);
     free(sm->term_buf);
 }
@@ -5735,7 +5723,7 @@ static void sm_merge_norms(SegmentMerger *sm)
                         for (k = 0; k < max_doc; k++) {
                             byte = is_read_byte(is);
                             if (!frt_bv_get(deleted_docs, k)) {
-                                os_write_byte(os, byte);
+                                frt_os_write_byte(os, byte);
                             }
                         }
                     }
@@ -5747,11 +5735,11 @@ static void sm_merge_norms(SegmentMerger *sm)
                 else {
                     const int doc_cnt = smi->doc_cnt;
                     for (k = 0; k < doc_cnt; k++) {
-                        os_write_byte(os, '\0');
+                        frt_os_write_byte(os, '\0');
                     }
                 }
             }
-            os_close(os);
+            frt_os_close(os);
         }
     }
 }
@@ -5780,7 +5768,7 @@ void index_create(FrtStore *store, FrtFieldInfos *fis)
 
 bool index_is_locked(FrtStore *store)
 {
-    FrtLock *write_lock = open_lock(store, FRT_WRITE_LOCK_NAME);
+    FrtLock *write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
     bool is_locked = write_lock->is_locked(write_lock);
     frt_close_lock(write_lock);
     return is_locked;
@@ -5818,7 +5806,7 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis,
     file_name[seg_len] = '.';
     ext = file_name + seg_len + 1;
 
-    cw = open_cw(store, cfs_file_name);
+    cw = frt_open_cw(store, cfs_file_name);
     for (i = 0; i < FRT_NELEMS(COMPOUND_EXTENSIONS); i++) {
         memcpy(ext, COMPOUND_EXTENSIONS[i], 4);
         MOVE_TO_COMPOUND_DIR(file_name);
@@ -6092,7 +6080,7 @@ FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
     iw->config = *config;
 
     FRT_TRY
-        iw->write_lock = open_lock(store, FRT_WRITE_LOCK_NAME);
+        iw->write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
         if (!iw->write_lock->obtain(iw->write_lock)) {
             rb_raise(cLockError,
                   "Couldn't obtain write lock when opening IndexWriter");
@@ -6163,22 +6151,22 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
             int j, data_len = 0;
             const int field_cnt = is_read_vint(fdt_in);
             int tv_cnt;
-            off_t doc_start_ptr = os_pos(fdt_out);
+            off_t doc_start_ptr = frt_os_pos(fdt_out);
 
-            os_write_u64(fdx_out, doc_start_ptr);
-            os_write_vint(fdt_out, field_cnt);
+            frt_os_write_u64(fdx_out, doc_start_ptr);
+            frt_os_write_vint(fdt_out, field_cnt);
 
             for (j = 0; j < field_cnt; j++) {
                 int k;
                 const int field_num = map[is_read_vint(fdt_in)];
                 const int df_size = is_read_vint(fdt_in);
-                os_write_vint(fdt_out, field_num);
-                os_write_vint(fdt_out, df_size);
+                frt_os_write_vint(fdt_out, field_num);
+                frt_os_write_vint(fdt_out, df_size);
                 /* sum total lengths of FrtDocField */
                 for (k = 0; k < df_size; k++) {
                     /* Each field has one ' ' byte so add 1 */
                     const int flen = is_read_vint(fdt_in);
-                    os_write_vint(fdt_out, flen);
+                    frt_os_write_vint(fdt_out, flen);
                     data_len +=  flen + 1;
                 }
             }
@@ -6192,14 +6180,14 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
                                    - (frt_u64)is_pos(fdt_in)));
 
             /* Write TV index pos */
-            os_write_u32(fdx_out, (frt_u32)(os_pos(fdt_out) - doc_start_ptr));
+            frt_os_write_u32(fdx_out, (frt_u32)(frt_os_pos(fdt_out) - doc_start_ptr));
             tv_cnt = is_read_vint(fdt_in);
-            os_write_vint(fdt_out, tv_cnt);
+            frt_os_write_vint(fdt_out, tv_cnt);
             for (j = 0; j < tv_cnt; j++) {
                 const int field_num = map[is_read_vint(fdt_in)];
                 const int tv_size = is_read_vint(fdt_in);
-                os_write_vint(fdt_out, field_num);
-                os_write_vint(fdt_out, tv_size);
+                frt_os_write_vint(fdt_out, field_num);
+                frt_os_write_vint(fdt_out, tv_size);
             }
         }
     }
@@ -6209,8 +6197,8 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
     }
     is_close(fdt_in);
     is_close(fdx_in);
-    os_close(fdt_out);
-    os_close(fdx_out);
+    frt_os_close(fdt_out);
+    frt_os_close(fdx_out);
 }
 
 static void iw_cp_terms(FrtIndexWriter *iw, SegmentReader *sr,
@@ -6250,16 +6238,16 @@ static void iw_cp_terms(FrtIndexWriter *iw, SegmentReader *sr,
 
     if (map) {
         int field_cnt = is_read_u32(tfx_in);
-        os_write_u32(tfx_out, field_cnt);
-        os_write_vint(tfx_out, is_read_vint(tfx_in)); /* index_interval */
-        os_write_vint(tfx_out, is_read_vint(tfx_in)); /* skip_interval */
+        frt_os_write_u32(tfx_out, field_cnt);
+        frt_os_write_vint(tfx_out, is_read_vint(tfx_in)); /* index_interval */
+        frt_os_write_vint(tfx_out, is_read_vint(tfx_in)); /* skip_interval */
 
         for (; field_cnt > 0; field_cnt--) {
-            os_write_vint(tfx_out, map[is_read_vint(tfx_in)]);/* mapped field */
-            os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* index ptr */
-            os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* dict ptr */
-            os_write_vint(tfx_out, is_read_vint(tfx_in));     /* index size */
-            os_write_vint(tfx_out, is_read_vint(tfx_in));     /* dict size */
+            frt_os_write_vint(tfx_out, map[is_read_vint(tfx_in)]);/* mapped field */
+            frt_os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* index ptr */
+            frt_os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* dict ptr */
+            frt_os_write_vint(tfx_out, is_read_vint(tfx_in));     /* index size */
+            frt_os_write_vint(tfx_out, is_read_vint(tfx_in));     /* dict size */
         }
     }
     else {
@@ -6271,15 +6259,15 @@ static void iw_cp_terms(FrtIndexWriter *iw, SegmentReader *sr,
     is2os_copy_bytes(prx_in, prx_out, is_length(prx_in));
 
     is_close(tix_in);
-    os_close(tix_out);
+    frt_os_close(tix_out);
     is_close(tis_in);
-    os_close(tis_out);
+    frt_os_close(tis_out);
     is_close(tfx_in);
-    os_close(tfx_out);
+    frt_os_close(tfx_out);
     is_close(frq_in);
-    os_close(frq_out);
+    frt_os_close(frq_out);
     is_close(prx_in);
-    os_close(prx_out);
+    frt_os_close(prx_out);
 }
 
 static void iw_cp_norms(FrtIndexWriter *iw, SegmentReader *sr,
@@ -6307,7 +6295,7 @@ static void iw_cp_norms(FrtIndexWriter *iw, SegmentReader *sr,
             si_norm_file_name(si, file_name_out, field_num);
             norms_out = store_out->new_output(store_out, file_name_out);
             is2os_copy_bytes(norms_in, norms_out, is_length(norms_in));
-            os_close(norms_out);
+            frt_os_close(norms_out);
             is_close(norms_in);
         }
     }

@@ -789,7 +789,7 @@ static void frb_pq_down(PriQ *pq)
     heap[i] = node;
 }
 
-static void pq_push(PriQ *pq, VALUE elem)
+static void frt_pq_push(PriQ *pq, VALUE elem)
 {
     pq->size++;
     if (pq->size >= pq->mem_capa) {
@@ -892,7 +892,7 @@ frb_pq_init(int argc, VALUE *argv, VALUE self)
 
 /*
  *  call-seq:
- *     pq.clone -> pq_clone
+ *     pq.clone -> frt_pq_clone
  *
  *  Returns a shallow clone of the priority queue. That is only the priority
  *  queue is cloned, its contents are not cloned.
@@ -938,7 +938,7 @@ frb_pq_insert(VALUE self, VALUE elem)
     PriQ *pq;
     GET_PQ(pq, self);
     if (pq->size < pq->capa) {
-        pq_push(pq, elem);
+        frt_pq_push(pq, elem);
     }
     else if (pq->size > 0 && frb_pq_lt(pq->proc, pq->heap[1], elem)) {
         pq->heap[1] = elem;

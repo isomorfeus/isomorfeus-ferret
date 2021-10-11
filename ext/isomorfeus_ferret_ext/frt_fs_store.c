@@ -280,7 +280,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
               path, strerror(errno));
     }
 
-    os = os_new();
+    os = frt_os_new();
     os->file.fd = fd;
     os->m = &FS_OUT_STREAM_METHODS;
     return os;
@@ -477,7 +477,7 @@ static FrtStore *fs_store_new(const char *pathname)
     return new_store;
 }
 
-FrtStore *open_fs_store(const char *pathname)
+FrtStore *frt_open_fs_store(const char *pathname)
 {
     FrtStore *store = NULL;
 

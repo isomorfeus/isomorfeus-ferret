@@ -56,7 +56,7 @@ FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fiel
         FRT_REF(store);
         self->store = store;
     } else {
-        self->store = open_ram_store();
+        self->store = frt_open_ram_store();
         create = true;
     }
     if (analyzer) {

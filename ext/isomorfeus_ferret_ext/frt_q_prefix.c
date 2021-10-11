@@ -78,7 +78,7 @@ static int prq_eq(FrtQuery *self, FrtQuery *o)
         && (strcmp(PfxQ(self)->field, PfxQ(o)->field) == 0);
 }
 
-FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
+FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix)
 {
     FrtQuery *self = frt_q_new(FrtPrefixQuery);
 

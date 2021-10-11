@@ -443,7 +443,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
 {
     PhraseScorer *phsc = PhSc(self);
     PhPos *pp;
-    FrtPriorityQueue *pq = pq_new(phsc->pp_cnt, (lt_ft)&pp_less_than, NULL);
+    FrtPriorityQueue *pq = frt_pq_new(phsc->pp_cnt, (lt_ft)&pp_less_than, NULL);
     const int pp_cnt = phsc->pp_cnt;
 
     int last_pos = 0, pos, next_pos, start, match_length, i;
@@ -465,14 +465,14 @@ static float sphsc_phrase_freq(FrtScorer *self)
         if (pp->position > last_pos) {
             last_pos = pp->position;
         }
-        pq_push(pq, pp);
+        frt_pq_push(pq, pp);
     }
     int pqsize = pq->size;
     do {
         pqsize--;
-        pp = (PhPos *)pq_pop(pq);
+        pp = (PhPos *)frt_pq_pop(pq);
         pos = start = pp->position;
-        next_pos = PP(pq_top(pq))->position;
+        next_pos = PP(frt_pq_top(pq))->position;
         while (pos <= next_pos) {
             start = pos;        /* advance pp to min window */
             if (!pp_next_position(pp)
@@ -491,12 +491,12 @@ static float sphsc_phrase_freq(FrtScorer *self)
         if (pp->position > last_pos) {
             last_pos = pp->position;
         }
-        pq_push(pq, pp);        /* restore pq */
+        frt_pq_push(pq, pp);        /* restore pq */
         if (pqsize == 0) { done = true; }
     } while (!done);
 return_freq:
 
-    pq_destroy(pq);
+    frt_pq_destroy(pq);
     return freq;
 }
 
@@ -761,7 +761,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
                                  int offset)
 {
     int i, total_positions = 0;
-    FrtPriorityQueue *tvpe_pq = pq_new(t_cnt, (lt_ft)tvpe_lt, &free);
+    FrtPriorityQueue *tvpe_pq = frt_pq_new(t_cnt, (lt_ft)tvpe_lt, &free);
     TVPosEnum *self = NULL;
 
     for (i = 0; i < t_cnt; i++) {
@@ -771,12 +771,12 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
             /* got tv_term so tvpe_next should always return true once here */
             bool res = tvpe_next(tvpe);
             assert(res);(void)res;
-            pq_push(tvpe_pq, tvpe);
+            frt_pq_push(tvpe_pq, tvpe);
             total_positions += tv_term->freq;
         }
     }
     if (tvpe_pq->size == 0) {
-        pq_destroy(tvpe_pq);
+        frt_pq_destroy(tvpe_pq);
     }
     else {
         int index = 0;
@@ -787,17 +787,17 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
         self->index = -1;
         self->pos = -1;
         while (tvpe_pq->size > 0) {
-            TVPosEnum *top = (TVPosEnum *)pq_top(tvpe_pq);
+            TVPosEnum *top = (TVPosEnum *)frt_pq_top(tvpe_pq);
             self->positions[index++] = top->pos;
             if (! tvpe_next(top)) {
-                pq_pop(tvpe_pq);
+                frt_pq_pop(tvpe_pq);
                 free(top);
             }
             else {
-                pq_down(tvpe_pq);
+                frt_pq_down(tvpe_pq);
             }
         }
-        pq_destroy(tvpe_pq);
+        frt_pq_destroy(tvpe_pq);
     }
     return self;
 }
@@ -827,7 +827,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         bool done = false;
 
         if (slop > 0) {
-            FrtPriorityQueue *tvpe_pq = pq_new(pos_cnt, (lt_ft)tvpe_lt, &free);
+            FrtPriorityQueue *tvpe_pq = frt_pq_new(pos_cnt, (lt_ft)tvpe_lt, &free);
             int last_pos = 0;
             for (i = 0; i < pos_cnt; i++) {
                 FrtPhrasePosition *pp = &(PhQ(self)->positions[i]);
@@ -837,7 +837,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                     if (tvpe->pos > last_pos) {
                         last_pos = tvpe->pos;
                     }
-                    pq_push(tvpe_pq, tvpe);
+                    frt_pq_push(tvpe_pq, tvpe);
                 }
                 else {
                     done = true;
@@ -846,10 +846,10 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                 }
             }
             while (! done) {
-                TVPosEnum *tvpe = (TVPosEnum *)pq_pop(tvpe_pq);
+                TVPosEnum *tvpe = (TVPosEnum *)frt_pq_pop(tvpe_pq);
                 int pos;
                 int start = pos = tvpe->pos;
-                int next_pos = ((TVPosEnum *)pq_top(tvpe_pq))->pos;
+                int next_pos = ((TVPosEnum *)frt_pq_top(tvpe_pq))->pos;
                 while (pos <= next_pos) {
                     start = pos;
                     if (!tvpe_next(tvpe)) {
@@ -872,10 +872,10 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                 if (tvpe->pos > last_pos) {
                     last_pos = tvpe->pos;
                 }
-                pq_push(tvpe_pq, tvpe);
+                frt_pq_push(tvpe_pq, tvpe);
             }
 
-            pq_destroy(tvpe_pq);
+            frt_pq_destroy(tvpe_pq);
         }
         else { /* exact match */
             TVPosEnum **tvpe_a = FRT_ALLOC_AND_ZERO_N(TVPosEnum *, pos_cnt);
@@ -1127,7 +1127,7 @@ static int phq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-FrtQuery *phq_new(FrtSymbol field)
+FrtQuery *frt_phq_new(FrtSymbol field)
 {
     FrtQuery *self = frt_q_new(FrtPhraseQuery);
 
@@ -1148,7 +1148,7 @@ FrtQuery *phq_new(FrtSymbol field)
     return self;
 }
 
-void phq_add_term_abs(FrtQuery *self, const char *term, int position)
+void frt_phq_add_term_abs(FrtQuery *self, const char *term, int position)
 {
     FrtPhraseQuery *phq = PhQ(self);
     int index = phq->pos_cnt;
@@ -1164,7 +1164,7 @@ void phq_add_term_abs(FrtQuery *self, const char *term, int position)
     phq->pos_cnt++;
 }
 
-void phq_add_term(FrtQuery *self, const char *term, int pos_inc)
+void frt_phq_add_term(FrtQuery *self, const char *term, int pos_inc)
 {
     FrtPhraseQuery *phq = PhQ(self);
     int position;
@@ -1174,16 +1174,16 @@ void phq_add_term(FrtQuery *self, const char *term, int pos_inc)
     else {
         position = phq->positions[phq->pos_cnt - 1].pos + pos_inc;
     }
-    phq_add_term_abs(self, term, position);
+    frt_phq_add_term_abs(self, term, position);
 }
 
-void phq_append_multi_term(FrtQuery *self, const char *term)
+void frt_phq_append_multi_term(FrtQuery *self, const char *term)
 {
     FrtPhraseQuery *phq = PhQ(self);
     int index = phq->pos_cnt - 1;
 
     if (index < 0) {
-        phq_add_term(self, term, 0);
+        frt_phq_add_term(self, term, 0);
     }
     else {
         frt_ary_push(phq->positions[index].terms, frt_estrdup(term));

@@ -221,7 +221,7 @@ static char *build_shell_command()
     char *command =
         "gdb -quiet -ex='bt' -ex='quit' %s %d 2>/dev/null | grep '^[ #]'";
 
-    snprintf(buf, CMD_BUF_SIZE, command, progname(), pid);
+    snprintf(buf, CMD_BUF_SIZE, command, frt_progname(), pid);
     return buf;
 }
 
@@ -266,7 +266,7 @@ char *get_stacktrace()
 #endif
 }
 
-void print_stacktrace()
+void frt_print_stacktrace()
 {
     char *stack = get_stacktrace();
 
@@ -310,7 +310,7 @@ void frt_setprogname(const char *str)
     strncpy(name, str, sizeof(name) - 1);
 }
 
-const char *progname()
+const char *frt_progname()
 {
     return name;
 }
@@ -333,7 +333,7 @@ static const char *signal_to_string(int signum)
 
 static void sighandler_crash(int signum)
 {
-    print_stacktrace();
+    frt_print_stacktrace();
     FRT_XEXIT("Signal", "Exiting on signal %s (%d)",
              signal_to_string(signum), signum);
 }

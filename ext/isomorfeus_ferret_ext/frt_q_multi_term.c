@@ -171,16 +171,16 @@ static bool multi_tsc_next(FrtScorer *self)
     if (tdew_pq == NULL) {
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = pq_new(mtsc->tdew_cnt, (lt_ft)tdew_less_than, (free_ft)NULL);
+        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (lt_ft)tdew_less_than, (free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_next(tdew_a[i])) {
-                pq_push(tdew_pq, tdew_a[i]);
+                frt_pq_push(tdew_pq, tdew_a[i]);
             }
         }
         mtsc->tdew_pq = tdew_pq;
     }
 
-    tdew = (TermDocEnumWrapper *)pq_top(tdew_pq);
+    tdew = (TermDocEnumWrapper *)frt_pq_top(tdew_pq);
     if (tdew == NULL) {
         return false;
     }
@@ -196,13 +196,13 @@ static bool multi_tsc_next(FrtScorer *self)
         }
 
         if (tdew_next(tdew)) {
-            pq_down(tdew_pq);
+            frt_pq_down(tdew_pq);
         }
         else {
-            pq_pop(tdew_pq);
+            frt_pq_pop(tdew_pq);
         }
 
-    } while (((tdew = (TermDocEnumWrapper *)pq_top(tdew_pq)) != NULL)
+    } while (((tdew = (TermDocEnumWrapper *)frt_pq_top(tdew_pq)) != NULL)
              && tdew->doc == curr_doc);
     mtsc->total_score = total_score;
     return true;
@@ -216,10 +216,10 @@ static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num)
         MultiTermScorer *mtsc = MTSc(self);
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = pq_new(mtsc->tdew_cnt, (lt_ft)tdew_less_than, (free_ft)NULL);
+        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (lt_ft)tdew_less_than, (free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_skip_to(tdew_a[i], target_doc_num)) {
-                pq_push(tdew_pq, tdew_a[i]);
+                frt_pq_push(tdew_pq, tdew_a[i]);
             }
         }
         MTSc(self)->tdew_pq = tdew_pq;
@@ -228,17 +228,17 @@ static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num)
         self->doc = -1;
         return false;
     }
-    while ((tdew = (TermDocEnumWrapper *)pq_top(tdew_pq)) != NULL
+    while ((tdew = (TermDocEnumWrapper *)frt_pq_top(tdew_pq)) != NULL
            && (target_doc_num > tdew->doc)) {
         if (tdew_skip_to(tdew, target_doc_num)) {
-            pq_down(tdew_pq);
+            frt_pq_down(tdew_pq);
         }
         else {
-            pq_pop(tdew_pq);
+            frt_pq_pop(tdew_pq);
         }
     }
-    tdew = (TermDocEnumWrapper *)pq_top(tdew_pq);
-    return (pq_top(tdew_pq) == NULL) ? false : true;
+    tdew = (TermDocEnumWrapper *)frt_pq_top(tdew_pq);
+    return (frt_pq_top(tdew_pq) == NULL) ? false : true;
 }
 
 static bool multi_tsc_skip_to(FrtScorer *self, int target_doc_num)
@@ -252,7 +252,7 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
     TermDocEnumWrapper *tdew;
 
     if (multi_tsc_advance_to(self, doc_num) &&
-        (tdew = (TermDocEnumWrapper *)pq_top(mtsc->tdew_pq))->doc == doc_num) {
+        (tdew = (TermDocEnumWrapper *)frt_pq_top(mtsc->tdew_pq))->doc == doc_num) {
 
         FrtPriorityQueue *tdew_pq = MTSc(self)->tdew_pq;
         FrtExplanation *expl = frt_expl_new(0.0f, "The sum of:");
@@ -271,13 +271,13 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
             /* maintain tdew queue, even though it probably won't get used
              * again */
             if (tdew_next(tdew)) {
-                pq_down(tdew_pq);
+                frt_pq_down(tdew_pq);
             }
             else {
-                pq_pop(tdew_pq);
+                frt_pq_pop(tdew_pq);
             }
 
-        } while (((tdew = (TermDocEnumWrapper *)pq_top(tdew_pq)) != NULL)
+        } while (((tdew = (TermDocEnumWrapper *)frt_pq_top(tdew_pq)) != NULL)
                  && tdew->doc == curr_doc);
         expl->value = total_score;
         return expl;
@@ -295,7 +295,7 @@ static void multi_tsc_destroy(FrtScorer *self)
         tdew_destroy(tdew_a[i]);
     }
     free(tdew_a);
-    if (MTSc(self)->tdew_pq) pq_destroy(MTSc(self)->tdew_pq);
+    if (MTSc(self)->tdew_pq) frt_pq_destroy(MTSc(self)->tdew_pq);
     frt_scorer_destroy_i(self);
 }
 
@@ -526,8 +526,8 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
     }
 
     *(bptr++) = '"';
-    bt_pq_clone = pq_clone(boosted_terms);
-    while ((bt = (BoostedTerm *)pq_pop(bt_pq_clone)) != NULL) {
+    bt_pq_clone = frt_pq_clone(boosted_terms);
+    while ((bt = (BoostedTerm *)frt_pq_pop(bt_pq_clone)) != NULL) {
         bptr += sprintf(bptr, "%s", bt->term);
 
         if (bt->boost != 1.0f) {
@@ -538,7 +538,7 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
         *(bptr++) = '|';
     }
-    pq_destroy(bt_pq_clone);
+    frt_pq_destroy(bt_pq_clone);
 
     if (bptr[-1] == '"') {
         bptr++; /* handle zero term case */
@@ -555,7 +555,7 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static void multi_tq_destroy_i(FrtQuery *self)
 {
-    pq_destroy(MTQ(self)->boosted_terms);
+    frt_pq_destroy(MTQ(self)->boosted_terms);
     frt_q_destroy_i(self);
 }
 
@@ -634,7 +634,7 @@ FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
     self                     = frt_q_new(FrtMultiTermQuery);
 
     MTQ(self)->field         = field;
-    MTQ(self)->boosted_terms = pq_new(max_terms,
+    MTQ(self)->boosted_terms = frt_pq_new(max_terms,
                                       (lt_ft)&boosted_term_less_than,
                                       (free_ft)&boosted_term_destroy);
     MTQ(self)->min_boost     = min_boost;
@@ -661,9 +661,9 @@ void multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost)
     if (boost > MTQ(self)->min_boost && term && term[0]) {
         BoostedTerm *bt = boosted_term_new(term, boost);
         FrtPriorityQueue *bt_pq = MTQ(self)->boosted_terms;
-        pq_insert(bt_pq, bt);
-        if (pq_full(bt_pq)) {
-            MTQ(self)->min_boost = ((BoostedTerm *)pq_top(bt_pq))->boost;
+        frt_pq_insert(bt_pq, bt);
+        if (frt_pq_full(bt_pq)) {
+            MTQ(self)->min_boost = ((BoostedTerm *)frt_pq_top(bt_pq))->boost;
         }
     }
 }
