@@ -12,7 +12,7 @@ FrtBitVector *frt_bv_new_capa(int capa)
     /* The capacity passed by the user is number of bits allowed, however we
      * store capacity as the number of words (U32) allocated. */
     bv->capa = FRT_MAX(FRT_TO_WORD(capa), 4);
-    bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
+    bv->bits = FRT_ALLOC_AND_ZERO_N(frt_u32, bv->capa);
     bv->curr_bit = -1;
     bv->ref_cnt = 1;
     return bv;
@@ -33,7 +33,7 @@ void frt_bv_destroy(FrtBitVector *bv)
 
 void frt_bv_clear(FrtBitVector *bv)
 {
-    memset(bv->bits, 0, bv->capa * sizeof(u32));
+    memset(bv->bits, 0, bv->capa * sizeof(frt_u32));
     bv->extends_as_ones = 0;
     bv->count = 0;
     bv->size = 0;
@@ -46,7 +46,7 @@ void frt_bv_scan_reset(FrtBitVector *bv)
 
 int frt_bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
 {
-    u32 *bits, *bits2;
+    frt_u32 *bits, *bits2;
     int min_size, word_size, ext_word_size = 0, i;
     if (bv1 == bv2) {
         return true;
@@ -75,7 +75,7 @@ int frt_bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
         ext_word_size = FRT_TO_WORD(bv2->size);
     }
     if (ext_word_size) {
-        const u32 expected = (bv1->extends_as_ones ? 0xFFFFFFFF : 0);
+        const frt_u32 expected = (bv1->extends_as_ones ? 0xFFFFFFFF : 0);
         for (i = word_size; i < ext_word_size; i++) {
             if (bits[i] != expected) {
                 return false;
@@ -88,10 +88,10 @@ int frt_bv_eq(FrtBitVector *bv1, FrtBitVector *bv2)
 unsigned long long frt_bv_hash(FrtBitVector *bv)
 {
     unsigned long long hash = 0;
-    const u32 empty_word = bv->extends_as_ones ? 0xFFFFFFFF : 0;
+    const frt_u32 empty_word = bv->extends_as_ones ? 0xFFFFFFFF : 0;
     int i;
     for (i = FRT_TO_WORD(bv->size) - 1; i >= 0; i--) {
-        const u32 word = bv->bits[i];
+        const frt_u32 word = bv->bits[i];
         if (word != empty_word)
             hash = (hash << 1) ^ word;
     }

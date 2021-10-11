@@ -31,8 +31,8 @@ float frt_byte2float(unsigned char b)
         return 0.0;
     }
     else {
-        u32 mantissa = b & 0x07;
-        u32 exponent = (b >> 3) & 0x1f;
+        frt_u32 mantissa = b & 0x07;
+        frt_u32 exponent = (b >> 3) & 0x1f;
 
         return int2float((mantissa << 21) | ((exponent + 48) << 24));
     }
@@ -45,7 +45,7 @@ unsigned char float2byte(float f)
     }
     else {
         /* correctly order the bytes for encoding */
-        u32 i = float2int(f);
+        frt_u32 i = float2int(f);
         int mantissa = (i & 0xEf0000) >> 21;
         int exponent = ((i >> 24) - 48);
 

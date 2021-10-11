@@ -482,10 +482,5 @@
 #define tv_get_term_index                              frt_tv_get_term_index
 #define tv_get_tv_term                                 frt_tv_get_tv_term
 #define tv_scan_to_term_index                          frt_tv_scan_to_term_index
-#define u16                                            frt_u16
-#define u32                                            frt_u32
-#define u32malloc                                      frt_u32malloc
-#define u64                                            frt_u64
-#define u64malloc                                      frt_u64malloc
 
 #endif

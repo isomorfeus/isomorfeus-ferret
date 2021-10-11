@@ -33,7 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-/** 
+/**
  @file    posh.c
  @author  Brian Hook
  @date    2002
@@ -81,11 +81,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  define FOREIGN64 POSH_LittleU64
 #endif /* POSH_LITTLE_ENDIAN */
 
-static 
-int 
+static
+int
 s_testBigEndian( void )
 {
-   union 
+   union
    {
       posh_byte_t c[ 4 ];
       posh_u32_t  i;
@@ -207,7 +207,7 @@ s_testEndianess( void )
    }
 
    /* make sure our endian swap routines work */
-   if ( ( NATIVE32( 0x11223344L ) != 0x11223344L ) || 
+   if ( ( NATIVE32( 0x11223344L ) != 0x11223344L ) ||
         ( FOREIGN32( 0x11223344L ) != 0x44332211L ) ||
         ( NATIVE16( 0x1234 ) != 0x1234 ) ||
         ( FOREIGN16( 0x1234 ) != 0x3412 ) )
@@ -222,14 +222,14 @@ s_testEndianess( void )
 #endif /* !defined FORCE_DOXYGEN */
 
 /**
-  Returns a string describing this platform's basic attributes.  
+  Returns a string describing this platform's basic attributes.
 
   POSH_GetArchString() reports on an architecture's statically determined
   attributes.  In addition, it will perform run-time verification checks
   to make sure the various platform specific functions work.  If an error
   occurs, please contact me at poshlib@poshlib.org so we can try to resolve
   what the specific failure case is.
-  @returns a string describing this platform on success, or a string in the 
+  @returns a string describing this platform on success, or a string in the
            form "*ERROR: [text]" on failure.  You can simply check to see if
            the first character returned is '*' to verify an error condition.
 */
@@ -278,7 +278,7 @@ POSH_GetArchString( void )
 /* ---------------------------------------------------------------------------*/
 /*                           BYTE SWAPPING SUPPORT                            */
 /* ---------------------------------------------------------------------------*/
-/** 
+/**
  * Byte swaps a 16-bit unsigned value
  *
    @ingroup ByteSwapFunctions
@@ -296,13 +296,13 @@ POSH_SwapU16( posh_u16_t v )
    return swapped;
 }
 
-/** 
+/**
  * Byte swaps a 16-bit signed value
  *
    @ingroup ByteSwapFunctions
    @param v [in] signed 16-bit input value to swap
    @returns a byte swapped version of v
-   @remarks This just calls back to the unsigned version, since byte swapping 
+   @remarks This just calls back to the unsigned version, since byte swapping
             is independent of sign.  However, we still provide this function to
             avoid signed/unsigned mismatch compiler warnings.
  */
@@ -312,7 +312,7 @@ POSH_SwapI16( posh_i16_t v )
    return ( posh_i16_t ) POSH_SwapU16( v );
 }
 
-/** 
+/**
  * Byte swaps a 32-bit unsigned value
  *
    @ingroup ByteSwapFunctions
@@ -332,13 +332,13 @@ POSH_SwapU32( posh_u32_t v )
    return swapped;
 }
 
-/** 
+/**
  * Byte swaps a 32-bit signed value
  *
    @ingroup ByteSwapFunctions
    @param v [in] signed 32-bit input value to swap
    @returns a byte swapped version of v
-   @remarks This just calls back to the unsigned version, since byte swapping 
+   @remarks This just calls back to the unsigned version, since byte swapping
             is independent of sign.  However, we still provide this function to
             avoid signed/unsigned mismatch compiler warnings.
  */
@@ -356,7 +356,7 @@ POSH_SwapI32( posh_i32_t v )
    @ingroup SixtyFourBit
    @returns a byte swapped version of v
 */
-posh_u64_t 
+posh_u64_t
 POSH_SwapU64( posh_u64_t v )
 {
    posh_byte_t tmp;
@@ -382,7 +382,7 @@ POSH_SwapU64( posh_u64_t v )
    @ingroup SixtyFourBit
    @returns a byte swapped version of v
 */
-posh_i64_t 
+posh_i64_t
 POSH_SwapI64( posh_i64_t v )
 {
    return ( posh_i64_t ) POSH_SwapU64( ( posh_u64_t ) v );
@@ -631,13 +631,13 @@ POSH_WriteI64ToBig( void *dst, posh_i64_t value )
 /*                         IN-MEMORY DESERIALIZATION                          */
 /* ---------------------------------------------------------------------------*/
 
-/** 
+/**
  * Reads an unsigned 16-bit value from a little-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 16-bit value
 */
-posh_u16_t  
+posh_u16_t
 POSH_ReadU16FromLittle( const void *src )
 {
     posh_u16_t   v = 0;
@@ -649,25 +649,25 @@ POSH_ReadU16FromLittle( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads a signed 16-bit value from a little-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 16-bit value
 */
-posh_i16_t  
+posh_i16_t
 POSH_ReadI16FromLittle( const void *src )
 {
    return ( posh_i16_t ) POSH_ReadU16FromLittle( src );
 }
 
-/** 
+/**
  * Reads an unsigned 32-bit value from a little-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
 */
-posh_u32_t  
+posh_u32_t
 POSH_ReadU32FromLittle( const void *src )
 {
     posh_u32_t v = 0;
@@ -681,26 +681,26 @@ POSH_ReadU32FromLittle( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads a signed 32-bit value from a little-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
 */
-posh_i32_t  
+posh_i32_t
 POSH_ReadI32FromLittle( const void *src )
 {
    return ( posh_i32_t ) POSH_ReadU32FromLittle( src );
 }
 
 
-/** 
+/**
  * Reads an unsigned 16-bit value from a big-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 16-bit value
 */
-posh_u16_t  
+posh_u16_t
 POSH_ReadU16FromBig( const void *src )
 {
     posh_u16_t   v = 0;
@@ -712,25 +712,25 @@ POSH_ReadU16FromBig( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads a signed 16-bit value from a big-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 16-bit value
 */
-posh_i16_t  
+posh_i16_t
 POSH_ReadI16FromBig( const void *src )
 {
    return ( posh_i16_t ) POSH_ReadU16FromBig( src );
 }
 
-/** 
+/**
  * Reads an unsigned 32-bit value from a big-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
 */
-posh_u32_t  
+posh_u32_t
 POSH_ReadU32FromBig( const void *src )
 {
     posh_u32_t   v = 0;
@@ -744,13 +744,13 @@ POSH_ReadU32FromBig( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads a signed 32-bit value from a big-endian buffer
  @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
 */
-posh_i32_t  
+posh_i32_t
 POSH_ReadI32FromBig( const void *src )
 {
    return POSH_BigI32( (*(const posh_i32_t*)src ) );
@@ -758,12 +758,12 @@ POSH_ReadI32FromBig( const void *src )
 
 #if defined POSH_64BIT_INTEGER
 
-/** 
+/**
  * Reads an unsigned 64-bit value from a little-endian buffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
 */
-posh_u64_t  
+posh_u64_t
 POSH_ReadU64FromLittle( const void *src )
 {
     posh_u64_t v = 0;
@@ -778,18 +778,18 @@ POSH_ReadU64FromLittle( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads a signed 64-bit value from a little-endian buffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
 */
-posh_i64_t  
+posh_i64_t
 POSH_ReadI64FromLittle( const void *src )
 {
    return ( posh_i64_t ) POSH_ReadU64FromLittle( src );
 }
 
-/** 
+/**
  * Reads an unsigned 64-bit value from a big-endian buffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
@@ -809,7 +809,7 @@ POSH_ReadU64FromBig( const void *src )
     return v;
 }
 
-/** 
+/**
  * Reads an signed 64-bit value from a big-endian buffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
@@ -846,7 +846,7 @@ POSH_LittleFloatBits( float f )
    return POSH_LittleU32( u.u32 );
 }
 
-/** 
+/**
  * Extracts raw big-endian bits from a 32-bit floating point value
  *
    @ingroup FloatingPoint
@@ -867,7 +867,7 @@ POSH_BigFloatBits( float f )
    return POSH_BigU32( u.u32 );
 }
 
-/** 
+/**
  * Extracts raw, little-endian bit representation from a 64-bit double.
  *
    @param d [in] 64-bit double precision value
@@ -907,16 +907,16 @@ POSH_DoubleBits( double d, posh_byte_t dst[ 8 ] )
 #endif
 }
 
-/** 
- * Creates a double-precision, 64-bit floating point value from a set of raw, 
+/**
+ * Creates a double-precision, 64-bit floating point value from a set of raw,
  * little-endian bits
 
    @ingroup FloatingPoint
-   @param src [in] little-endian byte representation of 64-bit double precision 
+   @param src [in] little-endian byte representation of 64-bit double precision
                   floating point value
    @returns double precision floating point representation of the raw bits
-   @remarks No error checking is performed, so there are no guarantees that the 
-            result is a valid number, nor is there any check to ensure that src is 
+   @remarks No error checking is performed, so there are no guarantees that the
+            result is a valid number, nor is there any check to ensure that src is
             non-NULL.  BE CAREFUL USING THIS.
  */
 double
@@ -951,16 +951,16 @@ POSH_DoubleFromBits( const posh_byte_t src[ 8 ] )
    return u.d64;
 }
 
-/** 
+/**
  * Creates a floating point number from little endian bits
  *
    @ingroup FloatingPoint
    @param   bits [in] raw floating point bits in little-endian form
    @returns a floating point number based on the given bit representation
-   @remarks No error checking is performed, so there are no guarantees that the 
+   @remarks No error checking is performed, so there are no guarantees that the
             result is a valid number.  BE CAREFUL USING THIS.
  */
-float       
+float
 POSH_FloatFromLittleBits( posh_u32_t bits )
 {
    union
@@ -977,13 +977,13 @@ POSH_FloatFromLittleBits( posh_u32_t bits )
    return u.f32;
 }
 
-/** 
+/**
  * Creates a floating point number from big-endian bits
  *
    @ingroup FloatingPoint
    @param   bits [in] raw floating point bits in big-endian form
    @returns a floating point number based on the given bit representation
-   @remarks No error checking is performed, so there are no guarantees that the 
+   @remarks No error checking is performed, so there are no guarantees that the
             result is a valid number.  BE CAREFUL USING THIS.
  */
 float

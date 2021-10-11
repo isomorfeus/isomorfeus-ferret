@@ -300,24 +300,24 @@ i64 is_read_i64(FrtInStream *is)
         ((i64)is_read_byte(is));
 }
 
-u32 is_read_u32(FrtInStream *is)
+frt_u32 is_read_u32(FrtInStream *is)
 {
-    return ((u32)is_read_byte(is) << 24) |
-        ((u32)is_read_byte(is) << 16) |
-        ((u32)is_read_byte(is) << 8) |
-        ((u32)is_read_byte(is));
+    return ((frt_u32)is_read_byte(is) << 24) |
+        ((frt_u32)is_read_byte(is) << 16) |
+        ((frt_u32)is_read_byte(is) << 8) |
+        ((frt_u32)is_read_byte(is));
 }
 
-u64 is_read_u64(FrtInStream *is)
+frt_u64 is_read_u64(FrtInStream *is)
 {
-    return ((u64)is_read_byte(is) << 56) |
-        ((u64)is_read_byte(is) << 48) |
-        ((u64)is_read_byte(is) << 40) |
-        ((u64)is_read_byte(is) << 32) |
-        ((u64)is_read_byte(is) << 24) |
-        ((u64)is_read_byte(is) << 16) |
-        ((u64)is_read_byte(is) << 8) |
-        ((u64)is_read_byte(is));
+    return ((frt_u64)is_read_byte(is) << 56) |
+        ((frt_u64)is_read_byte(is) << 48) |
+        ((frt_u64)is_read_byte(is) << 40) |
+        ((frt_u64)is_read_byte(is) << 32) |
+        ((frt_u64)is_read_byte(is) << 24) |
+        ((frt_u64)is_read_byte(is) << 16) |
+        ((frt_u64)is_read_byte(is) << 8) |
+        ((frt_u64)is_read_byte(is));
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
@@ -381,9 +381,9 @@ off_t is_read_voff_t(FrtInStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-u64 is_read_vll(FrtInStream *is)
+frt_u64 is_read_vll(FrtInStream *is)
 {
-    register u64 res, b;
+    register frt_u64 res, b;
     register int shift = 7;
 
     if (is->buf.pos > (is->buf.len - VINT_MAX_LEN)) {
@@ -497,7 +497,7 @@ void os_write_i64(FrtOutStream *os, i64 num)
     os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
-void os_write_u32(FrtOutStream *os, u32 num)
+void os_write_u32(FrtOutStream *os, frt_u32 num)
 {
     os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
     os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
@@ -505,7 +505,7 @@ void os_write_u32(FrtOutStream *os, u32 num)
     os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
-void os_write_u64(FrtOutStream *os, u64 num)
+void os_write_u64(FrtOutStream *os, frt_u64 num)
 {
     os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
     os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
@@ -556,7 +556,7 @@ void os_write_voff_t(FrtOutStream *os, register off_t num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void os_write_vll(FrtOutStream *os, register u64 num)
+void os_write_vll(FrtOutStream *os, register frt_u64 num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {

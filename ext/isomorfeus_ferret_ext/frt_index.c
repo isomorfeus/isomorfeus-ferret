@@ -57,7 +57,7 @@ static const char *COMPOUND_EXTENSIONS[] = {
 
 static const char BASE36_DIGITMAP[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-static char *u64_to_str36(char *buf, int buf_size, u64 u)
+static char *u64_to_str36(char *buf, int buf_size, frt_u64 u)
 {
     int i = buf_size - 1;
     buf[i] = '\0';
@@ -75,9 +75,9 @@ static char *u64_to_str36(char *buf, int buf_size, u64 u)
     return buf + i;
 }
 
-static u64 str36_to_u64(char *p)
+static frt_u64 str36_to_u64(char *p)
 {
-    u64 u = 0;
+    frt_u64 u = 0;
     while (true) {
         if ('0' <= *p && '9' >= *p) {
             u = u * 36 + *p - '0';
@@ -114,7 +114,7 @@ char *fn_for_generation(char *buf,
     }
     else {
         char b[FRT_SEGMENT_NAME_MAX_LENGTH];
-        char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (u64)gen);
+        char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (frt_u64)gen);
         if (ext == NULL) {
             sprintf(buf, "%s_%s", base, u);
         }
@@ -125,7 +125,7 @@ char *fn_for_generation(char *buf,
     }
 }
 
-static char *segfn_for_generation(char *buf, u64 generation)
+static char *segfn_for_generation(char *buf, frt_u64 generation)
 {
     char b[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, generation);
@@ -158,7 +158,7 @@ static char *fn_for_gen_field(char *buf,
         char b[FRT_SEGMENT_NAME_MAX_LENGTH];
         sprintf(buf, "%s_%s.%s%d",
                 base,
-                u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (u64)gen),
+                u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (frt_u64)gen),
                 ext,
                 field_num);
         return buf;
@@ -401,7 +401,7 @@ FrtFieldInfos *fis_read(FrtInStream *is)
             FrtIndexValue index_val;
             FrtTermVectorValue term_vector_val;
             volatile int i;
-            union { u32 i; float f; } tmp;
+            union { frt_u32 i; float f; } tmp;
             FrtFieldInfo *volatile fi;
             store_val = (FrtStoreValue)is_read_vint(is);
             index_val = (FrtIndexValue)is_read_vint(is);
@@ -430,7 +430,7 @@ FrtFieldInfos *fis_read(FrtInStream *is)
 void fis_write(FrtFieldInfos *fis, FrtOutStream *os)
 {
     int i;
-    union { u32 i; float f; } tmp;
+    union { frt_u32 i; float f; } tmp;
     FrtFieldInfo *fi;
     const int fis_size = fis->size;
 
@@ -715,7 +715,7 @@ static char *new_segment(i64 generation)
 {
     char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *fn_p = u64_to_str36(buf, FRT_SEGMENT_NAME_MAX_LENGTH - 1,
-                              (u64)generation);
+                              (frt_u64)generation);
     *(--fn_p) = '_';
     return frt_estrdup(fn_p);
 }
@@ -729,7 +729,7 @@ typedef struct FindSegmentsFile {
     union {
       FrtSegmentInfos *sis;
       FrtIndexReader  *ir;
-      u64           uint64;
+      frt_u64           uint64;
     } ret;
 } FindSegmentsFile;
 
@@ -997,7 +997,7 @@ FrtSegmentInfos *sis_new(FrtFieldInfos *fis)
     FRT_REF(fis);
     sis->fis = fis;
     sis->format = FORMAT;
-    sis->version = (u64)time(NULL);
+    sis->version = (frt_u64)time(NULL);
     sis->size = 0;
     sis->counter = 0;
     sis->generation = -1;
@@ -1147,10 +1147,10 @@ void sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
 static void sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
 {
     FrtInStream *is;
-    u64 version;
+    frt_u64 version;
     char seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
-    segfn_for_generation(seg_file_name, (u64)fsf->generation);
+    segfn_for_generation(seg_file_name, (frt_u64)fsf->generation);
     is = store->open_input(store, seg_file_name);
     version = 0;
 
@@ -1164,7 +1164,7 @@ static void sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
     fsf->ret.uint64 = version;
 }
 
-u64 sis_read_current_version(FrtStore *store)
+frt_u64 sis_read_current_version(FrtStore *store)
 {
     FindSegmentsFile fsf;
     sis_find_segments_file(store, &fsf, &sis_read_ver_i);
@@ -1627,7 +1627,7 @@ void fw_write_tv_index(FrtFieldsWriter *fw)
     int i;
     const int tv_cnt = frt_ary_size(fw->tv_fields);
     FrtOutStream *fdt_out = fw->fdt_out;
-    os_write_u32(fw->fdx_out, (u32)(os_pos(fdt_out) - fw->start_ptr));
+    os_write_u32(fw->fdx_out, (frt_u32)(os_pos(fdt_out) - fw->start_ptr));
     os_write_vint(fdt_out, tv_cnt);
     /* write in reverse order so we can count back from the start position to
      * the beginning of the TermVector's data */
@@ -1691,8 +1691,8 @@ void fw_add_postings(FrtFieldsWriter *fw,
         for (i = 0; i < offset_count; i++) {
             i64 start = (i64)offsets[i].start;
             i64 end = (i64)offsets[i].end;
-            os_write_vll(fdt_out, (u64)(start - last_end));
-            os_write_vll(fdt_out, (u64)(end - start));
+            os_write_vll(fdt_out, (frt_u64)(start - last_end));
+            os_write_vll(fdt_out, (frt_u64)(end - start));
             last_end = end;
         }
     }
@@ -4050,7 +4050,7 @@ static FrtBitVector *bv_read(FrtStore *store, char *name)
     FrtBitVector *volatile bv = FRT_ALLOC_AND_ZERO(FrtBitVector);
     bv->size = (int)is_read_vint(is);
     bv->capa = (bv->size >> 5) + 1;
-    bv->bits = FRT_ALLOC_AND_ZERO_N(u32, bv->capa);
+    bv->bits = FRT_ALLOC_AND_ZERO_N(frt_u32, bv->capa);
     bv->ref_cnt = 1;
     FRT_TRY
         for (i = ((bv->size-1) >> 5); i >= 0; i--) {
@@ -5570,7 +5570,7 @@ static void sm_merge_fields(SegmentMerger *sm)
             end = (off_t)is_read_u64(fdx_in);
         }
         for (j = 0; j < max_doc; j++) {
-            u32 tv_idx_offset = is_read_u32(fdx_in);
+            frt_u32 tv_idx_offset = is_read_u32(fdx_in);
             start = end;
             if (j == max_doc - 1) {
                 end = is_length(fdt_in);
@@ -6256,11 +6256,11 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
             /* write TVs up to TV index */
             is2os_copy_bytes(fdt_in, fdt_out,
                              (int)(is_read_u64(fdx_in)
-                                   + (u64)is_read_u32(fdx_in)
-                                   - (u64)is_pos(fdt_in)));
+                                   + (frt_u64)is_read_u32(fdx_in)
+                                   - (frt_u64)is_pos(fdt_in)));
 
             /* Write TV index pos */
-            os_write_u32(fdx_out, (u32)(os_pos(fdt_out) - doc_start_ptr));
+            os_write_u32(fdx_out, (frt_u32)(os_pos(fdt_out) - doc_start_ptr));
             tv_cnt = is_read_vint(fdt_in);
             os_write_vint(fdt_out, tv_cnt);
             for (j = 0; j < tv_cnt; j++) {

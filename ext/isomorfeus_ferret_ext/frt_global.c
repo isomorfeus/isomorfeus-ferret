@@ -64,20 +64,6 @@ unsigned long *lmalloc(unsigned long value)
   return p;
 }
 
-u32 *u32malloc(u32 value)
-{
-  u32 *p = FRT_ALLOC(u32);
-  *p = value;
-  return p;
-}
-
-u64 *u64malloc(u64 value)
-{
-  u64 *p = FRT_ALLOC(u64);
-  *p = value;
-  return p;
-}
-
 /* concatenate two strings freeing the second */
 char *frt_estrcat(char *str1, char *str2)
 {

@@ -77,8 +77,6 @@ typedef void (*frt_free_ft)(void *key);
 
 extern unsigned int *frt_imalloc(unsigned int value);
 extern unsigned long *frt_lmalloc(unsigned long value);
-extern frt_u32 *frt_u32malloc(frt_u32 value);
-extern frt_u64 *frt_u64malloc(frt_u64 value);
 
 extern char *frt_estrdup(const char *s);
 extern char *frt_estrcat(char *str, char *str_cat);
