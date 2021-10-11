@@ -127,7 +127,7 @@ static char *csq_to_s(FrtQuery *self, FrtSymbol default_field)
 static void csq_destroy(FrtQuery *self)
 {
     frt_filt_deref(CScQ(self)->filter);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static unsigned long long csq_hash(FrtQuery *self)
@@ -142,7 +142,7 @@ static int csq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_csq_new_nr(FrtFilter *filter)
 {
-    FrtQuery *self = q_new(FrtConstantScoreQuery);
+    FrtQuery *self = frt_q_new(FrtConstantScoreQuery);
     CScQ(self)->filter = filter;
 
     self->type              = CONSTANT_QUERY;

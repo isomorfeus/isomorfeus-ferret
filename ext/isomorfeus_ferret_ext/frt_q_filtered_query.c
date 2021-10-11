@@ -185,20 +185,20 @@ static char *fq_to_s(FrtQuery *self, FrtSymbol default_field)
 static void fq_destroy(FrtQuery *self)
 {
     frt_filt_deref(FQQ(self)->filter);
-    q_deref(FQQ(self)->query);
-    q_destroy_i(self);
+    frt_q_deref(FQQ(self)->query);
+    frt_q_destroy_i(self);
 }
 
 static FrtWeight *fq_new_weight(FrtQuery *self, FrtSearcher *searcher)
 {
     FrtQuery *sub_query = FQQ(self)->query;
-    return fqw_new(self, q_weight(sub_query, searcher),
+    return fqw_new(self, frt_q_weight(sub_query, searcher),
                       searcher->similarity);
 }
 
 FrtQuery *fq_new(FrtQuery *query, FrtFilter *filter)
 {
-    FrtQuery *self = q_new(FrtFilteredQuery);
+    FrtQuery *self = frt_q_new(FrtFilteredQuery);
 
     FQQ(self)->query        = query;
     FQQ(self)->filter       = filter;

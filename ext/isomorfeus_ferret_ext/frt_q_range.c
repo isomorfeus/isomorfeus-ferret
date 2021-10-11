@@ -456,7 +456,7 @@ static char *rq_to_s(FrtQuery *self, FrtSymbol field)
 static void rq_destroy(FrtQuery *self)
 {
     range_destroy(RQ(self)->range);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
@@ -521,7 +521,7 @@ FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
     FrtQuery *self;
     Range *range            = range_new(field, lower_term, upper_term,
                                         include_lower, include_upper);
-    self                    = q_new(FrtRangeQuery);
+    self                    = frt_q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 
     self->type              = RANGE_QUERY;
@@ -530,7 +530,7 @@ FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
     self->hash              = &rq_hash;
     self->eq                = &rq_eq;
     self->destroy_i         = &rq_destroy;
-    self->create_weight_i   = &q_create_weight_unsup;
+    self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
 }
 
@@ -641,7 +641,7 @@ FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
     FrtQuery *self;
     Range *range            = trange_new(field, lower_term, upper_term,
                                          include_lower, include_upper);
-    self                    = q_new(FrtRangeQuery);
+    self                    = frt_q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 
     self->type              = TYPED_RANGE_QUERY;
@@ -650,6 +650,6 @@ FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
     self->hash              = &rq_hash;
     self->eq                = &rq_eq;
     self->destroy_i         = &rq_destroy;
-    self->create_weight_i   = &q_create_weight_unsup;
+    self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
 }

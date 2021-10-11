@@ -250,7 +250,7 @@ void frt_w_normalize(FrtWeight *self, float normalization_factor)
 
 void frt_w_destroy(FrtWeight *self)
 {
-    q_deref(self->query);
+    frt_q_deref(self->query);
     free(self);
 }
 
@@ -302,7 +302,7 @@ static const char *QUERY_NAMES[] = {
 
 static const char *UNKNOWN_QUERY_NAME = "UnkownQuery";
 
-const char *q_get_query_name(FrtQueryType type) {
+const char *frt_q_get_query_name(FrtQueryType type) {
     if (type >= FRT_NELEMS(QUERY_NAMES)) {
         return UNKNOWN_QUERY_NAME;
     }
@@ -325,25 +325,25 @@ static void q_extract_terms(FrtQuery *self, FrtHashSet *terms)
     (void)terms;
 }
 
-FrtSimilarity *q_get_similarity_i(FrtQuery *self, FrtSearcher *searcher)
+FrtSimilarity *frt_q_get_similarity_i(FrtQuery *self, FrtSearcher *searcher)
 {
     (void)self;
     return searcher->get_similarity(searcher);
 }
 
-void q_destroy_i(FrtQuery *self)
+void frt_q_destroy_i(FrtQuery *self)
 {
     free(self);
 }
 
-void q_deref(FrtQuery *self)
+void frt_q_deref(FrtQuery *self)
 {
     if (--(self->ref_cnt) == 0) {
         self->destroy_i(self);
     }
 }
 
-FrtWeight *q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher)
+FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher)
 {
     (void)self;
     (void)searcher;
@@ -352,25 +352,25 @@ FrtWeight *q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher)
     return NULL;
 }
 
-FrtWeight *q_weight(FrtQuery *self, FrtSearcher *searcher)
+FrtWeight *frt_q_weight(FrtQuery *self, FrtSearcher *searcher)
 {
     FrtQuery      *query   = searcher->rewrite(searcher, self);
     FrtWeight     *weight  = query->create_weight_i(query, searcher);
     float       sum     = weight->sum_of_squared_weights(weight);
     FrtSimilarity *sim     = query->get_similarity(query, searcher);
     float       norm    = frt_sim_query_norm(sim, sum);
-    q_deref(query);
+    frt_q_deref(query);
 
     weight->normalize(weight, norm);
     return self->weight = weight;
 }
 
 #define BQ(query) ((FrtBooleanQuery *)(query))
-FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
+FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
 {
     int i;
     FrtQuery *q, *ret_q;
-    FrtHashSet *uniques = hs_new((hash_ft)&q_hash, (frt_eq_ft)&q_eq, NULL);
+    FrtHashSet *uniques = hs_new((hash_ft)&frt_q_hash, (frt_eq_ft)&frt_q_eq, NULL);
     for (i = 0; i < q_cnt; i++) {
         q = queries[i];
         if (q->type == BOOLEAN_QUERY) {
@@ -415,12 +415,12 @@ FrtQuery *q_combine(FrtQuery **queries, int q_cnt)
     return ret_q;
 }
 
-unsigned long long q_hash(FrtQuery *self)
+unsigned long long frt_q_hash(FrtQuery *self)
 {
     return (self->hash(self) << 5) | self->type;
 }
 
-int q_eq(FrtQuery *self, FrtQuery *o)
+int frt_q_eq(FrtQuery *self, FrtQuery *o)
 {
     return (self == o)
         || ((self->type == o->type)
@@ -435,7 +435,7 @@ static FrtMatchVector *q_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTer
     return mv;
 }
 
-FrtQuery *q_create(size_t size)
+FrtQuery *frt_q_create(size_t size)
 {
     FrtQuery *self = (FrtQuery *)frt_ecalloc(size);
 #ifdef DEBUG
@@ -446,7 +446,7 @@ FrtQuery *q_create(size_t size)
 #endif
     self->boost             = 1.0f;
     self->rewrite           = &q_rewrite;
-    self->get_similarity    = &q_get_similarity_i;
+    self->get_similarity    = &frt_q_get_similarity_i;
     self->extract_terms     = &q_extract_terms;
     self->get_matchv_i      = &q_get_matchv_i;
     self->weight            = NULL;
@@ -823,7 +823,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
         FrtMatchVector *mv;
         query = self->rewrite(self, query);
         mv = query->get_matchv_i(query, matchv_new(), tv);
-        q_deref(query);
+        frt_q_deref(query);
         if (lazy_df->len < (excerpt_len * num_excerpts)) {
             excerpt_strs = frt_ary_new_type_capa(char *, 1);
             frt_ary_push(excerpt_strs,
@@ -933,7 +933,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
 
 static FrtWeight *sea_create_weight(FrtSearcher *self, FrtQuery *query)
 {
-    return q_weight(query, self);
+    return frt_q_weight(query, self);
 }
 
 static void sea_check_args(int num_docs, int first_doc)
@@ -1091,7 +1091,7 @@ static FrtTopDocs *isea_search(FrtSearcher *self,
                             bool load_fields)
 {
     FrtTopDocs *td;
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     td = isea_search_w(self, weight, first_doc, num_docs, filter, sort, post_filter, load_fields);
     weight->destroy(weight);
     return td;
@@ -1134,7 +1134,7 @@ static void isea_search_each(FrtSearcher *self, FrtQuery *query, FrtFilter *filt
                              void (*fn)(FrtSearcher *, int, float, void *),
                              void *arg)
 {
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     isea_search_each_w(self, weight, filter, post_filter, fn, arg);
     weight->destroy(weight);
 }
@@ -1173,7 +1173,7 @@ static int isea_search_unscored(FrtSearcher *self,
                                 int offset_docnum)
 {
     int count;
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     count = isea_search_unscored_w(self, weight, buf, limit, offset_docnum);
     weight->destroy(weight);
     return count;
@@ -1188,7 +1188,7 @@ static FrtQuery *isea_rewrite(FrtSearcher *self, FrtQuery *original)
         query = rewritten_query;
         rewritten_query = query->rewrite(query, ISEA(self)->ir);
         q_is_destroyed = (query->ref_cnt <= 1);
-        q_deref(query); /* destroy intermediate queries */
+        frt_q_deref(query); /* destroy intermediate queries */
     }
     return query;
 }
@@ -1197,7 +1197,7 @@ static FrtExplanation *isea_explain(FrtSearcher *self,
                                  FrtQuery *query,
                                  int doc_num)
 {
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     FrtExplanation *e = weight->explain(weight, ISEA(self)->ir, doc_num);
     weight->destroy(weight);
     return e;
@@ -1505,8 +1505,8 @@ static FrtWeight *msea_create_weight(FrtSearcher *self, FrtQuery *query)
 
     cdfsea = cdfsea_new(df_map, MSEA(self)->max_doc);
 
-    w = q_weight(rewritten_query, cdfsea);
-    q_deref(rewritten_query);
+    w = frt_q_weight(rewritten_query, cdfsea);
+    frt_q_deref(rewritten_query);
     cdfsea->close(cdfsea);
 
     return w;
@@ -1550,7 +1550,7 @@ static void msea_search_each(FrtSearcher *self, FrtQuery *query, FrtFilter *filt
                              void (*fn)(FrtSearcher *, int, float, void *),
                              void *arg)
 {
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     msea_search_each_w(self, weight, filter, post_filter, fn, arg);
     weight->destroy(weight);
 }
@@ -1598,7 +1598,7 @@ static int msea_search_unscored(FrtSearcher *self,
                                 int offset_docnum)
 {
     int count;
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     count = msea_search_unscored_w(self, weight, buf, limit, offset_docnum);
     weight->destroy(weight);
     return count;
@@ -1713,7 +1713,7 @@ static FrtTopDocs *msea_search(FrtSearcher *self,
                             bool load_fields)
 {
     FrtTopDocs *td;
-    FrtWeight *weight = q_weight(query, self);
+    FrtWeight *weight = frt_q_weight(query, self);
     td = msea_search_w(self, weight, first_doc, num_docs, filter,
                        sort, post_filter, load_fields);
     weight->destroy(weight);
@@ -1731,10 +1731,10 @@ static FrtQuery *msea_rewrite(FrtSearcher *self, FrtQuery *original)
         s = msea->searchers[i];
         queries[i] = s->rewrite(s, original);
     }
-    rewritten = q_combine(queries, msea->s_cnt);
+    rewritten = frt_q_combine(queries, msea->s_cnt);
 
     for (i = 0; i < msea->s_cnt; i++) {
-        q_deref(queries[i]);
+        frt_q_deref(queries[i]);
     }
     free(queries);
     return rewritten;
@@ -1744,7 +1744,7 @@ static FrtExplanation *msea_explain(FrtSearcher *self, FrtQuery *query, int doc_
 {
     FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
-    FrtWeight *w = q_weight(query, self);
+    FrtWeight *w = frt_q_weight(query, self);
     FrtSearcher *s = msea->searchers[i];
     FrtExplanation *e = s->explain_w(s, w, doc_num - msea->starts[i]);
     w->destroy(w);

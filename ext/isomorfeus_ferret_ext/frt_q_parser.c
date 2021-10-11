@@ -112,8 +112,8 @@ typedef struct BCArray {
     FrtBooleanClause **clauses;
 } BCArray;
 
-float qp_default_fuzzy_min_sim = 0.5;
-int qp_default_fuzzy_pre_len = 0;
+float frt_qp_default_fuzzy_min_sim = 0.5;
+int frt_qp_default_fuzzy_pre_len = 0;
 
 
 
@@ -219,11 +219,11 @@ static void qp_pop_fields(FrtQParser *self);
                 FRT_TRY\
                   if (sq) frt_bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
                 FRT_XCATCHALL\
-                  if (sq) q_deref(sq);\
+                  if (sq) frt_q_deref(sq);\
                 FRT_XENDTRY\
             }\
             if (((FrtBooleanQuery *)q)->clause_cnt == 0) {\
-                q_deref(q);\
+                frt_q_deref(q);\
                 q = NULL;\
             }\
         }\
@@ -231,7 +231,7 @@ static void qp_pop_fields(FrtQParser *self);
         qp->destruct = true;\
         FRT_HANDLED();\
     FRT_XENDTRY\
-    if (qp->destruct && !qp->recovering && q) {q_deref(q); q = NULL;}\
+    if (qp->destruct && !qp->recovering && q) {frt_q_deref(q); q = NULL;}\
 } while (0)
 
 #define Y if (qp->destruct) goto yyerrorlab;
@@ -1213,7 +1213,7 @@ yydestruct (yymsg, yytype, yyvaluep, qp)
     {
       case 27: /* "bool_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1230 "src/q_parser.c"
 	break;
       case 28: /* "bool_clss" */
@@ -1228,32 +1228,32 @@ yydestruct (yymsg, yytype, yyvaluep, qp)
 	break;
       case 30: /* "boosted_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1245 "src/q_parser.c"
 	break;
       case 31: /* "q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1250 "src/q_parser.c"
 	break;
       case 32: /* "term_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1255 "src/q_parser.c"
 	break;
       case 33: /* "wild_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1260 "src/q_parser.c"
 	break;
       case 34: /* "field_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1265 "src/q_parser.c"
 	break;
       case 39: /* "phrase_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1270 "src/q_parser.c"
 	break;
       case 40: /* "ph_words" */
@@ -1263,7 +1263,7 @@ yydestruct (yymsg, yytype, yyvaluep, qp)
 	break;
       case 41: /* "range_q" */
 #line 221 "src/q_parser.y"
-	{ if ((yyvaluep->query) && qp->destruct) q_deref((yyvaluep->query)); };
+	{ if ((yyvaluep->query) && qp->destruct) frt_q_deref((yyvaluep->query)); };
 #line 1280 "src/q_parser.c"
 	break;
 
@@ -2424,11 +2424,11 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
     }
     else {
         /* it only makes sense to find one term in a fuzzy query */
-        float slop = qp_default_fuzzy_min_sim;
+        float slop = frt_qp_default_fuzzy_min_sim;
         if (slop_str) {
             sscanf(slop_str, "%f", &slop);
         }
-        q = fuzq_new_conf(field, token->text, slop, qp_default_fuzzy_pre_len,
+        q = fuzq_new_conf(field, token->text, slop, frt_qp_default_fuzzy_pre_len,
                           qp->max_clauses);
     }
     return q;
@@ -2846,7 +2846,7 @@ static void qp_pop_fields(FrtQParser *self)
 /**
  * Free all memory allocated by the QueryParser.
  */
-void qp_destroy(FrtQParser *self)
+void frt_qp_destroy(FrtQParser *self)
 {
     if (self->tokenized_fields != self->all_fields) {
         hs_destroy(self->tokenized_fields);
@@ -2871,7 +2871,7 @@ void qp_destroy(FrtQParser *self)
  * Not also that this method ensures that all fields that exist in
  * +def_fields+ must also exist in +all_fields+. This should make sense.
  */
-FrtQParser *qp_new(FrtAnalyzer *analyzer)
+FrtQParser *frt_qp_new(FrtAnalyzer *analyzer)
 {
     FrtQParser *self = FRT_ALLOC(FrtQParser);
     self->or_default = true;
@@ -2900,7 +2900,7 @@ FrtQParser *qp_new(FrtAnalyzer *analyzer)
     return self;
 }
 
-void qp_add_field(FrtQParser *self,
+void frt_qp_add_field(FrtQParser *self,
                   FrtSymbol field,
                   bool is_default,
                   bool is_tokenized)
@@ -2928,7 +2928,7 @@ static void str_insert_char(char *str, int len, char chr)
 }
 
 /**
- * +qp_clean_str+ basically scans the query string and ensures that all open
+ * +frt_qp_clean_str+ basically scans the query string and ensures that all open
  * and close parentheses '()' and quotes '"' are balanced. It does this by
  * inserting or appending extra parentheses or quotes to the string. This
  * obviously won't necessarily be exactly what the user wanted but we are
@@ -2940,7 +2940,7 @@ static void str_insert_char(char *str, int len, char chr)
  * ( <>,|," ). Note that '<' and '>' will also be escaped unless the appear
  * together like so; '<>'.
  */
-char *qp_clean_str(char *str)
+char *frt_qp_clean_str(char *str)
 {
     int b, pb = -1;
     int br_cnt = 0;
@@ -3063,7 +3063,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
 
     self->recovering = self->destruct = false;
     if (self->clean_str) {
-        self->qstrp = self->qstr = qp_clean_str(qstr);
+        self->qstrp = self->qstr = frt_qp_clean_str(qstr);
     }
     else {
         self->qstrp = self->qstr = qstr;

@@ -135,13 +135,13 @@ static int maq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *maq_new()
 {
-    FrtQuery *self = q_new(FrtQuery);
+    FrtQuery *self = frt_q_new(FrtQuery);
 
     self->type = MATCH_ALL_QUERY;
     self->to_s = &maq_to_s;
     self->hash = &maq_hash;
     self->eq = &maq_eq;
-    self->destroy_i = &q_destroy_i;
+    self->destroy_i = &frt_q_destroy_i;
     self->create_weight_i = &maw_new;
 
     return self;

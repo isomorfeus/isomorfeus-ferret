@@ -236,7 +236,7 @@ static FrtWeight *tw_new(FrtQuery *query, FrtSearcher *searcher)
 static void tq_destroy(FrtQuery *self)
 {
     free(TQ(self)->term);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
@@ -296,7 +296,7 @@ static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
 
 FrtQuery *frt_tq_new(FrtSymbol field, const char *term)
 {
-    FrtQuery *self             = q_new(FrtTermQuery);
+    FrtQuery *self             = frt_q_new(FrtTermQuery);
 
     TQ(self)->field         = field;
     TQ(self)->term          = frt_estrdup(term);

@@ -107,7 +107,7 @@ static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
     FrtSearcher *sea = isea_new(ir);
-    FrtWeight *weight = q_weight(QF(filt)->query, sea);
+    FrtWeight *weight = frt_q_weight(QF(filt)->query, sea);
     FrtScorer *scorer = weight->scorer(weight, ir);
     if (scorer) {
         while (scorer->next(scorer)) {
@@ -122,22 +122,22 @@ static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 
 static unsigned long long qfilt_hash(FrtFilter *filt)
 {
-    return q_hash(QF(filt)->query);
+    return frt_q_hash(QF(filt)->query);
 }
 
 static int qfilt_eq(FrtFilter *filt, FrtFilter *o)
 {
-    return q_eq(QF(filt)->query, QF(o)->query);
+    return frt_q_eq(QF(filt)->query, QF(o)->query);
 }
 
 static void qfilt_destroy_i(FrtFilter *filt)
 {
     FrtQuery *query = QF(filt)->query;
-    q_deref(query);
+    frt_q_deref(query);
     frt_filt_destroy_i(filt);
 }
 
-FrtFilter *qfilt_new_nr(FrtQuery *query)
+FrtFilter *frt_qfilt_new_nr(FrtQuery *query)
 {
     FrtFilter *filt = filt_new(QueryFilter);
 
@@ -151,8 +151,8 @@ FrtFilter *qfilt_new_nr(FrtQuery *query)
     return filt;
 }
 
-FrtFilter *qfilt_new(FrtQuery *query)
+FrtFilter *frt_qfilt_new(FrtQuery *query)
 {
     FRT_REF(query);
-    return qfilt_new_nr(query);
+    return frt_qfilt_new_nr(query);
 }

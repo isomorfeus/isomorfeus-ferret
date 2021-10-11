@@ -1054,7 +1054,7 @@ static void phq_destroy(FrtQuery *self)
         frt_ary_destroy(phq->positions[i].terms, &free);
     }
     free(phq->positions);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
@@ -1129,7 +1129,7 @@ static int phq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *phq_new(FrtSymbol field)
 {
-    FrtQuery *self = q_new(FrtPhraseQuery);
+    FrtQuery *self = frt_q_new(FrtPhraseQuery);
 
     PhQ(self)->field        = field;
     PhQ(self)->pos_cnt      = 0;

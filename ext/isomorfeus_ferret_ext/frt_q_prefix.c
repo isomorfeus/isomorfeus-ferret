@@ -64,7 +64,7 @@ static FrtQuery *prq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 static void prq_destroy(FrtQuery *self)
 {
     free(PfxQ(self)->prefix);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static unsigned long long prq_hash(FrtQuery *self)
@@ -80,7 +80,7 @@ static int prq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
 {
-    FrtQuery *self = q_new(FrtPrefixQuery);
+    FrtQuery *self = frt_q_new(FrtPrefixQuery);
 
     PfxQ(self)->field       = field;
     PfxQ(self)->prefix      = frt_estrdup(prefix);
@@ -92,7 +92,7 @@ FrtQuery *prefixq_new(FrtSymbol field, const char *prefix)
     self->hash              = &prq_hash;
     self->eq                = &prq_eq;
     self->destroy_i         = &prq_destroy;
-    self->create_weight_i   = &q_create_weight_unsup;
+    self->create_weight_i   = &frt_q_create_weight_unsup;
 
     return self;
 }

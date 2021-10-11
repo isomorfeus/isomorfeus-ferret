@@ -232,7 +232,7 @@ static void fuzq_destroy(FrtQuery *self)
 {
     free(FzQ(self)->term);
     free(FzQ(self)->da);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static unsigned long long fuzq_hash(FrtQuery *self)
@@ -255,7 +255,7 @@ static int fuzq_eq(FrtQuery *self, FrtQuery *o)
 FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
                      float min_sim, int pre_len, int max_terms)
 {
-    FrtQuery *self = q_new(FrtFuzzyQuery);
+    FrtQuery *self = frt_q_new(FrtFuzzyQuery);
 
     FzQ(self)->field      = field;
     FzQ(self)->term       = frt_estrdup(term);
@@ -270,7 +270,7 @@ FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
     self->eq              = &fuzq_eq;
     self->rewrite         = &fuzq_rewrite;
     self->destroy_i       = &fuzq_destroy;
-    self->create_weight_i = &q_create_weight_unsup;
+    self->create_weight_i = &frt_q_create_weight_unsup;
 
     return self;
 }

@@ -27,7 +27,7 @@ static int spanq_eq(FrtQuery *self, FrtQuery *o)
 
 static void spanq_destroy_i(FrtQuery *self)
 {
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static FrtMatchVector *mv_to_term_mv(FrtMatchVector *term_mv, FrtMatchVector *full_mv,
@@ -1567,7 +1567,7 @@ static int spantq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spantq_new(FrtSymbol field, const char *term)
 {
-    FrtQuery *self             = q_new(FrtSpanTermQuery);
+    FrtQuery *self             = frt_q_new(FrtSpanTermQuery);
 
     SpTQ(self)->term        = frt_estrdup(term);
     SpQ(self)->field        = field;
@@ -1674,7 +1674,7 @@ static int spanmtq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_terms)
 {
-    FrtQuery *self             = q_new(FrtSpanMultiTermQuery);
+    FrtQuery *self             = frt_q_new(FrtSpanMultiTermQuery);
 
     SpMTQ(self)->terms      = FRT_ALLOC_N(char *, max_terms);
     SpMTQ(self)->term_cnt   = 0;
@@ -1741,7 +1741,7 @@ static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 
     q = SpFQ(self)->match;
     rq = q->rewrite(q, ir);
-    q_deref(q);
+    frt_q_deref(q);
     SpFQ(self)->match = rq;
 
     self->ref_cnt++;
@@ -1750,7 +1750,7 @@ static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 
 static void spanfq_destroy_i(FrtQuery *self)
 {
-    q_deref(SpFQ(self)->match);
+    frt_q_deref(SpFQ(self)->match);
     spanq_destroy_i(self);
 }
 
@@ -1770,7 +1770,7 @@ static int spanfq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spanfq_new_nr(FrtQuery *match, int end)
 {
-    FrtQuery *self = q_new(FrtSpanFirstQuery);
+    FrtQuery *self = frt_q_new(FrtSpanFirstQuery);
 
     SpFQ(self)->match       = match;
     SpFQ(self)->end         = end;
@@ -1875,7 +1875,7 @@ static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     for (i = 0; i < soq->c_cnt; i++) {
         FrtQuery *clause = soq->clauses[i];
         FrtQuery *rewritten = clause->rewrite(clause, ir);
-        q_deref(clause);
+        frt_q_deref(clause);
         soq->clauses[i] = rewritten;
     }
 
@@ -1890,7 +1890,7 @@ static void spanoq_destroy_i(FrtQuery *self)
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
         FrtQuery *clause = soq->clauses[i];
-        q_deref(clause);
+        frt_q_deref(clause);
     }
     free(soq->clauses);
 
@@ -1932,7 +1932,7 @@ static int spanoq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spanoq_new()
 {
-    FrtQuery *self             = q_new(FrtSpanOrQuery);
+    FrtQuery *self             = frt_q_new(FrtSpanOrQuery);
     SpOQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpOQ(self)->c_capa      = CLAUSE_INIT_CAPA;
 
@@ -1958,7 +1958,7 @@ FrtQuery *frt_spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
     const int curr_index = SpOQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
         rb_raise(rb_eArgError, "Tried to add a %s to a SpanOrQuery. This is not a "
-              "SpanQuery.", q_get_query_name(clause->type));
+              "SpanQuery.", frt_q_get_query_name(clause->type));
     }
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
@@ -2058,7 +2058,7 @@ static FrtQuery *spannq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     for (i = 0; i < snq->c_cnt; i++) {
         FrtQuery *clause = snq->clauses[i];
         FrtQuery *rewritten = clause->rewrite(clause, ir);
-        q_deref(clause);
+        frt_q_deref(clause);
         snq->clauses[i] = rewritten;
     }
 
@@ -2073,7 +2073,7 @@ static void spannq_destroy(FrtQuery *self)
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
         FrtQuery *clause = snq->clauses[i];
-        q_deref(clause);
+        frt_q_deref(clause);
     }
     free(snq->clauses);
 
@@ -2119,7 +2119,7 @@ static int spannq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spannq_new(int slop, bool in_order)
 {
-    FrtQuery *self             = q_new(FrtSpanNearQuery);
+    FrtQuery *self             = frt_q_new(FrtSpanNearQuery);
 
     SpNQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpNQ(self)->c_capa      = CLAUSE_INIT_CAPA;
@@ -2148,7 +2148,7 @@ FrtQuery *frt_spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
     const int curr_index = SpNQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
         rb_raise(rb_eArgError, "Tried to add a %s to a SpanNearQuery. This is not a "
-              "SpanQuery.", q_get_query_name(clause->type));
+              "SpanQuery.", frt_q_get_query_name(clause->type));
     }
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
@@ -2208,13 +2208,13 @@ static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     /* rewrite inclusive query */
     q = sxq->inc;
     rq = q->rewrite(q, ir);
-    q_deref(q);
+    frt_q_deref(q);
     sxq->inc = rq;
 
     /* rewrite exclusive query */
     q = sxq->exc;
     rq = q->rewrite(q, ir);
-    q_deref(q);
+    frt_q_deref(q);
     sxq->exc = rq;
 
     self->ref_cnt++;
@@ -2225,8 +2225,8 @@ static void spanxq_destroy(FrtQuery *self)
 {
     FrtSpanNotQuery *sxq = SpXQ(self);
 
-    q_deref(sxq->inc);
-    q_deref(sxq->exc);
+    frt_q_deref(sxq->inc);
+    frt_q_deref(sxq->exc);
 
     spanq_destroy_i(self);
 }
@@ -2256,7 +2256,7 @@ FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc)
               "SpanQuery with field \"%s\" to an SpanNotQuery",
               SpQ(inc)->field, SpQ(exc)->field);
     }
-    self = q_new(FrtSpanNotQuery);
+    self = frt_q_new(FrtSpanNotQuery);
 
     SpXQ(self)->inc         = inc;
     SpXQ(self)->exc         = exc;
@@ -2369,7 +2369,7 @@ static int spanprq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix)
 {
-    FrtQuery *self = q_new(FrtSpanPrefixQuery);
+    FrtQuery *self = frt_q_new(FrtSpanPrefixQuery);
 
     SpQ(self)->field        = field;
     SpPfxQ(self)->prefix    = frt_estrdup(prefix);
@@ -2381,7 +2381,7 @@ FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix)
     self->hash              = &spanprq_hash;
     self->eq                = &spanprq_eq;
     self->destroy_i         = &spanprq_destroy;
-    self->create_weight_i   = &q_create_weight_unsup;
+    self->create_weight_i   = &frt_q_create_weight_unsup;
 
     return self;
 }

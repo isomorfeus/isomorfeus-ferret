@@ -293,24 +293,5 @@
 #define progname                                       frt_progname
 #define ptr_eq                                         frt_ptr_eq
 #define ptr_hash                                       frt_ptr_hash
-#define q_combine                                      frt_q_combine
-#define q_create                                       frt_q_create
-#define q_create_weight_unsup                          frt_q_create_weight_unsup
-#define q_deref                                        frt_q_deref
-#define q_destroy_i                                    frt_q_destroy_i
-#define q_eq                                           frt_q_eq
-#define q_get_query_name                               frt_q_get_query_name
-#define q_get_similarity_i                             frt_q_get_similarity_i
-#define q_hash                                         frt_q_hash
-#define q_new                                          frt_q_new
-#define q_weight                                       frt_q_weight
-#define qfilt_new                                      frt_qfilt_new
-#define qfilt_new_nr                                   frt_qfilt_new_nr
-#define qp_add_field                                   frt_qp_add_field
-#define qp_clean_str                                   frt_qp_clean_str
-#define qp_default_fuzzy_min_sim                       frt_qp_default_fuzzy_min_sim
-#define qp_default_fuzzy_pre_len                       frt_qp_default_fuzzy_pre_len
-#define qp_destroy                                     frt_qp_destroy
-#define qp_new                                         frt_qp_new
 
 #endif

@@ -556,7 +556,7 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
 static void multi_tq_destroy_i(FrtQuery *self)
 {
     pq_destroy(MTQ(self)->boosted_terms);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
@@ -631,7 +631,7 @@ FrtQuery *multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
               "%d < 0. ", max_terms);
     }
 
-    self                     = q_new(FrtMultiTermQuery);
+    self                     = frt_q_new(FrtMultiTermQuery);
 
     MTQ(self)->field         = field;
     MTQ(self)->boosted_terms = pq_new(max_terms,

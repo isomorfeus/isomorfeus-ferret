@@ -81,9 +81,9 @@ FrtIndex *index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fiel
     self->check_latest = true;
 
     FRT_REF(self->analyzer);
-    self->qp = qp_new(self->analyzer);
+    self->qp = frt_qp_new(self->analyzer);
     for (hse = def_fields->first; hse; hse = hse->next) {
-        qp_add_field(self->qp, (FrtSymbol)hse->elem, true, true);
+        frt_qp_add_field(self->qp, (FrtSymbol)hse->elem, true, true);
     }
     /* Index is a convenience class so set qp convenience options */
     self->qp->allow_any_fields = true;
@@ -100,7 +100,7 @@ void index_destroy(FrtIndex *self)
     if (self->iw) iw_close(self->iw);
     frt_store_deref(self->store);
     frt_a_deref(self->analyzer);
-    if (self->qp) qp_destroy(self->qp);
+    if (self->qp) frt_qp_destroy(self->qp);
     if (self->key) hs_destroy(self->key);
     free(self);
 }
@@ -233,7 +233,7 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
     } else if (td->total_hits == 1) {
         ir_delete_doc(self->ir, td->hits[0]->doc);
     }
-    q_deref(q);
+    frt_q_deref(q);
     frt_td_destroy(td);
 }
 
@@ -297,7 +297,7 @@ FrtTopDocs *index_search_str(FrtIndex *self, char *qstr, int first_doc,
     query = index_get_query(self, qstr); /* will ensure_searcher is open */
     td = frt_searcher_search(self->sea, query, first_doc, num_docs,
                          filter, sort, post_filter);
-    q_deref(query);
+    frt_q_deref(query);
     return td;
 }
 
@@ -418,7 +418,7 @@ void index_delete_query_str(FrtIndex *self, char *qstr, FrtFilter *f,
 {
     FrtQuery *q = index_get_query(self, qstr);
     index_delete_query(self, q, f, post_filter);
-    q_deref(q);
+    frt_q_deref(q);
 }
 
 FrtExplanation *index_explain(FrtIndex *self, FrtQuery *q, int doc_num)

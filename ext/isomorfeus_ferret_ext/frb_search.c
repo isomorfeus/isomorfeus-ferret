@@ -384,7 +384,7 @@ static void
 frb_q_free(void *p)
 {
     object_del(p);
-    q_deref((FrtQuery *)p);
+    frt_q_deref((FrtQuery *)p);
 }
 
 #define GET_Q() FrtQuery *q = (FrtQuery *)DATA_PTR(self)
@@ -499,7 +499,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
     FrtQuery *rq = sea->rewrite(sea, q);
     rq->extract_terms(rq, terms);
-    q_deref(rq);
+    frt_q_deref(rq);
 
     for (hse = terms->first; hse; hse = hse->next) {
         FrtTerm *term = (FrtTerm *)hse->elem;
@@ -1495,7 +1495,7 @@ frb_fq_get_dms(VALUE self)
     return rb_cvar_get(cFuzzyQuery, id_default_min_similarity);
 }
 
-extern float qp_default_fuzzy_min_sim;
+extern float frt_qp_default_fuzzy_min_sim;
 /*
  *  call-seq:
  *     FuzzyQuery.default_min_similarity = min_sim -> min_sim
@@ -1513,7 +1513,7 @@ frb_fq_set_dms(VALUE self, VALUE val)
         rb_raise(rb_eArgError,
                  "%f < 0.0. :min_similarity must be > 0.0", min_sim);
     }
-    qp_default_fuzzy_min_sim = (float)min_sim;
+    frt_qp_default_fuzzy_min_sim = (float)min_sim;
     rb_cvar_set(cFuzzyQuery, id_default_min_similarity, val);
     return val;
 }
@@ -1530,7 +1530,7 @@ frb_fq_get_dpl(VALUE self)
     return rb_cvar_get(cFuzzyQuery, id_default_prefix_length);
 }
 
-extern int qp_default_fuzzy_pre_len;
+extern int frt_qp_default_fuzzy_pre_len;
 /*
  *  call-seq:
  *     FuzzyQuery.default_prefix_length = prefix_length -> prefix_length
@@ -1545,7 +1545,7 @@ frb_fq_set_dpl(VALUE self, VALUE val)
         rb_raise(rb_eArgError,
                  "%d < 0. :prefix_length must be >= 0", pre_len);
     }
-    qp_default_fuzzy_pre_len = pre_len;
+    frt_qp_default_fuzzy_pre_len = pre_len;
     rb_cvar_set(cFuzzyQuery, id_default_prefix_length, val);
     return val;
 }
@@ -2096,7 +2096,7 @@ frb_qf_init(VALUE self, VALUE rquery)
     FrtQuery *q;
     FrtFilter *f;
     Data_Get_Struct(rquery, FrtQuery, q);
-    f = qfilt_new(q);
+    f = frt_qfilt_new(q);
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
     return self;

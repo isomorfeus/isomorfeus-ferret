@@ -34,7 +34,7 @@ static void
 frb_qp_free(void *p)
 {
     object_del(p);
-    qp_destroy((FrtQParser *)p);
+    frt_qp_destroy((FrtQParser *)p);
 }
 
 static void
@@ -187,7 +187,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
     if (!analyzer) {
         analyzer = mb_standard_analyzer_new(true);
     }
-    qp = qp_new(analyzer);
+    qp = frt_qp_new(analyzer);
     //hs_destroy(qp->all_fields);
     //hs_destroy(qp->def_fields);
     //hs_destroy(qp->tokenized_fields);

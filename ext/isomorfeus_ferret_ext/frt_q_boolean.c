@@ -1241,7 +1241,7 @@ static FrtWeight *bw_new(FrtQuery *query, FrtSearcher *searcher)
     BW(self)->w_cnt = BQ(query)->clause_cnt;
     BW(self)->weights = FRT_ALLOC_N(FrtWeight *, BW(self)->w_cnt);
     for (i = 0; i < BW(self)->w_cnt; i++) {
-        BW(self)->weights[i] = q_weight(BQ(query)->clauses[i]->query, searcher);
+        BW(self)->weights[i] = frt_q_weight(BQ(query)->clauses[i]->query, searcher);
     }
 
     self->normalize                 = &bw_normalize;
@@ -1288,19 +1288,19 @@ void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
 void frt_bc_deref(FrtBooleanClause *self)
 {
     if (--self->ref_cnt <= 0) {
-        q_deref(self->query);
+        frt_q_deref(self->query);
         free(self);
     }
 }
 
 static unsigned long long bc_hash(FrtBooleanClause *self)
 {
-    return ((q_hash(self->query) << 2) | self->occur);
+    return ((frt_q_hash(self->query) << 2) | self->occur);
 }
 
 static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o)
 {
-    return ((self->occur == o->occur) && q_eq(self->query, o->query));
+    return ((self->occur == o->occur) && frt_q_eq(self->query, o->query));
 }
 
 FrtBooleanClause *frt_bc_new(FrtQuery *query, FrtBCType occur)
@@ -1374,7 +1374,7 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         if (rq != clause->query) {
             if (!rewritten) {
                 int j;
-                FrtQuery *new_self = q_new(FrtBooleanQuery);
+                FrtQuery *new_self = frt_q_new(FrtBooleanQuery);
                 memcpy(new_self, self, sizeof(FrtBooleanQuery));
                 BQ(new_self)->clauses = FRT_ALLOC_N(FrtBooleanClause *,
                                                 BQ(self)->clause_capa);
@@ -1485,7 +1485,7 @@ static void bq_destroy(FrtQuery *self)
     if (BQ(self)->similarity) {
         BQ(self)->similarity->destroy(BQ(self)->similarity);
     }
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static float bq_coord_disabled(FrtSimilarity *sim, int overlap, int max_overlap)
@@ -1497,7 +1497,7 @@ static float bq_coord_disabled(FrtSimilarity *sim, int overlap, int max_overlap)
 static FrtSimilarity *bq_get_similarity(FrtQuery *self, FrtSearcher *searcher)
 {
     if (!BQ(self)->similarity) {
-        FrtSimilarity *sim = q_get_similarity_i(self, searcher);
+        FrtSimilarity *sim = frt_q_get_similarity_i(self, searcher);
         BQ(self)->similarity = FRT_ALLOC(FrtSimilarity);
         memcpy(BQ(self)->similarity, sim, sizeof(FrtSimilarity));
         BQ(self)->similarity->coord = &bq_coord_disabled;
@@ -1538,7 +1538,7 @@ static int  bq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_bq_new(bool coord_disabled)
 {
-    FrtQuery *self = q_new(FrtBooleanQuery);
+    FrtQuery *self = frt_q_new(FrtBooleanQuery);
     BQ(self)->coord_disabled = coord_disabled;
     if (coord_disabled) {
         self->get_similarity = &bq_get_similarity;

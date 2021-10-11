@@ -133,7 +133,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 static void wcq_destroy(FrtQuery *self)
 {
     free(WCQ(self)->pattern);
-    q_destroy_i(self);
+    frt_q_destroy_i(self);
 }
 
 static unsigned long long wcq_hash(FrtQuery *self)
@@ -149,7 +149,7 @@ static int wcq_eq(FrtQuery *self, FrtQuery *o)
 
 FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern)
 {
-    FrtQuery *self = q_new(FrtWildCardQuery);
+    FrtQuery *self = frt_q_new(FrtWildCardQuery);
 
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = frt_estrdup(pattern);
@@ -161,7 +161,7 @@ FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern)
     self->hash              = &wcq_hash;
     self->eq                = &wcq_eq;
     self->destroy_i         = &wcq_destroy;
-    self->create_weight_i   = &q_create_weight_unsup;
+    self->create_weight_i   = &frt_q_create_weight_unsup;
 
     return self;
 }
