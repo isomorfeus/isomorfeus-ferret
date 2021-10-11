@@ -20,7 +20,7 @@ static char *dummy_int_key = "i";
 static FrtHash *free_hts[MAX_FREE_HASH_TABLES];
 static int num_free_hts = 0;
 
-unsigned long long str_hash(const char *const str)
+unsigned long long frt_str_hash(const char *const str)
 {
     register unsigned long long h = 0;
     register unsigned char *p = (unsigned char *)str;
@@ -178,7 +178,7 @@ FrtHash *h_new_str(free_ft free_key, free_ft free_value)
     memset(self->smalltable, 0, sizeof(self->smalltable));
     self->lookup_i = (lookup_ft)&h_lookup;
     self->eq_i = str_eq;
-    self->hash_i = (hash_ft)str_hash;
+    self->hash_i = (hash_ft)frt_str_hash;
 
     self->free_key_i = free_key != NULL ? free_key : &frt_dummy_free;
     self->free_value_i = free_value != NULL ? free_value : &frt_dummy_free;
@@ -505,7 +505,7 @@ void h_str_print_keys(FrtHash *self, FILE *out)
             keys[i] = (char *)he->key;
         }
     }
-    strsort(keys, self->size);
+    frt_strsort(keys, self->size);
     fprintf(out, "keys:\n");
     for (i = 0; i < self->size; i++) {
         fprintf(out, "\t%s\n", keys[i]);

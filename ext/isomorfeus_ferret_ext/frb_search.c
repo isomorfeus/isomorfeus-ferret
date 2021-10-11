@@ -1655,7 +1655,7 @@ frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
 static VALUE
 frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm)
 {
-    FrtQuery *q = spantq_new(frb_field(rfield), StringValuePtr(rterm));
+    FrtQuery *q = frt_spantq_new(frb_field(rfield), StringValuePtr(rterm));
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1677,10 +1677,10 @@ frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm)
 static VALUE
 frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms)
 {
-    FrtQuery *q = spanmtq_new(frb_field(rfield));
+    FrtQuery *q = frt_spanmtq_new(frb_field(rfield));
     int i;
     for (i = RARRAY_LEN(rterms) - 1; i >= 0; i--) {
-        spanmtq_add_term(q, StringValuePtr(RARRAY_PTR(rterms)[i]));
+        frt_spanmtq_add_term(q, StringValuePtr(RARRAY_PTR(rterms)[i]));
     }
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -1709,7 +1709,7 @@ frb_spanprq_init(int argc, VALUE *argv, VALUE self)
     if (rb_scan_args(argc, argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
         max_terms = FIX2INT(rmax_terms);
     }
-    q = spanprq_new(frb_field(rfield), StringValuePtr(rprefix));
+    q = frt_spanprq_new(frb_field(rfield), StringValuePtr(rprefix));
     ((FrtSpanPrefixQuery *)q)->max_terms = max_terms;
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -1736,7 +1736,7 @@ frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend)
     FrtQuery *q;
     FrtQuery *match;
     Data_Get_Struct(rmatch, FrtQuery, match);
-    q = spanfq_new(match, FIX2INT(rend));
+    q = frt_spanfq_new(match, FIX2INT(rend));
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -1797,7 +1797,7 @@ frb_spannq_init(int argc, VALUE *argv, VALUE self)
             in_order = RTEST(v);
         }
     }
-    q = spannq_new(slop, in_order);
+    q = frt_spannq_new(slop, in_order);
     if (argc > 0) {
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_clauses))) {
@@ -1806,7 +1806,7 @@ frb_spannq_init(int argc, VALUE *argv, VALUE self)
             Check_Type(v, T_ARRAY);
             for (i = 0; i < RARRAY_LEN(v); i++) {
                 Data_Get_Struct(RARRAY_PTR(v)[i], FrtQuery, clause);
-                spannq_add_clause(q, clause);
+                frt_spannq_add_clause(q, clause);
             }
         }
     }
@@ -1831,7 +1831,7 @@ frb_spannq_add(VALUE self, VALUE rclause)
     GET_Q();
     FrtQuery *clause;
     Data_Get_Struct(rclause, FrtQuery, clause);
-    spannq_add_clause(q, clause);
+    frt_spannq_add_clause(q, clause);
     return self;
 }
 
@@ -1865,14 +1865,14 @@ frb_spanoq_init(int argc, VALUE *argv, VALUE self)
     FrtQuery *q;
     VALUE rclauses;
 
-    q = spanoq_new();
+    q = frt_spanoq_new();
     if (rb_scan_args(argc, argv, "01", &rclauses) > 0) {
         int i;
         FrtQuery *clause;
         Check_Type(rclauses, T_ARRAY);
         for (i = 0; i < RARRAY_LEN(rclauses); i++) {
             Data_Get_Struct(RARRAY_PTR(rclauses)[i], FrtQuery, clause);
-            spanoq_add_clause(q, clause);
+            frt_spanoq_add_clause(q, clause);
         }
     }
     Frt_Wrap_Struct(self, &frb_spanoq_mark, &frb_q_free, q);
@@ -1894,7 +1894,7 @@ frb_spanoq_add(VALUE self, VALUE rclause)
     GET_Q();
     FrtQuery *clause;
     Data_Get_Struct(rclause, FrtQuery, clause);
-    spanoq_add_clause(q, clause);
+    frt_spanoq_add_clause(q, clause);
     return self;
 }
 
@@ -1925,7 +1925,7 @@ frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc)
     FrtQuery *q;
     Check_Type(rinc, T_DATA);
     Check_Type(rexc, T_DATA);
-    q = spanxq_new(DATA_PTR(rinc), DATA_PTR(rexc));
+    q = frt_spanxq_new(DATA_PTR(rinc), DATA_PTR(rexc));
     Frt_Wrap_Struct(self, &frb_spanxq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
@@ -2112,7 +2112,7 @@ static void
 frb_sf_free(void *p)
 {
     object_del(p);
-    sort_field_destroy((FrtSortField *)p);
+    frt_sort_field_destroy((FrtSortField *)p);
 }
 
 static VALUE
@@ -2196,7 +2196,7 @@ frb_sf_init(int argc, VALUE *argv, VALUE self)
     if (NIL_P(rfield)) rb_raise(rb_eArgError, "must pass a valid field name");
     field = frb_field(rfield);
 
-    sf = sort_field_new(field, type, is_reverse);
+    sf = frt_sort_field_new(field, type, is_reverse);
     if (sf->field == NULL) {
         sf->field = field;
     }
@@ -2280,7 +2280,7 @@ static VALUE
 frb_sf_to_s(VALUE self)
 {
     GET_SF();
-    char *str = sort_field_to_s(sf);
+    char *str = frt_sort_field_to_s(sf);
     VALUE rstr = rb_str_new2(str);
     free(str);
     return rstr;
@@ -2297,7 +2297,7 @@ frb_sort_free(void *p)
 {
     FrtSort *sort = (FrtSort *)p;
     object_del(sort);
-    sort_destroy(sort);
+    frt_sort_destroy(sort);
 }
 
 static void
@@ -2314,7 +2314,7 @@ static VALUE
 frb_sort_alloc(VALUE klass)
 {
     VALUE self;
-    FrtSort *sort = sort_new();
+    FrtSort *sort = frt_sort_new();
     sort->destroy_all = false;
     self = Data_Wrap_Struct(klass, &frb_sort_mark, &frb_sort_free, sort);
     object_add(sort, self);
@@ -2350,14 +2350,14 @@ frb_parse_sort_str(FrtSort *sort, char *xsort_str)
         *e = '\0';
 
         if (strcmp("SCORE", s) == 0) {
-            sf = sort_field_score_new(reverse);
+            sf = frt_sort_field_score_new(reverse);
         } else if (strcmp("DOC_ID", s) == 0) {
-            sf = sort_field_doc_new(reverse);
+            sf = frt_sort_field_doc_new(reverse);
         } else {
-            sf = sort_field_auto_new(strdup(s), reverse);
+            sf = frt_sort_field_auto_new(strdup(s), reverse);
         }
         frb_get_sf(sf);
-        sort_add_sort_field(sort, sf);
+        frt_sort_add_sort_field(sort, sf);
         s = comma + 1;
     }
     free(sort_str);
@@ -2371,14 +2371,14 @@ frb_sort_add(FrtSort *sort, VALUE rsf, bool reverse)
         case T_DATA:
             Data_Get_Struct(rsf, FrtSortField, sf);
             if (reverse) sf->reverse = !sf->reverse;
-            sort_add_sort_field(sort, sf);
+            frt_sort_add_sort_field(sort, sf);
             break;
         case T_SYMBOL:
-            sf = sort_field_auto_new(frb_field(rsf), reverse);
+            sf = frt_sort_field_auto_new(frb_field(rsf), reverse);
             /* need to give it a ruby object so it'll be freed when the
              * sort is garbage collected */
             rsf = frb_get_sf(sf);
-            sort_add_sort_field(sort, sf);
+            frt_sort_add_sort_field(sort, sf);
             break;
         case T_STRING:
             frb_parse_sort_str(sort, rs2s(rsf));
@@ -2421,12 +2421,12 @@ frb_sort_init(int argc, VALUE *argv, VALUE self)
                     if (sort->sort_fields[i] == &FRT_SORT_FIELD_DOC) has_sfd = true;
                 }
                 if (!has_sfd) {
-                    sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
+                    frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
                 }
                 break;
         case 0:
-                sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_SCORE);
-                sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
+                frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_SCORE);
+                frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
     }
 
     return self;
@@ -2461,7 +2461,7 @@ static VALUE
 frb_sort_to_s(VALUE self)
 {
     GET_SORT();
-    char *str = sort_to_s(sort);
+    char *str = frt_sort_to_s(sort);
     VALUE rstr = rb_str_new2(str);
     free(str);
     return rstr;

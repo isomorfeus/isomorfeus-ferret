@@ -79,9 +79,9 @@ static void range_destroy(Range *range)
 static unsigned long long range_hash(Range *filt)
 {
     return filt->include_lower | (filt->include_upper << 1)
-        | ((sym_hash(filt->field)
-            ^ (filt->lower_term ? str_hash(filt->lower_term) : 0)
-            ^ (filt->upper_term ? str_hash(filt->upper_term) : 0)) << 2);
+        | ((frt_sym_hash(filt->field)
+            ^ (filt->lower_term ? frt_str_hash(filt->lower_term) : 0)
+            ^ (filt->upper_term ? frt_str_hash(filt->upper_term) : 0)) << 2);
 }
 
 static int range_eq(Range *filt, Range *o)
@@ -207,7 +207,7 @@ static void rfilt_destroy_i(FrtFilter *filt)
 static char *rfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
-    char *rfstr = strfmt("RangeFilter< %s >", rstr);
+    char *rfstr = frt_strfmt("RangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
 }
@@ -307,7 +307,7 @@ FrtFilter *rfilt_new(FrtSymbol field,
 static char *trfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
-    char *rfstr = strfmt("TypedRangeFilter< %s >", rstr);
+    char *rfstr = frt_strfmt("TypedRangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
 }

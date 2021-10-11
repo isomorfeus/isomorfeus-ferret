@@ -4,9 +4,9 @@
 #include "frt_internal.h"
 
 extern VALUE cStateError;
-extern void store_destroy(FrtStore *store);
+extern void frt_store_destroy(FrtStore *store);
 extern FrtInStream *is_new();
-extern FrtStore *store_new();
+extern FrtStore *frt_store_new();
 
 /****************************************************************************
  *
@@ -87,7 +87,7 @@ static void cmpd_close_i(FrtStore *store)
     is_close(cmpd->stream);
     cmpd->stream = NULL;
     free(store->dir.cmpd);
-    store_destroy(store);
+    frt_store_destroy(store);
 }
 
 static off_t cmpd_length(FrtStore *store, const char *file_name)
@@ -248,7 +248,7 @@ FrtStore *open_cmpd_store(FrtStore *store, const char *name)
         entry->length = is_length(is) - entry->offset;
     }
 
-    new_store               = store_new();
+    new_store               = frt_store_new();
     new_store->dir.cmpd     = cmpd;
     new_store->touch        = &cmpd_touch;
     new_store->exists       = &cmpd_exists;

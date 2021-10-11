@@ -94,7 +94,7 @@ typedef struct FilteredQueryWeight
 
 static char *fqw_to_s(FrtWeight *self)
 {
-    return strfmt("FilteredQueryWeight(%f)", self->value);
+    return frt_strfmt("FilteredQueryWeight(%f)", self->value);
 }
 
 static float fqw_sum_of_squared_weights(FrtWeight *self)
@@ -171,10 +171,10 @@ static char *fq_to_s(FrtQuery *self, FrtSymbol default_field)
     char *query_str = fq->query->to_s(fq->query, default_field);
     char *buffer;
     if (self->boost == 1.0) {
-        buffer = strfmt("FilteredQuery(query:%s, filter:%s)",
+        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)",
                         query_str, filter_str);
     } else {
-        buffer = strfmt("FilteredQuery(query:%s, filter:%s)^%f",
+        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)^%f",
                         query_str, filter_str, self->boost);
     }
     free(filter_str);

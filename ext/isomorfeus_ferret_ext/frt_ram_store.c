@@ -125,7 +125,7 @@ static void ram_close_i(FrtStore *store)
         }
     }
     h_destroy(store->dir.ht);
-    store_destroy(store);
+    frt_store_destroy(store);
 }
 
 /*
@@ -358,11 +358,11 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
         /*
         FrtHash *ht = store->dir.ht;
         int i;
-        printf("\nlooking for %s, %ld\n", filename, str_hash(filename));
+        printf("\nlooking for %s, %ld\n", filename, frt_str_hash(filename));
         for (i = 0; i <= ht->mask; i++) {
             if (ht->table[i].value)
                 printf("%s, %ld  --  %ld\n", (char *)ht->table[i].key,
-                       str_hash(ht->table[i].key), ht->table[i].hash);
+                       frt_str_hash(ht->table[i].key), ht->table[i].hash);
         }
         */
         rb_raise(cFileNotFoundError,
@@ -421,7 +421,7 @@ static void ram_close_lock_i(FrtLock *lock)
 
 FrtStore *open_ram_store()
 {
-    FrtStore *new_store = store_new();
+    FrtStore *new_store = frt_store_new();
 
     new_store->dir.ht       = h_new_str(NULL, rf_close);
     new_store->touch        = &ram_touch;
@@ -473,7 +473,7 @@ FrtStore *open_ram_store_and_copy(FrtStore *from_store, bool close_dir)
     from_store->each(from_store, &copy_files, &cfa);
 
     if (close_dir) {
-        store_deref(from_store);
+        frt_store_deref(from_store);
     }
 
     return store;

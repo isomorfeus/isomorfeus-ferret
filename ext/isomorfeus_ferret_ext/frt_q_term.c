@@ -207,7 +207,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
 
 static char *tw_to_s(FrtWeight *self)
 {
-    return strfmt("TermWeight(%f)", self->value);
+    return frt_strfmt("TermWeight(%f)", self->value);
 }
 
 static FrtWeight *tw_new(FrtQuery *query, FrtSearcher *searcher)
@@ -269,7 +269,7 @@ static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 
 static unsigned long long tq_hash(FrtQuery *self)
 {
-    return str_hash(TQ(self)->term) ^ sym_hash(TQ(self)->field);
+    return frt_str_hash(TQ(self)->term) ^ frt_sym_hash(TQ(self)->field);
 }
 
 static int tq_eq(FrtQuery *self, FrtQuery *o)

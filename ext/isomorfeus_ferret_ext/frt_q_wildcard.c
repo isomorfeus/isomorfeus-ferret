@@ -138,7 +138,7 @@ static void wcq_destroy(FrtQuery *self)
 
 static unsigned long long wcq_hash(FrtQuery *self)
 {
-    return sym_hash(WCQ(self)->field) ^ str_hash(WCQ(self)->pattern);
+    return frt_sym_hash(WCQ(self)->field) ^ frt_str_hash(WCQ(self)->pattern);
 }
 
 static int wcq_eq(FrtQuery *self, FrtQuery *o)

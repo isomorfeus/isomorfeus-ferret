@@ -12,7 +12,7 @@
 static unsigned long long field_index_hash(const void *p)
 {
     FrtFieldIndex *self = (FrtFieldIndex *)p;
-    return sym_hash(self->field) ^ (unsigned long long)(self->klass);
+    return frt_sym_hash(self->field) ^ (unsigned long long)(self->klass);
 }
 
 static int field_index_eq(const void *p1, const void *p2)

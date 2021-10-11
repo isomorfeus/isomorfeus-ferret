@@ -47,7 +47,7 @@ char *frt_expl_to_s_depth(FrtExplanation *expl, int depth)
     memset(buffer, ' ', sizeof(char) * depth * 2);
     buffer[depth*2] = 0;
 
-    buffer = frt_estrcat(buffer, strfmt("%f = %s\n",
+    buffer = frt_estrcat(buffer, frt_strfmt("%f = %s\n",
                                     expl->value, expl->description));
     for (i = 0; i < num_details; i++) {
         buffer = frt_estrcat(buffer, frt_expl_to_s_depth(expl->details[i], depth + 1));
@@ -62,7 +62,7 @@ char *frt_expl_to_html(FrtExplanation *expl)
     char *buffer;
     const int num_details = frt_ary_size(expl->details);
 
-    buffer = strfmt("<ul>\n<li>%f = %s</li>\n", expl->value, expl->description);
+    buffer = frt_strfmt("<ul>\n<li>%f = %s</li>\n", expl->value, expl->description);
 
     for (i = 0; i < num_details; i++) {
         frt_estrcat(buffer, frt_expl_to_html(expl->details[i]));
@@ -210,11 +210,11 @@ char *frt_td_to_s(FrtTopDocs *td)
 {
     int i;
     FrtHit *hit;
-    char *buffer = strfmt("%d hits sorted by <score, doc_num>\n",
+    char *buffer = frt_strfmt("%d hits sorted by <score, doc_num>\n",
                           td->total_hits);
     for (i = 0; i < td->size; i++) {
         hit = td->hits[i];
-        frt_estrcat(buffer, strfmt("\t%d:%f\n", hit->doc, hit->score));
+        frt_estrcat(buffer, frt_strfmt("\t%d:%f\n", hit->doc, hit->score));
     }
     return buffer;
 }
@@ -1687,12 +1687,12 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
         hq_pop = &hit_pq_pop;
     }
 
-    /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
+    /*if (sort) printf("sort = %s\n", frt_sort_to_s(sort)); */
     for (i = 0; i < MSEA(self)->s_cnt; i++) {
         FrtSearcher *s = MSEA(self)->searchers[i];
         FrtTopDocs *td = s->search_w(s, weight, 0, max_size,
                                   filter, sort, post_filter, true);
-        /*if (sort) printf("sort = %s\n", sort_to_s(sort)); */
+        /*if (sort) printf("sort = %s\n", frt_sort_to_s(sort)); */
         if (td->size > 0) {
             /*printf("td->size = %d %d\n", td->size, num_docs); */
             int j;

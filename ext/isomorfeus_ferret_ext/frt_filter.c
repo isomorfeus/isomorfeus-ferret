@@ -70,7 +70,7 @@ FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
 
 unsigned long long filt_hash(FrtFilter *filt)
 {
-    return sym_hash(filt->name) ^ filt->hash(filt);
+    return frt_sym_hash(filt->name) ^ filt->hash(filt);
 }
 
 int filt_eq(FrtFilter *filt, FrtFilter *o)
@@ -98,7 +98,7 @@ static char *qfilt_to_s(FrtFilter *filt)
 {
     FrtQuery *query = QF(filt)->query;
     char *query_str = query->to_s(query, NULL);
-    char *filter_str = strfmt("QueryFilter< %s >", query_str);
+    char *filter_str = frt_strfmt("QueryFilter< %s >", query_str);
     free(query_str);
     return filter_str;
 }

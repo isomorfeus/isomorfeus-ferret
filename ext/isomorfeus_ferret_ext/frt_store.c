@@ -8,7 +8,7 @@
 
 extern VALUE cLockError;
 
-void store_deref(FrtStore *store)
+void frt_store_deref(FrtStore *store)
 {
     mutex_lock(&store->mutex_i);
     if (--store->ref_cnt <= 0) {
@@ -39,7 +39,7 @@ static void frt_close_lock_i(FrtLock *lock)
 /**
  * Create a store struct initializing the mutex.
  */
-FrtStore *store_new()
+FrtStore *frt_store_new()
 {
     FrtStore *store = FRT_ALLOC(FrtStore);
     store->ref_cnt = 1;
@@ -54,7 +54,7 @@ FrtStore *store_new()
  *
  * @param store the store struct to free
  */
-void store_destroy(FrtStore *store)
+void frt_store_destroy(FrtStore *store)
 {
     mutex_destroy(&store->mutex_i);
     mutex_destroy(&store->mutex);
@@ -645,7 +645,7 @@ static void add_file_name(const char *fname, void *arg)
     fnl->total_len += strlen(fname) + 2;
 }
 
-char *store_to_s(FrtStore *store)
+char *frt_store_to_s(FrtStore *store)
 {
     struct FileNameListArg fnl;
     char *buf, *b;

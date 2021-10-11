@@ -63,7 +63,7 @@ static FrtScorer *cssc_new(FrtWeight *weight, FrtIndexReader *ir)
 
 static char *csw_to_s(FrtWeight *self)
 {
-    return strfmt("ConstantScoreWeight(%f)", self->value);
+    return frt_strfmt("ConstantScoreWeight(%f)", self->value);
 }
 
 static FrtExplanation *csw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
@@ -115,10 +115,10 @@ static char *csq_to_s(FrtQuery *self, FrtSymbol default_field)
     char *buffer;
     (void)default_field;
     if (self->boost == 1.0) {
-        buffer = strfmt("ConstantScore(%s)", filter_str);
+        buffer = frt_strfmt("ConstantScore(%s)", filter_str);
     }
     else {
-        buffer = strfmt("ConstantScore(%s)^%f", filter_str, self->boost);
+        buffer = frt_strfmt("ConstantScore(%s)^%f", filter_str, self->boost);
     }
     free(filter_str);
     return buffer;;

@@ -602,7 +602,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
         store = open_fs_store(rs2s(rdir));
     }
     index_create(store, fis);
-    store_deref(store);
+    frt_store_deref(store);
     return self;
 }
 

@@ -67,23 +67,23 @@ char *frt_df_to_s(FrtDocField *df)
     s = str = FRT_ALLOC_N(char, namelen + len + 5);
     memcpy(s, df->name, namelen);
     s += namelen;
-    s = strapp(s, ": ");
+    s = frt_strapp(s, ": ");
 
     if (df->size > 1) {
-        s = strapp(s, "[");
+        s = frt_strapp(s, "[");
     }
     for (i = 0; i < df->size; i++) {
         if (i != 0) {
-            s = strapp(s, ", ");
+            s = frt_strapp(s, ", ");
         }
-        s = strapp(s, "\"");
+        s = frt_strapp(s, "\"");
         memcpy(s, df->data[i], df->lengths[i]);
         s += df->lengths[i];
-        s = strapp(s, "\"");
+        s = frt_strapp(s, "\"");
     }
 
     if (df->size > 1) {
-        s = strapp(s, "]");
+        s = frt_strapp(s, "]");
     }
     *s = 0;
     return str;

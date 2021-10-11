@@ -903,7 +903,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_a_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
-    return get_wrapped_ts(self, rstr, standard_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_standard_tokenizer_new());
 }
 
 /*
@@ -1015,11 +1015,11 @@ frb_stop_filter_init(int argc, VALUE *argv, VALUE self)
     ts = frb_get_cwrapped_rts(rsub_ts);
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        ts = stop_filter_new_with_words(ts, (const char **)stop_words);
+        ts = frt_stop_filter_new_with_words(ts, (const char **)stop_words);
 
         free(stop_words);
     } else {
-        ts = stop_filter_new(ts);
+        ts = frt_stop_filter_new(ts);
     }
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
@@ -1147,7 +1147,7 @@ frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
         case 3: charenc = rs2s(rb_obj_as_string(rcharenc));
         case 2: algorithm = rs2s(rb_obj_as_string(ralgorithm));
     }
-    ts = stem_filter_new(ts, algorithm, charenc);
+    ts = frt_stem_filter_new(ts, algorithm, charenc);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1402,10 +1402,10 @@ frb_a_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        a = standard_analyzer_new_with_words((const char **)stop_words, lower);
+        a = frt_standard_analyzer_new_with_words((const char **)stop_words, lower);
         free(stop_words);
     } else {
-        a = standard_analyzer_new(lower);
+        a = frt_standard_analyzer_new(lower);
     }
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);

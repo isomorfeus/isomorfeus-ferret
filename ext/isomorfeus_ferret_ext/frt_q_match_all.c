@@ -73,7 +73,7 @@ static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
 
 static char *maw_to_s(FrtWeight *self)
 {
-    return strfmt("MatchAllWeight(%f)", self->value);
+    return frt_strfmt("MatchAllWeight(%f)", self->value);
 }
 
 static FrtExplanation *maw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
@@ -117,7 +117,7 @@ static char *maq_to_s(FrtQuery *self, FrtSymbol default_field)
     if (self->boost == 1.0) {
         return frt_estrdup("*");
     } else {
-        return strfmt("*^%f", self->boost);
+        return frt_strfmt("*^%f", self->boost);
     }
 }
 

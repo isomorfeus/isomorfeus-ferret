@@ -28,36 +28,36 @@ static FrtSortField *sort_field_alloc(FrtSymbol field,
     return self;
 }
 
-FrtSortField *sort_field_new(FrtSymbol field, SortType type, bool reverse)
+FrtSortField *frt_sort_field_new(FrtSymbol field, SortType type, bool reverse)
 {
     FrtSortField *sf = NULL;
     switch (type) {
         case FRT_SORT_TYPE_SCORE:
-            sf = sort_field_score_new(reverse);
+            sf = frt_sort_field_score_new(reverse);
             break;
         case FRT_SORT_TYPE_DOC:
-            sf = sort_field_doc_new(reverse);
+            sf = frt_sort_field_doc_new(reverse);
             break;
         case FRT_SORT_TYPE_BYTE:
-            sf = sort_field_byte_new(field, reverse);
+            sf = frt_sort_field_byte_new(field, reverse);
             break;
         case FRT_SORT_TYPE_INTEGER:
-            sf = sort_field_int_new(field, reverse);
+            sf = frt_sort_field_int_new(field, reverse);
             break;
         case FRT_SORT_TYPE_FLOAT:
-            sf = sort_field_float_new(field, reverse);
+            sf = frt_sort_field_float_new(field, reverse);
             break;
         case FRT_SORT_TYPE_STRING:
-            sf = sort_field_string_new(field, reverse);
+            sf = frt_sort_field_string_new(field, reverse);
             break;
         case FRT_SORT_TYPE_AUTO:
-            sf = sort_field_auto_new(field, reverse);
+            sf = frt_sort_field_auto_new(field, reverse);
             break;
     }
     return sf;
 }
 
-void sort_field_destroy(void *p)
+void frt_sort_field_destroy(void *p)
 {
     free(p);
 }
@@ -65,7 +65,7 @@ void sort_field_destroy(void *p)
 /*
  * field:<type>!
  */
-char *sort_field_to_s(FrtSortField *self)
+char *frt_sort_field_to_s(FrtSortField *self)
 {
     char *str;
     const char *type = NULL;
@@ -124,7 +124,7 @@ static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1)
     else return 0;
 }
 
-FrtSortField *sort_field_score_new(bool reverse)
+FrtSortField *frt_sort_field_score_new(bool reverse)
 {
     return sort_field_alloc(NULL, FRT_SORT_TYPE_SCORE, reverse,
                             &sf_score_compare, &sf_score_get_val, NULL);
@@ -169,7 +169,7 @@ static int sf_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2)
     else return 0;
 }
 
-FrtSortField *sort_field_doc_new(bool reverse)
+FrtSortField *frt_sort_field_doc_new(bool reverse)
 {
     return sort_field_alloc(NULL, FRT_SORT_TYPE_DOC, reverse,
                             &sf_doc_compare, &sf_doc_get_val, NULL);
@@ -211,7 +211,7 @@ static int sf_byte_compare(void *index, FrtHit *hit1, FrtHit *hit2)
     else return 0;
 }
 
-FrtSortField *sort_field_byte_new(FrtSymbol field, bool reverse)
+FrtSortField *frt_sort_field_byte_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_BYTE, reverse,
                             &sf_byte_compare, &sf_byte_get_val,
@@ -236,7 +236,7 @@ static int sf_int_compare(void *index, FrtHit *hit1, FrtHit *hit2)
     else return 0;
 }
 
-FrtSortField *sort_field_int_new(FrtSymbol field, bool reverse)
+FrtSortField *frt_sort_field_int_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_INTEGER, reverse,
                             &sf_int_compare, &sf_int_get_val,
@@ -261,7 +261,7 @@ static int sf_float_compare(void *index, FrtHit *hit1, FrtHit *hit2)
     else return 0;
 }
 
-FrtSortField *sort_field_float_new(FrtSymbol field, bool reverse)
+FrtSortField *frt_sort_field_float_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_FLOAT, reverse,
                             &sf_float_compare, &sf_float_get_val,
@@ -306,7 +306,7 @@ static int sf_string_compare(void *index, FrtHit *hit1, FrtHit *hit2)
     */
 }
 
-FrtSortField *sort_field_string_new(FrtSymbol field, bool reverse)
+FrtSortField *frt_sort_field_string_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_STRING, reverse,
                             &sf_string_compare, &sf_string_get_val,
@@ -317,7 +317,7 @@ FrtSortField *sort_field_string_new(FrtSymbol field, bool reverse)
  * AutoSortField
  ***************************************************************************/
 
-FrtSortField *sort_field_auto_new(FrtSymbol field, bool reverse)
+FrtSortField *frt_sort_field_auto_new(FrtSymbol field, bool reverse)
 {
     return sort_field_alloc(field, FRT_SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
 }
@@ -668,7 +668,7 @@ bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
 
 #define SORT_INIT_SIZE 4
 
-FrtSort *sort_new()
+FrtSort *frt_sort_new()
 {
     FrtSort *self = FRT_ALLOC(FrtSort);
     self->size = 0;
@@ -680,26 +680,26 @@ FrtSort *sort_new()
     return self;
 }
 
-void sort_clear(FrtSort *self)
+void frt_sort_clear(FrtSort *self)
 {
     int i;
     if (self->destroy_all) {
         for (i = 0; i < self->size; i++) {
-            sort_field_destroy(self->sort_fields[i]);
+            frt_sort_field_destroy(self->sort_fields[i]);
         }
     }
     self->size = 0;
 }
 
-void sort_destroy(void *p)
+void frt_sort_destroy(void *p)
 {
     FrtSort *self = (FrtSort *)p;
-    sort_clear(self);
+    frt_sort_clear(self);
     free(self->sort_fields);
     free(self);
 }
 
-void sort_add_sort_field(FrtSort *self, FrtSortField *sf)
+void frt_sort_add_sort_field(FrtSort *self, FrtSortField *sf)
 {
     if (self->size == self->capa) {
         self->capa <<= 1;
@@ -710,7 +710,7 @@ void sort_add_sort_field(FrtSort *self, FrtSortField *sf)
     self->size++;
 }
 
-char *sort_to_s(FrtSort *self)
+char *frt_sort_to_s(FrtSort *self)
 {
     int i, len = 20;
     char *s;
@@ -718,12 +718,12 @@ char *sort_to_s(FrtSort *self)
     char **sf_strs = FRT_ALLOC_N(char *, self->size);
 
     for (i = 0; i < self->size; i++) {
-        sf_strs[i] = s = sort_field_to_s(self->sort_fields[i]);
+        sf_strs[i] = s = frt_sort_field_to_s(self->sort_fields[i]);
         len += (int)strlen(s) + 2;
     }
 
     str = FRT_ALLOC_N(char, len);
-    s = strapp(str, "Sort[");
+    s = frt_strapp(str, "Sort[");
 
     for (i = 0; i < self->size; i++) {
         s += sprintf(s, "%s, ", sf_strs[i]);

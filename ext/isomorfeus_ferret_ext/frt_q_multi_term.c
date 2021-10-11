@@ -332,7 +332,7 @@ static FrtScorer *multi_tsc_new(FrtWeight *weight, FrtSymbol field,
 
 static char *multi_tw_to_s(FrtWeight *self)
 {
-    return strfmt("MultiTermWeight(%f)", self->value);
+    return frt_strfmt("MultiTermWeight(%f)", self->value);
 }
 
 static FrtScorer *multi_tw_scorer(FrtWeight *self, FrtIndexReader *ir)
@@ -572,11 +572,11 @@ static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static unsigned long long multi_tq_hash(FrtQuery *self)
 {
     int i;
-    unsigned long long hash = sym_hash(MTQ(self)->field);
+    unsigned long long hash = frt_sym_hash(MTQ(self)->field);
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-        hash ^= str_hash(bt->term) ^ float2int(bt->boost);
+        hash ^= frt_str_hash(bt->term) ^ float2int(bt->boost);
     }
     return hash;
 }

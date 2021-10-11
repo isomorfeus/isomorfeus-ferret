@@ -1164,7 +1164,7 @@ static FrtScorer *bw_scorer(FrtWeight *self, FrtIndexReader *ir)
 
 static char *bw_to_s(FrtWeight *self)
 {
-    return strfmt("BooleanWeight(%f)", self->value);
+    return frt_strfmt("BooleanWeight(%f)", self->value);
 }
 
 static void bw_destroy(FrtWeight *self)
@@ -1464,7 +1464,7 @@ static char *bq_to_s(FrtQuery *self, FrtSymbol field)
     }
 
     if (self->boost != 1.0) {
-        char *boost_str = strfmt(")^%f", self->boost);
+        char *boost_str = frt_strfmt(")^%f", self->boost);
         int boost_len = (int)strlen(boost_str);
         FRT_REALLOC_N(buffer, char, bp + boost_len + 1);
         memcpy(buffer + bp, boost_str, sizeof(char) * boost_len);

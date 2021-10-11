@@ -26,7 +26,7 @@ int scmp(const void *p1, const void *p2)
     return strcmp(*(char **) p1, *(char **) p2);
 }
 
-void strsort(char **str_array, int size)
+void frt_strsort(char **str_array, int size)
 {
     qsort(str_array, size, sizeof(char *), &scmp);
 }
@@ -118,11 +118,11 @@ char *frt_dbl_to_s(char *buf, double num)
 }
 
 /**
- * strapp: appends a string up to, but not including the \0 character to the
+ * frt_strapp: appends a string up to, but not including the \0 character to the
  * end of a string returning a pointer to the next unassigned character in the
  * string.
  */
-char *strapp(char *dst, const char *src) {
+char *frt_strapp(char *dst, const char *src) {
     while (*src != '\0') {
         *dst = *src;
         ++dst;
@@ -195,7 +195,7 @@ char *frt_vstrfmt(const char *fmt, va_list args)
     return string;
 }
 
-char *strfmt(const char *fmt, ...)
+char *frt_strfmt(const char *fmt, ...)
 {
     va_list args;
     char *str;

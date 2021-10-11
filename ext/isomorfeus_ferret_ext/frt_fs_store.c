@@ -224,7 +224,7 @@ static void fs_destroy(FrtStore *store)
         FRT_HANDLED();
     FRT_XENDTRY
     free(store->dir.path);
-    store_destroy(store);
+    frt_store_destroy(store);
 }
 
 static off_t fs_length(FrtStore *store, const char *filename)
@@ -430,7 +430,7 @@ static void fs_close_i(FrtStore *store)
 
 static FrtStore *fs_store_new(const char *pathname)
 {
-    FrtStore *new_store = store_new();
+    FrtStore *new_store = frt_store_new();
 
     new_store->file_mode = S_IRUSR | S_IWUSR;
 #if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64

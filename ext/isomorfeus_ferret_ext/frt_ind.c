@@ -98,7 +98,7 @@ void index_destroy(FrtIndex *self)
     mutex_destroy(&self->mutex);
     INDEX_CLOSE_READER(self);
     if (self->iw) iw_close(self->iw);
-    store_deref(self->store);
+    frt_store_deref(self->store);
     frt_a_deref(self->analyzer);
     if (self->qp) qp_destroy(self->qp);
     if (self->key) hs_destroy(self->key);

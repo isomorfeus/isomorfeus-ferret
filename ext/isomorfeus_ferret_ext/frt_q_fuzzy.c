@@ -237,7 +237,7 @@ static void fuzq_destroy(FrtQuery *self)
 
 static unsigned long long fuzq_hash(FrtQuery *self)
 {
-    return str_hash(FzQ(self)->term) ^ sym_hash(FzQ(self)->field)
+    return frt_str_hash(FzQ(self)->term) ^ frt_sym_hash(FzQ(self)->field)
         ^ float2int(FzQ(self)->min_sim) ^ FzQ(self)->pre_len;
 }
 

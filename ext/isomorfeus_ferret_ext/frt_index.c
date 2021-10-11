@@ -845,7 +845,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
         if (0 == method) {
             gen = sis_current_segment_generation(store);
             if (gen == -1) {
-                // fprintf(stderr, ">>\n%s\n>>\n", store_to_s(store));
+                // fprintf(stderr, ">>\n%s\n>>\n", frt_store_to_s(store));
                 rb_raise(cFileNotFoundError, "couldn't find segments file");
             }
         }
@@ -908,7 +908,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                  * this must be a real error.  We throw the original exception
                  * we got. */
                 char *listing, listing_buffer[1024];
-                listing = store_to_s(store);
+                listing = frt_store_to_s(store);
                 strncpy(listing_buffer, listing, 1023);
                 listing_buffer[1023] = '\0';
                 free(listing);
@@ -938,7 +938,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                 fprintf(stderr, "%s\n", xcontext.msg);
             }
             else {
-                char *sl = store_to_s(store);
+                char *sl = frt_store_to_s(store);
                 bool done = false;
                 fprintf(stderr, "%s\n>>>\n%s", xcontext.msg, sl);
                 free(sl);
@@ -952,7 +952,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                 }
             }
 
-            char *sl = store_to_s(store);
+            char *sl = frt_store_to_s(store);
             fprintf(stderr, "%s\n>>>\n%s", xcontext.msg, sl);
             free(sl);
             */
@@ -1853,14 +1853,14 @@ FrtSegmentFieldIndex *sfi_open(FrtStore *store, const char *segment)
 
     sprintf(file_name, "%s.tix", segment);
     is = store->open_input(store, file_name);
-    sfi->index_te = ste_new(is, sfi);
+    sfi->index_te = frt_ste_new(is, sfi);
     return sfi;
 }
 
 void sfi_close(FrtSegmentFieldIndex *sfi)
 {
     mutex_destroy(&sfi->mutex);
-    ste_close(sfi->index_te);
+    frt_ste_close(sfi->index_te);
     h_destroy(sfi->field_dict);
     free(sfi);
 }
@@ -1977,11 +1977,11 @@ static FrtSegmentTermEnum *ste_allocate()
     TE(ste)->next = &ste_next;
     TE(ste)->set_field = &ste_set_field;
     TE(ste)->skip_to = &ste_scan_to;
-    TE(ste)->close = &ste_close;
+    TE(ste)->close = &frt_ste_close;
     return ste;
 }
 
-FrtTermEnum *ste_clone(FrtTermEnum *other_te)
+FrtTermEnum *frt_ste_clone(FrtTermEnum *other_te)
 {
     FrtSegmentTermEnum *ste = ste_allocate();
 
@@ -1990,7 +1990,7 @@ FrtTermEnum *ste_clone(FrtTermEnum *other_te)
     return TE(ste);
 }
 
-void ste_close(FrtTermEnum *te)
+void frt_ste_close(FrtTermEnum *te)
 {
     is_close(STE(te)->is);
     free(te);
@@ -2034,7 +2034,7 @@ static char *ste_get_term(FrtTermEnum *te, int pos)
     return te->curr_term;
 }
 
-FrtTermEnum *ste_new(FrtInStream *is, FrtSegmentFieldIndex *sfi)
+FrtTermEnum *frt_ste_new(FrtInStream *is, FrtSegmentFieldIndex *sfi)
 {
     FrtSegmentTermEnum *ste = ste_allocate();
 
@@ -2298,7 +2298,7 @@ FrtTermInfosReader *frt_tir_open(FrtStore *store,
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     sprintf(file_name, "%s.tis", segment);
-    tir->orig_te = ste_new(store->open_input(store, file_name), sfi);
+    tir->orig_te = frt_ste_new(store->open_input(store, file_name), sfi);
     frt_thread_key_create(&tir->thread_te, NULL);
     tir->te_bucket = frt_ary_new();
     tir->field_num = -1;
@@ -2310,7 +2310,7 @@ static FrtTermEnum *tir_enum(FrtTermInfosReader *tir)
 {
     FrtTermEnum *te;
     if (NULL == (te = (FrtTermEnum *)frt_thread_getspecific(tir->thread_te))) {
-        te = ste_clone(tir->orig_te);
+        te = frt_ste_clone(tir->orig_te);
         ste_set_field(te, tir->field_num);
         frt_ary_push(tir->te_bucket, te);
         frt_thread_setspecific(tir->thread_te, te);
@@ -2359,8 +2359,8 @@ static FrtTermInfo *tir_get_ti_field(FrtTermInfosReader *tir, int field_num,
 
 void frt_tir_close(FrtTermInfosReader *tir)
 {
-    frt_ary_destroy(tir->te_bucket, (free_ft)&ste_close);
-    ste_close(tir->orig_te);
+    frt_ary_destroy(tir->te_bucket, (free_ft)&frt_ste_close);
+    frt_ste_close(tir->orig_te);
 
     /* fix for some dodgy old versions of pthread */
     frt_thread_setspecific(tir->thread_te, NULL);
@@ -2753,7 +2753,7 @@ static void stde_seek_prox(FrtSegmentTermDocEnum *stde, off_t prx_ptr)
 }
 
 
-FrtTermDocEnum *stde_new(FrtTermInfosReader *tir,
+FrtTermDocEnum *frt_stde_new(FrtTermInfosReader *tir,
                       FrtInStream *frq_in,
                       FrtBitVector *deleted_docs,
                       int skip_interval)
@@ -2858,13 +2858,13 @@ static void stpe_seek_prox(FrtSegmentTermDocEnum *stde, off_t prx_ptr)
     stde->prx_cnt = 0;
 }
 
-FrtTermDocEnum *stpe_new(FrtTermInfosReader *tir,
+FrtTermDocEnum *frt_stpe_new(FrtTermInfosReader *tir,
                       FrtInStream *frq_in,
                       FrtInStream *prx_in,
                       FrtBitVector *del_docs,
                       int skip_interval)
 {
-    FrtTermDocEnum *tde         = stde_new(tir, frq_in, del_docs, skip_interval);
+    FrtTermDocEnum *tde         = frt_stde_new(tir, frq_in, del_docs, skip_interval);
     FrtSegmentTermDocEnum *stde = STDE(tde);
 
     /* TermDocEnum methods */
@@ -3812,7 +3812,7 @@ void ir_close(FrtIndexReader *ir)
         ir_commit_i(ir);
         ir->close_i(ir);
         if (ir->store) {
-            store_deref(ir->store);
+            frt_store_deref(ir->store);
         }
         if (ir->is_owner && ir->sis) {
             sis_destroy(ir->sis);
@@ -4112,7 +4112,7 @@ static void sr_close_i(FrtIndexReader *ir)
     if (sr->prx_in)       is_close(sr->prx_in);
     if (sr->norms)        h_destroy(sr->norms);
     if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
-    if (sr->cfs_store)    store_deref(sr->cfs_store);
+    if (sr->cfs_store)    frt_store_deref(sr->cfs_store);
     if (sr->fr_bucket) {
         frt_thread_setspecific(sr->thread_fr, NULL);
         frt_thread_key_delete(sr->thread_fr);
@@ -4185,14 +4185,14 @@ static frt_uchar *sr_get_norms_into(FrtIndexReader *ir, int field_num,
 static FrtTermEnum *sr_terms(FrtIndexReader *ir, int field_num)
 {
     FrtTermEnum *te = SR(ir)->tir->orig_te;
-    te = ste_clone(te);
+    te = frt_ste_clone(te);
     return ste_set_field(te, field_num);
 }
 
 static FrtTermEnum *sr_terms_from(FrtIndexReader *ir, int field_num, const char *term)
 {
     FrtTermEnum *te = SR(ir)->tir->orig_te;
-    te = ste_clone(te);
+    te = frt_ste_clone(te);
     ste_set_field(te, field_num);
     ste_scan_to(te, term);
     return te;
@@ -4206,14 +4206,14 @@ static int sr_doc_freq(FrtIndexReader *ir, int field_num, const char *term)
 
 static FrtTermDocEnum *sr_term_docs(FrtIndexReader *ir)
 {
-    return stde_new(SR(ir)->tir, SR(ir)->frq_in, SR(ir)->deleted_docs,
+    return frt_stde_new(SR(ir)->tir, SR(ir)->frq_in, SR(ir)->deleted_docs,
                     STE(SR(ir)->tir->orig_te)->skip_interval);
 }
 
 static FrtTermDocEnum *sr_term_positions(FrtIndexReader *ir)
 {
     SegmentReader *sr = SR(ir);
-    return stpe_new(sr->tir, sr->frq_in, sr->prx_in, sr->deleted_docs,
+    return frt_stpe_new(sr->tir, sr->frq_in, sr->prx_in, sr->deleted_docs,
                     STE(sr->tir->orig_te)->skip_interval);
 }
 
@@ -5441,18 +5441,18 @@ static void smi_load_term_input(SegmentMergeInfo *smi)
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     smi->sfi = sfi_open(store, segment);
     sprintf(file_name, "%s.tis", segment);
-    smi->te = TE(ste_new(store->open_input(store, file_name), smi->sfi));
+    smi->te = TE(frt_ste_new(store->open_input(store, file_name), smi->sfi));
     sprintf(file_name, "%s.frq", segment);
     smi->frq_in = store->open_input(store, file_name);
     sprintf(file_name, "%s.prx", segment);
     smi->prx_in = store->open_input(store, file_name);
-    smi->tde = stpe_new(NULL, smi->frq_in, smi->prx_in, smi->deleted_docs,
+    smi->tde = frt_stpe_new(NULL, smi->frq_in, smi->prx_in, smi->deleted_docs,
                         STE(smi->te)->skip_interval);
 }
 
 static void smi_close_term_input(SegmentMergeInfo *smi)
 {
-    ste_close(smi->te);
+    frt_ste_close(smi->te);
     sfi_close(smi->sfi);
     stpe_close(smi->tde);
     is_close(smi->frq_in);
@@ -5462,7 +5462,7 @@ static void smi_close_term_input(SegmentMergeInfo *smi)
 static void smi_destroy(SegmentMergeInfo *smi)
 {
     if (smi->store != smi->orig_store) {
-        store_deref(smi->store);
+        frt_store_deref(smi->store);
     }
     if (smi->deleted_docs) {
         frt_bv_destroy(smi->deleted_docs);
@@ -6132,7 +6132,7 @@ void iw_close(FrtIndexWriter *iw)
     iw->write_lock->release(iw->write_lock);
     frt_close_lock(iw->write_lock);
     iw->write_lock = NULL;
-    store_deref(iw->store);
+    frt_store_deref(iw->store);
     frt_deleter_destroy(iw->deleter);
     mutex_destroy(&iw->mutex);
     free(iw);

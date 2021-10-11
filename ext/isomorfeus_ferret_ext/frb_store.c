@@ -156,7 +156,7 @@ frb_dir_free(FrtStore *store)
 {
     frb_unwrap_locks(store);
     object_del(store);
-    store_deref(store);
+    frt_store_deref(store);
 }
 
 /*
@@ -177,7 +177,7 @@ frb_dir_close(VALUE self)
         Frt_Unwrap_Struct(self);
         object_del(store);
         frb_unwrap_locks(store);
-        store_deref(store);
+        frt_store_deref(store);
     }
     return Qnil;
 }

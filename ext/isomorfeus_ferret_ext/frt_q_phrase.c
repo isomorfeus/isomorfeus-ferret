@@ -101,13 +101,6 @@ static bool pp_first_position(PhPos *self)
     return pp_next_position(self);
 }
 
-/*
-static char *pp_to_s(PhPos *self)
-{
-    return strfmt("pp->(doc => %d, position => %d)", self->doc, self->position);
-}
-*/
-
 #define PP_pp(p) (*(PhPos **)p)
 static int pp_cmp(const void *const p1, const void *const p2)
 {
@@ -533,7 +526,7 @@ static FrtScorer *sloppy_phrase_scorer_new(FrtWeight *weight,
 
 static char *phw_to_s(FrtWeight *self)
 {
-    return strfmt("PhraseWeight(%f)", self->value);
+    return frt_strfmt("PhraseWeight(%f)", self->value);
 }
 
 static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
@@ -974,7 +967,7 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     if (phq->pos_cnt == 0) {
         if ((default_field == NULL) || ((default_field != NULL) && (strcmp(default_field, phq->field) != 0))) {
-            return strfmt("%s:\"\"", field);
+            return frt_strfmt("%s:\"\"", field);
         }
         else {
             return frt_estrdup("\"\"");
@@ -1096,11 +1089,11 @@ static unsigned long long phq_hash(FrtQuery *self)
 {
     int i, j;
     FrtPhraseQuery *phq = PhQ(self);
-    unsigned long long hash = sym_hash(phq->field);
+    unsigned long long hash = frt_sym_hash(phq->field);
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
-            hash = (hash << 1) ^ (str_hash(terms[j])
+            hash = (hash << 1) ^ (frt_str_hash(terms[j])
                                ^ phq->positions[i].pos);
         }
     }
