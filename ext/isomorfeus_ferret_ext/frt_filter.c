@@ -32,7 +32,7 @@ FrtBitVector *filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
             ir_add_cache(ir);
         }
         bv = filt->get_bv_i(filt, ir);
-        co = co_create(filt->cache, ir->cache, filt, ir,
+        co = frt_co_create(filt->cache, ir->cache, filt, ir,
                        (free_ft)&frt_bv_destroy, (void *)bv);
     }
     return (FrtBitVector *)co->obj;
@@ -58,7 +58,7 @@ static int filt_eq_default(FrtFilter *filt, FrtFilter *o)
 FrtFilter *filt_create(size_t size, FrtSymbol name)
 {
     FrtFilter *filt    = (FrtFilter *)emalloc(size);
-    filt->cache     = co_hash_create();
+    filt->cache     = frt_co_hash_create();
     filt->name      = name;
     filt->to_s      = &filt_to_s_i;
     filt->hash      = &filt_hash_default;

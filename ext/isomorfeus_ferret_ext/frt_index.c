@@ -189,7 +189,7 @@ static void co_destroy(FrtCacheObject *self)
     free(self);
 }
 
-FrtCacheObject *co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
+FrtCacheObject *frt_co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
                        void *ref1, void *ref2, free_ft destroy, void *obj)
 {
     FrtCacheObject *self = FRT_ALLOC(FrtCacheObject);
@@ -204,7 +204,7 @@ FrtCacheObject *co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
     return self;
 }
 
-FrtHash *co_hash_create()
+FrtHash *frt_co_hash_create()
 {
     return h_new(&co_hash, &co_eq, (free_ft)NULL, (free_ft)&co_destroy);
 }
@@ -3580,7 +3580,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
         if (sis_read_current_version(ir->store) > ir->sis->version) {
             ir->is_stale = true;
             ir->write_lock->release(ir->write_lock);
-            close_lock(ir->write_lock);
+            frt_close_lock(ir->write_lock);
             ir->write_lock = NULL;
             rb_raise(cStateError, "IndexReader out of date and no longer valid "
                                "for delete, undelete, or set_norm operations. "
@@ -3797,7 +3797,7 @@ static void ir_commit_i(FrtIndexReader *ir)
             if (NULL != ir->write_lock) {
                 /* release write lock */
                 ir->write_lock->release(ir->write_lock);
-                close_lock(ir->write_lock);
+                frt_close_lock(ir->write_lock);
                 ir->write_lock = NULL;
             }
         }
@@ -3854,7 +3854,7 @@ void ir_close(FrtIndexReader *ir)
 void ir_add_cache(FrtIndexReader *ir)
 {
     if (NULL == ir->cache) {
-        ir->cache = co_hash_create();
+        ir->cache = frt_co_hash_create();
     }
 }
 
@@ -5850,7 +5850,7 @@ bool index_is_locked(FrtStore *store)
 {
     FrtLock *write_lock = open_lock(store, FRT_WRITE_LOCK_NAME);
     bool is_locked = write_lock->is_locked(write_lock);
-    close_lock(write_lock);
+    frt_close_lock(write_lock);
     return is_locked;
 }
 
@@ -5870,7 +5870,7 @@ int iw_doc_count(FrtIndexWriter *iw)
 
 #define MOVE_TO_COMPOUND_DIR(file_name)\
     deleter_queue_file(dlr, file_name);\
-    cw_add_file(cw, file_name)
+    frt_cw_add_file(cw, file_name)
 
 static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis,
                                     FrtSegmentInfo *si, char *cfs_file_name,
@@ -5901,7 +5901,7 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis,
     }
 
     /* Perform the merge */
-    cw_close(cw);
+    frt_cw_close(cw);
 }
 
 static void iw_commit_compound_file(FrtIndexWriter *iw, FrtSegmentInfo *si)
@@ -6140,7 +6140,7 @@ void iw_close(FrtIndexWriter *iw)
     fis_deref(iw->fis);
     sim_destroy(iw->similarity);
     iw->write_lock->release(iw->write_lock);
-    close_lock(iw->write_lock);
+    frt_close_lock(iw->write_lock);
     iw->write_lock = NULL;
     store_deref(iw->store);
     deleter_destroy(iw->deleter);
@@ -6172,7 +6172,7 @@ FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
     FRT_XCATCHALL
         if (iw->write_lock) {
             iw->write_lock->release(iw->write_lock);
-            close_lock(iw->write_lock);
+            frt_close_lock(iw->write_lock);
             iw->write_lock = NULL;
         }
         if (iw->sis) sis_destroy(iw->sis);

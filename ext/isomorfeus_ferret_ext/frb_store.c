@@ -33,7 +33,7 @@ frb_lock_free(void *p)
 {
     FrtLock *lock = (FrtLock *)p;
     object_del(p);
-    close_lock(lock);
+    frt_close_lock(lock);
 }
 
 void

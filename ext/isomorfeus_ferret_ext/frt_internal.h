@@ -2,19 +2,6 @@
 #define FRT_INTERNAL_H
 
 /* Functions */
-#define close_lock                                     frt_close_lock
-#define co_create                                      frt_co_create
-#define co_hash_create                                 frt_co_hash_create
-#define count_leading_ones                             frt_count_leading_ones
-#define count_leading_zeros                            frt_count_leading_zeros
-#define count_ones                                     frt_count_ones
-#define count_trailing_ones                            frt_count_trailing_ones
-#define count_trailing_zeros                           frt_count_trailing_zeros
-#define count_zeros                                    frt_count_zeros
-#define csq_new                                        frt_csq_new
-#define csq_new_nr                                     frt_csq_new_nr
-#define cw_add_file                                    frt_cw_add_file
-#define cw_close                                       frt_cw_close
 #define dbl_to_s                                       frt_dbl_to_s
 #define default_config                                 frt_default_config
 #define deleter_clear_pending_files                    frt_deleter_clear_pending_files

@@ -283,7 +283,7 @@ FrtCompoundWriter *open_cw(FrtStore *store, char *name)
     return cw;
 }
 
-void cw_add_file(FrtCompoundWriter *cw, char *id)
+void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
 {
     id = estrdup(id);
     if (hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
@@ -332,7 +332,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     is_close(is);
 }
 
-void cw_close(FrtCompoundWriter *cw)
+void frt_cw_close(FrtCompoundWriter *cw)
 {
     FrtOutStream *os = NULL;
     int i;

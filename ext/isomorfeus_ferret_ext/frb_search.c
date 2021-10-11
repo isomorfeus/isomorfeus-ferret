@@ -1597,7 +1597,7 @@ frb_csq_init(VALUE self, VALUE rfilter)
     FrtQuery *q;
     FrtFilter *filter;
     Data_Get_Struct(rfilter, FrtFilter, filter);
-    q = csq_new(filter);
+    q = frt_csq_new(filter);
 
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);

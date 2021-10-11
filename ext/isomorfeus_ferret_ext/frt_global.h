@@ -148,12 +148,6 @@ int frt_count_leading_zeros(frt_u32 word)
 #endif
 }
 
-static FRT_ATTR_ALWAYS_INLINE FRT_ATTR_CONST
-int frt_count_leading_ones(frt_u32 word)
-{
-    return frt_count_leading_zeros(~word);
-}
-
 /**
  * Return the count of trailing [LSB] 0 bits in +word+.
  */

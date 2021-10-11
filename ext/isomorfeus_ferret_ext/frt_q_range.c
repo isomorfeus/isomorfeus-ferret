@@ -499,7 +499,7 @@ static FrtQuery *rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     FrtFilter *filter = rfilt_new(r->field, r->lower_term, r->upper_term,
                                r->include_lower, r->include_upper);
     (void)ir;
-    csq = csq_new_nr(filter);
+    csq = frt_csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &rq_get_matchv_i;
     return (FrtQuery *)csq;
@@ -641,7 +641,7 @@ static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     FrtFilter *filter = trfilt_new(r->field, r->lower_term, r->upper_term,
                                 r->include_lower, r->include_upper);
     (void)ir;
-    csq = csq_new_nr(filter);
+    csq = frt_csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
     csq->get_matchv_i = &trq_get_matchv_i;
     return (FrtQuery *)csq;

@@ -53,12 +53,12 @@ FrtLock *open_lock(FrtStore *store, const char *lockname)
     return lock;
 }
 
-void close_lock(FrtLock *lock)
+void frt_close_lock(FrtLock *lock)
 {
     hs_del(lock->store->locks, lock);
 }
 
-static void close_lock_i(FrtLock *lock)
+static void frt_close_lock_i(FrtLock *lock)
 {
     lock->store->close_lock_i(lock);
 }
@@ -72,7 +72,7 @@ FrtStore *store_new()
     store->ref_cnt = 1;
     mutex_init(&store->mutex_i, NULL);
     mutex_init(&store->mutex, NULL);
-    store->locks = hs_new_ptr((free_ft)&close_lock_i);
+    store->locks = hs_new_ptr((free_ft)&frt_close_lock_i);
     return store;
 }
 

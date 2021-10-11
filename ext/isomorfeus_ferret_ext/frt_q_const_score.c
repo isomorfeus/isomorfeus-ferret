@@ -140,7 +140,7 @@ static int csq_eq(FrtQuery *self, FrtQuery *o)
     return filt_eq(CScQ(self)->filter, CScQ(o)->filter);
 }
 
-FrtQuery *csq_new_nr(FrtFilter *filter)
+FrtQuery *frt_csq_new_nr(FrtFilter *filter)
 {
     FrtQuery *self = q_new(FrtConstantScoreQuery);
     CScQ(self)->filter = filter;
@@ -155,8 +155,8 @@ FrtQuery *csq_new_nr(FrtFilter *filter)
     return self;
 }
 
-FrtQuery *csq_new(FrtFilter *filter)
+FrtQuery *frt_csq_new(FrtFilter *filter)
 {
     FRT_REF(filter);
-    return csq_new_nr(filter);
+    return frt_csq_new_nr(filter);
 }
