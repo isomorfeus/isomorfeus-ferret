@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
-#include "frt_internal.h"
 
 const char *FRT_EMPTY_STRING = "";
 
@@ -31,7 +30,7 @@ void frt_strsort(char **str_array, int size)
     qsort(str_array, size, sizeof(char *), &frt_scmp);
 }
 
-int icmp(const void *p1, const void *p2)
+int frt_icmp(const void *p1, const void *p2)
 {
     int i1 = *(int *) p1;
     int i2 = *(int *) p2;
@@ -45,12 +44,12 @@ int icmp(const void *p1, const void *p2)
     return 0;
 }
 
-int icmp_risky(const void *p1, const void *p2)
+int frt_icmp_risky(const void *p1, const void *p2)
 {
   return (*(int *)p1) - *((int *)p2);
 }
 
-unsigned int *imalloc(unsigned int value)
+unsigned int *frt_imalloc(unsigned int value)
 {
   unsigned int *p = FRT_ALLOC(unsigned int);
   *p = value;
@@ -271,14 +270,14 @@ void frt_print_stacktrace()
 typedef struct FreeMe
 {
     void *p;
-    free_ft free_func;
+    frt_free_ft free_func;
 } FreeMe;
 
 static FreeMe *free_mes = NULL;
 static int free_mes_size = 0;
 static int free_mes_capa = 0;
 
-void frt_register_for_cleanup(void *p, free_ft free_func)
+void frt_register_for_cleanup(void *p, frt_free_ft free_func)
 {
     FreeMe *free_me;
     if (free_mes_capa == 0) {
@@ -335,7 +334,7 @@ static void sighandler_crash(int signum)
     signal(sig, handler);                  \
 } while(0)
 
-void init(int argc, const char *const argv[])
+void frt_init(int argc, const char *const argv[])
 {
     if (argc > 0) {
         frt_setprogname(argv[0]);
@@ -351,7 +350,7 @@ void init(int argc, const char *const argv[])
 
     symbol_init();
 
-    atexit(&hash_finalize);
+    atexit(&frt_hash_finalize);
 }
 
 /**

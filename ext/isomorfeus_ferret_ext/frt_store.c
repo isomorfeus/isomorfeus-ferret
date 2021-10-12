@@ -1,7 +1,6 @@
 #include "ruby.h"
 #include "frt_store.h"
 #include <string.h>
-#include "frt_internal.h"
 
 #define VINT_MAX_LEN 10
 #define VINT_END FRT_BUFFER_SIZE - VINT_MAX_LEN
@@ -22,13 +21,13 @@ void frt_store_deref(FrtStore *store)
 FrtLock *frt_open_lock(FrtStore *store, const char *lockname)
 {
     FrtLock *lock = store->open_lock_i(store, lockname);
-    hs_add(store->locks, lock);
+    frt_hs_add(store->locks, lock);
     return lock;
 }
 
 void frt_close_lock(FrtLock *lock)
 {
-    hs_del(lock->store->locks, lock);
+    frt_hs_del(lock->store->locks, lock);
 }
 
 static void frt_close_lock_i(FrtLock *lock)
@@ -45,7 +44,7 @@ FrtStore *frt_store_new()
     store->ref_cnt = 1;
     frt_mutex_init(&store->mutex_i, NULL);
     frt_mutex_init(&store->mutex, NULL);
-    store->locks = hs_new_ptr((free_ft)&frt_close_lock_i);
+    store->locks = frt_hs_new_ptr((frt_free_ft)&frt_close_lock_i);
     return store;
 }
 
@@ -58,7 +57,7 @@ void frt_store_destroy(FrtStore *store)
 {
     frt_mutex_destroy(&store->mutex_i);
     frt_mutex_destroy(&store->mutex);
-    hs_destroy(store->locks);
+    frt_hs_destroy(store->locks);
     free(store);
 }
 
@@ -160,7 +159,7 @@ void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
  *
  * @return a newly allocated and initialized InStream
  */
-FrtInStream *is_new()
+FrtInStream *frt_is_new()
 {
     FrtInStream *is = FRT_ALLOC(FrtInStream);
     is->buf.start = 0;
@@ -200,7 +199,7 @@ static void is_refill(FrtInStream *is)
 }
 
 /**
- * Unsafe alternative to is_read_byte. Only use this method when you know
+ * Unsafe alternative to frt_is_read_byte. Only use this method when you know
  * there is no chance that you will read past the end of the InStream's
  * buffer.
  */
@@ -214,7 +213,7 @@ static void is_refill(FrtInStream *is)
  * @raise FRT_IO_ERROR if there is a error reading from the filesystem
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-frt_uchar is_read_byte(FrtInStream *is)
+frt_uchar frt_is_read_byte(FrtInStream *is)
 {
     if (is->buf.pos >= is->buf.len) {
         is_refill(is);
@@ -223,12 +222,12 @@ frt_uchar is_read_byte(FrtInStream *is)
     return read_byte(is);
 }
 
-off_t is_pos(FrtInStream *is)
+off_t frt_is_pos(FrtInStream *is)
 {
     return is->buf.start + is->buf.pos;
 }
 
-frt_uchar *is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
+frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
 {
     int i;
     off_t start;
@@ -239,7 +238,7 @@ frt_uchar *is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
         }
     }
     else {                              /* read all-at-once */
-        start = is_pos(is);
+        start = frt_is_pos(is);
         is->m->seek_i(is, start);
         is->m->read_i(is, buf, len);
 
@@ -250,7 +249,7 @@ frt_uchar *is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
     return buf;
 }
 
-void is_seek(FrtInStream *is, off_t pos)
+void frt_is_seek(FrtInStream *is, off_t pos)
 {
     if (pos >= is->buf.start && pos < (is->buf.start + is->buf.len)) {
         is->buf.pos = pos - is->buf.start;  /* seek within buffer */
@@ -263,7 +262,7 @@ void is_seek(FrtInStream *is, off_t pos)
     }
 }
 
-void is_close(FrtInStream *is)
+void frt_is_close(FrtInStream *is)
 {
     if (--(*(is->ref_cnt_ptr)) < 0) {
         is->m->close_i(is);
@@ -272,7 +271,7 @@ void is_close(FrtInStream *is)
     free(is);
 }
 
-FrtInStream *is_clone(FrtInStream *is)
+FrtInStream *frt_is_clone(FrtInStream *is)
 {
     FrtInStream *new_index_i = FRT_ALLOC(FrtInStream);
     memcpy(new_index_i, is, sizeof(FrtInStream));
@@ -280,58 +279,51 @@ FrtInStream *is_clone(FrtInStream *is)
     return new_index_i;
 }
 
-i32 is_read_i32(FrtInStream *is)
+
+frt_i64 frt_is_read_i64(FrtInStream *is)
 {
-    return ((i32)is_read_byte(is) << 24) |
-        ((i32)is_read_byte(is) << 16) |
-        ((i32)is_read_byte(is) << 8) |
-        ((i32)is_read_byte(is));
+    return ((frt_i64)frt_is_read_byte(is) << 56) |
+        ((frt_i64)frt_is_read_byte(is) << 48) |
+        ((frt_i64)frt_is_read_byte(is) << 40) |
+        ((frt_i64)frt_is_read_byte(is) << 32) |
+        ((frt_i64)frt_is_read_byte(is) << 24) |
+        ((frt_i64)frt_is_read_byte(is) << 16) |
+        ((frt_i64)frt_is_read_byte(is) << 8) |
+        ((frt_i64)frt_is_read_byte(is));
 }
 
-i64 is_read_i64(FrtInStream *is)
+frt_u32 frt_is_read_u32(FrtInStream *is)
 {
-    return ((i64)is_read_byte(is) << 56) |
-        ((i64)is_read_byte(is) << 48) |
-        ((i64)is_read_byte(is) << 40) |
-        ((i64)is_read_byte(is) << 32) |
-        ((i64)is_read_byte(is) << 24) |
-        ((i64)is_read_byte(is) << 16) |
-        ((i64)is_read_byte(is) << 8) |
-        ((i64)is_read_byte(is));
+    return ((frt_u32)frt_is_read_byte(is) << 24) |
+        ((frt_u32)frt_is_read_byte(is) << 16) |
+        ((frt_u32)frt_is_read_byte(is) << 8) |
+        ((frt_u32)frt_is_read_byte(is));
 }
 
-frt_u32 is_read_u32(FrtInStream *is)
+frt_u64 frt_is_read_u64(FrtInStream *is)
 {
-    return ((frt_u32)is_read_byte(is) << 24) |
-        ((frt_u32)is_read_byte(is) << 16) |
-        ((frt_u32)is_read_byte(is) << 8) |
-        ((frt_u32)is_read_byte(is));
-}
-
-frt_u64 is_read_u64(FrtInStream *is)
-{
-    return ((frt_u64)is_read_byte(is) << 56) |
-        ((frt_u64)is_read_byte(is) << 48) |
-        ((frt_u64)is_read_byte(is) << 40) |
-        ((frt_u64)is_read_byte(is) << 32) |
-        ((frt_u64)is_read_byte(is) << 24) |
-        ((frt_u64)is_read_byte(is) << 16) |
-        ((frt_u64)is_read_byte(is) << 8) |
-        ((frt_u64)is_read_byte(is));
+    return ((frt_u64)frt_is_read_byte(is) << 56) |
+        ((frt_u64)frt_is_read_byte(is) << 48) |
+        ((frt_u64)frt_is_read_byte(is) << 40) |
+        ((frt_u64)frt_is_read_byte(is) << 32) |
+        ((frt_u64)frt_is_read_byte(is) << 24) |
+        ((frt_u64)frt_is_read_byte(is) << 16) |
+        ((frt_u64)frt_is_read_byte(is) << 8) |
+        ((frt_u64)frt_is_read_byte(is));
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-unsigned int is_read_vint(FrtInStream *is)
+unsigned int frt_is_read_vint(FrtInStream *is)
 {
     register unsigned int res, b;
     register int shift = 7;
 
     if (is->buf.pos > (is->buf.len - VINT_MAX_LEN)) {
-        b = is_read_byte(is);
+        b = frt_is_read_byte(is);
         res = b & 0x7F;                 /* 0x7F = 0b01111111 */
 
         while ((b & 0x80) != 0) {       /* 0x80 = 0b10000000 */
-            b = is_read_byte(is);
+            b = frt_is_read_byte(is);
             res |= (b & 0x7F) << shift;
             shift += 7;
         }
@@ -351,17 +343,17 @@ unsigned int is_read_vint(FrtInStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-off_t is_read_voff_t(FrtInStream *is)
+off_t frt_is_read_voff_t(FrtInStream *is)
 {
     register off_t res, b;
     register int shift = 7;
 
     if (is->buf.pos > (is->buf.len - VINT_MAX_LEN)) {
-        b = is_read_byte(is);
+        b = frt_is_read_byte(is);
         res = b & 0x7F;                 /* 0x7F = 0b01111111 */
 
         while ((b & 0x80) != 0) {       /* 0x80 = 0b10000000 */
-            b = is_read_byte(is);
+            b = frt_is_read_byte(is);
             res |= (b & 0x7F) << shift;
             shift += 7;
         }
@@ -381,17 +373,17 @@ off_t is_read_voff_t(FrtInStream *is)
 }
 
 /* optimized to use unchecked read_byte if there is definitely space */
-frt_u64 is_read_vll(FrtInStream *is)
+frt_u64 frt_is_read_vll(FrtInStream *is)
 {
     register frt_u64 res, b;
     register int shift = 7;
 
     if (is->buf.pos > (is->buf.len - VINT_MAX_LEN)) {
-        b = is_read_byte(is);
+        b = frt_is_read_byte(is);
         res = b & 0x7F;                 /* 0x7F = 0b01111111 */
 
         while ((b & 0x80) != 0) {       /* 0x80 = 0b10000000 */
-            b = is_read_byte(is);
+            b = frt_is_read_byte(is);
             res |= (b & 0x7F) << shift;
             shift += 7;
         }
@@ -410,10 +402,10 @@ frt_u64 is_read_vll(FrtInStream *is)
     return res;
 }
 
-void is_skip_vints(FrtInStream *is, register int cnt)
+void frt_is_skip_vints(FrtInStream *is, register int cnt)
 {
     for (; cnt > 0; cnt--) {
-        while ((is_read_byte(is) & 0x80) != 0) {
+        while ((frt_is_read_byte(is) & 0x80) != 0) {
         }
     }
 }
@@ -428,21 +420,21 @@ static void is_read_chars(FrtInStream *is, char *buffer,
     end = off + len;
 
     for (i = off; i < end; i++) {
-        buffer[i] = is_read_byte(is);
+        buffer[i] = frt_is_read_byte(is);
     }
 }
 */
 
-char *is_read_string(FrtInStream *is)
+char *frt_is_read_string(FrtInStream *is)
 {
-    register int length = (int) is_read_vint(is);
+    register int length = (int) frt_is_read_vint(is);
     char *str = FRT_ALLOC_N(char, length + 1);
     str[length] = '\0';
 
     if (is->buf.pos > (is->buf.len - length)) {
         register int i;
         for (i = 0; i < length; i++) {
-            str[i] = is_read_byte(is);
+            str[i] = frt_is_read_byte(is);
         }
     }
     else {                      /* unchecked optimization */
@@ -453,9 +445,9 @@ char *is_read_string(FrtInStream *is)
     return str;
 }
 
-char *is_read_string_safe(FrtInStream *is)
+char *frt_is_read_string_safe(FrtInStream *is)
 {
-    register int length = (int) is_read_vint(is);
+    register int length = (int) frt_is_read_vint(is);
     char *str = FRT_ALLOC_N(char, length + 1);
     str[length] = '\0';
 
@@ -463,7 +455,7 @@ char *is_read_string_safe(FrtInStream *is)
         if (is->buf.pos > (is->buf.len - length)) {
             register int i;
             for (i = 0; i < length; i++) {
-                str[i] = is_read_byte(is);
+                str[i] = frt_is_read_byte(is);
             }
         }
         else {                      /* unchecked optimization */
@@ -577,23 +569,23 @@ int frt_file_is_lock(const char *filename)
     return ((start > 0) && (strcmp(FRT_LOCK_EXT, &filename[start]) == 0));
 }
 
-void is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
+void frt_is2os_copy_bytes(FrtInStream *is, FrtOutStream *os, int cnt)
 {
     int len;
     frt_uchar buf[FRT_BUFFER_SIZE];
 
     for (; cnt > 0; cnt -= FRT_BUFFER_SIZE) {
         len = ((cnt > FRT_BUFFER_SIZE) ? FRT_BUFFER_SIZE : cnt);
-        is_read_bytes(is, buf, len);
+        frt_is_read_bytes(is, buf, len);
         frt_os_write_bytes(os, buf, len);
     }
 }
 
-void is2os_copy_vints(FrtInStream *is, FrtOutStream *os, int cnt)
+void frt_is2os_copy_vints(FrtInStream *is, FrtOutStream *os, int cnt)
 {
     frt_uchar b;
     for (; cnt > 0; cnt--) {
-        while (((b = is_read_byte(is)) & 0x80) != 0) {
+        while (((b = frt_is_read_byte(is)) & 0x80) != 0) {
             frt_os_write_byte(os, b);
         }
         frt_os_write_byte(os, b);

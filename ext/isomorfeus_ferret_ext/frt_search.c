@@ -2,7 +2,6 @@
 #include <limits.h>
 #include "frt_search.h"
 #include "frt_array.h"
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -27,7 +26,7 @@ FrtExplanation *frt_expl_new(float value, const char *description, ...)
 
 void frt_expl_destroy(FrtExplanation *expl)
 {
-    frt_ary_destroy((void **)expl->details, (free_ft)frt_expl_destroy);
+    frt_ary_destroy((void **)expl->details, (frt_free_ft)frt_expl_destroy);
     free(expl->description);
     free(expl);
 }
@@ -370,7 +369,7 @@ FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
 {
     int i;
     FrtQuery *q, *ret_q;
-    FrtHashSet *uniques = hs_new((hash_ft)&frt_q_hash, (frt_eq_ft)&frt_q_eq, NULL);
+    FrtHashSet *uniques = frt_hs_new((frt_hash_ft)&frt_q_hash, (frt_eq_ft)&frt_q_eq, NULL);
     for (i = 0; i < q_cnt; i++) {
         q = queries[i];
         if (q->type == BOOLEAN_QUERY) {
@@ -389,13 +388,13 @@ FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
             if (splittable) {
                 for (j = 0; j < BQ(q)->clause_cnt; j++) {
                     FrtQuery *sub_q = BQ(q)->clauses[j]->query;
-                    hs_add(uniques, sub_q);
+                    frt_hs_add(uniques, sub_q);
                 }
             } else {
-                hs_add(uniques, q);
+                frt_hs_add(uniques, q);
             }
         } else {
-            hs_add(uniques, q);
+            frt_hs_add(uniques, q);
         }
     }
 
@@ -410,7 +409,7 @@ FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
             frt_bq_add_query(ret_q, q, FRT_BC_SHOULD);
         }
     }
-    hs_destroy(uniques);
+    frt_hs_destroy(uniques);
 
     return ret_q;
 }
@@ -962,9 +961,9 @@ static FrtSimilarity *sea_get_similarity(FrtSearcher *self)
 
 #define ISEA(searcher) ((FrtIndexSearcher *)(searcher))
 
-int isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
+int frt_isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
 {
-    return ir_doc_freq(ISEA(self)->ir, field, term);
+    return frt_ir_doc_freq(ISEA(self)->ir, field, term);
 }
 
 static FrtDocument *isea_get_doc(FrtSearcher *self, int doc_num)
@@ -1018,18 +1017,18 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     float score = 0.0f;
     float filter_factor = 1.0f;
 
-    FrtBitVector *bits = (filter ? filt_get_bv(filter, ISEA(self)->ir) : NULL);
+    FrtBitVector *bits = (filter ? frt_filt_get_bv(filter, ISEA(self)->ir) : NULL);
 
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = fshq_pq_new(max_size, sort, ISEA(self)->ir);
-        hq_insert = &fshq_pq_insert;
-        hq_destroy = &fshq_pq_destroy;
+        hq = frt_fshq_pq_new(max_size, sort, ISEA(self)->ir);
+        hq_insert = &frt_fshq_pq_insert;
+        hq_destroy = &frt_fshq_pq_destroy;
         if (load_fields) {
-            hq_pop = &fshq_pq_pop_fd;
+            hq_pop = &frt_fshq_pq_pop_fd;
         } else {
-            hq_pop = &fshq_pq_pop;
+            hq_pop = &frt_fshq_pq_pop;
         }
     } else {
         hq = frt_pq_new(max_size, (frt_lt_ft)&hit_less_than, &free);
@@ -1105,7 +1104,7 @@ static void isea_search_each_w(FrtSearcher *self, FrtWeight *weight, FrtFilter *
     FrtScorer *scorer;
     float filter_factor = 1.0f;
     FrtBitVector *bits = (filter
-                       ? filt_get_bv(filter, ISEA(self)->ir)
+                       ? frt_filt_get_bv(filter, ISEA(self)->ir)
                        : NULL);
 
     scorer = weight->scorer(weight, ISEA(self)->ir);
@@ -1219,12 +1218,12 @@ static FrtTermVector *isea_get_term_vector(FrtSearcher *self,
 static void isea_close(FrtSearcher *self)
 {
     if (ISEA(self)->ir && ISEA(self)->close_ir) {
-        ir_close(ISEA(self)->ir);
+        frt_ir_close(ISEA(self)->ir);
     }
     free(self);
 }
 
-FrtSearcher *isea_new(FrtIndexReader *ir)
+FrtSearcher *frt_isea_new(FrtIndexReader *ir)
 {
     FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(FrtIndexSearcher);
 
@@ -1232,7 +1231,7 @@ FrtSearcher *isea_new(FrtIndexReader *ir)
     ISEA(self)->close_ir    = true;
 
     self->similarity        = frt_sim_create_default();
-    self->doc_freq          = &isea_doc_freq;
+    self->doc_freq          = &frt_isea_doc_freq;
     self->get_doc           = &isea_get_doc;
     self->get_lazy_doc      = &isea_get_lazy_doc;
     self->max_doc           = &isea_max_doc;
@@ -1273,7 +1272,7 @@ static int cdfsea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *text)
     int *df;
     term.field = field;
     term.text = (char *)text;
-    df = (int *)h_get(CDFSEA(self)->df_map, &term);
+    df = (int *)frt_h_get(CDFSEA(self)->df_map, &term);
     return df ? *df : 0;
 }
 
@@ -1369,7 +1368,7 @@ static FrtSimilarity *cdfsea_get_similarity(FrtSearcher *self)
 
 static void cdfsea_close(FrtSearcher *self)
 {
-    h_destroy(CDFSEA(self)->df_map);
+    frt_h_destroy(CDFSEA(self)->df_map);
     free(self);
 }
 
@@ -1483,24 +1482,24 @@ static FrtWeight *msea_create_weight(FrtSearcher *self, FrtQuery *query)
     int i, *doc_freqs;
     FrtSearcher *cdfsea;
     FrtWeight *w;
-    FrtHash *df_map = h_new((hash_ft)&frt_term_hash,
+    FrtHash *df_map = frt_h_new((frt_hash_ft)&frt_term_hash,
                          (frt_eq_ft)&frt_term_eq,
-                         (free_ft)frt_term_destroy,
+                         (frt_free_ft)frt_term_destroy,
                          free);
     FrtQuery *rewritten_query = self->rewrite(self, query);
     /* terms get copied directly to df_map so no need to free here */
-    FrtHashSet *terms = hs_new((hash_ft)&frt_term_hash,
+    FrtHashSet *terms = frt_hs_new((frt_hash_ft)&frt_term_hash,
                             (frt_eq_ft)&frt_term_eq,
-                            (free_ft)NULL);
+                            (frt_free_ft)NULL);
     FrtHashSetEntry *hse;
 
     rewritten_query->extract_terms(rewritten_query, terms);
     doc_freqs = msea_get_doc_freqs(self, terms);
 
     for (hse = terms->first, i = 0; hse; ++i, hse = hse->next) {
-        h_set(df_map, hse->elem, imalloc(doc_freqs[i]));
+        frt_h_set(df_map, hse->elem, frt_imalloc(doc_freqs[i]));
     }
-    hs_destroy(terms);
+    frt_hs_destroy(terms);
     free(doc_freqs);
 
     cdfsea = cdfsea_new(df_map, MSEA(self)->max_doc);

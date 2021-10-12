@@ -5,7 +5,6 @@
 #include "frt_global.h"
 #include "frt_hashset.h"
 #include "frt_document.h"
-#include "frt_internal.h"
 
 /* IDs */
 extern ID id_new;

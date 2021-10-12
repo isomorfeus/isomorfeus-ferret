@@ -3,7 +3,6 @@
 #include "frt_array.h"
 #include "frt_helper.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 /****************************************************************************
  *

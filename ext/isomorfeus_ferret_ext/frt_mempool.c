@@ -1,7 +1,6 @@
 #include "frt_global.h"
 #include "frt_mempool.h"
 #include <string.h>
-#include "frt_internal.h"
 
 FrtMemoryPool *frt_mp_new_capa(int chuck_size, int init_buf_capa)
 {

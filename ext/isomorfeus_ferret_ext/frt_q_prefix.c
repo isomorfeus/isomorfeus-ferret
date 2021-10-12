@@ -1,7 +1,6 @@
 #include <string.h>
 #include "frt_search.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -35,7 +34,7 @@ static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static FrtQuery *prq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
-    const int field_num = fis_get_field_num(ir->fis, PfxQ(self)->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, PfxQ(self)->field);
     FrtQuery *volatile q = frt_multi_tq_new_conf(PfxQ(self)->field,
                                           FrtMTQMaxTerms(self), 0.0);
     q->boost = self->boost;        /* set the boost */

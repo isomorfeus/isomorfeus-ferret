@@ -491,9 +491,9 @@ static VALUE
 frb_q_get_terms(VALUE self, VALUE searcher)
 {
     VALUE rterms = rb_ary_new();
-    FrtHashSet *terms = hs_new((hash_ft)&frt_term_hash,
+    FrtHashSet *terms = frt_hs_new((frt_hash_ft)&frt_term_hash,
                             (frt_eq_ft)&frt_term_eq,
-                            (free_ft)frt_term_destroy);
+                            (frt_free_ft)frt_term_destroy);
     FrtHashSetEntry *hse;
     GET_Q();
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
@@ -505,7 +505,7 @@ frb_q_get_terms(VALUE self, VALUE searcher)
         FrtTerm *term = (FrtTerm *)hse->elem;
         rb_ary_push(rterms, frb_get_term(term->field, term->text));
     }
-    hs_destroy(terms);
+    frt_hs_destroy(terms);
     return rterms;
 }
 
@@ -1450,7 +1450,7 @@ frb_fq_init(int argc, VALUE *argv, VALUE self)
                  "%d < 0. :max_terms must be >= 0", max_terms);
     }
 
-    q = fuzq_new_conf(frb_field(rfield), StringValuePtr(rterm),
+    q = frt_fuzq_new_conf(frb_field(rfield), StringValuePtr(rterm),
                       min_sim, pre_len, max_terms);
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -1631,7 +1631,7 @@ frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
     FrtFilter *f;
     Data_Get_Struct(rquery, FrtQuery, sq);
     Data_Get_Struct(rfilter, FrtFilter, f);
-    q = fq_new(sq, f);
+    q = frt_fq_new(sq, f);
     FRT_REF(sq);
     FRT_REF(f);
     Frt_Wrap_Struct(self, &frb_fqq_mark, &frb_q_free, q);
@@ -1981,7 +1981,7 @@ frb_f_get_bits(VALUE self, VALUE rindex_reader)
     FrtIndexReader *ir;
     GET_F();
     Data_Get_Struct(rindex_reader, FrtIndexReader, ir);
-    bv = filt_get_bv(f, ir);
+    bv = frt_filt_get_bv(f, ir);
     return frb_get_bv(bv);
 }
 
@@ -3051,14 +3051,14 @@ frb_sea_init(VALUE self, VALUE obj)
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
         store = frt_open_fs_store(rs2s(obj));
-        ir = ir_open(store);
+        ir = frt_ir_open(store);
         FRT_DEREF(store);
         FRT_GET_IR(obj, ir);
     } else {
         Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
             Data_Get_Struct(obj, FrtStore, store);
-            ir = ir_open(store);
+            ir = frt_ir_open(store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
             Data_Get_Struct(obj, FrtIndexReader, ir);
@@ -3066,7 +3066,7 @@ frb_sea_init(VALUE self, VALUE obj)
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
     }
-    sea = isea_new(ir);
+    sea = frt_isea_new(ir);
     ((FrtIndexSearcher *)sea)->close_ir = false;
     Frt_Wrap_Struct(self, &frb_sea_mark, &frb_sea_free, sea);
     object_add(sea, self);

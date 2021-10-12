@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "frt_global.h"
-#include "frt_internal.h"
 
 #define RET goto ret;
 

@@ -1,7 +1,6 @@
 #include "frt_symbol.h"
 #include <string.h>
 #include "frt_search.h"
-#include "frt_internal.h"
 
 #define TQ(query) ((FrtTermQuery *)(query))
 #define TSc(scorer) ((TermScorer *)(scorer))
@@ -149,7 +148,7 @@ static FrtScorer *tw_scorer(FrtWeight *self, FrtIndexReader *ir)
     /* ir_term_docs_for should always return a TermDocEnum */
     assert(NULL != tde);
 
-    return tsc_new(self, tde, ir_get_norms(ir, tq->field));
+    return tsc_new(self, tde, frt_ir_get_norms(ir, tq->field));
 }
 
 static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
@@ -167,8 +166,8 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     FrtExplanation *expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
     /* We need two of these as it's included in both the query explanation
      * and the field explanation */
-    FrtExplanation *idf_expl1 = frt_expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
-    FrtExplanation *idf_expl2 = frt_expl_new(self->idf, "idf(doc_freq=%d)", ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl1 = frt_expl_new(self->idf, "idf(doc_freq=%d)", frt_ir_doc_freq(ir, tq->field, term));
+    FrtExplanation *idf_expl2 = frt_expl_new(self->idf, "idf(doc_freq=%d)", frt_ir_doc_freq(ir, tq->field, term));
     /* explain query weight */
     FrtExplanation *query_expl = frt_expl_new(0.0, "query_weight(%s), product of:", query_str);
     free(query_str);
@@ -189,7 +188,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     frt_expl_add_detail(field_expl, tf_expl);
     frt_expl_add_detail(field_expl, idf_expl2);
 
-    field_norms = ir_get_norms(ir, tq->field);
+    field_norms = frt_ir_get_norms(ir, tq->field);
     field_norm = (field_norms ? frt_sim_decode_norm(self->similarity, field_norms[doc_num]) : (float)0.0);
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)", tq->field, doc_num);
     frt_expl_add_detail(field_expl, field_norm_expl);
@@ -264,7 +263,7 @@ static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
-    hs_add(terms, frt_term_new(TQ(self)->field, TQ(self)->term));
+    frt_hs_add(terms, frt_term_new(TQ(self)->field, TQ(self)->term));
 }
 
 static unsigned long long tq_hash(FrtQuery *self)

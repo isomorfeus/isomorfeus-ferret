@@ -1,7 +1,6 @@
 #include "ruby.h"
 #include "frt_store.h"
 #include <string.h>
-#include "frt_internal.h"
 
 extern VALUE cFileNotFoundError;
 
@@ -42,14 +41,14 @@ static void rf_close(void *p)
 
 static void ram_touch(FrtStore *store, const char *filename)
 {
-    if (h_get(store->dir.ht, filename) == NULL) {
-        h_set(store->dir.ht, filename, rf_new(filename));
+    if (frt_h_get(store->dir.ht, filename) == NULL) {
+        frt_h_set(store->dir.ht, filename, rf_new(filename));
     }
 }
 
 static int ram_exists(FrtStore *store, const char *filename)
 {
-    if (h_get(store->dir.ht, filename) != NULL) {
+    if (frt_h_get(store->dir.ht, filename) != NULL) {
         return true;
     }
     else {
@@ -59,7 +58,7 @@ static int ram_exists(FrtStore *store, const char *filename)
 
 static int ram_remove(FrtStore *store, const char *filename)
 {
-    FrtRAMFile *rf = (FrtRAMFile *)h_rem(store->dir.ht, filename, false);
+    FrtRAMFile *rf = (FrtRAMFile *)frt_h_rem(store->dir.ht, filename, false);
     if (rf != NULL) {
         FRT_DEREF(rf);
         rf_close(rf);
@@ -72,7 +71,7 @@ static int ram_remove(FrtStore *store, const char *filename)
 
 static void ram_rename(FrtStore *store, const char *from, const char *to)
 {
-    FrtRAMFile *rf = (FrtRAMFile *)h_rem(store->dir.ht, from, false);
+    FrtRAMFile *rf = (FrtRAMFile *)frt_h_rem(store->dir.ht, from, false);
     FrtRAMFile *tmp;
 
     if (rf == NULL) {
@@ -85,12 +84,12 @@ static void ram_rename(FrtStore *store, const char *from, const char *to)
     rf->name = frt_estrdup(to);
 
     /* clean up the file we are overwriting */
-    tmp = (FrtRAMFile *)h_get(store->dir.ht, to);
+    tmp = (FrtRAMFile *)frt_h_get(store->dir.ht, to);
     if (tmp != NULL) {
         FRT_DEREF(tmp);
     }
 
-    h_set(store->dir.ht, rf->name, rf);
+    frt_h_set(store->dir.ht, rf->name, rf);
 }
 
 static int ram_count(FrtStore *store)
@@ -124,7 +123,7 @@ static void ram_close_i(FrtStore *store)
             FRT_DEREF(rf);
         }
     }
-    h_destroy(store->dir.ht);
+    frt_h_destroy(store->dir.ht);
     frt_store_destroy(store);
 }
 
@@ -139,7 +138,7 @@ static void ram_clear(FrtStore *store)
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && !frt_file_is_lock(rf->name)) {
             FRT_DEREF(rf);
-            h_del(ht, rf->name);
+            frt_h_del(ht, rf->name);
         }
     }
 }
@@ -152,7 +151,7 @@ static void ram_clear_locks(FrtStore *store)
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf && frt_file_is_lock(rf->name)) {
             FRT_DEREF(rf);
-            h_del(ht, rf->name);
+            frt_h_del(ht, rf->name);
         }
     }
 }
@@ -165,14 +164,14 @@ static void ram_clear_all(FrtStore *store)
         FrtRAMFile *rf = (FrtRAMFile *)ht->table[i].value;
         if (rf) {
             FRT_DEREF(rf);
-            h_del(ht, rf->name);
+            frt_h_del(ht, rf->name);
         }
     }
 }
 
 static off_t ram_length(FrtStore *store, const char *filename)
 {
-    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
     if (rf != NULL) {
         return rf->len;
     }
@@ -275,12 +274,12 @@ void frt_ram_destroy_buffer(FrtOutStream *os)
 
 static FrtOutStream *ram_new_output(FrtStore *store, const char *filename)
 {
-    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
     FrtOutStream *os = frt_os_new();
 
     if (rf == NULL) {
         rf = rf_new(filename);
-        h_set(store->dir.ht, rf->name, rf);
+        frt_h_set(store->dir.ht, rf->name, rf);
     }
     FRT_REF(rf);
     os->pointer = 0;
@@ -346,7 +345,7 @@ static const struct FrtInStreamMethods RAM_IN_STREAM_METHODS = {
 
 static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
 {
-    FrtRAMFile *rf = (FrtRAMFile *)h_get(store->dir.ht, filename);
+    FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
     FrtInStream *is = NULL;
 
     if (rf == NULL) {
@@ -364,7 +363,7 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
               "tried to open \"%s\" but it doesn't exist", filename);
     }
     FRT_REF(rf);
-    is = is_new();
+    is = frt_is_new();
     is->file.rf = rf;
     is->d.pointer = 0;
     is->m = &RAM_IN_STREAM_METHODS;
@@ -418,7 +417,7 @@ FrtStore *frt_open_ram_store()
 {
     FrtStore *new_store = frt_store_new();
 
-    new_store->dir.ht       = h_new_str(NULL, rf_close);
+    new_store->dir.ht       = frt_h_new_str(NULL, rf_close);
     new_store->touch        = &ram_touch;
     new_store->exists       = &ram_exists;
     new_store->remove       = &ram_remove;
@@ -450,10 +449,10 @@ static void copy_files(const char *fname, void *arg)
     int len = (int)is_length(is);
     frt_uchar *buffer = FRT_ALLOC_N(frt_uchar, len + 1);
 
-    is_read_bytes(is, buffer, len);
+    frt_is_read_bytes(is, buffer, len);
     frt_os_write_bytes(os, buffer, len);
 
-    is_close(is);
+    frt_is_close(is);
     frt_os_close(os);
     free(buffer);
 }

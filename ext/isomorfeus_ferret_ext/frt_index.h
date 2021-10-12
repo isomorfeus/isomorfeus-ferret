@@ -149,7 +149,6 @@ FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
 extern FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi);
 extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name);
 extern int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name);
-extern FrtFieldInfo *frt_fis_by_number(FrtFieldInfos *fis, int num);
 extern FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis,
                                               FrtSymbol name);
 extern void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os);
@@ -726,10 +725,7 @@ struct FrtIndexReader
     bool                is_owner    : 1;
 };
 
-extern FrtIndexReader *frt_ir_create(FrtStore *store, FrtSegmentInfos *sis, int is_owner);
 extern FrtIndexReader *frt_ir_open(FrtStore *store);
-extern int frt_ir_get_field_num(FrtIndexReader *ir, FrtSymbol field);
-extern bool frt_ir_index_exists(FrtStore *store);
 extern void frt_ir_close(FrtIndexReader *ir);
 extern void frt_ir_commit(FrtIndexReader *ir);
 extern void frt_ir_delete_doc(FrtIndexReader *ir, int doc_num);
@@ -740,9 +736,6 @@ extern void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field,
 extern frt_uchar *frt_ir_get_norms_i(FrtIndexReader *ir, int field_num);
 extern frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, FrtSymbol field);
 extern frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf);
-extern void frt_ir_destroy(FrtIndexReader *self);
-extern FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, FrtSymbol field,
-                                      const char *term);
 extern FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, FrtSymbol field);
 extern FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
                                const char *t);
@@ -853,7 +846,6 @@ struct FrtIndexWriter
 };
 
 extern void frt_index_create(FrtStore *store, FrtFieldInfos *fis);
-extern bool frt_index_is_locked(FrtStore *store);
 extern FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *analyzer,
                             const FrtConfig *config);
 extern void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field,

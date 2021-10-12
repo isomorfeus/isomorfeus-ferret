@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include "frt_internal.h"
 
 /*
  * This list of stop words is taken from

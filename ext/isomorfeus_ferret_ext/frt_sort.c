@@ -3,7 +3,6 @@
 #include "frt_search.h"
 #include "frt_index.h"
 #include "frt_field_index.h"
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -390,7 +389,7 @@ static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir)
     if (sf->type > FRT_SORT_TYPE_DOC) {
         FrtFieldIndex *field_index = NULL;
         if (sf->type == FRT_SORT_TYPE_AUTO) {
-            FrtTermEnum *te = ir_terms(ir, sf->field);
+            FrtTermEnum *te = frt_ir_terms(ir, sf->field);
             if (te) {
                 if (!te->next(te) && (ir->num_docs(ir) > 0)) {
                     rb_raise(rb_eArgError,
@@ -489,7 +488,7 @@ void fshq_pq_down(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-FrtHit *fshq_pq_pop(FrtPriorityQueue *pq)
+FrtHit *frt_fshq_pq_pop(FrtPriorityQueue *pq)
 {
     if (pq->size > 0) {
         FrtHit *hit = (FrtHit *)pq->heap[1];   /* save first value */
@@ -520,7 +519,7 @@ static void fshq_pq_up(FrtPriorityQueue *pq)
     heap[i] = node;
 }
 
-void fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
+void frt_fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
 {
     if (pq->size < pq->capa) {
         FrtHit *new_hit = FRT_ALLOC(FrtHit);
@@ -539,13 +538,13 @@ void fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
     }
 }
 
-void fshq_pq_destroy(FrtPriorityQueue *self)
+void frt_fshq_pq_destroy(FrtPriorityQueue *self)
 {
     sorter_destroy((Sorter *)self->heap[0]);
     frt_pq_destroy(self);
 }
 
-FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
+FrtPriorityQueue *frt_fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
 {
     FrtPriorityQueue *self = frt_pq_new(size, &fshq_less_than, &free);
     int i;
@@ -561,7 +560,7 @@ FrtPriorityQueue *fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir)
     return self;
 }
 
-FrtHit *fshq_pq_pop_fd(FrtPriorityQueue *pq)
+FrtHit *frt_fshq_pq_pop_fd(FrtPriorityQueue *pq)
 {
     if (pq->size <= 0) {
         return NULL;

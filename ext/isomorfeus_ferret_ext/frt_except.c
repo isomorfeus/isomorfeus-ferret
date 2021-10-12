@@ -2,7 +2,6 @@
 #include "frt_global.h"
 #include "frt_except.h"
 #include "frt_threading.h"
-#include "frt_internal.h"
 
 static const char *const ERROR_TYPES[] = {
     "Body",

@@ -1,7 +1,6 @@
 #include <string.h>
 #include "frt_search.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -90,7 +89,7 @@ static FrtQuery *wcq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         q->boost = self->boost;
     }
     else {
-        const int field_num = fis_get_field_num(ir->fis, WCQ(self)->field);
+        const int field_num = frt_fis_get_field_num(ir->fis, WCQ(self)->field);
         q = frt_multi_tq_new_conf(WCQ(self)->field, FrtMTQMaxTerms(self), 0.0);
 
         if (field_num >= 0) {

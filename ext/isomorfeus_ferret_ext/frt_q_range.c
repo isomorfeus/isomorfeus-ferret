@@ -1,7 +1,6 @@
 #include <string.h>
 #include "frt_search.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 /*****************************************************************************
  *
@@ -216,7 +215,7 @@ static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
-    FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
+    FrtFieldInfo *fi = frt_fis_get_field(ir->fis, range->field);
     /* the field info exists we need to add docs to the bit vector, otherwise
      * we just return an empty bit vector */
     if (fi) {
@@ -350,7 +349,7 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
         (!ut || (sscanf(ut, "%lg%n", &unum, &len) && (int)strlen(ut) == len)))
     {
         FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
-        FrtFieldInfo *fi = fis_get_field(ir->fis, range->field);
+        FrtFieldInfo *fi = frt_fis_get_field(ir->fis, range->field);
         /* the field info exists we need to add docs to the bit vector,
          * otherwise we just return an empty bit vector */
         if (fi) {

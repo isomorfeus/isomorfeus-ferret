@@ -1,7 +1,6 @@
 #include "frt_search.h"
 #include "frt_symbol.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -11,7 +10,7 @@
 
 void frt_filt_destroy_i(FrtFilter *filt)
 {
-    h_destroy(filt->cache);
+    frt_h_destroy(filt->cache);
     free(filt);
 }
 
@@ -22,18 +21,18 @@ void frt_filt_deref(FrtFilter *filt)
     }
 }
 
-FrtBitVector *filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
+FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
 {
-    FrtCacheObject *co = (FrtCacheObject *)h_get(filt->cache, ir);
+    FrtCacheObject *co = (FrtCacheObject *)frt_h_get(filt->cache, ir);
 
     if (!co) {
         FrtBitVector *bv;
         if (!ir->cache) {
-            ir_add_cache(ir);
+            frt_ir_add_cache(ir);
         }
         bv = filt->get_bv_i(filt, ir);
         co = frt_co_create(filt->cache, ir->cache, filt, ir,
-                       (free_ft)&frt_bv_destroy, (void *)bv);
+                       (frt_free_ft)&frt_bv_destroy, (void *)bv);
     }
     return (FrtBitVector *)co->obj;
 }
@@ -43,13 +42,13 @@ static char *filt_to_s_i(FrtFilter *filt)
     return frt_estrdup(filt->name);
 }
 
-static unsigned long long filt_hash_default(FrtFilter *filt)
+static unsigned long long frt_filt_hash_default(FrtFilter *filt)
 {
     (void)filt;
     return 0;
 }
 
-static int filt_eq_default(FrtFilter *filt, FrtFilter *o)
+static int frt_filt_eq_default(FrtFilter *filt, FrtFilter *o)
 {
     (void)filt; (void)o;
     return false;
@@ -61,19 +60,19 @@ FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
     filt->cache     = frt_co_hash_create();
     filt->name      = name;
     filt->to_s      = &filt_to_s_i;
-    filt->hash      = &filt_hash_default;
-    filt->eq        = &filt_eq_default;
+    filt->hash      = &frt_filt_hash_default;
+    filt->eq        = &frt_filt_eq_default;
     filt->destroy_i = &frt_filt_destroy_i;
     filt->ref_cnt   = 1;
     return filt;
 }
 
-unsigned long long filt_hash(FrtFilter *filt)
+unsigned long long frt_filt_hash(FrtFilter *filt)
 {
     return frt_sym_hash(filt->name) ^ filt->hash(filt);
 }
 
-int filt_eq(FrtFilter *filt, FrtFilter *o)
+int frt_filt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return ((filt == o)
             || ((strcmp(filt->name, o->name) == 0)
@@ -106,7 +105,7 @@ static char *qfilt_to_s(FrtFilter *filt)
 static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
-    FrtSearcher *sea = isea_new(ir);
+    FrtSearcher *sea = frt_isea_new(ir);
     FrtWeight *weight = frt_q_weight(QF(filt)->query, sea);
     FrtScorer *scorer = weight->scorer(weight, ir);
     if (scorer) {

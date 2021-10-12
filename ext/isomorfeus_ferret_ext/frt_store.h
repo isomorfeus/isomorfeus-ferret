@@ -590,16 +590,6 @@ extern frt_uchar frt_is_read_byte(FrtInStream *is);
 extern frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len);
 
 /**
- * Read a 32-bit unsigned integer from the FrtInStream.
- *
- * @param is the FrtInStream to read from
- * @return a 32-bit unsigned integer
- * @raise FRT_IO_ERROR if there is a error reading from the file-system
- * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
- */
-extern frt_i32 frt_is_read_i32(FrtInStream *is);
-
-/**
  * Read a 64-bit unsigned integer from the FrtInStream.
  *
  * @param is the FrtInStream to read from

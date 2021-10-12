@@ -52,26 +52,26 @@ frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
 
     if (rfields == Qnil) return NULL;
 
-    fields = hs_new_str(NULL);
+    fields = frt_hs_new_str(NULL);
     if (TYPE(rfields) == T_ARRAY) {
         int i;
         for (i = 0; i < RARRAY_LEN(rfields); i++) {
             rval = rb_obj_as_string(RARRAY_PTR(rfields)[i]);
-            hs_add(fields, rstrdup(rval));
+            frt_hs_add(fields, rstrdup(rval));
         }
     } else {
         rval = rb_obj_as_string(rfields);
         if (strcmp("*", rs2s(rval)) == 0) {
-            hs_destroy(fields);
+            frt_hs_destroy(fields);
             fields = NULL;
         } else {
             s = str = rstrdup(rval);
             while ((p = strchr(s, '|')) && *p != '\0') {
                 *p = '\0';
-                hs_add(fields, strdup(s));
+                frt_hs_add(fields, strdup(s));
                 s = p + 1;
             }
-            hs_add(fields, strdup(s));
+            frt_hs_add(fields, strdup(s));
             free(str);
         }
     }
@@ -83,7 +83,7 @@ hs_safe_merge(FrtHashSet *merger, FrtHashSet *mergee)
 {
     FrtHashSetEntry *entry = mergee->first;
     for (; entry != NULL; entry = entry->next) {
-        hs_add_safe(merger, entry->elem);
+        frt_hs_add_safe(merger, entry->elem);
     }
 }
 
@@ -182,15 +182,15 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
         }
     }
     if (all_fields == NULL) {
-        all_fields = hs_new_str(NULL);
+        all_fields = frt_hs_new_str(NULL);
     }
     if (!analyzer) {
         analyzer = frt_mb_standard_analyzer_new(true);
     }
     qp = frt_qp_new(analyzer);
-    //hs_destroy(qp->all_fields);
-    //hs_destroy(qp->def_fields);
-    //hs_destroy(qp->tokenized_fields);
+    //frt_hs_destroy(qp->all_fields);
+    //frt_hs_destroy(qp->def_fields);
+    //frt_hs_destroy(qp->tokenized_fields);
     if (def_fields) hs_safe_merge(all_fields, def_fields);
     if (tkz_fields) hs_safe_merge(all_fields, tkz_fields);
     qp->all_fields = all_fields;
@@ -304,7 +304,7 @@ frb_qp_set_fields(VALUE self, VALUE rfields)
     if (qp->tokenized_fields == qp->all_fields) qp->tokenized_fields = NULL;
 
     if (fields == NULL) {
-        fields = hs_new_str(NULL);
+        fields = frt_hs_new_str(NULL);
     }
 
     /* make sure all the fields in tokenized fields are contained in
@@ -313,7 +313,7 @@ frb_qp_set_fields(VALUE self, VALUE rfields)
 
     /* delete old fields set */
     assert(qp->all_fields->free_elem_i == frt_dummy_free);
-    hs_destroy(qp->all_fields);
+    frt_hs_destroy(qp->all_fields);
 
     /* add the new fields set and add to def_fields if necessary */
     qp->all_fields = fields;
@@ -364,7 +364,7 @@ frb_qp_set_tkz_fields(VALUE self, VALUE rfields)
 {
     GET_QP;
     if (qp->tokenized_fields != qp->all_fields) {
-        hs_destroy(qp->tokenized_fields);
+        frt_hs_destroy(qp->tokenized_fields);
     }
     qp->tokenized_fields = frb_get_fields(rfields, NULL);
     return self;

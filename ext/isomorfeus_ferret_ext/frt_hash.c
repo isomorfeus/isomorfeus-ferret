@@ -1,7 +1,6 @@
 #include "frt_hash.h"
 #include "frt_global.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -117,7 +116,7 @@ static FrtHashEntry *h_lookup_ptr(FrtHash *self, const void *key)
     }
 }
 
-FrtHashEntry *h_lookup(FrtHash *self, register const void *key)
+FrtHashEntry *frt_h_lookup(FrtHash *self, register const void *key)
 {
     register const unsigned long long hash = self->hash_i(key);
     register unsigned long perturb;
@@ -162,7 +161,7 @@ FrtHashEntry *h_lookup(FrtHash *self, register const void *key)
     }
 }
 
-FrtHash *h_new_str(free_ft free_key, free_ft free_value)
+FrtHash *frt_h_new_str(frt_free_ft free_key, frt_free_ft free_value)
 {
     FrtHash *self;
     if (num_free_hts > 0) {
@@ -176,9 +175,9 @@ FrtHash *h_new_str(free_ft free_key, free_ft free_value)
     self->mask = FRT_HASH_MINSIZE - 1;
     self->table = self->smalltable;
     memset(self->smalltable, 0, sizeof(self->smalltable));
-    self->lookup_i = (lookup_ft)&h_lookup;
+    self->lookup_i = (lookup_ft)&frt_h_lookup;
     self->eq_i = str_eq;
-    self->hash_i = (hash_ft)frt_str_hash;
+    self->hash_i = (frt_hash_ft)frt_str_hash;
 
     self->free_key_i = free_key != NULL ? free_key : &frt_dummy_free;
     self->free_value_i = free_value != NULL ? free_value : &frt_dummy_free;
@@ -186,9 +185,9 @@ FrtHash *h_new_str(free_ft free_key, free_ft free_value)
     return self;
 }
 
-FrtHash *h_new_int(free_ft free_value)
+FrtHash *frt_h_new_int(frt_free_ft free_value)
 {
-    FrtHash *self     = h_new_str(NULL, free_value);
+    FrtHash *self     = frt_h_new_str(NULL, free_value);
 
     self->lookup_i = &h_lookup_ptr;
     self->eq_i     = NULL;
@@ -197,23 +196,23 @@ FrtHash *h_new_int(free_ft free_value)
     return self;
 }
 
-FrtHash *h_new(hash_ft hash, frt_eq_ft eq, free_ft free_key, free_ft free_value)
+FrtHash *frt_h_new(frt_hash_ft hash, frt_eq_ft eq, frt_free_ft free_key, frt_free_ft free_value)
 {
-    FrtHash *self     = h_new_str(free_key, free_value);
+    FrtHash *self     = frt_h_new_str(free_key, free_value);
 
-    self->lookup_i = &h_lookup;
+    self->lookup_i = &frt_h_lookup;
     self->eq_i     = eq;
     self->hash_i   = hash;
 
     return self;
 }
 
-void h_clear(FrtHash *self)
+void frt_h_clear(FrtHash *self)
 {
     int i;
     FrtHashEntry *he;
-    free_ft free_key   = self->free_key_i;
-    free_ft free_value = self->free_value_i;
+    frt_free_ft free_key   = self->free_key_i;
+    frt_free_ft free_value = self->free_value_i;
 
     /* Clear all the hash values and keys as necessary */
     if (free_key != frt_dummy_free || free_value != frt_dummy_free) {
@@ -231,10 +230,10 @@ void h_clear(FrtHash *self)
     self->fill = 0;
 }
 
-void h_destroy(FrtHash *self)
+void frt_h_destroy(FrtHash *self)
 {
     if (--(self->ref_cnt) <= 0) {
-        h_clear(self);
+        frt_h_clear(self);
 
         /* if a new table was created, be sure to free it */
         if (self->table != self->smalltable) {
@@ -250,13 +249,13 @@ void h_destroy(FrtHash *self)
     }
 }
 
-void *h_get(FrtHash *self, const void *key)
+void *frt_h_get(FrtHash *self, const void *key)
 {
     /* Note: lookup_i will never return NULL. */
     return self->lookup_i(self, key)->value;
 }
 
-int h_del(FrtHash *self, const void *key)
+int frt_h_del(FrtHash *self, const void *key)
 {
     FrtHashEntry *he = self->lookup_i(self, key);
 
@@ -273,7 +272,7 @@ int h_del(FrtHash *self, const void *key)
     }
 }
 
-void *h_rem(FrtHash *self, const void *key, bool destroy_key)
+void *frt_h_rem(FrtHash *self, const void *key, bool destroy_key)
 {
     void *val;
     FrtHashEntry *he = self->lookup_i(self, key);
@@ -339,7 +338,7 @@ static int h_resize(FrtHash *self, int min_newsize)
     return 0;
 }
 
-bool h_set_ext(FrtHash *self, const void *key, FrtHashEntry **he)
+bool frt_h_set_ext(FrtHash *self, const void *key, FrtHashEntry **he)
 {
     *he = self->lookup_i(self, key);
     if ((*he)->key == NULL) {
@@ -357,11 +356,11 @@ bool h_set_ext(FrtHash *self, const void *key, FrtHashEntry **he)
     return false;
 }
 
-FrtHashKeyStatus h_set(FrtHash *self, const void *key, void *value)
+FrtHashKeyStatus frt_h_set(FrtHash *self, const void *key, void *value)
 {
     FrtHashKeyStatus ret_val = FRT_HASH_KEY_DOES_NOT_EXIST;
     FrtHashEntry *he;
-    if (!h_set_ext(self, key, &he)) {
+    if (!frt_h_set_ext(self, key, &he)) {
         if (he->key != key) {
             self->free_key_i(he->key);
             if (he->value != value) {
@@ -383,10 +382,10 @@ FrtHashKeyStatus h_set(FrtHash *self, const void *key, void *value)
     return ret_val;
 }
 
-int h_set_safe(FrtHash *self, const void *key, void *value)
+int frt_h_set_safe(FrtHash *self, const void *key, void *value)
 {
     FrtHashEntry *he;
-    if (h_set_ext(self, key, &he)) {
+    if (frt_h_set_ext(self, key, &he)) {
         he->key = (void *)key;
         he->value = value;
         return true;
@@ -396,7 +395,7 @@ int h_set_safe(FrtHash *self, const void *key, void *value)
     }
 }
 
-FrtHashKeyStatus h_has_key(FrtHash *self, const void *key)
+FrtHashKeyStatus frt_h_has_key(FrtHash *self, const void *key)
 {
     FrtHashEntry *he = self->lookup_i(self, key);
     if (he->key == NULL || he->key == dummy_key) {
@@ -408,28 +407,28 @@ FrtHashKeyStatus h_has_key(FrtHash *self, const void *key)
     return FRT_HASH_KEY_EQUAL;
 }
 
-void *h_get_int(FrtHash *self, const unsigned long long key)
+void *frt_h_get_int(FrtHash *self, const unsigned long long key)
 {
-    return h_get(self, (const void *)key);
+    return frt_h_get(self, (const void *)key);
 }
 
-int h_del_int(FrtHash *self, const unsigned long long key)
+int frt_h_del_int(FrtHash *self, const unsigned long long key)
 {
-    return h_del(self, (const void *)key);
+    return frt_h_del(self, (const void *)key);
 }
 
-void *h_rem_int(FrtHash *self, const unsigned long long key)
+void *frt_h_rem_int(FrtHash *self, const unsigned long long key)
 {
-    return h_rem(self, (const void *)key, false);
+    return frt_h_rem(self, (const void *)key, false);
 }
 
-FrtHashKeyStatus h_set_int(FrtHash *self,
+FrtHashKeyStatus frt_h_set_int(FrtHash *self,
                                const unsigned long long key,
                                void *value)
 {
     FrtHashKeyStatus ret_val = FRT_HASH_KEY_DOES_NOT_EXIST;
     FrtHashEntry *he;
-    if (!h_set_ext(self, (const void *)key, &he)) {
+    if (!frt_h_set_ext(self, (const void *)key, &he)) {
         /* Only free old value if it isn't the new value */
         if (he->value != value) {
             self->free_value_i(he->value);
@@ -442,10 +441,10 @@ FrtHashKeyStatus h_set_int(FrtHash *self,
     return ret_val;
 }
 
-int h_set_safe_int(FrtHash *self, const unsigned long long key, void *value)
+int frt_h_set_safe_int(FrtHash *self, const unsigned long long key, void *value)
 {
     FrtHashEntry *he;
-    if (h_set_ext(self, (const void *)key, &he)) {
+    if (frt_h_set_ext(self, (const void *)key, &he)) {
         he->key = dummy_int_key;
         he->value = value;
         return true;
@@ -453,12 +452,12 @@ int h_set_safe_int(FrtHash *self, const unsigned long long key, void *value)
     return false;
 }
 
-int h_has_key_int(FrtHash *self, const unsigned long long key)
+int frt_h_has_key_int(FrtHash *self, const unsigned long long key)
 {
-    return h_has_key(self, (const void *)key);
+    return frt_h_has_key(self, (const void *)key);
 }
 
-void h_each(FrtHash *self,
+void frt_h_each(FrtHash *self,
             void (*each_kv) (void *key, void *value, void *arg), void *arg)
 {
     FrtHashEntry *he;
@@ -471,14 +470,14 @@ void h_each(FrtHash *self,
     }
 }
 
-FrtHash *h_clone(FrtHash *self, h_clone_ft clone_key, h_clone_ft clone_value)
+FrtHash *frt_h_clone(FrtHash *self, frt_h_clone_ft clone_key, frt_h_clone_ft clone_value)
 {
     void *key, *value;
     FrtHashEntry *he;
     int i = self->size;
     FrtHash *ht_clone;
 
-    ht_clone = h_new(self->hash_i,
+    ht_clone = frt_h_new(self->hash_i,
                      self->eq_i,
                      self->free_key_i,
                      self->free_value_i);
@@ -487,33 +486,14 @@ FrtHash *h_clone(FrtHash *self, h_clone_ft clone_key, h_clone_ft clone_value)
         if (he->key && he->key != dummy_key) {        /* active entry */
             key = clone_key ? clone_key(he->key) : he->key;
             value = clone_value ? clone_value(he->value) : he->value;
-            h_set(ht_clone, key, value);
+            frt_h_set(ht_clone, key, value);
             i--;
         }
     }
     return ht_clone;
 }
 
-void h_str_print_keys(FrtHash *self, FILE *out)
-{
-    FrtHashEntry *he;
-    int i = self->size;
-    char **keys = FRT_ALLOC_N(char *, self->size);
-    for (he = self->table; i > 0; he++) {
-        if (he->key && he->key != dummy_key) {        /* active entry */
-            i--;
-            keys[i] = (char *)he->key;
-        }
-    }
-    frt_strsort(keys, self->size);
-    fprintf(out, "keys:\n");
-    for (i = 0; i < self->size; i++) {
-        fprintf(out, "\t%s\n", keys[i]);
-    }
-    free(keys);
-}
-
-void hash_finalize()
+void frt_hash_finalize()
 {
     while (num_free_hts > 0) {
         free(free_hts[--num_free_hts]);

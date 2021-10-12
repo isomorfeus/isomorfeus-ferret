@@ -3,7 +3,6 @@
 #include "frt_search.h"
 #include "frt_array.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 #define PhQ(query) ((FrtPhraseQuery *)(query))
 
@@ -314,7 +313,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
     PhSc(self)->check_repeats   = false;
 
     if (slop) {
-        term_set = hs_new_str((free_ft)NULL);
+        term_set = frt_hs_new_str((frt_free_ft)NULL);
     }
     for (i = 0; i < pos_cnt; i++) {
         /* check for repeats */
@@ -323,7 +322,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
             const int t_cnt = frt_ary_size(terms);
             int j;
             for (j = 0; j < t_cnt; j++) {
-                if (hs_add(term_set, terms[j])) {
+                if (frt_hs_add(term_set, terms[j])) {
                     PhSc(self)->check_repeats = true;
                     break;
                 }
@@ -333,7 +332,7 @@ static FrtScorer *phsc_new(FrtWeight *weight,
     }
 
     if (slop) {
-        hs_destroy(term_set);
+        frt_hs_destroy(term_set);
     }
 
     self->score     = &phsc_score;
@@ -537,7 +536,7 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
     FrtTermDocEnum **tps, *tpe;
     FrtPhrasePosition *positions = phq->positions;
     const int pos_cnt = phq->pos_cnt;
-    const int field_num = fis_get_field_num(ir->fis, phq->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, phq->field);
 
     if (pos_cnt == 0 || field_num < 0) {
         return NULL;
@@ -562,12 +561,12 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
     if (phq->slop == 0) {       /* optimize exact (common) case */
         phsc = exact_phrase_scorer_new(self, tps, positions, pos_cnt,
                                        self->similarity,
-                                       ir_get_norms_i(ir, field_num));
+                                       frt_ir_get_norms_i(ir, field_num));
     }
     else {
         phsc = sloppy_phrase_scorer_new(self, tps, positions, pos_cnt,
                                         self->similarity, phq->slop,
-                                        ir_get_norms_i(ir, field_num));
+                                        frt_ir_get_norms_i(ir, field_num));
     }
     free(tps);
     return phsc;
@@ -593,7 +592,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     int i, j;
     char *doc_freqs = NULL;
     size_t len = 0, pos = 0;
-    const int field_num = fis_get_field_num(ir->fis, phq->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, phq->field);
     const char *field = phq->field;
 
     if (field_num < 0) {
@@ -943,7 +942,7 @@ static void phq_extract_terms(FrtQuery *self, FrtHashSet *term_set)
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
-            hs_add(term_set, frt_term_new(phq->field, terms[j]));
+            frt_hs_add(term_set, frt_term_new(phq->field, terms[j]));
         }
     }
 }

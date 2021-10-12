@@ -1,7 +1,6 @@
 #include "frt_helper.h"
-#include "frt_internal.h"
 
-int hlp_string_diff(register const char *const s1,
+int frt_hlp_string_diff(register const char *const s1,
                            register const char *const s2)
 {
     register int i = 0;
@@ -11,16 +10,16 @@ int hlp_string_diff(register const char *const s1,
     return i;
 }
 
-i32 float2int(float f)
+frt_i32 frt_float2int(float f)
 {
-    union { i32 i; float f; } tmp;
+    union { frt_i32 i; float f; } tmp;
     tmp.f = f;
     return tmp.i;
 }
 
-float int2float(i32 v)
+float frt_int2float(frt_i32 v)
 {
-    union { i32 i; float f; } tmp;
+    union { frt_i32 i; float f; } tmp;
     tmp.i = v;
     return tmp.f;
 }
@@ -34,18 +33,18 @@ float frt_byte2float(unsigned char b)
         frt_u32 mantissa = b & 0x07;
         frt_u32 exponent = (b >> 3) & 0x1f;
 
-        return int2float((mantissa << 21) | ((exponent + 48) << 24));
+        return frt_int2float((mantissa << 21) | ((exponent + 48) << 24));
     }
 }
 
-unsigned char float2byte(float f)
+unsigned char frt_float2byte(float f)
 {
     if (f <= 0.0) {
         return 0;
     }
     else {
         /* correctly order the bytes for encoding */
-        frt_u32 i = float2int(f);
+        frt_u32 i = frt_float2int(f);
         int mantissa = (i & 0xEf0000) >> 21;
         int exponent = ((i >> 24) - 48);
 

@@ -23,7 +23,7 @@
 #define frt_ary_new()               frt_ary_new_i(sizeof(void *), 0)
 #define frt_ary_resize(ary, size)   frt_ary_resize_i(((void ***)(void *)&ary), size)
 #define frt_ary_push(ary, val)      frt_ary_push_i(((void ***)(void *)&ary), val)
-#define frt_ary_destroy(ary, f)     frt_ary_destroy_i(((void **)ary), (free_ft)f)
+#define frt_ary_destroy(ary, f)     frt_ary_destroy_i(((void **)ary), (frt_free_ft)f)
 #define frt_ary_grow(ary)           frt_ary_resize(ary, frt_ary_sz(ary))
 #define frt_ary_last(ary)           ary[frt_ary_sz(ary) - 1]
 

@@ -3,7 +3,6 @@
 #include "frt_search.h"
 #include "frt_hashset.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 #define CLAUSE_INIT_CAPA 4
 
@@ -153,8 +152,8 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         FrtMatchVector *full_mv = frt_matchv_new();
         FrtHashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
-        ir->fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-        fis_add_field(ir->fis,
+        ir->fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+        frt_fis_add_field(ir->fis,
                       frt_fi_new(tv->field, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
         ir->store = (FrtStore *)tv;
         ir->term_positions = &spanq_ir_term_positions;
@@ -166,13 +165,13 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
         }
         sp_enum->destroy(sp_enum);
 
-        fis_deref(ir->fis);
+        frt_fis_deref(ir->fis);
         free(ir);
 
         frt_matchv_compact(full_mv);
         mv_to_term_mv(mv, full_mv, terms, tv);
         frt_matchv_destroy(full_mv);
-        hs_destroy(terms);
+        frt_hs_destroy(terms);
     }
     return mv;
 }
@@ -284,7 +283,7 @@ static void spansc_destroy(FrtScorer *self)
 static FrtScorer *spansc_new(FrtWeight *weight, FrtIndexReader *ir)
 {
     FrtScorer *self = NULL;
-    const int field_num = fis_get_field_num(ir->fis, SpQ(weight->query)->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, SpQ(weight->query)->field);
     if (field_num >= 0) {
         FrtQuery *spanq = weight->query;
         self = frt_scorer_new(SpanScorer, weight->similarity);
@@ -423,7 +422,7 @@ static FrtSpanEnum *spante_new(FrtQuery *query, FrtIndexReader *ir)
     char *term = SpTQ(query)->term;
     FrtSpanEnum *self = (FrtSpanEnum *)FRT_ALLOC(SpanTermEnum);
 
-    SpTEn(self)->positions  = ir_term_positions_for(ir, SpQ(query)->field,
+    SpTEn(self)->positions  = frt_ir_term_positions_for(ir, SpQ(query)->field,
                                                     term);
     SpTEn(self)->position   = -1;
     SpTEn(self)->doc        = -1;
@@ -526,7 +525,7 @@ static bool spanmte_next(FrtSpanEnum *self)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (free_ft)NULL);
+        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             if (tpew_next(tpews[i])) {
                 frt_pq_push(tpew_pq, tpews[i]);
@@ -563,7 +562,7 @@ static bool spanmte_skip_to(FrtSpanEnum *self, int target)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (free_ft)NULL);
+        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             tpew_skip_to(tpews[i], target);
             frt_pq_push(tpew_pq, tpews[i]);
@@ -625,7 +624,7 @@ static FrtSpanEnum *spanmte_new(FrtQuery *query, FrtIndexReader *ir)
     for (i = 0; i < smtq->term_cnt; i++) {
         char *term = smtq->terms[i];
         smte->tpews[i] = tpew_new(term,
-            ir_term_positions_for(ir, SpQ(query)->field, term));
+            frt_ir_term_positions_for(ir, SpQ(query)->field, term));
     }
     smte->tpew_cnt          = smtq->term_cnt;
     smte->tpew_pq           = NULL;
@@ -914,7 +913,7 @@ static FrtSpanEnum *spanoe_new(FrtQuery *query, FrtIndexReader *ir)
     }
 
     SpOEn(self)->queue      = frt_pq_new(SpOEn(self)->s_cnt, (frt_lt_ft)&span_less_than,
-                                     (free_ft)NULL);
+                                     (frt_free_ft)NULL);
 
     self->query             = query;
     self->next              = &spanoe_next;
@@ -1403,7 +1402,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
 
     char *query_str;
     FrtHashSet *terms = SpW(self)->terms;
-    const int field_num = fis_get_field_num(ir->fis, SpQ(self->query)->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, SpQ(self->query)->field);
     char *doc_freqs = NULL;
     size_t df_i = 0;
     FrtHashSetEntry *hse;
@@ -1495,7 +1494,7 @@ static char *spanw_to_s(FrtWeight *self)
 
 static void spanw_destroy(FrtWeight *self)
 {
-    hs_destroy(SpW(self)->terms);
+    frt_hs_destroy(SpW(self)->terms);
     frt_w_destroy(self);
 }
 
@@ -1545,13 +1544,13 @@ static void spantq_destroy_i(FrtQuery *self)
 
 static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 {
-    hs_add(terms, frt_term_new(SpQ(self)->field, SpTQ(self)->term));
+    frt_hs_add(terms, frt_term_new(SpQ(self)->field, SpTQ(self)->term));
 }
 
 static FrtHashSet *spantq_get_terms(FrtQuery *self)
 {
-    FrtHashSet *terms = hs_new_str(&free);
-    hs_add(terms, frt_estrdup(SpTQ(self)->term));
+    FrtHashSet *terms = frt_hs_new_str(&free);
+    frt_hs_add(terms, frt_estrdup(SpTQ(self)->term));
     return terms;
 }
 
@@ -1633,17 +1632,17 @@ static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
-        hs_add(terms, frt_term_new(SpQ(self)->field, smtq->terms[i]));
+        frt_hs_add(terms, frt_term_new(SpQ(self)->field, smtq->terms[i]));
     }
 }
 
 static FrtHashSet *spanmtq_get_terms(FrtQuery *self)
 {
-    FrtHashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = frt_hs_new_str(&free);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
-        hs_add(terms, frt_estrdup(smtq->terms[i]));
+        frt_hs_add(terms, frt_estrdup(smtq->terms[i]));
     }
     return terms;
 }
@@ -1844,12 +1843,12 @@ static void spanoq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static FrtHashSet *spanoq_get_terms(FrtQuery *self)
 {
     FrtSpanOrQuery *soq = SpOQ(self);
-    FrtHashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = frt_hs_new_str(&free);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
         FrtQuery *clause = soq->clauses[i];
         FrtHashSet *sub_terms = SpQ(clause)->get_terms(clause);
-        hs_merge(terms, sub_terms);
+        frt_hs_merge(terms, sub_terms);
     }
 
     return terms;
@@ -2028,12 +2027,12 @@ static void spannq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static FrtHashSet *spannq_get_terms(FrtQuery *self)
 {
     FrtSpanNearQuery *snq = SpNQ(self);
-    FrtHashSet *terms = hs_new_str(&free);
+    FrtHashSet *terms = frt_hs_new_str(&free);
     int i;
     for (i = 0; i < snq->c_cnt; i++) {
         FrtQuery *clause = snq->clauses[i];
         FrtHashSet *sub_terms = SpQ(clause)->get_terms(clause);
-        hs_merge(terms, sub_terms);
+        frt_hs_merge(terms, sub_terms);
     }
 
     return terms;
@@ -2325,7 +2324,7 @@ static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
 
 static FrtQuery *spanprq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
-    const int field_num = fis_get_field_num(ir->fis, SpQ(self)->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, SpQ(self)->field);
     FrtQuery *volatile q = frt_spanmtq_new_conf(SpQ(self)->field, SpPfxQ(self)->max_terms);
     q->boost = self->boost;        /* set the boost */
 

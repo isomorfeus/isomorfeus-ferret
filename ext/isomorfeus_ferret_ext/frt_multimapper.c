@@ -3,7 +3,6 @@
 #include "frt_array.h"
 #include "frt_bitvector.h"
 #include <string.h>
-#include "frt_internal.h"
 
 #define St(state) ((FrtState *)(state))
 #define UCtoI(val) ((int)(unsigned char)(val))
@@ -163,14 +162,14 @@ static void mulmap_bv_set_states(FrtBitVector *bv, int *states, int cnt)
 static FrtDeterministicState *mulmap_process_state(FrtMultiMapper *self, FrtBitVector *bv)
 {
     FrtDeterministicState *current_state
-        = (FrtDeterministicState *)h_get(self->dstates_map, bv);
+        = (FrtDeterministicState *)frt_h_get(self->dstates_map, bv);
     if (current_state == NULL) {
         int bit, i;
         int match_len = 0, max_match_len = 0;
         FrtState *start = self->nstates[0];
         FrtDeterministicState *start_ds;
         current_state = FRT_ALLOC_AND_ZERO(FrtDeterministicState);
-        h_set(self->dstates_map, bv, current_state);
+        frt_h_set(self->dstates_map, bv, current_state);
         if (self->d_size >= self->d_capa) {
             self->d_capa <<= 1;
             FRT_REALLOC_N(self->dstates, FrtDeterministicState *, self->d_capa);
@@ -248,10 +247,10 @@ void frt_mulmap_compile(FrtMultiMapper *self)
     self->nstates = nstates;
     self->nsize = size;
     self->next_states = FRT_ALLOC_N(int, size);
-    self->dstates_map = h_new((hash_ft)&frt_bv_hash, (frt_eq_ft)&frt_bv_eq,
-                              (free_ft)&frt_bv_destroy, (free_ft)NULL);
+    self->dstates_map = frt_h_new((frt_hash_ft)&frt_bv_hash, (frt_eq_ft)&frt_bv_eq,
+                              (frt_free_ft)&frt_bv_destroy, (frt_free_ft)NULL);
     mulmap_process_state(self, frt_bv_new_capa(0));
-    h_destroy(self->dstates_map);
+    frt_h_destroy(self->dstates_map);
     for (i = size - 1; i >= 0; i--) {
         state_destroy(nstates[i]);
     }

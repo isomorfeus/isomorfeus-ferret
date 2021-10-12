@@ -6,7 +6,6 @@
 #include "frt_hashset.h"
 #include "frb_threading.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 /* Object Map */
 static FrtHash *object_map;
@@ -59,7 +58,7 @@ int value_eq(const void *key1, const void *key2)
 
 VALUE object_get(void *key)
 {
-    VALUE val = (VALUE)h_get(object_map, key);
+    VALUE val = (VALUE)frt_h_get(object_map, key);
     if (!val) val = Qnil;
     return val;
 }
@@ -69,20 +68,20 @@ void
 //object_add(void *key, VALUE obj)
 object_add2(void *key, VALUE obj, const char *file, int line)
 {
-    if (h_get(object_map, key))
+    if (frt_h_get(object_map, key))
         printf("failed adding %lx to %ld; already contains %lx. %s:%d\n",
-               (long)obj, (long)key, (long)h_get(object_map, key), file, line);
+               (long)obj, (long)key, (long)frt_h_get(object_map, key), file, line);
     //printf("adding %ld. now contains %d %s:%d\n", (long)key, ++hash_cnt, file, line);
-    h_set(object_map, key, (void *)obj);
+    frt_h_set(object_map, key, (void *)obj);
 }
 
 void
 //object_set(void *key, VALUE obj)
 object_set2(void *key, VALUE obj, const char *file, int line)
 {
-    //if (!h_get(object_map, key))
+    //if (!frt_h_get(object_map, key))
       //printf("adding %ld. now contains %d %s:%d\n", (long)key, ++hash_cnt, file, line);
-    h_set(object_map, key, (void *)obj);
+    frt_h_set(object_map, key, (void *)obj);
 }
 
 void
@@ -92,12 +91,12 @@ object_del2(void *key, const char *file, int line)
     if (object_get(key) == Qnil)
         printf("failed deleting %ld. %s:%d\n", (long)key, file, line);
     //printf("deleting %ld. now contains %ld, %s:%d\n", (long)key, --hash_cnt, file, line);
-    h_del(object_map, key);
+    frt_h_del(object_map, key);
 }
 
 void frb_gc_mark(void *key)
 {
-    VALUE val = (VALUE)h_get(object_map, key);
+    VALUE val = (VALUE)frt_h_get(object_map, key);
     if (val)
         rb_gc_mark(val);
 }
@@ -122,22 +121,22 @@ void frb_thread_once(int *once_control, void (*init_routine) (void))
 
 void frb_thread_key_create(frt_thread_key_t *key, void (*destr_function)(void *))
 {
-    *key = h_new(&value_hash, &value_eq, NULL, destr_function);
+    *key = frt_h_new(&value_hash, &value_eq, NULL, destr_function);
 }
 
 void frb_thread_key_delete(frt_thread_key_t key)
 {
-    h_destroy(key);
+    frt_h_destroy(key);
 }
 
 void frb_thread_setspecific(frt_thread_key_t key, const void *pointer)
 {
-    h_set(key, (void *)rb_thread_current(), (void *)pointer);
+    frt_h_set(key, (void *)rb_thread_current(), (void *)pointer);
 }
 
 void *frb_thread_getspecific(frt_thread_key_t key)
 {
-    return h_get(key, (void *)rb_thread_current());
+    return frt_h_get(key, (void *)rb_thread_current());
 }
 
 void frb_create_dir(VALUE rpath)
@@ -341,7 +340,7 @@ void Init_isomorfeus_ferret_ext(void)
     frt_init(1, progname);
 
     /* initialize object map */
-    object_map = h_new(&value_hash, &value_eq, NULL, NULL);
+    object_map = frt_h_new(&value_hash, &value_eq, NULL, NULL);
 
     /* IDs */
     id_new = rb_intern("new");

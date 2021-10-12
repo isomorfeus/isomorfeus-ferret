@@ -1,10 +1,9 @@
 #include <string.h>
 #include "frt_priorityqueue.h"
-#include "frt_internal.h"
 
 #define START_CAPA 127
 
-FrtPriorityQueue *frt_pq_new(int capa, frt_lt_ft less_than, free_ft free_elem)
+FrtPriorityQueue *frt_pq_new(int capa, frt_lt_ft less_than, frt_free_ft free_elem)
 {
     FrtPriorityQueue *pq = FRT_ALLOC(FrtPriorityQueue);
     pq->size = 0;

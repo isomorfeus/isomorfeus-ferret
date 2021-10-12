@@ -100,7 +100,7 @@ extern void frt_register_for_cleanup(void *p, frt_free_ft free_func);
 
 /**
  * A dummy function which can be passed to functions which expect a free
- * function such as h_new() if you don't want the free functions to do anything.
+ * function such as frt_h_new() if you don't want the free functions to do anything.
  * This function will do nothing.
  *
  * @param p the object which this function will be called on.

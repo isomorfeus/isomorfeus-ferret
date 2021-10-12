@@ -1,7 +1,6 @@
 #include "ruby.h"
 #include <string.h>
 #include "frt_field_index.h"
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -38,7 +37,7 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
     int length = 0;
     FrtTermEnum *volatile te = NULL;
     FrtTermDocEnum *volatile tde = NULL;
-    FrtFieldInfo *fi = fis_get_field(ir->fis, field);
+    FrtFieldInfo *fi = frt_fis_get_field(ir->fis, field);
     const volatile int field_num = fi ? fi->number : -1;
     FrtFieldIndex *volatile self = NULL;
     FrtFieldIndex key;
@@ -50,13 +49,13 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
     }
 
     if (!ir->field_index_cache) {
-        ir->field_index_cache = h_new(&field_index_hash, &field_index_eq,
+        ir->field_index_cache = frt_h_new(&field_index_hash, &field_index_eq,
                                       NULL, &field_index_destroy);
     }
 
     key.field = field;
     key.klass = klass;
-    self = (FrtFieldIndex *)h_get(ir->field_index_cache, &key);
+    self = (FrtFieldIndex *)frt_h_get(ir->field_index_cache, &key);
 
     if (self == NULL) {
         self = FRT_ALLOC(FrtFieldIndex);
@@ -83,7 +82,7 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
                 te->close(te);
             FRT_XENDTRY
         }
-        h_set(ir->field_index_cache, self, self);
+        frt_h_set(ir->field_index_cache, self, self);
     }
 
     return self;

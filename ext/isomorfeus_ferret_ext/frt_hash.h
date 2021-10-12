@@ -14,7 +14,7 @@
                                  * conserve memory */
 
 /**
- * Return values for h_set
+ * Return values for frt_h_set
  */
 typedef enum
 {
@@ -201,12 +201,12 @@ extern void *frt_h_get(FrtHash *self, const void *key);
  * Delete the value in Hash referenced by the key +key+. When the value
  * is deleted it is also destroyed along with the key depending on how
  * free_key and free_value where set when the Hash was created. If you
- * don't want to destroy the value use h_rem.
+ * don't want to destroy the value use frt_h_rem.
  *
  * This functions returns +true+ if the value was deleted successfully or
  * false if the key was not found.
  *
- * @see h_rem
+ * @see frt_h_rem
  *
  * @param self the Hash to reference
  * @param key the key to lookup
@@ -221,9 +221,9 @@ extern int frt_h_del(FrtHash *self, const void *key);
  * destroyed using the free_key functions passed when the Hash is created
  * if del_key is true.
  *
- * If you want the value to be destroyed, use the h_del function.
+ * If you want the value to be destroyed, use the frt_h_del function.
  *
- * @see h_del
+ * @see frt_h_del
  *
  * @param self the Hash to reference
  * @param key the key to lookup
@@ -326,12 +326,12 @@ extern void *frt_h_get_int(FrtHash *self, const unsigned long long key);
 /**
  * Delete the value in Hash referenced by the integer key +key+. When the
  * value is deleted it is also destroyed using the free_value function. If you
- * don't want to destroy the value use h_rem.
+ * don't want to destroy the value use frt_h_rem.
  *
  * This functions returns +true+ if the value was deleted successfully or
  * false if the key was not found.
  *
- * @see h_rem
+ * @see frt_h_rem
  *
  * @param self the Hash to reference
  * @param key the integer key to lookup
@@ -344,9 +344,9 @@ extern int frt_h_del_int(FrtHash *self, const unsigned long long key);
  * Remove the value in Hash referenced by the integer key +key+. When the
  * value is removed it is returned rather than destroyed.
  *
- * If you want the value to be destroyed, use the h_del function.
+ * If you want the value to be destroyed, use the frt_h_del function.
  *
- * @see h_del
+ * @see frt_h_del
  *
  * @param self the Hash to reference
  * @param key the integer key to lookup
@@ -408,45 +408,7 @@ extern int frt_h_set_safe_int(FrtHash *self,
  */
 extern int frt_h_has_key_int(FrtHash *self, const unsigned long long key);
 
-typedef void (*frt_h_each_key_val_ft)(void *key, void *value, void *arg);
-
 /**
- * Run function +each_key_val+ on each key and value in the Hash. The third
- * argument +arg+ will also be passed to +each_key_val+. If you need to pass
- * more than one argument to the function you should pass a struct.
- *
- * example;
- *
- * // Lets say we have stored strings in a Hash and we want to put them
- * // all into an array. First we need to create a struct to store the
- * // strings;
- *
- * struct StringArray {
- *   char **strings;
- *   int cnt;
- *   int size;
- * };
- *
- * static void add_string_ekv(void *key, void *value,
- *                            struct StringArray *str_arr)
- * {
- *   str_arr->strings[str_arr->cnt] = (char *)value;
- *   str_arr->cnt++;
- * }
- *
- * struct StringArray *h_extract_strings(Hash *ht)
- * {
- *   struct StringArray *str_arr = FRT_ALLOC(struct StringArray);
- *
- *   str_arr->strings = FRT_ALLOC_N(char *, ht->size);
- *   str_arr->cnt = 0;
- *   str_arr->size = ht->size;
- *
- *   h_each(ht, (h_each_key_val_ft)add_string_ekv, str_arr);
- *
- *   return str_arr;
- * }
- *
  * @param self the Hash to run the function on
  * @param each_key_val function to run on on each key and value in the
  *   Hash
@@ -487,11 +449,6 @@ extern FrtHash *frt_h_clone(FrtHash *self,
  */
 extern FrtHashEntry *frt_h_lookup(FrtHash *ht,
                                      register const void *key);
-
-typedef FrtHashEntry *(*frt_h_lookup_ft)(FrtHash *ht,
-                                            register const void *key);
-
-extern void frt_h_str_print_keys(FrtHash *ht, FILE *out);
 
 /**
  * The Hash implementation actually keeps a buffer of old hash tables around

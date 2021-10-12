@@ -1,11 +1,10 @@
 #include "ruby.h"
 #include "frt_index.h"
 #include "frt_array.h"
-#include "frt_internal.h"
 
 extern VALUE cStateError;
 extern void frt_store_destroy(FrtStore *store);
-extern FrtInStream *is_new();
+extern FrtInStream *frt_is_new();
 extern FrtStore *frt_store_new();
 
 /****************************************************************************
@@ -26,7 +25,7 @@ static void cmpd_touch(FrtStore *store, const char *file_name)
 
 static int cmpd_exists(FrtStore *store, const char *file_name)
 {
-    if (h_get(store->dir.cmpd->entries, file_name) != NULL) {
+    if (frt_h_get(store->dir.cmpd->entries, file_name) != NULL) {
         return true;
     }
     else {
@@ -82,9 +81,9 @@ static void cmpd_close_i(FrtStore *store)
         rb_raise(rb_eIOError, "Tried to close already closed compound store");
     }
 
-    h_destroy(cmpd->entries);
+    frt_h_destroy(cmpd->entries);
 
-    is_close(cmpd->stream);
+    frt_is_close(cmpd->stream);
     cmpd->stream = NULL;
     free(store->dir.cmpd);
     frt_store_destroy(store);
@@ -92,7 +91,7 @@ static void cmpd_close_i(FrtStore *store)
 
 static off_t cmpd_length(FrtStore *store, const char *file_name)
 {
-    FileEntry *fe = (FileEntry *)h_get(store->dir.cmpd->entries, file_name);
+    FileEntry *fe = (FileEntry *)frt_h_get(store->dir.cmpd->entries, file_name);
     if (fe != NULL) {
         return fe->length;
     }
@@ -123,7 +122,7 @@ static off_t cmpdi_length_i(FrtInStream *is)
 static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len)
 {
     FrtCompoundInStream *cis = is->d.cis;
-    off_t start = is_pos(is);
+    off_t start = frt_is_pos(is);
 
     if ((start + len) > cis->length) {
         rb_raise(rb_eEOFError, "Tried to read past end of file. File length is "
@@ -131,8 +130,8 @@ static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len)
               cis->length, start + len);
     }
 
-    is_seek(cis->sub, cis->offset + start);
-    is_read_bytes(cis->sub, b, len);
+    frt_is_seek(cis->sub, cis->offset + start);
+    frt_is_read_bytes(cis->sub, b, len);
 }
 
 static const struct FrtInStreamMethods CMPD_IN_STREAM_METHODS = {
@@ -144,7 +143,7 @@ static const struct FrtInStreamMethods CMPD_IN_STREAM_METHODS = {
 
 static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t length)
 {
-    FrtInStream *is = is_new();
+    FrtInStream *is = frt_is_new();
     FrtCompoundInStream *cis = FRT_ALLOC(FrtCompoundInStream);
 
     cis->sub = sub_is;
@@ -169,7 +168,7 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
               "stream is closed.");
     }
 
-    entry = (FileEntry *)h_get(cmpd->entries, file_name);
+    entry = (FileEntry *)frt_h_get(cmpd->entries, file_name);
     if (entry == NULL) {
         frt_mutex_unlock(&store->mutex);
         rb_raise(rb_eIOError, "File %s does not exist: ", file_name);
@@ -218,15 +217,15 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
 
         cmpd->store       = store;
         cmpd->name        = name;
-        cmpd->entries     = h_new_str(&free, &free);
+        cmpd->entries     = frt_h_new_str(&free, &free);
         is = cmpd->stream = store->open_input(store, cmpd->name);
 
         /* read the directory and init files */
-        count = is_read_vint(is);
+        count = frt_is_read_vint(is);
         entry = NULL;
         for (i = 0; i < count; i++) {
-            offset = (off_t)is_read_i64(is);
-            fname = is_read_string(is);
+            offset = (off_t)frt_is_read_i64(is);
+            fname = frt_is_read_string(is);
 
             if (entry != NULL) {
                 /* set length of the previous entry */
@@ -235,11 +234,11 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
 
             entry = FRT_ALLOC(FileEntry);
             entry->offset = offset;
-            h_set(cmpd->entries, fname, entry);
+            frt_h_set(cmpd->entries, fname, entry);
         }
     FRT_XCATCHALL
-        if (is) is_close(is);
-        if (cmpd->entries) h_destroy(cmpd->entries);
+        if (is) frt_is_close(is);
+        if (cmpd->entries) frt_h_destroy(cmpd->entries);
         free(cmpd);
     FRT_XENDTRY
 
@@ -278,7 +277,7 @@ FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name)
     FrtCompoundWriter *cw = FRT_ALLOC(FrtCompoundWriter);
     cw->store = store;
     cw->name = name;
-    cw->ids = hs_new_str(&free);
+    cw->ids = frt_hs_new_str(&free);
     cw->file_entries = frt_ary_new_type_capa(FrtCWFileEntry, FRT_CW_INIT_CAPA);
     return cw;
 }
@@ -286,7 +285,7 @@ FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name)
 void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
 {
     id = frt_estrdup(id);
-    if (hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
+    if (frt_hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
         rb_raise(rb_eIOError, "Tried to add file \"%s\" which has already been "
               "added to the compound store", id);
     }
@@ -308,7 +307,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
 
     while (remainder > 0) {
         len = FRT_MIN(remainder, FRT_BUFFER_SIZE);
-        is_read_bytes(is, buffer, len);
+        frt_is_read_bytes(is, buffer, len);
         frt_os_write_bytes(os, buffer, len);
         remainder -= len;
     }
@@ -329,7 +328,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
               "<%"FRT_OFF_T_PFX"d>", len, length);
     }
 
-    is_close(is);
+    frt_is_close(is);
 }
 
 void frt_cw_close(FrtCompoundWriter *cw)
@@ -371,7 +370,7 @@ void frt_cw_close(FrtCompoundWriter *cw)
         frt_os_close(os);
     }
 
-    hs_destroy(cw->ids);
+    frt_hs_destroy(cw->ids);
     frt_ary_free(cw->file_entries);
     free(cw);
 }

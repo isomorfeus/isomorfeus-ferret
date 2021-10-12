@@ -1,7 +1,6 @@
 #include "ruby.h"
 #include "frt_document.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -98,7 +97,7 @@ char *frt_df_to_s(FrtDocField *df)
 FrtDocument *frt_doc_new()
 {
     FrtDocument *doc = FRT_ALLOC(FrtDocument);
-    doc->field_dict = h_new_str(NULL, (free_ft)&frt_df_destroy);
+    doc->field_dict = frt_h_new_str(NULL, (frt_free_ft)&frt_df_destroy);
     doc->size = 0;
     doc->capa = FRT_DOC_INIT_CAPA;
     doc->fields = FRT_ALLOC_N(FrtDocField *, doc->capa);
@@ -108,7 +107,7 @@ FrtDocument *frt_doc_new()
 
 FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 {
-    if (!h_set_safe(doc->field_dict, df->name, df)) {
+    if (!frt_h_set_safe(doc->field_dict, df->name, df)) {
         rb_raise(rb_eException, "tried to add %s field which alread existed\n",
               df->name);
     }
@@ -123,12 +122,12 @@ FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 
 FrtDocField *frt_doc_get_field(FrtDocument *doc, FrtSymbol name)
 {
-    return (FrtDocField *)h_get(doc->field_dict, name);
+    return (FrtDocField *)frt_h_get(doc->field_dict, name);
 }
 
 void frt_doc_destroy(FrtDocument *doc)
 {
-    h_destroy(doc->field_dict);
+    frt_h_destroy(doc->field_dict);
     free(doc->fields);
     free(doc);
 }

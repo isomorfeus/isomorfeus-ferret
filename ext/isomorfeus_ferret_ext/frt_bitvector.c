@@ -1,6 +1,5 @@
 #include "ruby.h"
 #include "frt_bitvector.h"
-#include "frt_internal.h"
 #include <string.h>
 
 extern VALUE cStateError;

@@ -1,7 +1,6 @@
 #include "ruby.h"
 #include "frt_array.h"
 #include <string.h>
-#include "frt_internal.h"
 
 #define META_CNT FRT_ARY_META_CNT
 #define DATA_SZ sizeof(int) * META_CNT

@@ -3,7 +3,6 @@
 #include "frt_search.h"
 #include "frt_helper.h"
 #include "frt_symbol.h"
-#include "frt_internal.h"
 
 #define MTQ(query) ((FrtMultiTermQuery *)(query))
 
@@ -171,7 +170,7 @@ static bool multi_tsc_next(FrtScorer *self)
     if (tdew_pq == NULL) {
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (free_ft)NULL);
+        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_next(tdew_a[i])) {
                 frt_pq_push(tdew_pq, tdew_a[i]);
@@ -216,7 +215,7 @@ static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num)
         MultiTermScorer *mtsc = MTSc(self);
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (free_ft)NULL);
+        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_skip_to(tdew_a[i], target_doc_num)) {
                 frt_pq_push(tdew_pq, tdew_a[i]);
@@ -339,7 +338,7 @@ static FrtScorer *multi_tw_scorer(FrtWeight *self, FrtIndexReader *ir)
 {
     FrtScorer *multi_tsc = NULL;
     FrtPriorityQueue *boosted_terms = MTQ(self->query)->boosted_terms;
-    const int field_num = fis_get_field_num(ir->fis, MTQ(self->query)->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, MTQ(self->query)->field);
 
     if (boosted_terms->size > 0 && field_num >= 0) {
         int i;
@@ -361,7 +360,7 @@ static FrtScorer *multi_tw_scorer(FrtWeight *self, FrtIndexReader *ir)
         te->close(te);
         if (tdew_cnt) {
             multi_tsc = multi_tsc_new(self, MTQ(self->query)->field, tdew_a,
-                                      tdew_cnt, ir_get_norms_i(ir, field_num));
+                                      tdew_cnt, frt_ir_get_norms_i(ir, field_num));
         }
         else {
             free(tdew_a);
@@ -392,7 +391,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
     int total_doc_freqs = 0;
     char *doc_freqs = NULL;
     size_t len = 0, pos = 0;
-    const int field_num = fis_get_field_num(ir->fis, mtq->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, mtq->field);
 
     if (field_num < 0) {
         return frt_expl_new(0.0f, "field \"%s\" does not exist in the index",
@@ -565,7 +564,7 @@ static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-        hs_add(terms, frt_term_new(MTQ(self)->field, bt->term));
+        frt_hs_add(terms, frt_term_new(MTQ(self)->field, bt->term));
     }
 }
 
@@ -576,7 +575,7 @@ static unsigned long long multi_tq_hash(FrtQuery *self)
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
-        hash ^= frt_str_hash(bt->term) ^ float2int(bt->boost);
+        hash ^= frt_str_hash(bt->term) ^ frt_float2int(bt->boost);
     }
     return hash;
 }
@@ -636,7 +635,7 @@ FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
     MTQ(self)->field         = field;
     MTQ(self)->boosted_terms = frt_pq_new(max_terms,
                                       (frt_lt_ft)&boosted_term_less_than,
-                                      (free_ft)&boosted_term_destroy);
+                                      (frt_free_ft)&boosted_term_destroy);
     MTQ(self)->min_boost     = min_boost;
 
     self->type               = MULTI_TERM_QUERY;

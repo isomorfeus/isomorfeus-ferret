@@ -33,7 +33,6 @@
 #ifndef O_BINARY
 # define O_BINARY 0
 #endif
-#include "frt_internal.h"
 
 extern VALUE cFileNotFoundError;
 /**
@@ -289,7 +288,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
 static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 {
     int fd = is->file.fd;
-    off_t pos = is_pos(is);
+    off_t pos = frt_is_pos(is);
     if (pos != lseek(fd, 0, SEEK_CUR)) {
         lseek(fd, pos, SEEK_SET);
     }
@@ -344,7 +343,7 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
               "tried to open \"%s\" but it doesn't exist: <%s>",
               path, strerror(errno));
     }
-    is = is_new();
+    is = frt_is_new();
     is->file.fd = fd;
     is->d.path = frt_estrdup(path);
     is->m = &FS_IN_STREAM_METHODS;
@@ -424,7 +423,7 @@ static frt_mutex_t stores_mutex = FRT_MUTEX_INITIALIZER;
 static void fs_close_i(FrtStore *store)
 {
     frt_mutex_lock(&stores_mutex);
-    h_del(stores, store->dir.path);
+    frt_h_del(stores, store->dir.path);
     frt_mutex_unlock(&stores_mutex);
 }
 
@@ -482,12 +481,12 @@ FrtStore *frt_open_fs_store(const char *pathname)
     FrtStore *store = NULL;
 
     if (!stores) {
-        stores = h_new_str(NULL, (free_ft)fs_destroy);
-        frt_register_for_cleanup(stores, (free_ft)h_destroy);
+        stores = frt_h_new_str(NULL, (frt_free_ft)fs_destroy);
+        frt_register_for_cleanup(stores, (frt_free_ft)frt_h_destroy);
     }
 
     frt_mutex_lock(&stores_mutex);
-    store = (FrtStore *)h_get(stores, pathname);
+    store = (FrtStore *)frt_h_get(stores, pathname);
     if (store) {
         frt_mutex_lock(&store->mutex);
         store->ref_cnt++;
@@ -495,7 +494,7 @@ FrtStore *frt_open_fs_store(const char *pathname)
     }
     else {
         store = fs_store_new(pathname);
-        h_set(stores, store->dir.path, store);
+        frt_h_set(stores, store->dir.path, store);
     }
     frt_mutex_unlock(&stores_mutex);
 

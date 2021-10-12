@@ -361,7 +361,7 @@ static void
 frb_fis_free(void *p)
 {
     object_del(p);
-    fis_deref((FrtFieldInfos *)p);
+    frt_fis_deref((FrtFieldInfos *)p);
 }
 
 static void
@@ -414,7 +414,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     if (argc > 0) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
-    fis = fis_new(store, index, term_vector);
+    fis = frt_fis_new(store, index, term_vector);
     Frt_Wrap_Struct(self, &frb_fis_mark, &frb_fis_free, fis);
     object_add(fis, self);
     return self;
@@ -470,11 +470,11 @@ frb_fis_get(VALUE self, VALUE ridx)
                        }
         case T_SYMBOL:
         case T_STRING:
-            rfi = frb_get_field_info(fis_get_field(fis, frb_field(ridx)));
+            rfi = frb_get_field_info(frt_fis_get_field(fis, frb_field(ridx)));
             break;
             /*
         case T_STRING:
-            rfi = frb_get_field_info(fis_get_field(fis, StringValuePtr(ridx)));
+            rfi = frb_get_field_info(frt_fis_get_field(fis, StringValuePtr(ridx)));
             break;
             */
         default:
@@ -498,7 +498,7 @@ frb_fis_add(VALUE self, VALUE rfi)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi = (FrtFieldInfo *)frb_rb_data_ptr(rfi);
-    fis_add_field(fis, fi);
+    frt_fis_add_field(fis, fi);
     FRT_REF(fi);
     return self;
 }
@@ -527,7 +527,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
     }
     fi = frt_fi_new(frb_field(rname), store, index, term_vector);
     fi->boost = boost;
-    fis_add_field(fis, fi);
+    frt_fis_add_field(fis, fi);
     return self;
 }
 
@@ -559,7 +559,7 @@ static VALUE
 frb_fis_to_s(VALUE self)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
-    char *fis_s = fis_to_s(fis);
+    char *fis_s = frt_fis_to_s(fis);
     VALUE rfis_s = rb_str_new2(fis_s);
     free(fis_s);
     return rfis_s;
@@ -601,7 +601,7 @@ frb_fis_create_index(VALUE self, VALUE rdir)
         frb_create_dir(rdir);
         store = frt_open_fs_store(rs2s(rdir));
     }
-    index_create(store, fis);
+    frt_index_create(store, fis);
     frt_store_deref(store);
     return self;
 }
@@ -1250,7 +1250,7 @@ frb_get_tv(FrtTermVector *tv)
 void
 frb_iw_free(void *p)
 {
-    iw_close((FrtIndexWriter *)p);
+    frt_iw_close((FrtIndexWriter *)p);
 }
 
 void
@@ -1275,7 +1275,7 @@ frb_iw_close(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     Frt_Unwrap_Struct(self);
-    iw_close(iw);
+    frt_iw_close(iw);
     return Qnil;
 }
 
@@ -1367,16 +1367,16 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
         FrtFieldInfos *fis;
         if ((rval = rb_hash_aref(roptions, sym_field_infos)) != Qnil) {
             Data_Get_Struct(rval, FrtFieldInfos, fis);
-            index_create(store, fis);
+            frt_index_create(store, fis);
         } else {
-            fis = fis_new(FRT_STORE_YES, FRT_INDEX_YES,
+            fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                           FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-            index_create(store, fis);
-            fis_deref(fis);
+            frt_index_create(store, fis);
+            frt_fis_deref(fis);
         }
     }
 
-    iw = iw_open(store, analyzer, &config);
+    iw = frt_iw_open(store, analyzer, &config);
 
     Frt_Wrap_Struct(self, &frb_iw_mark, &frb_iw_free, iw);
 
@@ -1400,7 +1400,7 @@ static VALUE
 frb_iw_get_doc_count(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
-    return INT2FIX(iw_doc_count(iw));
+    return INT2FIX(frt_iw_doc_count(iw));
 }
 
 static int
@@ -1505,7 +1505,7 @@ frb_iw_add_doc(VALUE self, VALUE rdoc)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     FrtDocument *doc = frb_get_doc(rdoc);
-    iw_add_doc(iw, doc);
+    frt_iw_add_doc(iw, doc);
     frt_doc_destroy(doc);
     return self;
 }
@@ -1526,7 +1526,7 @@ static VALUE
 frb_iw_optimize(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
-    iw_optimize(iw);
+    frt_iw_optimize(iw);
     return self;
 }
 
@@ -1542,7 +1542,7 @@ static VALUE
 frb_iw_commit(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
-    iw_commit(iw);
+    frt_iw_commit(iw);
     return self;
 }
 
@@ -1571,7 +1571,7 @@ frb_iw_add_readers(VALUE self, VALUE rreaders)
         Data_Get_Struct(RARRAY_PTR(rreaders)[i], FrtIndexReader, ir);
         irs[i] = ir;
     }
-    iw_add_readers(iw, irs, RARRAY_LEN(rreaders));
+    frt_iw_add_readers(iw, irs, RARRAY_LEN(rreaders));
     free(irs);
     return self;
 }
@@ -1598,10 +1598,10 @@ frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm)
         for (i = 0; i < term_cnt; i++) {
             terms[i] = StringValuePtr(RARRAY_PTR(rterm)[i]);
         }
-        iw_delete_terms(iw, frb_field(rfield), terms, term_cnt);
+        frt_iw_delete_terms(iw, frb_field(rfield), terms, term_cnt);
         free(terms);
     } else {
-        iw_delete_term(iw, frb_field(rfield), StringValuePtr(rterm));
+        frt_iw_delete_term(iw, frb_field(rfield), StringValuePtr(rterm));
     }
     return self;
 }
@@ -2021,7 +2021,7 @@ void
 frb_ir_free(void *p)
 {
     object_del(p);
-    ir_close((FrtIndexReader *)p);
+    frt_ir_close((FrtIndexReader *)p);
 }
 
 void
@@ -2113,7 +2113,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                              rs2s(rb_obj_as_string(rdir)));
                     break;
             }
-            sub_readers[i] = ir_open(store);
+            sub_readers[i] = frt_ir_open(store);
         }
         ir = frt_mr_open(sub_readers, reader_cnt);
         Frt_Wrap_Struct(self, &frb_mr_mark, &frb_ir_free, ir);
@@ -2133,7 +2133,7 @@ frb_ir_init(VALUE self, VALUE rdir)
                          rs2s(rb_obj_as_string(rdir)));
                 break;
         }
-        ir = ir_open(store);
+        ir = frt_ir_open(store);
         Frt_Wrap_Struct(self, &frb_ir_mark, &frb_ir_free, ir);
     }
     object_add(ir, self);
@@ -2162,7 +2162,7 @@ static VALUE
 frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (frt_uchar)NUM2CHR(rval));
+    frt_ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (frt_uchar)NUM2CHR(rval));
     return self;
 }
 
@@ -2179,7 +2179,7 @@ frb_ir_norms(VALUE self, VALUE rfield)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     frt_uchar *norms;
-    norms = ir_get_norms(ir, frb_field(rfield));
+    norms = frt_ir_get_norms(ir, frb_field(rfield));
     if (norms) {
         return rb_str_new((char *)norms, ir->max_doc(ir));
     } else {
@@ -2207,7 +2207,7 @@ frb_ir_get_norms_into(VALUE self, VALUE rfield, VALUE rnorms, VALUE roffset)
                  RSTRING_LEN(rnorms), offset, ir->max_doc(ir));
     }
 
-    ir_get_norms_into(ir, frb_field(rfield),
+    frt_ir_get_norms_into(ir, frb_field(rfield),
                       (frt_uchar *)rs2s(rnorms) + offset);
     return rnorms;
 }
@@ -2223,7 +2223,7 @@ static VALUE
 frb_ir_commit(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    ir_commit(ir);
+    frt_ir_commit(ir);
     return self;
 }
 
@@ -2243,7 +2243,7 @@ frb_ir_close(VALUE self)
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     object_del(ir);
     Frt_Unwrap_Struct(self);
-    ir_close(ir);
+    frt_ir_close(ir);
     return self;
 }
 
@@ -2273,7 +2273,7 @@ static VALUE
 frb_ir_delete(VALUE self, VALUE rdoc_id)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    ir_delete_doc(ir, FIX2INT(rdoc_id));
+    frt_ir_delete_doc(ir, FIX2INT(rdoc_id));
     return self;
 }
 
@@ -2334,7 +2334,7 @@ static VALUE
 frb_ir_undelete_all(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    ir_undelete_all(ir);
+    frt_ir_undelete_all(ir);
     return self;
 }
 
@@ -2412,7 +2412,7 @@ static VALUE
 frb_ir_is_latest(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    return ir_is_latest(ir) ? Qtrue : Qfalse;
+    return frt_ir_is_latest(ir) ? Qtrue : Qfalse;
 }
 
 /*
@@ -2459,8 +2459,8 @@ frb_ir_term_vectors(VALUE self, VALUE rdoc_id)
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtHash *tvs = ir->term_vectors(ir, FIX2INT(rdoc_id));
     VALUE rtvs = rb_hash_new();
-    h_each(tvs, &frb_add_each_tv, (void *)rtvs);
-    h_destroy(tvs);
+    frt_h_each(tvs, &frb_add_each_tv, (void *)rtvs);
+    frt_h_destroy(tvs);
 
     return rtvs;
 }
@@ -2523,7 +2523,7 @@ static VALUE
 frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    return frb_get_tde(self, ir_term_positions_for(ir,
+    return frb_get_tde(self, frt_ir_term_positions_for(ir,
                                                    frb_field(rfield),
                                                    StringValuePtr(rterm)));
 }
@@ -2539,7 +2539,7 @@ static VALUE
 frb_ir_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    return INT2FIX(ir_doc_freq(ir,
+    return INT2FIX(frt_ir_doc_freq(ir,
                                frb_field(rfield),
                                StringValuePtr(rterm)));
 }
@@ -2555,7 +2555,7 @@ static VALUE
 frb_ir_terms(VALUE self, VALUE rfield)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    return frb_get_te(self, ir_terms(ir, frb_field(rfield)));
+    return frb_get_te(self, frt_ir_terms(ir, frb_field(rfield)));
 }
 
 /*
@@ -2569,7 +2569,7 @@ static VALUE
 frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    return frb_get_te(self, ir_terms_from(ir,
+    return frb_get_te(self, frt_ir_terms_from(ir,
                                           frb_field(rfield),
                                           StringValuePtr(rterm)));
 }
@@ -2584,7 +2584,7 @@ static VALUE
 frb_ir_term_count(VALUE self, VALUE rfield)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    FrtTermEnum *te = ir_terms(ir, frb_field(rfield));
+    FrtTermEnum *te = frt_ir_terms(ir, frb_field(rfield));
     int count = 0;
     while (te->next(te)) {
         count++;

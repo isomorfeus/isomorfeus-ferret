@@ -6,7 +6,6 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
-#include "frt_internal.h"
 
 extern VALUE cFileNotFoundError;
 extern VALUE cLockError;
@@ -104,10 +103,10 @@ static frt_u64 str36_to_u64(char *p)
  * @param ext extension of the filename (including .)
  * @param gen generation
  */
-char *fn_for_generation(char *buf,
+char *frt_fn_for_generation(char *buf,
                         const char *base,
                         const char *ext,
-                        i64 gen)
+                        frt_i64 gen)
 {
     if (-1 == gen) {
         return NULL;
@@ -148,7 +147,7 @@ static char *segfn_for_generation(char *buf, frt_u64 generation)
 static char *fn_for_gen_field(char *buf,
                               const char *base,
                               const char *ext,
-                              i64 gen,
+                              frt_i64 gen,
                               int field_num)
 {
     if (-1 == gen) {
@@ -183,18 +182,18 @@ static int co_eq(const void *key1, const void *key2)
 
 static void co_destroy(FrtCacheObject *self)
 {
-    h_rem(self->ref_tab1, self->ref2, false);
-    h_rem(self->ref_tab2, self->ref1, false);
+    frt_h_rem(self->ref_tab1, self->ref2, false);
+    frt_h_rem(self->ref_tab2, self->ref1, false);
     self->destroy(self->obj);
     free(self);
 }
 
 FrtCacheObject *frt_co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
-                       void *ref1, void *ref2, free_ft destroy, void *obj)
+                       void *ref1, void *ref2, frt_free_ft destroy, void *obj)
 {
     FrtCacheObject *self = FRT_ALLOC(FrtCacheObject);
-    h_set(ref_tab1, ref2, self);
-    h_set(ref_tab2, ref1, self);
+    frt_h_set(ref_tab1, ref2, self);
+    frt_h_set(ref_tab2, ref1, self);
     self->ref_tab1 = ref_tab1;
     self->ref_tab2 = ref_tab2;
     self->ref1 = ref1;
@@ -206,7 +205,7 @@ FrtCacheObject *frt_co_create(FrtHash *ref_tab1, FrtHash *ref_tab2,
 
 FrtHash *frt_co_hash_create()
 {
-    return h_new(&co_hash, &co_eq, (free_ft)NULL, (free_ft)&co_destroy);
+    return frt_h_new(&co_hash, &co_eq, (frt_free_ft)NULL, (frt_free_ft)&co_destroy);
 }
 
 /****************************************************************************
@@ -329,12 +328,12 @@ char *frt_fi_to_s(FrtFieldInfo *fi)
  *
  ****************************************************************************/
 
-FrtFieldInfos *fis_new(FrtStoreValue store, FrtIndexValue index,
+FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
                     FrtTermVectorValue term_vector)
 {
     FrtFieldInfos *fis = FRT_ALLOC(FrtFieldInfos);
     fi_check_params(store, index, term_vector);
-    fis->field_dict = h_new_str(NULL, (free_ft)&frt_fi_deref);
+    fis->field_dict = frt_h_new_str(NULL, (frt_free_ft)&frt_fi_deref);
     fis->size = 0;
     fis->capa = FIELD_INFOS_INIT_CAPA;
     fis->fields = FRT_ALLOC_N(FrtFieldInfo *, fis->capa);
@@ -345,13 +344,13 @@ FrtFieldInfos *fis_new(FrtStoreValue store, FrtIndexValue index,
     return fis;
 }
 
-FrtFieldInfo *fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
+FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
 {
     if (fis->size == fis->capa) {
         fis->capa <<= 1;
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
-    if (!h_set_safe(fis->field_dict, fi->name, fi)) {
+    if (!frt_h_set_safe(fis->field_dict, fi->name, fi)) {
         rb_raise(rb_eArgError, "Field :%s already exists", (char *)fi->name);
     }
     fi->number = fis->size;
@@ -360,39 +359,29 @@ FrtFieldInfo *fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
     return fi;
 }
 
-FrtFieldInfo *fis_get_field(FrtFieldInfos *fis, FrtSymbol name)
+FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name)
 {
-    return (FrtFieldInfo *)h_get(fis->field_dict, name);
+    return (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
 }
 
-int fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name)
+int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
     if (fi) { return fi->number; }
     else { return -1; }
 }
 
-FrtFieldInfo *fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name)
+FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
     if (!fi) {
         fi = (FrtFieldInfo*)frt_fi_new(name, fis->store, fis->index, fis->term_vector);
-        fis_add_field(fis, fi);
+        frt_fis_add_field(fis, fi);
     }
     return fi;
 }
 
-FrtFieldInfo *fis_by_number(FrtFieldInfos *fis, int num)
-{
-    if (num >= 0 && num < fis->size) {
-        return fis->fields[num];
-    }
-    else {
-        return NULL;
-    }
-}
-
-FrtFieldInfos *fis_read(FrtInStream *is)
+FrtFieldInfos *frt_fis_read(FrtInStream *is)
 {
     FrtFieldInfos *volatile fis = NULL;
     FRT_TRY
@@ -403,31 +392,31 @@ FrtFieldInfos *fis_read(FrtInStream *is)
             volatile int i;
             union { frt_u32 i; float f; } tmp;
             FrtFieldInfo *volatile fi;
-            store_val = (FrtStoreValue)is_read_vint(is);
-            index_val = (FrtIndexValue)is_read_vint(is);
-            term_vector_val = (FrtTermVectorValue)is_read_vint(is);
-            fis = fis_new(store_val, index_val, term_vector_val);
-            for (i = is_read_vint(is); i > 0; i--) {
+            store_val = (FrtStoreValue)frt_is_read_vint(is);
+            index_val = (FrtIndexValue)frt_is_read_vint(is);
+            term_vector_val = (FrtTermVectorValue)frt_is_read_vint(is);
+            fis = frt_fis_new(store_val, index_val, term_vector_val);
+            for (i = frt_is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
                 FRT_TRY
-                    fi->name = is_read_string_safe(is);
-                    tmp.i = is_read_u32(is);
+                    fi->name = frt_is_read_string_safe(is);
+                    tmp.i = frt_is_read_u32(is);
                     fi->boost = tmp.f;
-                    fi->bits = is_read_vint(is);
+                    fi->bits = frt_is_read_vint(is);
                 FRT_XCATCHALL
                     free(fi);
                 FRT_XENDTRY
-                fis_add_field(fis, fi);
+                frt_fis_add_field(fis, fi);
                 fi->ref_cnt = 1;
             }
         } while (0);
     FRT_XCATCHALL
-        fis_deref(fis);
+        frt_fis_deref(fis);
     FRT_XENDTRY
     return fis;
 }
 
-void fis_write(FrtFieldInfos *fis, FrtOutStream *os)
+void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os)
 {
     int i;
     union { frt_u32 i; float f; } tmp;
@@ -492,7 +481,7 @@ static const char *fi_term_vector_str(FrtFieldInfo *fi)
     return term_vector_str[(fi->bits >> 5) & 0x7];
 }
 
-char *fis_to_s(FrtFieldInfos *fis)
+char *frt_fis_to_s(FrtFieldInfos *fis)
 {
     int i, pos, capa = 200 + fis->size * 120;
     char *buf = FRT_ALLOC_N(char, capa);
@@ -523,10 +512,10 @@ char *fis_to_s(FrtFieldInfos *fis)
     return buf;
 }
 
-void fis_deref(FrtFieldInfos *fis)
+void frt_fis_deref(FrtFieldInfos *fis)
 {
     if (0 == --(fis->ref_cnt)) {
-        h_destroy(fis->field_dict);
+        frt_h_destroy(fis->field_dict);
         free(fis->fields);
         free(fis);
     }
@@ -570,19 +559,19 @@ static FrtSegmentInfo *si_read(FrtStore *store, FrtInStream *is)
     FrtSegmentInfo *volatile si = FRT_ALLOC_AND_ZERO(FrtSegmentInfo);
     FRT_TRY
         si->store = store;
-        si->name = is_read_string_safe(is);
-        si->doc_cnt = is_read_vint(is);
-        si->del_gen = is_read_vint(is);
-        si->norm_gens_size = is_read_vint(is);
+        si->name = frt_is_read_string_safe(is);
+        si->doc_cnt = frt_is_read_vint(is);
+        si->del_gen = frt_is_read_vint(is);
+        si->norm_gens_size = frt_is_read_vint(is);
         si->ref_cnt = 1;
         if (0 < si->norm_gens_size) {
             int i;
             si->norm_gens = FRT_ALLOC_N(int, si->norm_gens_size);
             for (i = si->norm_gens_size - 1; i >= 0; i--) {
-                si->norm_gens[i] = is_read_vint(is);
+                si->norm_gens[i] = frt_is_read_vint(is);
             }
         }
-        si->use_compound_file = (bool)is_read_byte(is);
+        si->use_compound_file = (bool)frt_is_read_byte(is);
     FRT_XCATCHALL
         free(si->name);
         free(si);
@@ -627,7 +616,7 @@ static char *si_del_file_name(FrtSegmentInfo *si, char *buf)
         return NULL;
     }
     else {
-        return fn_for_generation(buf, si->name, ".del", si->del_gen);
+        return frt_fn_for_generation(buf, si->name, ".del", si->del_gen);
     }
 }
 */
@@ -693,7 +682,7 @@ static void si_delete_files(FrtSegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *
         memcpy(ext, "cfs", 4);
         DEL(file_name);
         if (0 <= si->del_gen) {
-            DEL(fn_for_generation(file_name, si->name, "del", si->del_gen));
+            DEL(frt_fn_for_generation(file_name, si->name, "del", si->del_gen));
         }
     }
     else {
@@ -711,7 +700,7 @@ static void si_delete_files(FrtSegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *
  ****************************************************************************/
 
 #include <time.h>
-static char *new_segment(i64 generation)
+static char *new_segment(frt_i64 generation)
 {
     char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
     char *fn_p = u64_to_str36(buf, FRT_SEGMENT_NAME_MAX_LENGTH - 1,
@@ -725,7 +714,7 @@ static char *new_segment(i64 generation)
  ****************************************************************************/
 
 typedef struct FindSegmentsFile {
-    i64  generation;
+    frt_i64  generation;
     union {
       FrtSegmentInfos *sis;
       FrtIndexReader  *ir;
@@ -735,11 +724,11 @@ typedef struct FindSegmentsFile {
 
 static void which_gen_i(const char *file_name, void *arg)
 {
-    i64 *max_generation = (i64 *)arg;
+    frt_i64 *max_generation = (frt_i64 *)arg;
     if (0 == strncmp(FRT_SEGMENTS_FILE_NAME"_", file_name,
                      sizeof(FRT_SEGMENTS_FILE_NAME))) {
         char *p = strrchr(file_name, '_') + 1;
-        i64 generation = (i64)str36_to_u64(p);
+        frt_i64 generation = (frt_i64)str36_to_u64(p);
         if (generation > *max_generation) *max_generation = generation;
     }
 }
@@ -782,9 +771,9 @@ void frt_sis_put(FrtSegmentInfos *sis, FILE *stream)
  *
  * @param store - the Store to look in
  */
-i64 frt_sis_current_segment_generation(FrtStore *store)
+frt_i64 frt_sis_current_segment_generation(FrtStore *store)
 {
-    i64 current_generation = -1;
+    frt_i64 current_generation = -1;
     store->each(store, &which_gen_i, &current_generation);
     return current_generation;
 }
@@ -825,8 +814,8 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
     volatile int gen_look_ahead_count = 0;
     volatile bool retry = false;
     volatile int method = 0;
-    volatile i64 last_gen = -1;
-    volatile i64 gen = 0;
+    volatile frt_i64 last_gen = -1;
+    volatile frt_i64 gen = 0;
 
     /* Loop until we succeed in calling doBody() without hitting an
      * IOException. An IOException most likely means a commit was in process
@@ -865,15 +854,15 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                 FRT_XENDTRY
 
                 if (NULL != gen_is) {
-                    volatile i64 gen0 = -1, gen1 = -1;
+                    volatile frt_i64 gen0 = -1, gen1 = -1;
 
                     FRT_TRY
-                        gen0 = is_read_u64(gen_is);
-                        gen1 = is_read_u64(gen_is);
+                        gen0 = frt_is_read_u64(gen_is);
+                        gen1 = frt_is_read_u64(gen_is);
                     FRT_XFINALLY
                         /* if there is an error well simply try again */
                         FRT_HANDLED();
-                        is_close(gen_is);
+                        frt_is_close(gen_is);
                     FRT_XENDTRY
                     /* TODO:LOG "fallback check: " + gen0 + "; " + gen1 */
                     if (gen0 == gen1 && gen0 > gen) {
@@ -1018,7 +1007,7 @@ void frt_sis_destroy(FrtSegmentInfos *sis)
     for (i = 0; i < sis_size; i++) {
         frt_si_deref(sis->segs[i]);
     }
-    if (sis->fis) fis_deref(sis->fis);
+    if (sis->fis) frt_fis_deref(sis->fis);
     free(sis->segs);
     free(sis);
 }
@@ -1059,10 +1048,10 @@ static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf)
         is = store->open_input(store, seg_file_name);
         sis->store = store;
         sis->generation = fsf->generation;
-        sis->format = is_read_u32(is); /* do nothing. it's the first version */
-        sis->version = is_read_u64(is);
-        sis->counter = is_read_u64(is);
-        seg_cnt = is_read_vint(is);
+        sis->format = frt_is_read_u32(is); /* do nothing. it's the first version */
+        sis->version = frt_is_read_u64(is);
+        sis->counter = frt_is_read_u64(is);
+        seg_cnt = frt_is_read_vint(is);
         /* allocate space for segments */
         for (sis->capa = 4; sis->capa < seg_cnt; sis->capa <<= 1) {}
         sis->size = 0;
@@ -1070,10 +1059,10 @@ static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf)
         for (i = 0; i < seg_cnt; i++) {
             frt_sis_add_si(sis, si_read(store, is));
         }
-        sis->fis = fis_read(is);
+        sis->fis = frt_fis_read(is);
         success = true;
     FRT_XFINALLY
-        if (is) is_close(is);
+        if (is) frt_is_close(is);
         if (!success) {
             frt_sis_destroy(sis);
         }
@@ -1104,7 +1093,7 @@ void frt_sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
         for (i = 0; i < sis_size; i++) {
             si_write(sis->segs[i], os);
         }
-        fis_write(sis->fis, os);
+        frt_fis_write(sis->fis, os);
     FRT_XFINALLY
         frt_os_close(os);
     FRT_XENDTRY
@@ -1135,10 +1124,10 @@ static void frt_sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf)
     version = 0;
 
     FRT_TRY
-        is_read_u32(is); // format
-        version = is_read_u64(is);
+        frt_is_read_u32(is); // format
+        version = frt_is_read_u64(is);
     FRT_XFINALLY
-        is_close(is);
+        frt_is_close(is);
     FRT_XENDTRY
 
     fsf->ret.uint64 = version;
@@ -1185,9 +1174,9 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
         text = self->data[i].text;
         if (NULL == text) {
             const int read_len = self->data[i].length + 1;
-            is_seek(self->doc->fields_in, self->data[i].start);
+            frt_is_seek(self->doc->fields_in, self->data[i].start);
             self->data[i].text = text = FRT_ALLOC_N(char, read_len);
-            is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
+            frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
             text[read_len - 1] = '\0';
         }
     }
@@ -1209,8 +1198,8 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
               "bytes long but tried to read to %d", self->len, start + len);
     }
     else {
-        is_seek(self->doc->fields_in, self->data[0].start + start);
-        is_read_bytes(self->doc->fields_in, (frt_uchar *)buf, len);
+        frt_is_seek(self->doc->fields_in, self->data[0].start + start);
+        frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)buf, len);
     }
 }
 
@@ -1223,17 +1212,17 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
 static FrtLazyDoc *lazy_doc_new(int size, FrtInStream *fdt_in)
 {
     FrtLazyDoc *self = FRT_ALLOC(FrtLazyDoc);
-    self->field_dictionary = h_new_str(NULL, (free_ft)&lazy_df_destroy);
+    self->field_dictionary = frt_h_new_str(NULL, (frt_free_ft)&lazy_df_destroy);
     self->size = size;
     self->fields = FRT_ALLOC_AND_ZERO_N(FrtLazyDocField *, size);
-    self->fields_in = is_clone(fdt_in);
+    self->fields_in = frt_is_clone(fdt_in);
     return self;
 }
 
 void frt_lazy_doc_close(FrtLazyDoc *self)
 {
-    h_destroy(self->field_dictionary);
-    is_close(self->fields_in);
+    frt_h_destroy(self->field_dictionary);
+    frt_is_close(self->fields_in);
     free(self->fields);
     free(self);
 }
@@ -1242,13 +1231,13 @@ static void lazy_doc_add_field(FrtLazyDoc *self, FrtLazyDocField *lazy_df, int i
 {
     self->fields[i] = lazy_df;
 
-    h_set(self->field_dictionary, lazy_df->name, lazy_df);
+    frt_h_set(self->field_dictionary, lazy_df->name, lazy_df);
     lazy_df->doc = self;
 }
 
 FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, FrtSymbol field)
 {
-    return (FrtLazyDocField *)h_get(self->field_dictionary, field);
+    return (FrtLazyDocField *)frt_h_get(self->field_dictionary, field);
 }
 
 /****************************************************************************
@@ -1259,7 +1248,7 @@ FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, FrtSymbol field)
 
 #define FIELDS_IDX_PTR_SIZE 12
 
-FrtFieldsReader *fr_open(FrtStore *store, const char *segment, FrtFieldInfos *fis)
+FrtFieldsReader *frt_fr_open(FrtStore *store, const char *segment, FrtFieldInfos *fis)
 {
     FrtFieldsReader *fr = FRT_ALLOC(FrtFieldsReader);
     FrtInStream *fdx_in;
@@ -1280,21 +1269,21 @@ FrtFieldsReader *fr_open(FrtStore *store, const char *segment, FrtFieldInfos *fi
     return fr;
 }
 
-FrtFieldsReader *fr_clone(FrtFieldsReader *orig)
+FrtFieldsReader *frt_fr_clone(FrtFieldsReader *orig)
 {
     FrtFieldsReader *fr = FRT_ALLOC(FrtFieldsReader);
 
     memcpy(fr, orig, sizeof(FrtFieldsReader));
-    fr->fdx_in = is_clone(orig->fdx_in);
-    fr->fdt_in = is_clone(orig->fdt_in);
+    fr->fdx_in = frt_is_clone(orig->fdx_in);
+    fr->fdt_in = frt_is_clone(orig->fdt_in);
 
     return fr;
 }
 
-void fr_close(FrtFieldsReader *fr)
+void frt_fr_close(FrtFieldsReader *fr)
 {
-    is_close(fr->fdt_in);
-    is_close(fr->fdx_in);
+    frt_is_close(fr->fdt_in);
+    frt_is_close(fr->fdx_in);
     free(fr);
 }
 
@@ -1310,7 +1299,7 @@ static FrtDocField *fr_df_new(FrtSymbol name, int size)
     return df;
 }
 
-FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
+FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
 {
     int i, j;
     off_t pos;
@@ -1319,19 +1308,19 @@ FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
 
-    is_seek(fdx_in, doc_num * FIELDS_IDX_PTR_SIZE);
-    pos = (off_t)is_read_u64(fdx_in);
-    is_seek(fdt_in, pos);
-    stored_cnt = is_read_vint(fdt_in);
+    frt_is_seek(fdx_in, doc_num * FIELDS_IDX_PTR_SIZE);
+    pos = (off_t)frt_is_read_u64(fdx_in);
+    frt_is_seek(fdt_in, pos);
+    stored_cnt = frt_is_read_vint(fdt_in);
 
     for (i = 0; i < stored_cnt; i++) {
-        const int field_num = is_read_vint(fdt_in);
+        const int field_num = frt_is_read_vint(fdt_in);
         FrtFieldInfo *fi = fr->fis->fields[field_num];
-        const int df_size = is_read_vint(fdt_in);
+        const int df_size = frt_is_read_vint(fdt_in);
         FrtDocField *df = fr_df_new(fi->name, df_size);
 
         for (j = 0; j < df_size; j++) {
-            df->lengths[j] = is_read_vint(fdt_in);
+            df->lengths[j] = frt_is_read_vint(fdt_in);
         }
 
         frt_doc_add_field(doc, df);
@@ -1342,7 +1331,7 @@ FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
         for (j = 0; j < df_size; j++) {
             const int read_len = df->lengths[j] + 1;
             df->data[j] = FRT_ALLOC_N(char, read_len);
-            is_read_bytes(fdt_in, (frt_uchar *)df->data[j], read_len);
+            frt_is_read_bytes(fdt_in, (frt_uchar *)df->data[j], read_len);
             df->data[j][read_len - 1] = '\0';
         }
     }
@@ -1350,7 +1339,7 @@ FrtDocument *fr_get_doc(FrtFieldsReader *fr, int doc_num)
     return doc;
 }
 
-FrtLazyDoc *fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
+FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
 {
     int start = 0;
     int i, j;
@@ -1359,20 +1348,20 @@ FrtLazyDoc *fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     FrtLazyDoc *lazy_doc;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
-    is_seek(fdx_in, doc_num * FIELDS_IDX_PTR_SIZE);
-    pos = (off_t)is_read_u64(fdx_in);
-    is_seek(fdt_in, pos);
-    stored_cnt = is_read_vint(fdt_in);
+    frt_is_seek(fdx_in, doc_num * FIELDS_IDX_PTR_SIZE);
+    pos = (off_t)frt_is_read_u64(fdx_in);
+    frt_is_seek(fdt_in, pos);
+    stored_cnt = frt_is_read_vint(fdt_in);
     lazy_doc = lazy_doc_new(stored_cnt, fdt_in);
     for (i = 0; i < stored_cnt; i++) {
-        FrtFieldInfo *fi = fr->fis->fields[is_read_vint(fdt_in)];
-        const int data_cnt = is_read_vint(fdt_in);
+        FrtFieldInfo *fi = fr->fis->fields[frt_is_read_vint(fdt_in)];
+        const int data_cnt = frt_is_read_vint(fdt_in);
         FrtLazyDocField *lazy_df = lazy_df_new(fi->name, data_cnt);
         const int field_start = start;
         /* get the starts relative positions this time around */
         for (j = 0; j < data_cnt; j++) {
             lazy_df->data[j].start = start;
-            start += 1 + (lazy_df->data[j].length = is_read_vint(fdt_in));
+            start += 1 + (lazy_df->data[j].length = frt_is_read_vint(fdt_in));
         }
         lazy_df->len = start - field_start - 1;
         lazy_doc_add_field(lazy_doc, lazy_df, i);
@@ -1381,7 +1370,7 @@ FrtLazyDoc *fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     for (i = 0; i < stored_cnt; i++) {
         FrtLazyDocField *lazy_df = lazy_doc->fields[i];
         const int data_cnt = lazy_df->size;
-        const off_t start = is_pos(fdt_in);
+        const off_t start = frt_is_pos(fdt_in);
         for (j = 0; j < data_cnt; j++) {
             lazy_df->data[j].start += start;
         }
@@ -1395,7 +1384,7 @@ static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
     FrtTermVector *tv = FRT_ALLOC_AND_ZERO(FrtTermVector);
     FrtInStream *fdt_in = fr->fdt_in;
     FrtFieldInfo *fi = fr->fis->fields[field_num];
-    const int num_terms = is_read_vint(fdt_in);
+    const int num_terms = frt_is_read_vint(fdt_in);
 
     tv->field_num = field_num;
     tv->field = fi->name;
@@ -1413,46 +1402,46 @@ static FrtTermVector *fr_read_term_vector(FrtFieldsReader *fr, int field_num)
         for (i = 0; i < num_terms; i++) {
             term = &(tv->terms[i]);
             /* read delta encoded term */
-            delta_start = is_read_vint(fdt_in);
-            delta_len = is_read_vint(fdt_in);
+            delta_start = frt_is_read_vint(fdt_in);
+            delta_len = frt_is_read_vint(fdt_in);
             total_len = delta_start + delta_len;
-            is_read_bytes(fdt_in, buffer + delta_start, delta_len);
+            frt_is_read_bytes(fdt_in, buffer + delta_start, delta_len);
             buffer[total_len++] = '\0';
             term->text = (char *)memcpy(FRT_ALLOC_N(char, total_len),
                                         buffer, total_len);
 
             /* read freq */
-            freq = term->freq = is_read_vint(fdt_in);
+            freq = term->freq = frt_is_read_vint(fdt_in);
 
             /* read positions if necessary */
             if (store_positions) {
                 int *positions = term->positions = FRT_ALLOC_N(int, freq);
                 int pos = 0;
                 for (j = 0; j < freq; j++) {
-                    positions[j] = pos += is_read_vint(fdt_in);
+                    positions[j] = pos += frt_is_read_vint(fdt_in);
                 }
             }
 
             /* read offsets if necessary */
         }
         if (store_offsets) {
-            int num_positions = tv->offset_cnt = is_read_vint(fdt_in);
+            int num_positions = tv->offset_cnt = frt_is_read_vint(fdt_in);
             FrtOffset *offsets = tv->offsets = FRT_ALLOC_N(FrtOffset, num_positions);
-            i64 offset = 0;
+            frt_i64 offset = 0;
             for (i = 0; i < num_positions; i++) {
                 offsets[i].start =
-                    (off_t)(offset += (i64)is_read_vll(fdt_in));
+                    (off_t)(offset += (frt_i64)frt_is_read_vll(fdt_in));
                 offsets[i].end =
-                    (off_t)(offset += (i64)is_read_vll(fdt_in));
+                    (off_t)(offset += (frt_i64)frt_is_read_vll(fdt_in));
             }
         }
     }
     return tv;
 }
 
-FrtHash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
+FrtHash *frt_fr_get_tv(FrtFieldsReader *fr, int doc_num)
 {
-    FrtHash *term_vectors = h_new_str(NULL, (free_ft)&frt_tv_destroy);
+    FrtHash *term_vectors = frt_h_new_str(NULL, (frt_free_ft)&frt_tv_destroy);
     int i;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
@@ -1461,35 +1450,35 @@ FrtHash *fr_get_tv(FrtFieldsReader *fr, int doc_num)
     int *field_nums;
 
     if (doc_num >= 0 && doc_num < fr->size) {
-        is_seek(fdx_in, FIELDS_IDX_PTR_SIZE * doc_num);
+        frt_is_seek(fdx_in, FIELDS_IDX_PTR_SIZE * doc_num);
 
-        data_ptr = (off_t)is_read_u64(fdx_in);
-        field_index_ptr = data_ptr += (off_t)is_read_u32(fdx_in);
+        data_ptr = (off_t)frt_is_read_u64(fdx_in);
+        field_index_ptr = data_ptr += (off_t)frt_is_read_u32(fdx_in);
 
         /* scan fields to get position of field_num's term vector */
-        is_seek(fdt_in, field_index_ptr);
+        frt_is_seek(fdt_in, field_index_ptr);
 
-        field_cnt = is_read_vint(fdt_in);
+        field_cnt = frt_is_read_vint(fdt_in);
         field_nums = FRT_ALLOC_N(int, field_cnt);
 
         for (i = field_cnt - 1; i >= 0; i--) {
             int tv_size;
-            field_nums[i] = is_read_vint(fdt_in);
-            tv_size = is_read_vint(fdt_in);
+            field_nums[i] = frt_is_read_vint(fdt_in);
+            tv_size = frt_is_read_vint(fdt_in);
             data_ptr -= tv_size;
         }
-        is_seek(fdt_in, data_ptr);
+        frt_is_seek(fdt_in, data_ptr);
 
         for (i = 0; i < field_cnt; i++) {
             FrtTermVector *tv = fr_read_term_vector(fr, field_nums[i]);
-            h_set(term_vectors, tv->field, tv);
+            frt_h_set(term_vectors, tv->field, tv);
         }
         free(field_nums);
     }
     return term_vectors;
 }
 
-FrtTermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
+FrtTermVector *frt_fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
 {
     FrtTermVector *tv = NULL;
 
@@ -1501,23 +1490,23 @@ FrtTermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
         FrtInStream *fdx_in = fr->fdx_in;
         FrtInStream *fdt_in = fr->fdt_in;
 
-        is_seek(fdx_in, FIELDS_IDX_PTR_SIZE * doc_num);
+        frt_is_seek(fdx_in, FIELDS_IDX_PTR_SIZE * doc_num);
 
-        field_index_ptr =  (off_t)is_read_u64(fdx_in);
-        field_index_ptr += (off_t)is_read_u32(fdx_in);
+        field_index_ptr =  (off_t)frt_is_read_u64(fdx_in);
+        field_index_ptr += (off_t)frt_is_read_u32(fdx_in);
 
         /* scan fields to get position of field_num's term vector */
-        is_seek(fdt_in, field_index_ptr);
+        frt_is_seek(fdt_in, field_index_ptr);
 
-        field_cnt = is_read_vint(fdt_in);
+        field_cnt = frt_is_read_vint(fdt_in);
         for (i = field_cnt - 1; i >= 0 && fnum != field_num; i--) {
-            fnum = is_read_vint(fdt_in);
-            offset += is_read_vint(fdt_in); /* space taken by field */
+            fnum = frt_is_read_vint(fdt_in);
+            offset += frt_is_read_vint(fdt_in); /* space taken by field */
         }
 
         if (fnum == field_num) {
             /* field was found */
-            is_seek(fdt_in, field_index_ptr - (off_t)offset);
+            frt_is_seek(fdt_in, field_index_ptr - (off_t)offset);
             tv = fr_read_term_vector(fr, field_num);
         }
     }
@@ -1530,7 +1519,7 @@ FrtTermVector *fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_num)
  *
  ****************************************************************************/
 
-FrtFieldsWriter *fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis)
+FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis)
 {
     FrtFieldsWriter *fw = FRT_ALLOC(FrtFieldsWriter);
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -1552,7 +1541,7 @@ FrtFieldsWriter *fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fi
     return fw;
 }
 
-void fw_close(FrtFieldsWriter *fw)
+void frt_fw_close(FrtFieldsWriter *fw)
 {
     frt_os_close(fw->fdt_out);
     frt_os_close(fw->fdx_out);
@@ -1561,7 +1550,7 @@ void fw_close(FrtFieldsWriter *fw)
     free(fw);
 }
 
-void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
+void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 {
     int i, j, stored_cnt = 0;
     FrtDocField *df;
@@ -1571,7 +1560,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
-        if (fi_is_stored(fis_get_or_add_field(fw->fis, df->name))) {
+        if (fi_is_stored(frt_fis_get_or_add_field(fw->fis, df->name))) {
             stored_cnt++;
         }
     }
@@ -1584,7 +1573,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
-        fi = fis_get_field(fw->fis, df->name);
+        fi = frt_fis_get_field(fw->fis, df->name);
         if (fi_is_stored(fi)) {
             const int df_size = df->size;
             frt_os_write_vint(fdt_out, fi->number);
@@ -1602,7 +1591,7 @@ void fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
     frt_ramo_write_to(fw->buffer, fdt_out);
 }
 
-void fw_write_tv_index(FrtFieldsWriter *fw)
+void frt_fw_write_tv_index(FrtFieldsWriter *fw)
 {
     int i;
     const int tv_cnt = frt_ary_size(fw->tv_fields);
@@ -1617,7 +1606,7 @@ void fw_write_tv_index(FrtFieldsWriter *fw)
     }
 }
 
-void fw_add_postings(FrtFieldsWriter *fw,
+void frt_fw_add_postings(FrtFieldsWriter *fw,
                      int field_num,
                      FrtPostingList **plists,
                      int posting_count,
@@ -1641,7 +1630,7 @@ void fw_add_postings(FrtFieldsWriter *fw,
     for (i = 0; i < posting_count; i++) {
         plist = plists[i];
         posting = plist->last;
-        delta_start = hlp_string_diff(last_term, plist->term);
+        delta_start = frt_hlp_string_diff(last_term, plist->term);
         delta_length = plist->term_len - delta_start;
 
         frt_os_write_vint(fdt_out, delta_start);  /* write shared prefix length */
@@ -1666,11 +1655,11 @@ void fw_add_postings(FrtFieldsWriter *fw,
 
     if (fi_store_offsets(fi)) {
         /* use delta encoding for offsets */
-        i64 last_end = 0;
+        frt_i64 last_end = 0;
         frt_os_write_vint(fdt_out, offset_count);  /* write shared prefix length */
         for (i = 0; i < offset_count; i++) {
-            i64 start = (i64)offsets[i].start;
-            i64 end = (i64)offsets[i].end;
+            frt_i64 start = (frt_i64)offsets[i].start;
+            frt_i64 end = (frt_i64)offsets[i].end;
             frt_os_write_vll(fdt_out, (frt_u64)(start - last_end));
             frt_os_write_vll(fdt_out, (frt_u64)(end - start));
             last_end = end;
@@ -1745,7 +1734,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti,
         int index_cnt = sti->index_cnt;
         off_t index_ptr = 0;
         ste_reset(index_te);
-        is_seek(STE(index_te)->is, sti->index_ptr);
+        frt_is_seek(STE(index_te)->is, sti->index_ptr);
         STE(index_te)->size = sti->index_cnt;
 
         sti->index_terms = FRT_ALLOC_N(char *, index_cnt);
@@ -1762,7 +1751,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti,
             sti->index_terms[i] = frt_te_get_term(index_te);
             sti->index_term_lens[i] = index_te->curr_term_len;
             sti->index_term_infos[i] = index_te->curr_ti;
-            index_ptr += is_read_voff_t(STE(index_te)->is);
+            index_ptr += frt_is_read_voff_t(STE(index_te)->is);
             sti->index_ptrs[i] = index_ptr;
         }
     }
@@ -1814,22 +1803,22 @@ FrtSegmentFieldIndex *frt_sfi_open(FrtStore *store, const char *segment)
 
     sprintf(file_name, "%s.tfx", segment);
     is = store->open_input(store, file_name);
-    field_count = (int)is_read_u32(is);
-    sfi->index_interval = is_read_vint(is);
-    sfi->skip_interval = is_read_vint(is);
+    field_count = (int)frt_is_read_u32(is);
+    sfi->index_interval = frt_is_read_vint(is);
+    sfi->skip_interval = frt_is_read_vint(is);
 
-    sfi->field_dict = h_new_int((free_ft)&sti_destroy);
+    sfi->field_dict = frt_h_new_int((frt_free_ft)&sti_destroy);
 
     for (; field_count > 0; field_count--) {
-        int field_num = is_read_vint(is);
+        int field_num = frt_is_read_vint(is);
         FrtSegmentTermIndex *sti = FRT_ALLOC_AND_ZERO(FrtSegmentTermIndex);
-        sti->index_ptr = is_read_voff_t(is);
-        sti->ptr = is_read_voff_t(is);
-        sti->index_cnt = is_read_vint(is);
-        sti->size = is_read_vint(is);
-        h_set_int(sfi->field_dict, field_num, sti);
+        sti->index_ptr = frt_is_read_voff_t(is);
+        sti->ptr = frt_is_read_voff_t(is);
+        sti->index_cnt = frt_is_read_vint(is);
+        sti->size = frt_is_read_vint(is);
+        frt_h_set_int(sfi->field_dict, field_num, sti);
     }
-    is_close(is);
+    frt_is_close(is);
 
     sprintf(file_name, "%s.tix", segment);
     is = store->open_input(store, file_name);
@@ -1841,7 +1830,7 @@ void frt_sfi_close(FrtSegmentFieldIndex *sfi)
 {
     frt_mutex_destroy(&sfi->mutex);
     frt_ste_close(sfi->index_te);
-    h_destroy(sfi->field_dict);
+    frt_h_destroy(sfi->field_dict);
     free(sfi);
 }
 
@@ -1851,10 +1840,10 @@ void frt_sfi_close(FrtSegmentFieldIndex *sfi)
 
 static int term_read(char *buf, FrtInStream *is)
 {
-    int start = (int)is_read_vint(is);
-    int length = (int)is_read_vint(is);
+    int start = (int)frt_is_read_vint(is);
+    int length = (int)frt_is_read_vint(is);
     int total_length = start + length;
-    is_read_bytes(is, (frt_uchar *)(buf + start), length);
+    frt_is_read_bytes(is, (frt_uchar *)(buf + start), length);
     buf[total_length] = '\0';
     return total_length;
 }
@@ -1875,11 +1864,11 @@ static char *ste_next(FrtTermEnum *te)
     te->curr_term_len = term_read(te->curr_term, is);
 
     ti = &(te->curr_ti);
-    ti->doc_freq = is_read_vint(is);     /* read doc freq */
-    ti->frq_ptr += is_read_voff_t(is);   /* read freq ptr */
-    ti->prx_ptr += is_read_voff_t(is);   /* read prox ptr */
+    ti->doc_freq = frt_is_read_vint(is);     /* read doc freq */
+    ti->frq_ptr += frt_is_read_voff_t(is);   /* read freq ptr */
+    ti->prx_ptr += frt_is_read_voff_t(is);   /* read prox ptr */
     if (ti->doc_freq >= STE(te)->skip_interval) {
-        ti->skip_offset = is_read_voff_t(is);
+        ti->skip_offset = frt_is_read_voff_t(is);
     }
 
     return te->curr_term;
@@ -1896,12 +1885,12 @@ static void ste_reset(FrtTermEnum *te)
 static FrtTermEnum *ste_set_field(FrtTermEnum *te, int field_num)
 {
     FrtSegmentTermIndex *sti
-        = (FrtSegmentTermIndex *)h_get_int(STE(te)->sfi->field_dict, field_num);
+        = (FrtSegmentTermIndex *)frt_h_get_int(STE(te)->sfi->field_dict, field_num);
     ste_reset(te);
     te->field_num = field_num;
     if (sti) {
         STE(te)->size = sti->size;
-        is_seek(STE(te)->is, sti->ptr);
+        frt_is_seek(STE(te)->is, sti->ptr);
     }
     else {
         STE(te)->size = 0;
@@ -1912,7 +1901,7 @@ static FrtTermEnum *ste_set_field(FrtTermEnum *te, int field_num)
 static void ste_index_seek(FrtTermEnum *te, FrtSegmentTermIndex *sti, int idx_offset)
 {
     int term_len = sti->index_term_lens[idx_offset];
-    is_seek(STE(te)->is, sti->index_ptrs[idx_offset]);
+    frt_is_seek(STE(te)->is, sti->index_ptrs[idx_offset]);
     STE(te)->pos = STE(te)->sfi->index_interval * idx_offset - 1;
     memcpy(te->curr_term,
            sti->index_terms[idx_offset],
@@ -1925,7 +1914,7 @@ static char *ste_scan_to(FrtTermEnum *te, const char *term)
 {
     FrtSegmentFieldIndex *sfi = STE(te)->sfi;
     FrtSegmentTermIndex *sti
-        = (FrtSegmentTermIndex *)h_get_int(sfi->field_dict, te->field_num);
+        = (FrtSegmentTermIndex *)frt_h_get_int(sfi->field_dict, te->field_num);
     if (sti && sti->size > 0) {
         SFI_ENSURE_INDEX_IS_READ(sfi, sti);
         if (term[0] == '\0') {
@@ -1966,13 +1955,13 @@ FrtTermEnum *frt_ste_clone(FrtTermEnum *other_te)
     FrtSegmentTermEnum *ste = ste_allocate();
 
     memcpy(ste, other_te, sizeof(FrtSegmentTermEnum));
-    ste->is = is_clone(STE(other_te)->is);
+    ste->is = frt_is_clone(STE(other_te)->is);
     return TE(ste);
 }
 
 void frt_ste_close(FrtTermEnum *te)
 {
-    is_close(STE(te)->is);
+    frt_is_close(STE(te)->is);
     free(te);
 }
 
@@ -2187,7 +2176,7 @@ FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *term)
     mte->tis            = FRT_ALLOC_AND_ZERO_N(FrtTermInfo, r_cnt);
     mte->ti_indexes     = FRT_ALLOC_AND_ZERO_N(int, r_cnt);
     mte->tews           = FRT_ALLOC_AND_ZERO_N(TermEnumWrapper, r_cnt);
-    mte->tew_queue      = frt_pq_new(r_cnt, (frt_lt_ft)&tew_lt, (free_ft)NULL);
+    mte->tew_queue      = frt_pq_new(r_cnt, (frt_lt_ft)&tew_lt, (frt_free_ft)NULL);
     mte->field_num_map  = mr->field_num_map;
 
     for (i = 0; i < r_cnt; i++) {
@@ -2301,7 +2290,7 @@ static FrtTermInfo *tir_get_ti_field(FrtTermInfosReader *tir, int field_num,
 
 void frt_tir_close(FrtTermInfosReader *tir)
 {
-    frt_ary_destroy(tir->te_bucket, (free_ft)&frt_ste_close);
+    frt_ary_destroy(tir->te_bucket, (frt_free_ft)&frt_ste_close);
     frt_ste_close(tir->orig_te);
 
     /* fix for some dodgy old versions of pthread */
@@ -2369,7 +2358,7 @@ static void tw_write_term(FrtTermWriter *tw,
                                  const char *term,
                                  int term_len)
 {
-    int start = hlp_string_diff(tw->last_term, term);
+    int start = frt_hlp_string_diff(tw->last_term, term);
     int length = term_len - start;
 
     frt_os_write_vint(os, start);                   /* write shared prefix length */
@@ -2511,7 +2500,7 @@ static void stde_seek_ti(FrtSegmentTermDocEnum *stde, FrtTermInfo *ti)
         stde->frq_ptr = ti->frq_ptr;
         stde->prx_ptr = ti->prx_ptr;
         stde->skip_ptr = ti->frq_ptr + ti->skip_offset;
-        is_seek(stde->frq_in, ti->frq_ptr);
+        frt_is_seek(stde->frq_in, ti->frq_ptr);
         stde->have_skipped = false;
     }
 }
@@ -2554,13 +2543,13 @@ static bool stde_next(FrtTermDocEnum *tde)
             return false;
         }
 
-        doc_code = is_read_vint(stde->frq_in);
+        doc_code = frt_is_read_vint(stde->frq_in);
         stde->doc_num += doc_code >> 1;    /* shift off low bit */
         if (0 != (doc_code & 1)) {         /* if low bit is set */
             stde->freq = 1;                /* freq is one */
         }
         else {
-            stde->freq = (int)is_read_vint(stde->frq_in); /* read freq */
+            stde->freq = (int)frt_is_read_vint(stde->frq_in); /* read freq */
         }
 
         stde->count++;
@@ -2583,13 +2572,13 @@ static int stde_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 
     while (i < req_num && stde->count < stde->doc_freq) {
         /* manually inlined call to next() for speed */
-        doc_code = is_read_vint(stde->frq_in);
+        doc_code = frt_is_read_vint(stde->frq_in);
         stde->doc_num += (doc_code >> 1);            /* shift off low bit */
         if (0 != (doc_code & 1)) {                   /* if low bit is set */
             stde->freq = 1;                            /* freq is one */
         }
         else {
-            stde->freq = is_read_vint(stde->frq_in);  /* else read freq */
+            stde->freq = frt_is_read_vint(stde->frq_in);  /* else read freq */
         }
 
         stde->count++;
@@ -2616,18 +2605,18 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
         int num_skipped;
 
         if (NULL == stde->skip_in) {
-            stde->skip_in = is_clone(stde->frq_in);/* lazily clone */
+            stde->skip_in = frt_is_clone(stde->frq_in);/* lazily clone */
         }
 
         //printf("skip_ptr = %lld\n", stde->skip_ptr);
         if (!stde->have_skipped) {                 /* lazily seek skip stream */
-            is_seek(stde->skip_in, stde->skip_ptr);
+            frt_is_seek(stde->skip_in, stde->skip_ptr);
             stde->have_skipped = true;
         }
 
         /* scan skip data */
         last_skip_doc = stde->skip_doc;
-        last_frq_ptr = is_pos(stde->frq_in);
+        last_frq_ptr = frt_is_pos(stde->frq_in);
         last_prx_ptr = -1;
         num_skipped = -1 - (stde->count % stde->skip_interval);
         //printf("%d, %d, %d, %d\n", last_skip_doc, last_frq_ptr, last_prx_ptr, num_skipped);
@@ -2645,17 +2634,17 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
                 break;
             }
 
-            stde->skip_doc += is_read_vint(stde->skip_in);
-            stde->frq_ptr  += is_read_vint(stde->skip_in);
-            stde->prx_ptr  += is_read_vint(stde->skip_in);
+            stde->skip_doc += frt_is_read_vint(stde->skip_in);
+            stde->frq_ptr  += frt_is_read_vint(stde->skip_in);
+            stde->prx_ptr  += frt_is_read_vint(stde->skip_in);
             //printf("inner-> skip_doc:%d, frq_ptr:%d, prx_ptr:%d\n", stde->skip_doc, stde->frq_ptr, stde->prx_ptr);
 
             stde->skip_count++;
         }
 
         /* if we found something to skip, skip it */
-        if (last_frq_ptr > is_pos(stde->frq_in)) {
-            is_seek(stde->frq_in, last_frq_ptr);
+        if (last_frq_ptr > frt_is_pos(stde->frq_in)) {
+            frt_is_seek(stde->frq_in, last_frq_ptr);
             stde->seek_prox(stde, last_prx_ptr);
 
             stde->doc_num = last_skip_doc;
@@ -2674,10 +2663,10 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
 
 static void stde_close(FrtTermDocEnum *tde)
 {
-    is_close(STDE(tde)->frq_in);
+    frt_is_close(STDE(tde)->frq_in);
 
     if (NULL != STDE(tde)->skip_in) {
-        is_close(STDE(tde)->skip_in);
+        frt_is_close(STDE(tde)->skip_in);
     }
 
     free(tde);
@@ -2720,7 +2709,7 @@ FrtTermDocEnum *frt_stde_new(FrtTermInfosReader *tir,
 
     /* Attributes */
     stde->tir                = tir;
-    stde->frq_in             = is_clone(frq_in);
+    stde->frq_in             = frt_is_clone(frq_in);
     stde->deleted_docs       = deleted_docs;
     stde->skip_interval      = skip_interval;
 
@@ -2738,7 +2727,7 @@ static void stpe_seek_ti(FrtSegmentTermDocEnum *stde, FrtTermInfo *ti)
     }
     else {
         stde_seek_ti(stde, ti);
-        is_seek(stde->prx_in, ti->prx_ptr);
+        frt_is_seek(stde->prx_in, ti->prx_ptr);
     }
 }
 
@@ -2753,7 +2742,7 @@ static void stpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
 static bool stpe_next(FrtTermDocEnum *tde)
 {
     FrtSegmentTermDocEnum *stde = STDE(tde);
-    is_skip_vints(stde->prx_in, stde->prx_cnt);
+    frt_is_skip_vints(stde->prx_in, stde->prx_cnt);
 
     /* if super */
     if (stde_next(tde)) {
@@ -2778,25 +2767,25 @@ static int stpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 static int stpe_next_position(FrtTermDocEnum *tde)
 {
     FrtSegmentTermDocEnum *stde = STDE(tde);
-    return (stde->prx_cnt-- > 0) ? stde->position += is_read_vint(stde->prx_in)
+    return (stde->prx_cnt-- > 0) ? stde->position += frt_is_read_vint(stde->prx_in)
                                  : -1;
 }
 
 static void stpe_close(FrtTermDocEnum *tde)
 {
-    is_close(STDE(tde)->prx_in);
+    frt_is_close(STDE(tde)->prx_in);
     STDE(tde)->prx_in = NULL;
     stde_close(tde);
 }
 
 static void stpe_skip_prox(FrtSegmentTermDocEnum *stde)
 {
-    is_skip_vints(stde->prx_in, stde->freq);
+    frt_is_skip_vints(stde->prx_in, stde->freq);
 }
 
 static void stpe_seek_prox(FrtSegmentTermDocEnum *stde, off_t prx_ptr)
 {
-    is_seek(stde->prx_in, prx_ptr);
+    frt_is_seek(stde->prx_in, prx_ptr);
     stde->prx_cnt = 0;
 }
 
@@ -2821,7 +2810,7 @@ FrtTermDocEnum *frt_stpe_new(FrtTermInfosReader *tir,
     stde->seek_prox          = &stpe_seek_prox;
 
     /* Attributes */
-    stde->prx_in             = is_clone(prx_in);
+    stde->prx_in             = frt_is_clone(prx_in);
     stde->prx_cnt            = 0;
     stde->position           = 0;
 
@@ -3131,7 +3120,7 @@ static bool mtdpe_next(FrtTermDocEnum *tde)
         sub_tde = (FrtTermDocEnum *)frt_pq_top(mtdpe->pq);
     } while ((mtdpe->pq->size > 0) && (sub_tde->doc_num(sub_tde) == doc));
 
-    qsort(mtdpe->pos_queue, freq, sizeof(int), &icmp_risky);
+    qsort(mtdpe->pos_queue, freq, sizeof(int), &frt_icmp_risky);
 
     mtdpe->pos_queue_index = 0;
     mtdpe->freq = freq;
@@ -3193,7 +3182,7 @@ FrtTermDocEnum *frt_mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, i
     FrtTermDocEnum *tde = TDE(mtdpe);
     FrtPriorityQueue *pq;
 
-    pq = mtdpe->pq = frt_pq_new(t_cnt, (frt_lt_ft)&tdpe_less_than, (free_ft)&tde_destroy);
+    pq = mtdpe->pq = frt_pq_new(t_cnt, (frt_lt_ft)&tdpe_less_than, (frt_free_ft)&tde_destroy);
     mtdpe->pos_queue_capa = MTDPE_POS_QUEUE_INIT_CAPA;
     mtdpe->pos_queue = FRT_ALLOC_N(int, MTDPE_POS_QUEUE_INIT_CAPA);
     mtdpe->field_num = field_num;
@@ -3229,11 +3218,11 @@ static FrtHash *fn_extensions = NULL;
 static void file_name_filter_init()
 {
     int i;
-    fn_extensions = h_new_str((free_ft)NULL, (free_ft)NULL);
+    fn_extensions = frt_h_new_str((frt_free_ft)NULL, (frt_free_ft)NULL);
     for (i = 0; i < FRT_NELEMS(INDEX_EXTENSIONS); i++) {
-      h_set(fn_extensions, INDEX_EXTENSIONS[i], (char *)INDEX_EXTENSIONS[i]);
+      frt_h_set(fn_extensions, INDEX_EXTENSIONS[i], (char *)INDEX_EXTENSIONS[i]);
     }
-    frt_register_for_cleanup(fn_extensions, (free_ft)&h_destroy);
+    frt_register_for_cleanup(fn_extensions, (frt_free_ft)&frt_h_destroy);
 }
 
 bool frt_file_name_filter_is_index_file(const char *file_name, bool include_locks)
@@ -3242,7 +3231,7 @@ bool frt_file_name_filter_is_index_file(const char *file_name, bool include_lock
     if (NULL == fn_extensions) file_name_filter_init();
     if (NULL != p) {
         char *extension = p + 1;
-        if (NULL != h_get(fn_extensions, extension)) {
+        if (NULL != frt_h_get(fn_extensions, extension)) {
             return true;
         }
         else if ((*extension == 'f' || *extension == 's')
@@ -3271,7 +3260,7 @@ static bool file_name_filter_is_cfs_file(const char *file_name) {
     char *p = strrchr(file_name, '.');
     if (NULL != p) {
         char *extension = p + 1;
-        if (NULL != h_get(fn_extensions, extension)
+        if (NULL != frt_h_get(fn_extensions, extension)
             && 0 != strcmp(extension, "del")
             && 0 != strcmp(extension, "gen")
             && 0 != strcmp(extension, "cfs")) {
@@ -3298,19 +3287,19 @@ FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store)
     FrtDeleter *dlr = FRT_ALLOC(FrtDeleter);
     dlr->sis = sis;
     dlr->store = store;
-    dlr->pending = hs_new_str(&free);
+    dlr->pending = frt_hs_new_str(&free);
     return dlr;
 }
 
 void frt_deleter_destroy(FrtDeleter *dlr)
 {
-    hs_destroy(dlr->pending);
+    frt_hs_destroy(dlr->pending);
     free(dlr);
 }
 
 static void deleter_queue_file(FrtDeleter *dlr, const char *file_name)
 {
-    hs_add(dlr->pending, frt_estrdup(file_name));
+    frt_hs_add(dlr->pending, frt_estrdup(file_name));
 }
 
 void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name)
@@ -3320,9 +3309,9 @@ void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name)
         if (store->exists(store, file_name)) {
             store->remove(store, file_name);
         }
-        hs_del(dlr->pending, file_name);
+        frt_hs_del(dlr->pending, file_name);
     FRT_XCATCHALL
-        hs_add(dlr->pending, frt_estrdup(file_name));
+        frt_hs_add(dlr->pending, frt_estrdup(file_name));
     FRT_XENDTRY
 }
 
@@ -3384,7 +3373,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
 
         /* Delete this file if it's not a "current" segment, or, it is a
          * single index file but there is now a corresponding compound file: */
-        if (NULL == (si = (FrtSegmentInfo *)h_get(dfa->current, segment_name))) {
+        if (NULL == (si = (FrtSegmentInfo *)frt_h_get(dfa->current, segment_name))) {
             /* Delete if segment is not referenced: */
             do_delete = true;
         }
@@ -3398,7 +3387,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
             }
             else if (0 == strcmp("del", extension)) {
                 /* This is a _segmentName_N.del file: */
-                if (!fn_for_generation(tmp_fn, segment_name, "del", si->del_gen)
+                if (!frt_fn_for_generation(tmp_fn, segment_name, "del", si->del_gen)
                     || 0 != strcmp(file_name, tmp_fn)) {
                     /* If this is a seperate .del file, but it
                      * doesn't match the current del file name for
@@ -3443,13 +3432,13 @@ void frt_deleter_find_deletable_files(FrtDeleter *dlr)
     FrtStore *store = dlr->store;
     struct DelFilesArg dfa;
     FrtHash *current = dfa.current
-                       = h_new_str((free_ft)NULL, (free_ft)frt_si_deref);
+                       = frt_h_new_str((frt_free_ft)NULL, (frt_free_ft)frt_si_deref);
     dfa.dlr = dlr;
 
     for(i = 0; i < sis->size; i++) {
         FrtSegmentInfo *si = (FrtSegmentInfo *)sis->segs[i];
         FRT_REF(si);
-        h_set(current, si->name, si);
+        frt_h_set(current, si->name, si);
     }
 
     /* Then go through all files in the Directory that are Ferret index files,
@@ -3458,7 +3447,7 @@ void frt_deleter_find_deletable_files(FrtDeleter *dlr)
     frt_sis_curr_seg_file_name(dfa.curr_seg_file_name, store);
 
     store->each(store, &frt_deleter_find_deletable_files_i, &dfa);
-    h_destroy(dfa.current);
+    frt_h_destroy(dfa.current);
 }
 
 static void deleter_delete_deletable_files(FrtDeleter *dlr)
@@ -3471,7 +3460,7 @@ static void deleter_delete_deletable_files(FrtDeleter *dlr)
 TODO: currently not used. Why not?
 static void deleter_clear_pending_deletions(FrtDeleter *dlr)
 {
-    hs_clear(dlr->pending);
+    frt_hs_clear(dlr->pending);
 }
 */
 
@@ -3551,24 +3540,9 @@ static FrtIndexReader *ir_setup(FrtIndexReader *ir, FrtStore *store, FrtSegmentI
     return ir;
 }
 
-bool ir_index_exists(FrtStore *store)
+int frt_ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term)
 {
-    return frt_sis_current_segment_generation(store) != 1;
-}
-
-int ir_get_field_num(FrtIndexReader *ir, FrtSymbol field)
-{
-    int field_num = fis_get_field_num(ir->fis, field);
-    if (field_num < 0) {
-        rb_raise(rb_eArgError,
-              "Field :%s does not exist in this index", (char *)field);
-    }
-    return field_num;
-}
-
-int ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term)
-{
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         return ir->doc_freq(ir, field_num, term);
     }
@@ -3586,15 +3560,15 @@ static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uc
     frt_mutex_unlock(&ir->mutex);
 }
 
-void ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, frt_uchar val)
+void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, frt_uchar val)
 {
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         ir_set_norm_i(ir, doc_num, field_num, val);
     }
 }
 
-frt_uchar *ir_get_norms_i(FrtIndexReader *ir, int field_num)
+frt_uchar *frt_ir_get_norms_i(FrtIndexReader *ir, int field_num)
 {
     frt_uchar *norms = NULL;
     if (field_num >= 0) {
@@ -3609,15 +3583,15 @@ frt_uchar *ir_get_norms_i(FrtIndexReader *ir, int field_num)
     return norms;
 }
 
-frt_uchar *ir_get_norms(FrtIndexReader *ir, FrtSymbol field)
+frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, FrtSymbol field)
 {
-    int field_num = fis_get_field_num(ir->fis, field);
-    return ir_get_norms_i(ir, field_num);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
+    return frt_ir_get_norms_i(ir, field_num);
 }
 
-frt_uchar *ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf)
+frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf)
 {
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         ir->get_norms_into(ir, field_num, buf);
     }
@@ -3627,7 +3601,7 @@ frt_uchar *ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf
     return buf;
 }
 
-void ir_undelete_all(FrtIndexReader *ir)
+void frt_ir_undelete_all(FrtIndexReader *ir)
 {
     frt_mutex_lock(&ir->mutex);
     ir->acquire_write_lock(ir);
@@ -3636,7 +3610,7 @@ void ir_undelete_all(FrtIndexReader *ir)
     frt_mutex_unlock(&ir->mutex);
 }
 
-void ir_delete_doc(FrtIndexReader *ir, int doc_num)
+void frt_ir_delete_doc(FrtIndexReader *ir, int doc_num)
 {
     if (doc_num >= 0 && doc_num < ir->max_doc(ir)) {
         frt_mutex_lock(&ir->mutex);
@@ -3647,36 +3621,21 @@ void ir_delete_doc(FrtIndexReader *ir, int doc_num)
     }
 }
 
-FrtDocument *ir_get_doc_with_term(FrtIndexReader *ir, FrtSymbol field,
-                               const char *term)
-{
-    FrtTermDocEnum *tde = ir_term_docs_for(ir, field, term);
-    FrtDocument *doc = NULL;
-
-    if (tde) {
-        if (tde->next(tde)) {
-            doc = ir->get_doc(ir, tde->doc_num(tde));
-        }
-        tde->close(tde);
-    }
-    return doc;
-}
-
-FrtTermEnum *ir_terms(FrtIndexReader *ir, FrtSymbol field)
+FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, FrtSymbol field)
 {
     FrtTermEnum *te = NULL;
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         te = ir->terms(ir, field_num);
     }
     return te;
 }
 
-FrtTermEnum *ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
+FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
                            const char *term)
 {
     FrtTermEnum *te = NULL;
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         te = ir->terms_from(ir, field_num, term);
     }
@@ -3686,7 +3645,7 @@ FrtTermEnum *ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
 FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, FrtSymbol field,
                               const char *term)
 {
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     FrtTermDocEnum *tde = ir->term_docs(ir);
     if (field_num >= 0) {
         tde->seek(tde, field_num, term);
@@ -3694,10 +3653,10 @@ FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, FrtSymbol field,
     return tde;
 }
 
-FrtTermDocEnum *ir_term_positions_for(FrtIndexReader *ir, FrtSymbol field,
+FrtTermDocEnum *frt_ir_term_positions_for(FrtIndexReader *ir, FrtSymbol field,
                                    const char *term)
 {
-    int field_num = fis_get_field_num(ir->fis, field);
+    int field_num = frt_fis_get_field_num(ir->fis, field);
     FrtTermDocEnum *tde = ir->term_positions(ir);
     if (field_num >= 0) {
         tde->seek(tde, field_num, term);
@@ -3740,14 +3699,14 @@ static void ir_commit_i(FrtIndexReader *ir)
     ir->has_changes = false;
 }
 
-void ir_commit(FrtIndexReader *ir)
+void frt_ir_commit(FrtIndexReader *ir)
 {
     frt_mutex_lock(&ir->mutex);
     ir_commit_i(ir);
     frt_mutex_unlock(&ir->mutex);
 }
 
-void ir_close(FrtIndexReader *ir)
+void frt_ir_close(FrtIndexReader *ir)
 {
     frt_mutex_lock(&ir->mutex);
     if (0 == --(ir->ref_cnt)) {
@@ -3760,10 +3719,10 @@ void ir_close(FrtIndexReader *ir)
             frt_sis_destroy(ir->sis);
         }
         if (ir->cache) {
-            h_destroy(ir->cache);
+            frt_h_destroy(ir->cache);
         }
         if (ir->field_index_cache) {
-            h_destroy(ir->field_index_cache);
+            frt_h_destroy(ir->field_index_cache);
         }
         if (ir->deleter && ir->is_owner) {
             frt_deleter_destroy(ir->deleter);
@@ -3783,14 +3742,14 @@ void ir_close(FrtIndexReader *ir)
 /**
  * Don't call this method if the cache already exists
  **/
-void ir_add_cache(FrtIndexReader *ir)
+void frt_ir_add_cache(FrtIndexReader *ir)
 {
     if (NULL == ir->cache) {
         ir->cache = frt_co_hash_create();
     }
 }
 
-bool ir_is_latest(FrtIndexReader *ir)
+bool frt_ir_is_latest(FrtIndexReader *ir)
 {
     return ir->is_latest_i(ir);
 }
@@ -3820,7 +3779,7 @@ static Norm *norm_create(FrtInStream *is, int field_num)
 
 static void norm_destroy(Norm *norm)
 {
-    is_close(norm->is);
+    frt_is_close(norm->is);
     if (NULL != norm->bytes) {
         free(norm->bytes);
     }
@@ -3878,7 +3837,7 @@ static FrtFieldsReader *sr_fr(SegmentReader *sr)
     FrtFieldsReader *fr;
 
     if (NULL == (fr = (FrtFieldsReader *)frt_thread_getspecific(sr->thread_fr))) {
-        fr = fr_clone(sr->fr);
+        fr = frt_fr_clone(sr->fr);
         frt_ary_push(sr->fr_bucket, fr);
         frt_thread_setspecific(sr->thread_fr, fr);
     }
@@ -3893,7 +3852,7 @@ static bool sr_is_deleted_i(SegmentReader *sr, int doc_num)
 static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
                                        frt_uchar *buf)
 {
-    Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
+    Norm *norm = (Norm *)frt_h_get_int(sr->norms, field_num);
     if (NULL == norm) {
         memset(buf, 0, SR_SIZE(sr));
     }
@@ -3901,17 +3860,17 @@ static void sr_get_norms_into_i(SegmentReader *sr, int field_num,
         memcpy(buf, norm->bytes, SR_SIZE(sr));
     }
     else {
-        FrtInStream *norm_in = is_clone(norm->is);
+        FrtInStream *norm_in = frt_is_clone(norm->is);
         /* read from disk */
-        is_seek(norm_in, 0);
-        is_read_bytes(norm_in, buf, SR_SIZE(sr));
-        is_close(norm_in);
+        frt_is_seek(norm_in, 0);
+        frt_is_read_bytes(norm_in, buf, SR_SIZE(sr));
+        frt_is_close(norm_in);
     }
 }
 
 static frt_uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
 {
-    Norm *norm = (Norm *)h_get_int(sr->norms, field_num);
+    Norm *norm = (Norm *)frt_h_get_int(sr->norms, field_num);
     if (NULL == norm) {                           /* not an indexed field */
         return NULL;
     }
@@ -3926,7 +3885,7 @@ static frt_uchar *sr_get_norms_i(SegmentReader *sr, int field_num)
 
 static void sr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar b)
 {
-    Norm *norm = (Norm *)h_get_int(SR(ir)->norms, field_num);
+    Norm *norm = (Norm *)frt_h_get_int(SR(ir)->norms, field_num);
     if (NULL != norm) { /* has_norms */
         ir->has_changes = true;
         norm->is_dirty = true; /* mark it dirty */
@@ -3980,18 +3939,18 @@ static FrtBitVector *bv_read(FrtStore *store, char *name)
     volatile bool success = false;
     FrtInStream *volatile is = store->open_input(store, name);
     FrtBitVector *volatile bv = FRT_ALLOC_AND_ZERO(FrtBitVector);
-    bv->size = (int)is_read_vint(is);
+    bv->size = (int)frt_is_read_vint(is);
     bv->capa = (bv->size >> 5) + 1;
     bv->bits = FRT_ALLOC_AND_ZERO_N(frt_u32, bv->capa);
     bv->ref_cnt = 1;
     FRT_TRY
         for (i = ((bv->size-1) >> 5); i >= 0; i--) {
-            bv->bits[i] = is_read_u32(is);
+            bv->bits[i] = frt_is_read_u32(is);
         }
         frt_bv_recount(bv);
         success = true;
     FRT_XFINALLY
-        is_close(is);
+        frt_is_close(is);
         if (!success && bv) frt_bv_destroy(bv);
     FRT_XENDTRY
     return bv;
@@ -4010,7 +3969,7 @@ static void sr_commit_i(FrtIndexReader *ir)
 
     if (SR(ir)->undelete_all || SR(ir)->deleted_docs_dirty) {
         if (si->del_gen >= 0) {
-            fn_for_generation(tmp_file_name, segment, "del", si->del_gen);
+            frt_fn_for_generation(tmp_file_name, segment, "del", si->del_gen);
             deleter_queue_file(ir->deleter, tmp_file_name);
         }
         if (SR(ir)->undelete_all) {
@@ -4020,7 +3979,7 @@ static void sr_commit_i(FrtIndexReader *ir)
         else {
             /* (SR(ir)->deleted_docs_dirty) re-write deleted */
             si->del_gen++;
-            fn_for_generation(tmp_file_name, segment, "del", si->del_gen);
+            frt_fn_for_generation(tmp_file_name, segment, "del", si->del_gen);
             bv_write(SR(ir)->deleted_docs, ir->store, tmp_file_name);
             SR(ir)->deleted_docs_dirty = false;
         }
@@ -4032,7 +3991,7 @@ static void sr_commit_i(FrtIndexReader *ir)
         for (i = field_cnt - 1; i >= 0; i--) {
             fi = ir->fis->fields[i];
             if (fi_is_indexed(fi)) {
-                Norm *norm = (Norm *)h_get_int(SR(ir)->norms, fi->number);
+                Norm *norm = (Norm *)frt_h_get_int(SR(ir)->norms, fi->number);
                 if (norm && norm->is_dirty) {
                     norm_rewrite(norm, ir->store, ir->deleter, SR(ir)->si,
                                  SR_SIZE(ir));
@@ -4047,18 +4006,18 @@ static void sr_close_i(FrtIndexReader *ir)
 {
     SegmentReader *sr = SR(ir);
 
-    if (sr->fr)           fr_close(sr->fr);
+    if (sr->fr)           frt_fr_close(sr->fr);
     if (sr->tir)          frt_tir_close(sr->tir);
     if (sr->sfi)          frt_sfi_close(sr->sfi);
-    if (sr->frq_in)       is_close(sr->frq_in);
-    if (sr->prx_in)       is_close(sr->prx_in);
-    if (sr->norms)        h_destroy(sr->norms);
+    if (sr->frq_in)       frt_is_close(sr->frq_in);
+    if (sr->prx_in)       frt_is_close(sr->prx_in);
+    if (sr->norms)        frt_h_destroy(sr->norms);
     if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
     if (sr->cfs_store)    frt_store_deref(sr->cfs_store);
     if (sr->fr_bucket) {
         frt_thread_setspecific(sr->thread_fr, NULL);
         frt_thread_key_delete(sr->thread_fr);
-        frt_ary_destroy(sr->fr_bucket, (free_ft)&fr_close);
+        frt_ary_destroy(sr->fr_bucket, (frt_free_ft)&frt_fr_close);
     }
 }
 
@@ -4088,7 +4047,7 @@ static FrtDocument *sr_get_doc(FrtIndexReader *ir, int doc_num)
         frt_mutex_unlock(&ir->mutex);
         rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
-    doc = fr_get_doc(SR(ir)->fr, doc_num);
+    doc = frt_fr_get_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
     return doc;
 }
@@ -4101,7 +4060,7 @@ static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
         frt_mutex_unlock(&ir->mutex);
         rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
-    lazy_doc = fr_get_lazy_doc(SR(ir)->fr, doc_num);
+    lazy_doc = frt_fr_get_lazy_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
     return lazy_doc;
 }
@@ -4162,7 +4121,7 @@ static FrtTermDocEnum *sr_term_positions(FrtIndexReader *ir)
 static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num,
                                   FrtSymbol field)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)h_get(ir->fis->field_dict, field);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(ir->fis->field_dict, field);
     FrtFieldsReader *fr;
 
     if (!fi || !fi_store_term_vector(fi) || !SR(ir)->fr ||
@@ -4170,7 +4129,7 @@ static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num,
         return NULL;
     }
 
-    return fr_get_field_tv(fr, doc_num, fi->number);
+    return frt_fr_get_field_tv(fr, doc_num, fi->number);
 }
 
 static FrtHash *sr_term_vectors(FrtIndexReader *ir, int doc_num)
@@ -4180,7 +4139,7 @@ static FrtHash *sr_term_vectors(FrtIndexReader *ir, int doc_num)
         return NULL;
     }
 
-    return fr_get_tv(fr, doc_num);
+    return frt_fr_get_tv(fr, doc_num);
 }
 
 static bool sr_is_deleted(FrtIndexReader *ir, int doc_num)
@@ -4209,7 +4168,7 @@ static void sr_open_norms(FrtIndexReader *ir, FrtStore *cfs_store)
         FrtStore *store = (si->use_compound_file && si->norm_gens[i] == 0) ?
             cfs_store : ir->store;
         if (si_norm_file_name(si, file_name, i)) {
-            h_set_int(SR(ir)->norms, i,
+            frt_h_set_int(SR(ir)->norms, i,
                       norm_create(store->open_input(store, file_name), i));
         }
     }
@@ -4256,7 +4215,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
             store = sr->cfs_store;
         }
 
-        sr->fr = fr_open(store, sr_segment, ir->fis);
+        sr->fr = frt_fr_open(store, sr_segment, ir->fis);
         sr->sfi = frt_sfi_open(store, sr_segment);
         sr->tir = frt_tir_open(store, sr->sfi, sr_segment);
 
@@ -4264,7 +4223,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         sr->deleted_docs_dirty = false;
         sr->undelete_all = false;
         if (frt_si_has_deletions(sr->si)) {
-            fn_for_generation(file_name, sr_segment, "del", sr->si->del_gen);
+            frt_fn_for_generation(file_name, sr_segment, "del", sr->si->del_gen);
             sr->deleted_docs = bv_read(sr->si->store, file_name);
         }
 
@@ -4272,7 +4231,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         sr->frq_in = store->open_input(store, file_name);
         sprintf(file_name, "%s.prx", sr_segment);
         sr->prx_in = store->open_input(store, file_name);
-        sr->norms = h_new_int((free_ft)&norm_destroy);
+        sr->norms = frt_h_new_int((frt_free_ft)&norm_destroy);
         sr_open_norms(ir, store);
         if (fis_has_vectors(ir->fis)) {
             frt_thread_key_create(&sr->thread_fr, NULL);
@@ -4280,7 +4239,7 @@ static FrtIndexReader *sr_setup_i(SegmentReader *sr)
         }
     FRT_XCATCHALL
         ir->sis = NULL;
-        ir_close(ir);
+        frt_ir_close(ir);
     FRT_XENDTRY
 
     return ir;
@@ -4381,7 +4340,7 @@ static frt_uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
     frt_uchar *bytes;
 
     frt_mutex_lock(&ir->mutex);
-    bytes = (frt_uchar *)h_get_int(MR(ir)->norms_cache, field_num);
+    bytes = (frt_uchar *)frt_h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL == bytes) {
         int i;
         const int mr_reader_cnt = MR(ir)->r_cnt;
@@ -4395,7 +4354,7 @@ static frt_uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
                 reader->get_norms_into(reader, fnum, bytes + MR(ir)->starts[i]);
             }
         }
-        h_set_int(MR(ir)->norms_cache, field_num, bytes); /* update cache */
+        frt_h_set_int(MR(ir)->norms_cache, field_num, bytes); /* update cache */
     }
     frt_mutex_unlock(&ir->mutex);
 
@@ -4407,7 +4366,7 @@ static frt_uchar *mr_get_norms_into(FrtIndexReader *ir, int field_num, frt_uchar
     frt_uchar *bytes;
 
     frt_mutex_lock(&ir->mutex);
-    bytes = (frt_uchar *)h_get_int(MR(ir)->norms_cache, field_num);
+    bytes = (frt_uchar *)frt_h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL != bytes) {
         memcpy(buf, bytes, MR(ir)->max_doc);
     }
@@ -4491,7 +4450,7 @@ static void mr_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uc
     if (fnum >= 0) {
         FrtIndexReader *reader = MR(ir)->sub_readers[i];
         ir->has_changes = true;
-        h_del_int(MR(ir)->norms_cache, fnum);/* clear cache */
+        frt_h_del_int(MR(ir)->norms_cache, fnum);/* clear cache */
         ir_set_norm_i(reader, doc_num - MR(ir)->starts[i], fnum, val);
     }
 }
@@ -4536,7 +4495,7 @@ static bool mr_is_latest_i(FrtIndexReader *ir)
     int i;
     const int mr_reader_cnt = MR(ir)->r_cnt;
     for (i = 0; i < mr_reader_cnt; i++) {
-        if (!ir_is_latest(MR(ir)->sub_readers[i])) {
+        if (!frt_ir_is_latest(MR(ir)->sub_readers[i])) {
             return false;
         }
     }
@@ -4559,10 +4518,10 @@ static void mr_close_i(FrtIndexReader *ir)
     const int mr_reader_cnt = MR(ir)->r_cnt;
     for (i = 0; i < mr_reader_cnt; i++) {
         FrtIndexReader *reader = MR(ir)->sub_readers[i];
-        ir_close(reader);
+        frt_ir_close(reader);
     }
     free(MR(ir)->sub_readers);
-    h_destroy(MR(ir)->norms_cache);
+    frt_h_destroy(MR(ir)->norms_cache);
     free(MR(ir)->starts);
 }
 
@@ -4590,7 +4549,7 @@ static FrtIndexReader *mr_new(FrtIndexReader **sub_readers, const int r_cnt)
         }
     }
     mr->starts[r_cnt]       = mr->max_doc;
-    mr->norms_cache         = h_new_int(&free);
+    mr->norms_cache         = frt_h_new_int(&free);
 
     ir->num_docs            = &mr_num_docs;
     ir->max_doc             = &mr_max_doc;
@@ -4639,7 +4598,7 @@ static void mr_close_ext_i(FrtIndexReader *ir)
         }
         free(field_num_map);
     }
-    fis_deref(ir->fis);
+    frt_fis_deref(ir->fis);
     mr_close_i(ir);
 }
 
@@ -4648,7 +4607,7 @@ FrtIndexReader *frt_mr_open(FrtIndexReader **sub_readers, const int r_cnt)
     FrtIndexReader *ir = mr_new(sub_readers, r_cnt);
     FrtMultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FrtFieldInfos *fis = fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
@@ -4658,7 +4617,7 @@ FrtIndexReader *frt_mr_open(FrtIndexReader **sub_readers, const int r_cnt)
         const int sub_fis_size = sub_fis->size;
         for (j = 0; j < sub_fis_size; j++) {
             FrtFieldInfo *fi = sub_fis->fields[j];
-            FrtFieldInfo *new_fi = fis_get_or_add_field(fis, fi->name);
+            FrtFieldInfo *new_fi = frt_fis_get_or_add_field(fis, fi->name);
             new_fi->bits |= fi->bits;
             if (fi->number != new_fi->number) {
                 need_field_map = true;
@@ -4677,7 +4636,7 @@ FrtIndexReader *frt_mr_open(FrtIndexReader **sub_readers, const int r_cnt)
             mr->field_num_map[i] = FRT_ALLOC_N(int, fis_size);
             for (j = 0; j < fis_size; j++) {
                 FrtFieldInfo *fi = fis->fields[j];
-                FrtFieldInfo *fi_sub = fis_get_field(sub_fis, fi->name);
+                FrtFieldInfo *fi_sub = frt_fis_get_field(sub_fis, fi->name);
                 /* set non existant field nums to -1. The MultiReader will
                  * skip readers which don't have needed fields */
                 mr->field_num_map[i][j] = fi_sub ? fi_sub->number : -1;
@@ -4731,7 +4690,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf)
                     readers[i] = sr_open(sis, fis, i, false);
                 FRT_XCATCHALL
                     for (i++; i < num_segments; i++) {
-                        ir_close(readers[i]);
+                        frt_ir_close(readers[i]);
                     }
                     free(readers);
                 FRT_XENDTRY
@@ -4744,7 +4703,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf)
     FRT_XFINALLY
         if (!success) {
             if (ir) {
-                ir_close(ir);
+                frt_ir_close(ir);
             }
             else if (sis) {
                 frt_sis_destroy(sis);
@@ -4758,7 +4717,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf)
  * Will keep a reference to the store. To let this method delete the store
  * make sure you deref the store that you pass to it
  */
-FrtIndexReader *ir_open(FrtStore *store)
+FrtIndexReader *frt_ir_open(FrtStore *store)
 {
     FindSegmentsFile fsf;
     sis_find_segments_file(store, &fsf, &ir_open_i);
@@ -4850,14 +4809,14 @@ static FrtFieldInverter *fld_inv_new(FrtDocWriter *dw, FrtFieldInfo *fi)
     fld_inv->fi = fi;
 
     /* this will alloc it's own memory so must be destroyed */
-    fld_inv->plists = h_new_str(NULL, NULL);
+    fld_inv->plists = frt_h_new_str(NULL, NULL);
 
     return fld_inv;
 }
 
 static void fld_inv_destroy(FrtFieldInverter *fld_inv)
 {
-    h_destroy(fld_inv->plists);
+    frt_h_destroy(fld_inv->plists);
 }
 
 /****************************************************************************
@@ -4961,9 +4920,9 @@ static FrtPostingList **dw_sort_postings(FrtHash *plists_ht)
 static void dw_flush_streams(FrtDocWriter *dw)
 {
     frt_mp_reset(dw->mp);
-    fw_close(dw->fw);
+    frt_fw_close(dw->fw);
     dw->fw = NULL;
-    h_clear(dw->fields);
+    frt_h_clear(dw->fields);
     dw->doc_num = 0;
 }
 
@@ -4995,7 +4954,7 @@ static void dw_flush(FrtDocWriter *dw)
     for (i = 0; i < fields_count; i++) {
         fi = fis->fields[i];
         if (!fi_is_indexed(fi) || NULL ==
-            (fld_inv = (FrtFieldInverter*)h_get_int(dw->fields, fi->number))) {
+            (fld_inv = (FrtFieldInverter*)frt_h_get_int(dw->fields, fi->number))) {
             continue;
         }
         if (!fi_omit_norms(fi)) {
@@ -5059,11 +5018,11 @@ FrtDocWriter *frt_dw_open(FrtIndexWriter *iw, FrtSegmentInfo *si)
     dw->analyzer    = iw->analyzer;
     dw->fis         = iw->fis;
     dw->store       = store;
-    dw->fw          = fw_open(store, si->name, iw->fis);
+    dw->fw          = frt_fw_open(store, si->name, iw->fis);
     dw->si          = si;
 
-    dw->curr_plists = h_new_str(NULL, NULL);
-    dw->fields      = h_new_int((free_ft)fld_inv_destroy);
+    dw->curr_plists = frt_h_new_str(NULL, NULL);
+    dw->fields      = frt_h_new_int((frt_free_ft)fld_inv_destroy);
     dw->doc_num     = 0;
 
     dw->index_interval      = iw->config.index_interval;
@@ -5081,7 +5040,7 @@ FrtDocWriter *frt_dw_open(FrtIndexWriter *iw, FrtSegmentInfo *si)
 
 void frt_dw_new_segment(FrtDocWriter *dw, FrtSegmentInfo *si)
 {
-    dw->fw = fw_open(dw->store, si->name, dw->fis);
+    dw->fw = frt_fw_open(dw->store, si->name, dw->fis);
     dw->si = si;
 }
 
@@ -5091,10 +5050,10 @@ void frt_dw_close(FrtDocWriter *dw)
         dw_flush(dw);
     }
     if (dw->fw) {
-        fw_close(dw->fw);
+        frt_fw_close(dw->fw);
     }
-    h_destroy(dw->curr_plists);
-    h_destroy(dw->fields);
+    frt_h_destroy(dw->curr_plists);
+    frt_h_destroy(dw->fields);
     frt_mp_destroy(dw->mp);
     free(dw->offsets);
     free(dw);
@@ -5102,11 +5061,11 @@ void frt_dw_close(FrtDocWriter *dw)
 
 FrtFieldInverter *frt_dw_get_fld_inv(FrtDocWriter *dw, FrtFieldInfo *fi)
 {
-    FrtFieldInverter *fld_inv = (FrtFieldInverter*)h_get_int(dw->fields, fi->number);
+    FrtFieldInverter *fld_inv = (FrtFieldInverter*)frt_h_get_int(dw->fields, fi->number);
 
     if (!fld_inv) {
         fld_inv = fld_inv_new(dw, fi);
-        h_set_int(dw->fields, fi->number, fld_inv);
+        frt_h_set_int(dw->fields, fi->number, fld_inv);
     }
     return fld_inv;
 }
@@ -5120,12 +5079,12 @@ static void dw_add_posting(FrtMemoryPool *mp,
                            int pos)
 {
     FrtHashEntry *pl_he;
-    if (h_set_ext(curr_plists, text, &pl_he)) {
+    if (frt_h_set_ext(curr_plists, text, &pl_he)) {
         FrtPosting *p =  frt_p_new(mp, doc_num, pos);
         FrtHashEntry *fld_pl_he;
         FrtPostingList *pl;
 
-        if (h_set_ext(fld_plists, text, &fld_pl_he)) {
+        if (frt_h_set_ext(fld_plists, text, &fld_pl_he)) {
             fld_pl_he->value = pl = frt_pl_new(mp, text, len, p);
             pl_he->key = fld_pl_he->key = (char *)pl->term;
         }
@@ -5249,12 +5208,12 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
     FrtFieldInfo *fi;
     const int doc_size = doc->size;
 
-    /* fw_add_doc will add new fields as necessary */
-    fw_add_doc(dw->fw, doc);
+    /* frt_fw_add_doc will add new fields as necessary */
+    frt_fw_add_doc(dw->fw, doc);
 
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
-        fi = fis_get_field(dw->fis, df->name);
+        fi = frt_fis_get_field(dw->fis, df->name);
         if (!fi_is_indexed(fi)) {
             continue;
         }
@@ -5262,7 +5221,7 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
 
         postings = frt_dw_invert_field(dw, fld_inv, df);
         if (fld_inv->store_term_vector) {
-            fw_add_postings(dw->fw, fld_inv->fi->number,
+            frt_fw_add_postings(dw->fw, fld_inv->fi->number,
                             dw_sort_postings(postings), postings->size,
                             dw->offsets, dw->offsets_size);
         }
@@ -5279,7 +5238,7 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
             dw->offsets_size = 0;
         }
     }
-    fw_write_tv_index(dw->fw);
+    frt_fw_write_tv_index(dw->fw);
     dw->doc_num++;
 }
 
@@ -5357,7 +5316,7 @@ static SegmentMergeInfo *smi_new(int base, FrtStore *store, FrtSegmentInfo *si)
         = smi->store->length(smi->store, file_name) / FIELDS_IDX_PTR_SIZE;
 
     if (si->del_gen >= 0) {
-        fn_for_generation(file_name, segment, "del", si->del_gen);
+        frt_fn_for_generation(file_name, segment, "del", si->del_gen);
         smi->deleted_docs = bv_read(store, file_name);
         smi_load_doc_map(smi);
     }
@@ -5385,8 +5344,8 @@ static void smi_close_term_input(SegmentMergeInfo *smi)
     frt_ste_close(smi->te);
     frt_sfi_close(smi->sfi);
     stpe_close(smi->tde);
-    is_close(smi->frq_in);
-    is_close(smi->prx_in);
+    frt_is_close(smi->frq_in);
+    frt_is_close(smi->prx_in);
 }
 
 static void smi_destroy(SegmentMergeInfo *smi)
@@ -5487,27 +5446,27 @@ static void sm_merge_fields(SegmentMerger *sm)
         fdx_in = store->open_input(store, file_name);
 
         if (max_doc > 0) {
-            end = (off_t)is_read_u64(fdx_in);
+            end = (off_t)frt_is_read_u64(fdx_in);
         }
         for (j = 0; j < max_doc; j++) {
-            frt_u32 tv_idx_offset = is_read_u32(fdx_in);
+            frt_u32 tv_idx_offset = frt_is_read_u32(fdx_in);
             start = end;
             if (j == max_doc - 1) {
                 end = is_length(fdt_in);
             }
             else {
-                end = (off_t)is_read_u64(fdx_in);
+                end = (off_t)frt_is_read_u64(fdx_in);
             }
             /* skip deleted docs */
             if (!smi->deleted_docs || !frt_bv_get(smi->deleted_docs, j)) {
                 frt_os_write_u64(fdx_out, frt_os_pos(fdt_out));
                 frt_os_write_u32(fdx_out, tv_idx_offset);
-                is_seek(fdt_in, start);
-                is2os_copy_bytes(fdt_in, fdt_out, end - start);
+                frt_is_seek(fdt_in, start);
+                frt_is2os_copy_bytes(fdt_in, fdt_out, end - start);
             }
         }
-        is_close(fdt_in);
-        is_close(fdx_in);
+        frt_is_close(fdt_in);
+        frt_is_close(fdx_in);
     }
     frt_os_close(fdt_out);
     frt_os_close(fdx_out);
@@ -5561,7 +5520,7 @@ static int sm_append_postings(SegmentMerger *sm, SegmentMergeInfo **matches,
             }
 
             /* copy position deltas */
-            is2os_copy_vints(STDE(tde)->prx_in, sm->prx_out, freq);
+            frt_is2os_copy_vints(STDE(tde)->prx_in, sm->prx_out, freq);
         }
     }
     return df;
@@ -5721,16 +5680,16 @@ static void sm_merge_norms(SegmentMerger *sm)
                     is = store->open_input(store, file_name);
                     if (deleted_docs) {
                         for (k = 0; k < max_doc; k++) {
-                            byte = is_read_byte(is);
+                            byte = frt_is_read_byte(is);
                             if (!frt_bv_get(deleted_docs, k)) {
                                 frt_os_write_byte(os, byte);
                             }
                         }
                     }
                     else {
-                        is2os_copy_bytes(is, os, max_doc);
+                        frt_is2os_copy_bytes(is, os, max_doc);
                     }
-                    is_close(is);
+                    frt_is_close(is);
                 }
                 else {
                     const int doc_cnt = smi->doc_cnt;
@@ -5758,7 +5717,7 @@ static int sm_merge(SegmentMerger *sm)
  ****************************************************************************/
 
 /* prepare an index ready for writing */
-void index_create(FrtStore *store, FrtFieldInfos *fis)
+void frt_index_create(FrtStore *store, FrtFieldInfos *fis)
 {
     FrtSegmentInfos *sis = frt_sis_new(fis);
     store->clear_all(store);
@@ -5766,15 +5725,7 @@ void index_create(FrtStore *store, FrtFieldInfos *fis)
     frt_sis_destroy(sis);
 }
 
-bool index_is_locked(FrtStore *store)
-{
-    FrtLock *write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
-    bool is_locked = write_lock->is_locked(write_lock);
-    frt_close_lock(write_lock);
-    return is_locked;
-}
-
-int iw_doc_count(FrtIndexWriter *iw)
+int frt_iw_doc_count(FrtIndexWriter *iw)
 {
     int i, doc_cnt = 0;
     frt_mutex_lock(&iw->mutex);
@@ -5921,7 +5872,7 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     iw_maybe_merge_segments(iw);
 }
 
-void iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc)
+void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc)
 {
     frt_mutex_lock(&iw->mutex);
     if (NULL == iw->dw) {
@@ -5945,16 +5896,16 @@ static void iw_commit_i(FrtIndexWriter *iw)
     }
 }
 
-void iw_commit(FrtIndexWriter *iw)
+void frt_iw_commit(FrtIndexWriter *iw)
 {
     frt_mutex_lock(&iw->mutex);
     iw_commit_i(iw);
     frt_mutex_unlock(&iw->mutex);
 }
 
-void iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
+void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
 {
-    int field_num = fis_get_field_num(iw->fis, field);
+    int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;
         frt_mutex_lock(&iw->mutex);
@@ -5974,7 +5925,7 @@ void iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
                 }
                 tde_destroy(tde);
                 sr_commit_i(ir);
-                ir_close(ir);
+                frt_ir_close(ir);
             }
             if (did_delete) {
                 frt_mutex_lock(&iw->store->mutex);
@@ -5986,10 +5937,10 @@ void iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
     }
 }
 
-void iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field,
+void frt_iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field,
                      char **terms, const int term_cnt)
 {
-    int field_num = fis_get_field_num(iw->fis, field);
+    int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;
         frt_mutex_lock(&iw->mutex);
@@ -6013,7 +5964,7 @@ void iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field,
                 }
                 tde_destroy(tde);
                 sr_commit_i(ir);
-                ir_close(ir);
+                frt_ir_close(ir);
             }
             if (did_delete) {
                 frt_mutex_lock(&iw->store->mutex);
@@ -6041,14 +5992,14 @@ static void iw_optimize_i(FrtIndexWriter *iw)
     }
 }
 
-void iw_optimize(FrtIndexWriter *iw)
+void frt_iw_optimize(FrtIndexWriter *iw)
 {
     frt_mutex_lock(&iw->mutex);
     iw_optimize_i(iw);
     frt_mutex_unlock(&iw->mutex);
 }
 
-void iw_close(FrtIndexWriter *iw)
+void frt_iw_close(FrtIndexWriter *iw)
 {
     frt_mutex_lock(&iw->mutex);
     iw_commit_i(iw);
@@ -6057,7 +6008,7 @@ void iw_close(FrtIndexWriter *iw)
     }
     frt_a_deref(iw->analyzer);
     frt_sis_destroy(iw->sis);
-    fis_deref(iw->fis);
+    frt_fis_deref(iw->fis);
     frt_sim_destroy(iw->similarity);
     iw->write_lock->release(iw->write_lock);
     frt_close_lock(iw->write_lock);
@@ -6068,7 +6019,7 @@ void iw_close(FrtIndexWriter *iw)
     free(iw);
 }
 
-FrtIndexWriter *iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
+FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
                      const FrtConfig *config)
 {
     FrtIndexWriter *iw = FRT_ALLOC_AND_ZERO(FrtIndexWriter);
@@ -6140,7 +6091,7 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
         FrtInStream *del_in = store_in->open_input(store_in, file_name);
         sprintf(file_name, "%s.del", segment);
         del_out = store_out->new_output(store_out, file_name);
-        is2os_copy_bytes(del_in, del_out, is_length(del_in));
+        frt_is2os_copy_bytes(del_in, del_out, is_length(del_in));
     }
 
 
@@ -6149,7 +6100,7 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
         const int max_doc = sr_max_doc(IR(sr));
         for (i = 0; i < max_doc; i++) {
             int j, data_len = 0;
-            const int field_cnt = is_read_vint(fdt_in);
+            const int field_cnt = frt_is_read_vint(fdt_in);
             int tv_cnt;
             off_t doc_start_ptr = frt_os_pos(fdt_out);
 
@@ -6158,45 +6109,45 @@ static void iw_cp_fields(FrtIndexWriter *iw, SegmentReader *sr,
 
             for (j = 0; j < field_cnt; j++) {
                 int k;
-                const int field_num = map[is_read_vint(fdt_in)];
-                const int df_size = is_read_vint(fdt_in);
+                const int field_num = map[frt_is_read_vint(fdt_in)];
+                const int df_size = frt_is_read_vint(fdt_in);
                 frt_os_write_vint(fdt_out, field_num);
                 frt_os_write_vint(fdt_out, df_size);
                 /* sum total lengths of FrtDocField */
                 for (k = 0; k < df_size; k++) {
                     /* Each field has one ' ' byte so add 1 */
-                    const int flen = is_read_vint(fdt_in);
+                    const int flen = frt_is_read_vint(fdt_in);
                     frt_os_write_vint(fdt_out, flen);
                     data_len +=  flen + 1;
                 }
             }
-            is2os_copy_bytes(fdt_in, fdt_out, data_len);
+            frt_is2os_copy_bytes(fdt_in, fdt_out, data_len);
 
             /* Write TermVectors */
             /* write TVs up to TV index */
-            is2os_copy_bytes(fdt_in, fdt_out,
-                             (int)(is_read_u64(fdx_in)
-                                   + (frt_u64)is_read_u32(fdx_in)
-                                   - (frt_u64)is_pos(fdt_in)));
+            frt_is2os_copy_bytes(fdt_in, fdt_out,
+                             (int)(frt_is_read_u64(fdx_in)
+                                   + (frt_u64)frt_is_read_u32(fdx_in)
+                                   - (frt_u64)frt_is_pos(fdt_in)));
 
             /* Write TV index pos */
             frt_os_write_u32(fdx_out, (frt_u32)(frt_os_pos(fdt_out) - doc_start_ptr));
-            tv_cnt = is_read_vint(fdt_in);
+            tv_cnt = frt_is_read_vint(fdt_in);
             frt_os_write_vint(fdt_out, tv_cnt);
             for (j = 0; j < tv_cnt; j++) {
-                const int field_num = map[is_read_vint(fdt_in)];
-                const int tv_size = is_read_vint(fdt_in);
+                const int field_num = map[frt_is_read_vint(fdt_in)];
+                const int tv_size = frt_is_read_vint(fdt_in);
                 frt_os_write_vint(fdt_out, field_num);
                 frt_os_write_vint(fdt_out, tv_size);
             }
         }
     }
     else {
-        is2os_copy_bytes(fdt_in, fdt_out, is_length(fdt_in));
-        is2os_copy_bytes(fdx_in, fdx_out, is_length(fdx_in));
+        frt_is2os_copy_bytes(fdt_in, fdt_out, is_length(fdt_in));
+        frt_is2os_copy_bytes(fdx_in, fdx_out, is_length(fdx_in));
     }
-    is_close(fdt_in);
-    is_close(fdx_in);
+    frt_is_close(fdt_in);
+    frt_is_close(fdx_in);
     frt_os_close(fdt_out);
     frt_os_close(fdx_out);
 }
@@ -6237,36 +6188,36 @@ static void iw_cp_terms(FrtIndexWriter *iw, SegmentReader *sr,
     prx_in = store_in->open_input(store_in, file_name);
 
     if (map) {
-        int field_cnt = is_read_u32(tfx_in);
+        int field_cnt = frt_is_read_u32(tfx_in);
         frt_os_write_u32(tfx_out, field_cnt);
-        frt_os_write_vint(tfx_out, is_read_vint(tfx_in)); /* index_interval */
-        frt_os_write_vint(tfx_out, is_read_vint(tfx_in)); /* skip_interval */
+        frt_os_write_vint(tfx_out, frt_is_read_vint(tfx_in)); /* index_interval */
+        frt_os_write_vint(tfx_out, frt_is_read_vint(tfx_in)); /* skip_interval */
 
         for (; field_cnt > 0; field_cnt--) {
-            frt_os_write_vint(tfx_out, map[is_read_vint(tfx_in)]);/* mapped field */
-            frt_os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* index ptr */
-            frt_os_write_voff_t(tfx_out, is_read_voff_t(tfx_in)); /* dict ptr */
-            frt_os_write_vint(tfx_out, is_read_vint(tfx_in));     /* index size */
-            frt_os_write_vint(tfx_out, is_read_vint(tfx_in));     /* dict size */
+            frt_os_write_vint(tfx_out, map[frt_is_read_vint(tfx_in)]);/* mapped field */
+            frt_os_write_voff_t(tfx_out, frt_is_read_voff_t(tfx_in)); /* index ptr */
+            frt_os_write_voff_t(tfx_out, frt_is_read_voff_t(tfx_in)); /* dict ptr */
+            frt_os_write_vint(tfx_out, frt_is_read_vint(tfx_in));     /* index size */
+            frt_os_write_vint(tfx_out, frt_is_read_vint(tfx_in));     /* dict size */
         }
     }
     else {
-        is2os_copy_bytes(tfx_in, tfx_out, is_length(tfx_in));
+        frt_is2os_copy_bytes(tfx_in, tfx_out, is_length(tfx_in));
     }
-    is2os_copy_bytes(tix_in, tix_out, is_length(tix_in));
-    is2os_copy_bytes(tis_in, tis_out, is_length(tis_in));
-    is2os_copy_bytes(frq_in, frq_out, is_length(frq_in));
-    is2os_copy_bytes(prx_in, prx_out, is_length(prx_in));
+    frt_is2os_copy_bytes(tix_in, tix_out, is_length(tix_in));
+    frt_is2os_copy_bytes(tis_in, tis_out, is_length(tis_in));
+    frt_is2os_copy_bytes(frq_in, frq_out, is_length(frq_in));
+    frt_is2os_copy_bytes(prx_in, prx_out, is_length(prx_in));
 
-    is_close(tix_in);
+    frt_is_close(tix_in);
     frt_os_close(tix_out);
-    is_close(tis_in);
+    frt_is_close(tis_in);
     frt_os_close(tis_out);
-    is_close(tfx_in);
+    frt_is_close(tfx_in);
     frt_os_close(tfx_out);
-    is_close(frq_in);
+    frt_is_close(frq_in);
     frt_os_close(frq_out);
-    is_close(prx_in);
+    frt_is_close(prx_in);
     frt_os_close(prx_out);
 }
 
@@ -6294,9 +6245,9 @@ static void iw_cp_norms(FrtIndexWriter *iw, SegmentReader *sr,
             frt_si_advance_norm_gen(si, field_num);
             si_norm_file_name(si, file_name_out, field_num);
             norms_out = store_out->new_output(store_out, file_name_out);
-            is2os_copy_bytes(norms_in, norms_out, is_length(norms_in));
+            frt_is2os_copy_bytes(norms_in, norms_out, is_length(norms_in));
             frt_os_close(norms_out);
-            is_close(norms_in);
+            frt_is_close(norms_in);
         }
     }
 }
@@ -6311,7 +6262,7 @@ static void iw_cp_map_files(FrtIndexWriter *iw, SegmentReader *sr,
     int *field_map = FRT_ALLOC_N(int, map_size);
 
     for (i = 0; i < map_size; i++) {
-        field_map[i] = fis_get_field_num(to_fis, from_fis->fields[i]->name);
+        field_map[i] = frt_fis_get_field_num(to_fis, from_fis->fields[i]->name);
     }
 
     iw_cp_fields(iw, sr, si->name, field_map);
@@ -6342,11 +6293,11 @@ static void iw_add_segment(FrtIndexWriter *iw, SegmentReader *sr)
     /* Merge FieldInfos */
     for (j = 0; j < fis_size; j++) {
         FrtFieldInfo *fi = sub_fis->fields[j];
-        FrtFieldInfo *new_fi = fis_get_field(fis, fi->name);
+        FrtFieldInfo *new_fi = frt_fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
             new_fi = frt_fi_new(fi->name, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
             new_fi->bits = fi->bits;
-            fis_add_field(fis, new_fi);
+            frt_fis_add_field(fis, new_fi);
         }
         new_fi->bits |= fi->bits;
         if (fi->number != new_fi->number) {
@@ -6377,7 +6328,7 @@ static void iw_add_segments(FrtIndexWriter *iw, FrtIndexReader *ir)
     }
 }
 
-void iw_add_readers(FrtIndexWriter *iw, FrtIndexReader **readers, const int r_cnt)
+void frt_iw_add_readers(FrtIndexWriter *iw, FrtIndexReader **readers, const int r_cnt)
 {
     int i;
     frt_mutex_lock(&iw->mutex);

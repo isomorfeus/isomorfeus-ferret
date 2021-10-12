@@ -1,6 +1,5 @@
 #include "frt_search.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -127,7 +126,7 @@ static FrtScorer *fqw_scorer(FrtWeight *self, FrtIndexReader *ir)
     FrtScorer *scorer = sub_weight->scorer(sub_weight, ir);
     FrtFilter *filter = FQQ(self->query)->filter;
 
-    return fqsc_new(scorer, filt_get_bv(filter, ir), self->similarity);
+    return fqsc_new(scorer, frt_filt_get_bv(filter, ir), self->similarity);
 }
 
 static void fqw_destroy(FrtWeight *self)
@@ -196,7 +195,7 @@ static FrtWeight *fq_new_weight(FrtQuery *self, FrtSearcher *searcher)
                       searcher->similarity);
 }
 
-FrtQuery *fq_new(FrtQuery *query, FrtFilter *filter)
+FrtQuery *frt_fq_new(FrtQuery *query, FrtFilter *filter)
 {
     FrtQuery *self = frt_q_new(FrtFilteredQuery);
 

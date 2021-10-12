@@ -1,7 +1,6 @@
 #include <string.h>
 #include "frt_search.h"
 #include "frt_helper.h"
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -125,7 +124,7 @@ static float fuzq_score_mn(FrtFuzzyQuery *fuzq,
  *
  * http://mail-archives.apache.org/mod_mbox/lucene-java-dev/200606.mbox/%3c448F0E8C.3050901@alias-i.com%3e
  */
-float fuzq_score(FrtFuzzyQuery *fuzq, const char *target)
+float frt_fuzq_score(FrtFuzzyQuery *fuzq, const char *target)
 {
     const int m = (int)strlen(target);
     const int n = fuzq->text_len;
@@ -182,7 +181,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     int pre_len = fuzq->pre_len;
     char *prefix = NULL;
     const char *term = fuzq->term;
-    const int field_num = fis_get_field_num(ir->fis, fuzq->field);
+    const int field_num = frt_fis_get_field_num(ir->fis, fuzq->field);
     FrtTermEnum *te;
 
     if (field_num < 0) {
@@ -219,7 +218,7 @@ static FrtQuery *fuzq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         if (prefix && strncmp(curr_term, prefix, pre_len) != 0)
             break;
 
-        score = fuzq_score(fuzq, curr_suffix);
+        score = frt_fuzq_score(fuzq, curr_suffix);
         frt_multi_tq_add_term_boost(q, curr_term, score);
     } while (te->next(te) != NULL);
 
@@ -238,7 +237,7 @@ static void fuzq_destroy(FrtQuery *self)
 static unsigned long long fuzq_hash(FrtQuery *self)
 {
     return frt_str_hash(FzQ(self)->term) ^ frt_sym_hash(FzQ(self)->field)
-        ^ float2int(FzQ(self)->min_sim) ^ FzQ(self)->pre_len;
+        ^ frt_float2int(FzQ(self)->min_sim) ^ FzQ(self)->pre_len;
 }
 
 static int fuzq_eq(FrtQuery *self, FrtQuery *o)
@@ -252,7 +251,7 @@ static int fuzq_eq(FrtQuery *self, FrtQuery *o)
         && (fq1->min_sim == fq2->min_sim);
 }
 
-FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
+FrtQuery *frt_fuzq_new_conf(FrtSymbol field, const char *term,
                      float min_sim, int pre_len, int max_terms)
 {
     FrtQuery *self = frt_q_new(FrtFuzzyQuery);
@@ -275,7 +274,7 @@ FrtQuery *fuzq_new_conf(FrtSymbol field, const char *term,
     return self;
 }
 
-FrtQuery *fuzq_new(FrtSymbol field, const char *term)
+FrtQuery *frt_fuzq_new(FrtSymbol field, const char *term)
 {
-    return fuzq_new_conf(field, term, 0.0f, 0, 0);
+    return frt_fuzq_new_conf(field, term, 0.0f, 0, 0);
 }

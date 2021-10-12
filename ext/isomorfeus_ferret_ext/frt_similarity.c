@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "frt_global.h"
-#include "frt_internal.h"
 
 /****************************************************************************
  *
@@ -113,7 +112,7 @@ static float simdef_decode_norm(struct FrtSimilarity *s, frt_uchar b)
 static frt_uchar simdef_encode_norm(struct FrtSimilarity *s, float f)
 {
     (void)s;
-    return float2byte(f);
+    return frt_float2byte(f);
 }
 
 static void simdef_destroy(FrtSimilarity *s)

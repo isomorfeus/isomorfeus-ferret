@@ -2,7 +2,6 @@
 #include <string.h>
 #include "frt_search.h"
 #include "frt_array.h"
-#include "frt_internal.h"
 
 extern VALUE cStateError;
 

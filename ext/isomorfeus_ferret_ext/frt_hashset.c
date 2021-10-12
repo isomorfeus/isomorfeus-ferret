@@ -1,6 +1,5 @@
 #include "frt_hashset.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /*
  * The HashSet contains an array +elems+ of the elements that have been added.
@@ -8,7 +7,7 @@
  * over all alements in the HashSet. It also uses a Hash to keep track of
  * which elements have been added and their index in the +elems+ array.
  */
-static FrtHashSet *hs_alloc(free_ft free_func)
+static FrtHashSet *hs_alloc(frt_free_ft free_func)
 {
     FrtHashSet *hs = FRT_ALLOC(FrtHashSet);
     hs->size = 0;
@@ -17,31 +16,31 @@ static FrtHashSet *hs_alloc(free_ft free_func)
     return hs;
 }
 
-FrtHashSet *hs_new(hash_ft hash_func, frt_eq_ft eq_func, free_ft free_func)
+FrtHashSet *frt_hs_new(frt_hash_ft hash_func, frt_eq_ft eq_func, frt_free_ft free_func)
 {
     FrtHashSet *hs = hs_alloc(free_func);
-    hs->ht = h_new(hash_func, eq_func, NULL, NULL);
+    hs->ht = frt_h_new(hash_func, eq_func, NULL, NULL);
     return hs;
 }
 
-FrtHashSet *hs_new_str(free_ft free_func)
+FrtHashSet *frt_hs_new_str(frt_free_ft free_func)
 {
     FrtHashSet *hs = hs_alloc(free_func);
-    hs->ht = h_new_str((free_ft) NULL, NULL);
+    hs->ht = frt_h_new_str((frt_free_ft) NULL, NULL);
     return hs;
 }
 
-FrtHashSet *hs_new_ptr(free_ft free_func)
+FrtHashSet *frt_hs_new_ptr(frt_free_ft free_func)
 {
     FrtHashSet *hs = hs_alloc(free_func);
-    hs->ht = h_new_ptr(NULL);
+    hs->ht = frt_h_new_ptr(NULL);
     return hs;
 }
 
 static void clear(FrtHashSet *hs, bool destroy)
 {
     FrtHashSetEntry *curr, *next = hs->first;
-    free_ft do_free = destroy ? hs->free_elem_i : &frt_dummy_free;
+    frt_free_ft do_free = destroy ? hs->free_elem_i : &frt_dummy_free;
     while (NULL != (curr = next)) {
         next = curr->next;
         do_free(curr->elem);
@@ -51,23 +50,23 @@ static void clear(FrtHashSet *hs, bool destroy)
     hs->size = 0;
 }
 
-void hs_clear(FrtHashSet *hs)
+void frt_hs_clear(FrtHashSet *hs)
 {
     clear(hs, true);
-    h_clear(hs->ht);
+    frt_h_clear(hs->ht);
 }
 
-void hs_free(FrtHashSet *hs)
+void frt_hs_free(FrtHashSet *hs)
 {
     clear(hs, false);
-    h_destroy(hs->ht);
+    frt_h_destroy(hs->ht);
     free(hs);
 }
 
-void hs_destroy(FrtHashSet *hs)
+void frt_hs_destroy(FrtHashSet *hs)
 {
     clear(hs, true);
-    h_destroy(hs->ht);
+    frt_h_destroy(hs->ht);
     free(hs);
 }
 
@@ -84,13 +83,13 @@ static void append(FrtHashSet *hs, void *elem)
         hs->last->next = entry;
         hs->last = entry;
     }
-    h_set(hs->ht, elem, entry);
+    frt_h_set(hs->ht, elem, entry);
     hs->size++;
 }
 
-FrtHashKeyStatus hs_add(FrtHashSet *hs, void *elem)
+FrtHashKeyStatus frt_hs_add(FrtHashSet *hs, void *elem)
 {
-    FrtHashKeyStatus has_elem = h_has_key(hs->ht, elem);
+    FrtHashKeyStatus has_elem = frt_h_has_key(hs->ht, elem);
     switch (has_elem)
     {
         /* We don't want to keep two of the same elem so free if necessary */
@@ -112,9 +111,9 @@ FrtHashKeyStatus hs_add(FrtHashSet *hs, void *elem)
     return has_elem;
 }
 
-int hs_add_safe(FrtHashSet *hs, void *elem)
+int frt_hs_add_safe(FrtHashSet *hs, void *elem)
 {
-    switch(h_has_key(hs->ht, elem))
+    switch(frt_h_has_key(hs->ht, elem))
     {
         /* element can't be added */
         case FRT_HASH_KEY_EQUAL: return false;
@@ -129,10 +128,10 @@ int hs_add_safe(FrtHashSet *hs, void *elem)
     return true;
 }
 
-void *hs_rem(FrtHashSet *hs, const void *elem)
+void *frt_hs_rem(FrtHashSet *hs, const void *elem)
 {
     void *return_elem;
-    FrtHashSetEntry *entry = (FrtHashSetEntry *)h_get(hs->ht, elem);
+    FrtHashSetEntry *entry = (FrtHashSetEntry *)frt_h_get(hs->ht, elem);
     if (entry == NULL) return NULL;
 
     if (hs->first == hs->last) {
@@ -151,15 +150,15 @@ void *hs_rem(FrtHashSet *hs, const void *elem)
         entry->next->prev = entry->prev;
     }
     return_elem = entry->elem;
-    h_del(hs->ht, return_elem);
+    frt_h_del(hs->ht, return_elem);
     free(entry);
     hs->size--;
     return return_elem;
 }
 
-int hs_del(FrtHashSet *hs, const void *elem)
+int frt_hs_del(FrtHashSet *hs, const void *elem)
 {
-    void *tmp_elem = hs_rem(hs, elem);
+    void *tmp_elem = frt_hs_rem(hs, elem);
     if (tmp_elem != NULL) {
         hs->free_elem_i(tmp_elem);
         return 1;
@@ -167,26 +166,20 @@ int hs_del(FrtHashSet *hs, const void *elem)
     return 0;
 }
 
-FrtHashKeyStatus hs_exists(FrtHashSet *hs, const void *elem)
+FrtHashKeyStatus frt_hs_exists(FrtHashSet *hs, const void *elem)
 {
-    return h_has_key(hs->ht, elem);
+    return frt_h_has_key(hs->ht, elem);
 }
 
-FrtHashSet *hs_merge(FrtHashSet *hs, FrtHashSet * other)
+FrtHashSet *frt_hs_merge(FrtHashSet *hs, FrtHashSet * other)
 {
     FrtHashSetEntry *entry = other->first;
     for (; entry != NULL; entry = entry->next) {
-        hs_add(hs, entry->elem);
+        frt_hs_add(hs, entry->elem);
     }
     /* Now free the other hashset. It is no longer needed. No need, however,
      * to delete the elements as they were either destroyed or added to the
      * new hashset.  */
-    hs_free(other);
+    frt_hs_free(other);
     return hs;
-}
-
-void *hs_orig(FrtHashSet *hs, const void *elem)
-{
-    FrtHashSetEntry *entry = (FrtHashSetEntry *)h_get(hs->ht, elem);
-    return entry ? entry->elem : NULL;
 }

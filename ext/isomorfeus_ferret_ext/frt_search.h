@@ -715,7 +715,6 @@ extern char *frt_sort_to_s(FrtSort *self);
  ***************************************************************************/
 
 extern FrtHit *frt_fshq_pq_pop(FrtPriorityQueue *pq);
-extern void frt_fshq_pq_down(FrtPriorityQueue *pq);
 extern void frt_fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit);
 extern void frt_fshq_pq_destroy(FrtPriorityQueue *pq);
 extern FrtPriorityQueue *frt_fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir);
@@ -743,8 +742,6 @@ extern bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2);
  * FrtSearcher
  *
  ***************************************************************************/
-
-typedef float (*frt_filter_ft)(int doc_num, float score, FrtSearcher *self, void *arg);
 
 typedef struct FrtPostFilter
 {

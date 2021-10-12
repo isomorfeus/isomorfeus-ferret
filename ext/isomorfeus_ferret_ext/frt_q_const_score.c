@@ -1,6 +1,5 @@
 #include "frt_search.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /***************************************************************************
  *
@@ -45,7 +44,7 @@ static FrtScorer *cssc_new(FrtWeight *weight, FrtIndexReader *ir)
     FrtFilter *filter  = CScQ(weight->query)->filter;
 
     CScSc(self)->score  = weight->value;
-    CScSc(self)->bv     = filt_get_bv(filter, ir);
+    CScSc(self)->bv     = frt_filt_get_bv(filter, ir);
 
     self->score     = &cssc_score;
     self->next      = &cssc_next;
@@ -71,7 +70,7 @@ static FrtExplanation *csw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     FrtFilter *filter = CScQ(self->query)->filter;
     FrtExplanation *expl;
     char *filter_str = filter->to_s(filter);
-    FrtBitVector *bv = filt_get_bv(filter, ir);
+    FrtBitVector *bv = frt_filt_get_bv(filter, ir);
 
     if (frt_bv_get(bv, doc_num)) {
         expl = frt_expl_new(self->value,
@@ -132,12 +131,12 @@ static void csq_destroy(FrtQuery *self)
 
 static unsigned long long csq_hash(FrtQuery *self)
 {
-    return filt_hash(CScQ(self)->filter);
+    return frt_filt_hash(CScQ(self)->filter);
 }
 
 static int csq_eq(FrtQuery *self, FrtQuery *o)
 {
-    return filt_eq(CScQ(self)->filter, CScQ(o)->filter);
+    return frt_filt_eq(CScQ(self)->filter, CScQ(o)->filter);
 }
 
 FrtQuery *frt_csq_new_nr(FrtFilter *filter)

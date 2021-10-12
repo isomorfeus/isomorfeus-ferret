@@ -1,6 +1,5 @@
 #include "frt_search.h"
 #include <string.h>
-#include "frt_internal.h"
 
 /***************************************************************************
  *

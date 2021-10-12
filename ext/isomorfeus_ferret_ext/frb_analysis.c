@@ -985,7 +985,7 @@ static VALUE
 frb_hyphen_filter_init(VALUE self, VALUE rsub_ts)
 {
     FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = hyphen_filter_new(ts);
+    ts = frt_hyphen_filter_new(ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1458,7 +1458,7 @@ static void
 frb_pfa_mark(void *p)
 {
     frb_gc_mark(PFA(p)->default_a);
-    h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
+    frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
 }
 
 /*** PerFieldAnalyzer ***/
@@ -1523,7 +1523,7 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
     GET_A(pfa, self);
 
     StringValue(rstring);
-    a = (FrtAnalyzer *)h_get(PFA(pfa)->dict, field);
+    a = (FrtAnalyzer *)frt_h_get(PFA(pfa)->dict, field);
     if (a == NULL) {
         a = PFA(pfa)->default_a;
     }
