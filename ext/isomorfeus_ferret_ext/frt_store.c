@@ -7,6 +7,30 @@
 
 extern VALUE cLockError;
 
+/*
+ * TODO: add try finally
+ */
+void frt_with_lock(FrtLock *lock, void (*func)(void *arg), void *arg) {
+    if (!lock->obtain(lock)) {
+        FRT_RAISE(FRT_LOCK_ERROR, "couldn't obtain lock \"%s\"", lock->name);
+    }
+    func(arg);
+    lock->release(lock);
+}
+
+/*
+ * TODO: add try finally
+ */
+void frt_with_lock_name(FrtStore *store, const char *lock_name, void (*func)(void *arg), void *arg) {
+    FrtLock *lock = store->open_lock_i(store, lock_name);
+    if (!lock->obtain(lock)) {
+        FRT_RAISE(FRT_LOCK_ERROR, "couldn't obtain lock \"%s\"", lock->name);
+    }
+    func(arg);
+    lock->release(lock);
+    store->close_lock_i(lock);
+}
+
 void frt_store_deref(FrtStore *store)
 {
     frt_mutex_lock(&store->mutex_i);
@@ -279,6 +303,14 @@ FrtInStream *frt_is_clone(FrtInStream *is)
     return new_index_i;
 }
 
+frt_i32 frt_is_read_i32(FrtInStream *is)
+{
+    return ((frt_i32)frt_is_read_byte(is) << 24) |
+        ((frt_i32)frt_is_read_byte(is) << 16) |
+        ((frt_i32)frt_is_read_byte(is) << 8) |
+        ((frt_i32)frt_is_read_byte(is));
+}
+
 
 frt_i64 frt_is_read_i64(FrtInStream *is)
 {
@@ -467,6 +499,26 @@ char *frt_is_read_string_safe(FrtInStream *is)
     FRT_XENDTRY
 
     return str;
+}
+
+void frt_os_write_i32(FrtOutStream *os, frt_i32 num)
+{
+    frt_os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)(num & 0xFF));
+}
+
+void frt_os_write_i64(FrtOutStream *os, frt_i64 num)
+{
+    frt_os_write_byte(os, (frt_uchar)((num >> 56) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 48) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 40) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 32) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 24) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 16) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)((num >> 8) & 0xFF));
+    frt_os_write_byte(os, (frt_uchar)(num & 0xFF));
 }
 
 void frt_os_write_u32(FrtOutStream *os, frt_u32 num)

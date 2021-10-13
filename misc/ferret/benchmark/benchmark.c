@@ -2,10 +2,13 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <string.h>
+#include "ruby.h"
 #include "frt_global.h"
 #include "benchmark.h"
 #include "all_benchmarks.h"
 #include "word_list.h"
+
+static VALUE mBenchmark;
 
 static int bmtcmp(const void *p1, const void *p2)
 {
@@ -149,7 +152,7 @@ static void bm_run(BenchMark *benchmark)
     }
 }
 
-int main(int argc, const char *const argv[])
+int not_main_either(int argc, const char *const argv[])
 {
     int i;
     BenchMark benchmark;
@@ -171,4 +174,8 @@ int main(int argc, const char *const argv[])
         bm_clear(&benchmark);
     }
     return 0;
+}
+
+void Init_Benchmark(void) {
+    mBenchmark = rb_define_module_under(mFerret, "Bnchmark");
 }

@@ -56,6 +56,27 @@ unsigned int *frt_imalloc(unsigned int value)
   return p;
 }
 
+unsigned long *frt_lmalloc(unsigned long value)
+{
+  unsigned long *p = FRT_ALLOC(unsigned long);
+  *p = value;
+  return p;
+}
+
+frt_u32 *frt_u32malloc(frt_u32 value)
+{
+  frt_u32 *p = FRT_ALLOC(frt_u32);
+  *p = value;
+  return p;
+}
+
+frt_u64 *frt_u64malloc(frt_u64 value)
+{
+  frt_u64 *p = FRT_ALLOC(frt_u64);
+  *p = value;
+  return p;
+}
+
 /* concatenate two strings freeing the second */
 char *frt_estrcat(char *str1, char *str2)
 {
@@ -65,6 +86,21 @@ char *frt_estrcat(char *str1, char *str2)
     memcpy(str1 + len1, str2, len2 + 1);        /* make sure '\0' copied too */
     free(str2);
     return str1;
+}
+
+/* epstrdup: duplicate a string with a format, report if error */
+char *frt_epstrdup(const char *fmt, int len, ...)
+{
+    char *string;
+    va_list args;
+    len += (int) strlen(fmt);
+
+    string = FRT_ALLOC_N(char, len + 1);
+    va_start(args, len);
+    vsprintf(string, fmt, args);
+    va_end(args);
+
+    return string;
 }
 
 /* frt_estrdup: duplicate a string, report if error */
@@ -385,13 +421,13 @@ void p_off()
     p_switch = false;
 }
 
-void p_pause()
+void frt_p_pause()
 {
     p_switch_tmp = p_switch;
     p_switch = false;
 }
 
-void p_resume()
+void frt_p_resume()
 {
     p_switch = p_switch_tmp;
 }

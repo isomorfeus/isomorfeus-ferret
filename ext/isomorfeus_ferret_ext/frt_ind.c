@@ -31,12 +31,75 @@ static const char *NON_UNIQUE_KEY_ERROR_MSG =
     }                            \
 } while (0)
 
+FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fields,
+                 bool create)
+{
+    FrtIndex *self = FRT_ALLOC_AND_ZERO(FrtIndex);
+    FrtHashSetEntry *hse;
+    /* FIXME: need to add these to the query parser */
+    self->config = frt_default_config;
+    frt_mutex_init(&self->mutex, NULL);
+    self->has_writes = false;
+    if (store) {
+        FRT_REF(store);
+        self->store = store;
+    } else {
+        self->store = frt_open_ram_store();
+        create = true;
+    }
+    if (analyzer) {
+        self->analyzer = analyzer;
+        FRT_REF(analyzer);
+    } else {
+        self->analyzer = frt_mb_standard_analyzer_new(true);
+    }
+
+    if (create) {
+        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
+                                  FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        frt_index_create(self->store, fis);
+        frt_fis_deref(fis);
+    }
+
+    /* options */
+    self->key = NULL;
+    self->id_field = "id";
+    self->def_field = "id";
+    self->auto_flush = false;
+    self->check_latest = true;
+
+    FRT_REF(self->analyzer);
+    self->qp = frt_qp_new(self->analyzer);
+    for (hse = def_fields->first; hse; hse = hse->next) {
+        frt_qp_add_field(self->qp, (FrtSymbol)hse->elem, true, true);
+    }
+    /* Index is a convenience class so set qp convenience options */
+    self->qp->allow_any_fields = true;
+    self->qp->clean_str = true;
+    self->qp->handle_parse_errors = true;
+
+    return self;
+}
+
+void frt_index_destroy(FrtIndex *self)
+{
+    frt_mutex_destroy(&self->mutex);
+    INDEX_CLOSE_READER(self);
+    if (self->iw) frt_iw_close(self->iw);
+    frt_store_deref(self->store);
+    frt_a_deref(self->analyzer);
+    if (self->qp) frt_qp_destroy(self->qp);
+    if (self->key) frt_hs_destroy(self->key);
+    free(self);
+}
+
+
 void frt_ensure_writer_open(FrtIndex *self)
 {
     if (!self->iw) {
         INDEX_CLOSE_READER(self);
 
-        /* make sure the analzyer isn't deleted by the IndexWriter */
+        /* make sure the analzyer isn't deleted by the FrtIndexWriter */
         FRT_REF(self->analyzer);
         self->iw = frt_iw_open(self->store, self->analyzer, false);
         self->iw->config.use_compound_file = self->config.use_compound_file;
@@ -65,6 +128,41 @@ void frt_ensure_searcher_open(FrtIndex *self)
     if (!self->sea) {
         self->sea = frt_isea_new(self->ir);
     }
+}
+
+int frt_index_size(FrtIndex *self)
+{
+    int size;
+    frt_mutex_lock(&self->mutex);
+    {
+        frt_ensure_reader_open(self);
+        size = self->ir->num_docs(self->ir);
+    }
+    frt_mutex_unlock(&self->mutex);
+    return size;
+}
+
+void frt_index_optimize(FrtIndex *self)
+{
+    frt_mutex_lock(&self->mutex);
+    {
+        frt_ensure_writer_open(self);
+        frt_iw_optimize(self->iw);
+        AUTOFLUSH_IW(self);
+    }
+    frt_mutex_unlock(&self->mutex);
+}
+
+bool frt_index_is_deleted(FrtIndex *self, int doc_num)
+{
+    bool is_del;
+    frt_mutex_lock(&self->mutex);
+    {
+        frt_ensure_reader_open(self);
+        is_del = self->ir->is_deleted(self->ir, doc_num);
+    }
+    frt_mutex_unlock(&self->mutex);
+    return is_del;
 }
 
 static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
@@ -131,11 +229,23 @@ FrtQuery *frt_index_get_query(FrtIndex *self, char *qstr)
     frt_ensure_searcher_open(self);
     fis = self->ir->fis;
     for (i = fis->size - 1; i >= 0; i--) {
-        frt_hs_add(self->qp->all_fields, strdup(fis->fields[i]->name));
+        frt_hs_add(self->qp->all_fields, frt_estrdup(fis->fields[i]->name));
     }
     return qp_parse(self->qp, qstr);
 }
 
+FrtTopDocs *frt_index_search_str(FrtIndex *self, char *qstr, int first_doc,
+                          int num_docs, FrtFilter *filter, FrtSort *sort,
+                          FrtPostFilter *post_filter)
+{
+    FrtQuery *query;
+    FrtTopDocs *td;
+    query = frt_index_get_query(self, qstr); /* will ensure_searcher is open */
+    td = frt_searcher_search(self->sea, query, first_doc, num_docs,
+                         filter, sort, post_filter);
+    frt_q_deref(query);
+    return td;
+}
 
 FrtDocument *frt_index_get_doc(FrtIndex *self, int doc_num)
 {

@@ -68,10 +68,10 @@ frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
             s = str = rstrdup(rval);
             while ((p = strchr(s, '|')) && *p != '\0') {
                 *p = '\0';
-                frt_hs_add(fields, strdup(s));
+                frt_hs_add(fields, frt_estrdup(s));
                 s = p + 1;
             }
-            frt_hs_add(fields, strdup(s));
+            frt_hs_add(fields, frt_estrdup(s));
             free(str);
         }
     }
@@ -99,7 +99,7 @@ hs_safe_merge(FrtHashSet *merger, FrtHashSet *mergee)
  *  :default_field::         Default: "*" (all fields). The default field to
  *                           search when no field is specified in the search
  *                           string. It can also be an array of fields.
- *  :analyzer::              Default: StandardAnalyzer. Analyzer used by the
+ *  :analyzer::              Default: StandardAnalyzer. FrtAnalyzer used by the
  *                           query parser to parse query terms
  *  :wild_card_downcase::    Default: true. Specifies whether wild-card queries
  *                           and range queries should be downcased or not since

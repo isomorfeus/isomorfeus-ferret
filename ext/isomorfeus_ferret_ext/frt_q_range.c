@@ -197,13 +197,13 @@ typedef struct RangeFilter
 
 #define RF(filt) ((RangeFilter *)(filt))
 
-static void rfilt_destroy_i(FrtFilter *filt)
+static void frt_rfilt_destroy_i(FrtFilter *filt)
 {
     range_destroy(RF(filt)->range);
     frt_filt_destroy_i(filt);
 }
 
-static char *rfilt_to_s(FrtFilter *filt)
+static char *frt_rfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
     char *rfstr = frt_strfmt("RangeFilter< %s >", rstr);
@@ -211,7 +211,7 @@ static char *rfilt_to_s(FrtFilter *filt)
     return rfstr;
 }
 
-static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
+static FrtBitVector *frt_rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
     Range *range = RF(filt)->range;
@@ -271,13 +271,11 @@ static FrtBitVector *rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
     return bv;
 }
 
-static unsigned long long rfilt_hash(FrtFilter *filt)
-{
+static unsigned long long frt_rfilt_hash(FrtFilter *filt) {
     return range_hash(RF(filt)->range);
 }
 
-static int rfilt_eq(FrtFilter *filt, FrtFilter *o)
-{
+static int frt_rfilt_eq(FrtFilter *filt, FrtFilter *o) {
     return range_eq(RF(filt)->range, RF(o)->range);
 }
 
@@ -289,11 +287,11 @@ FrtFilter *frt_rfilt_new(FrtSymbol field,
     RF(filt)->range =  range_new(field, lower_term, upper_term,
                                  include_lower, include_upper);
 
-    filt->get_bv_i  = &rfilt_get_bv_i;
-    filt->hash      = &rfilt_hash;
-    filt->eq        = &rfilt_eq;
-    filt->to_s      = &rfilt_to_s;
-    filt->destroy_i = &rfilt_destroy_i;
+    filt->get_bv_i  = &frt_rfilt_get_bv_i;
+    filt->hash      = &frt_rfilt_hash;
+    filt->eq        = &frt_rfilt_eq;
+    filt->to_s      = &frt_rfilt_to_s;
+    filt->destroy_i = &frt_rfilt_destroy_i;
     return filt;
 }
 
@@ -303,7 +301,7 @@ FrtFilter *frt_rfilt_new(FrtSymbol field,
  *
  ***************************************************************************/
 
-static char *trfilt_to_s(FrtFilter *filt)
+static char *frt_trfilt_to_s(FrtFilter *filt)
 {
     char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
     char *rfstr = frt_strfmt("TypedRangeFilter< %s >", rstr);
@@ -338,7 +336,7 @@ do {\
 } while (te->next(te))
 
 
-static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
+static FrtBitVector *frt_trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     Range *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
@@ -414,7 +412,7 @@ static FrtBitVector *trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
         return bv;
     }
     else {
-        return rfilt_get_bv_i(filt, ir);
+        return frt_rfilt_get_bv_i(filt, ir);
     }
 }
 
@@ -426,11 +424,11 @@ FrtFilter *frt_trfilt_new(FrtSymbol field,
     RF(filt)->range =  trange_new(field, lower_term, upper_term,
                                   include_lower, include_upper);
 
-    filt->get_bv_i  = &trfilt_get_bv_i;
-    filt->hash      = &rfilt_hash;
-    filt->eq        = &rfilt_eq;
-    filt->to_s      = &trfilt_to_s;
-    filt->destroy_i = &rfilt_destroy_i;
+    filt->get_bv_i  = &frt_trfilt_get_bv_i;
+    filt->hash      = &frt_rfilt_hash;
+    filt->eq        = &frt_rfilt_eq;
+    filt->to_s      = &frt_trfilt_to_s;
+    filt->destroy_i = &frt_rfilt_destroy_i;
     return filt;
 }
 
@@ -447,12 +445,12 @@ typedef struct FrtRangeQuery
     Range *range;
 } FrtRangeQuery;
 
-static char *rq_to_s(FrtQuery *self, FrtSymbol field)
+static char *frt_rq_to_s(FrtQuery *self, FrtSymbol field)
 {
     return range_to_s(RQ(self)->range, field, self->boost);
 }
 
-static void rq_destroy(FrtQuery *self)
+static void frt_rq_destroy(FrtQuery *self)
 {
     range_destroy(RQ(self)->range);
     frt_q_destroy_i(self);
@@ -491,7 +489,7 @@ static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
     return mv;
 }
 
-static FrtQuery *rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
+static FrtQuery *frt_rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;
@@ -504,14 +502,21 @@ static FrtQuery *rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return (FrtQuery *)csq;
 }
 
-static unsigned long long rq_hash(FrtQuery *self)
+static unsigned long long frt_rq_hash(FrtQuery *self)
 {
     return range_hash(RQ(self)->range);
 }
 
-static int rq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int frt_rq_eq(FrtQuery *self, FrtQuery *o) {
     return range_eq(RQ(self)->range, RQ(o)->range);
+}
+
+FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term, bool include_upper) {
+    return frt_rq_new(field, NULL, upper_term, false, include_upper);
+}
+
+FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_lower) {
+    return frt_rq_new(field, lower_term, NULL, include_lower, false);
 }
 
 FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
@@ -524,11 +529,11 @@ FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
     RQ(self)->range         = range;
 
     self->type              = RANGE_QUERY;
-    self->rewrite           = &rq_rewrite;
-    self->to_s              = &rq_to_s;
-    self->hash              = &rq_hash;
-    self->eq                = &rq_eq;
-    self->destroy_i         = &rq_destroy;
+    self->rewrite           = &frt_rq_rewrite;
+    self->to_s              = &frt_rq_to_s;
+    self->hash              = &frt_rq_hash;
+    self->eq                = &frt_rq_eq;
+    self->destroy_i         = &frt_rq_destroy;
     self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
 }
@@ -621,7 +626,7 @@ static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
     return mv;
 }
 
-static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
+static FrtQuery *frt_trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
     Range *r = RQ(self)->range;
@@ -634,6 +639,14 @@ static FrtQuery *trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return (FrtQuery *)csq;
 }
 
+FrtQuery *frt_trq_new_less(FrtSymbol field, const char *upper_term, bool include_upper) {
+    return frt_trq_new(field, NULL, upper_term, false, include_upper);
+}
+
+FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term, bool include_lower) {
+    return frt_trq_new(field, lower_term, NULL, include_lower, false);
+}
+
 FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
                const char *upper_term, bool include_lower, bool include_upper)
 {
@@ -644,11 +657,11 @@ FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
     RQ(self)->range         = range;
 
     self->type              = TYPED_RANGE_QUERY;
-    self->rewrite           = &trq_rewrite;
-    self->to_s              = &rq_to_s;
-    self->hash              = &rq_hash;
-    self->eq                = &rq_eq;
-    self->destroy_i         = &rq_destroy;
+    self->rewrite           = &frt_trq_rewrite;
+    self->to_s              = &frt_rq_to_s;
+    self->hash              = &frt_rq_hash;
+    self->eq                = &frt_rq_eq;
+    self->destroy_i         = &frt_rq_destroy;
     self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
 }

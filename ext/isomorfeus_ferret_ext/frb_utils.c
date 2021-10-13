@@ -452,7 +452,7 @@ frb_bv_each(VALUE self)
  *  methods on the bit vector. If you want to convert an array to a bit_vector
  *  simply do this;
  *
- *    bv = [1, 12, 45, 367, 455].inject(BitVector.new) {|bv, i| bv.set(i)}
+ *    bv = [1, 12, 45, 367, 455].inject(FrtBitVector.new) {|bv, i| bv.set(i)}
  */
 VALUE
 frb_bv_to_a(VALUE self)

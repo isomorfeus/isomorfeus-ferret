@@ -408,6 +408,8 @@ extern int frt_h_set_safe_int(FrtHash *self,
  */
 extern int frt_h_has_key_int(FrtHash *self, const unsigned long long key);
 
+typedef void (*frt_h_each_key_val_ft)(void *key, void *value, void *arg);
+
 /**
  * @param self the Hash to run the function on
  * @param each_key_val function to run on on each key and value in the
@@ -447,8 +449,9 @@ extern FrtHash *frt_h_clone(FrtHash *self,
  * @param key the key to lookup
  * @return the HashEntry that was found
  */
-extern FrtHashEntry *frt_h_lookup(FrtHash *ht,
-                                     register const void *key);
+extern FrtHashEntry *frt_h_lookup(FrtHash *ht, register const void *key);
+
+extern void frt_h_str_print_keys(FrtHash *ht, FILE *out);
 
 /**
  * The Hash implementation actually keeps a buffer of old hash tables around

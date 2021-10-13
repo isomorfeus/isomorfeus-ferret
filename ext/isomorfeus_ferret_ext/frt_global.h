@@ -51,6 +51,7 @@ typedef void (*frt_free_ft)(void *key);
 #define FRT_MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define FRT_MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+#define FRT_MAX3(a, b, c) ((a) > (b) ? ((a) > (c) ? (a) : (c)) : ((b) > (c) ? (b) : (c)))
 
 #define FRT_ABS(n) ((n >= 0) ? n : -n)
 #define FRT_TO_WORD(n) (((n - 1) >> 5) + 1)
@@ -76,9 +77,13 @@ typedef void (*frt_free_ft)(void *key);
 #endif
 
 extern unsigned int *frt_imalloc(unsigned int value);
+extern unsigned long *frt_lmalloc(unsigned long value);
+extern frt_u32 *frt_u32malloc(frt_u32 value);
+extern frt_u64 *frt_u64malloc(frt_u64 value);
 
 extern char *frt_estrdup(const char *s);
 extern char *frt_estrcat(char *str, char *str_cat);
+extern char *frt_epstrdup(const char *fmt, int len, ...);
 
 extern char *frt_strapp(char *dst, const char *src);
 
@@ -141,6 +146,12 @@ int frt_count_leading_zeros(frt_u32 word)
     word >>= 8; if (word & 0xff) return count_leading_zeros[word & 0xff] + 16;
     word >>= 8;                  return count_leading_zeros[word & 0xff] + 24;
 #endif
+}
+
+static FRT_ATTR_ALWAYS_INLINE FRT_ATTR_CONST
+int frt_count_leading_ones(frt_u32 word)
+{
+    return frt_count_leading_zeros(~word);
 }
 
 /**
@@ -248,6 +259,7 @@ extern FILE *frt_x_exception_stream;
  * The convenience macro +EXCEPTION_STREAM+ returns stderr when
  * +frt_x_exception_stream+ isn't explicitely set.
  */
+#define EXCEPTION 2
 #define EXCEPTION_STREAM (frt_x_exception_stream ? frt_x_exception_stream : stderr)
 
 #ifdef DEBUG
@@ -268,7 +280,7 @@ extern const char *frt_progname();
 extern void p(const char *format, ...);
 extern void p_on();
 extern void p_off();
-extern void p_pause();
-extern void p_resume();
+extern void frt_p_pause();
+extern void frt_p_resume();
 
 #endif

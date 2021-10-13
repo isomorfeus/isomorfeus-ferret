@@ -4,8 +4,8 @@
  * Exception Handling looks something like this;
  *
  * ### NOTE ###
- * You must use a FINALLY block if you use "default:" block. Otherwise the
- * default: block will get called in place of the FINALLY block.
+ * You must use a FRT_FINALLY block if you use "default:" block. Otherwise the
+ * default: block will get called in place of the FRT_FINALLY block.
  *
  *
  * <pre>
@@ -80,9 +80,14 @@
 
 /* TODO make this an enum */
 #define FRT_BODY 0
+#define FRT_FINALLY 1
+#define FRT_EXCEPTION 2
 #define FRT_IO_ERROR 3
 #define FRT_FILE_NOT_FOUND_ERROR 4
+#define FRT_ARG_ERROR 5
 #define FRT_EOF_ERROR 6
+#define FRT_MEM_ERROR 10
+#define FRT_LOCK_ERROR 12
 
 extern const char *const FRT_UNSUPPORTED_ERROR_MSG;
 extern const char *const FRT_EOF_ERROR_MSG;
@@ -108,6 +113,15 @@ typedef struct frt_xcontext_t
 #define FRT_XENDTRY\
     }\
     frt_xpop_context();\
+  } while (0);
+
+#define FRT_ENDTRY\
+    }\
+    if (!xcontext.in_finally) {\
+      frt_xpop_context();\
+      xcontext.in_finally = 1;\
+      longjmp(xcontext.jbuf, FRT_FINALLY);\
+    }\
   } while (0);
 
 #define FRT_RETURN_EARLY() frt_xpop_context()

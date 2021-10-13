@@ -139,7 +139,7 @@ struct FrtCompoundInStream
     off_t length;
 };
 
-#define is_length(mis) mis->m->length_i(mis)
+#define frt_is_length(mis) mis->m->length_i(mis)
 
 typedef struct FrtStore FrtStore;
 typedef struct FrtLock FrtLock;
@@ -404,6 +404,34 @@ extern FrtOutStream *frt_ram_new_buffer();
 extern void frt_ram_destroy_buffer(FrtOutStream *os);
 
 /**
+ * Call the function +func+ with the +lock+ locked. The argument +arg+ will be
+ * passed to +func+. If you need to pass more than one argument you should use
+ * a struct. When the function is finished, release the lock.
+ *
+ * @param lock     lock to be locked while func is called
+ * @param func     function to call with the lock locked
+ * @param arg      argument to pass to the function
+ * @raise FRT_IO_ERROR if the lock is already locked
+ * @see frt_with_lock_name
+ */
+extern void frt_with_lock(FrtLock *lock, void (*func)(void *arg), void *arg);
+
+/**
+ * Create a lock in the +store+ with the name +lock_name+. Call the function
+ * +func+ with the lock locked. The argument +arg+ will be passed to +func+.
+ * If you need to pass more than one argument you should use a struct. When
+ * the function is finished, release and destroy the lock.
+ *
+ * @param store     store to open the lock in
+ * @param lock_name name of the lock to open
+ * @param func      function to call with the lock locked
+ * @param arg       argument to pass to the function
+ * @raise FRT_IO_ERROR  if the lock is already locked
+ * @see frt_with_lock
+ */
+extern void frt_with_lock_name(FrtStore *store, const char *lock_name, void (*func)(void *arg), void *arg);
+
+/**
  * Remove a reference to the store. If the reference count gets to zero free
  * all resources used by the store.
  *
@@ -459,6 +487,25 @@ extern void frt_os_write_byte(FrtOutStream *os, frt_uchar b);
  * @raise FRT_IO_ERROR if there is an IO error writing to the file-system
  */
 extern void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len);
+
+/**
+ * Write a 32-bit signed integer to the FrtOutStream
+ *
+ * @param os FrtOutStream to write to
+ * @param num the 32-bit signed integer to write
+ * @raise FRT_IO_ERROR if there is an error writing to the file-system
+ */
+extern void frt_os_write_i32(FrtOutStream *os, frt_i32 num);
+
+/**
+ * Write a 64-bit signed integer to the FrtOutStream
+ *
+ *
+ * @param os FrtOutStream to write to
+ * @param num the 64-bit signed integer to write
+ * @raise FRT_IO_ERROR if there is an error writing to the file-system
+ */
+extern void frt_os_write_i64(FrtOutStream *os, frt_i64 num);
 
 /**
  * Write a 32-bit unsigned integer to the FrtOutStream
@@ -588,6 +635,16 @@ extern frt_uchar frt_is_read_byte(FrtInStream *is);
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
 extern frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len);
+
+/**
+ * Read a 32-bit unsigned integer from the FrtInStream.
+ *
+ * @param is the FrtInStream to read from
+ * @return a 32-bit unsigned integer
+ * @raise FRT_IO_ERROR if there is a error reading from the file-system
+ * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
+ */
+extern frt_i32 frt_is_read_i32(FrtInStream *is);
 
 /**
  * Read a 64-bit unsigned integer from the FrtInStream.
@@ -727,7 +784,6 @@ extern void frt_store_destroy(FrtStore *store);
 extern FrtOutStream *frt_os_new();
 extern FrtInStream *frt_is_new();
 extern int frt_file_is_lock(const char *filename);
-extern bool frt_file_name_filter_is_index_file(const char *file_name,
-                                               bool include_locks);
+extern bool frt_file_name_filter_is_index_file(const char *file_name, bool include_locks);
 
 #endif

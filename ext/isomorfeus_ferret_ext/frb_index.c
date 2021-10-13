@@ -1243,7 +1243,7 @@ frb_get_tv(FrtTermVector *tv)
 
 /****************************************************************************
  *
- * IndexWriter Methods
+ * FrtIndexWriter Methods
  *
  ****************************************************************************/
 
@@ -1301,7 +1301,7 @@ frb_iw_close(VALUE self)
  *
  *    iw = IndexWriter.new(:path => "/path/to/index")
  *
- * See IndexWriter for more options.
+ * See FrtIndexWriter for more options.
  */
 static VALUE
 frb_iw_init(int argc, VALUE *argv, VALUE self)
@@ -2833,7 +2833,7 @@ Init_FieldInfo(void)
  *  this class that is used to create a new index using the
  *  FieldInfos#create_index method. If you are happy with the default
  *  properties for FieldInfo then you don't need to worry about this class.
- *  IndexWriter can create the index for you. Otherwise you should set up the
+ *  FrtIndexWriter can create the index for you. Otherwise you should set up the
  *  index like in the example;
  *
  *  == Example
@@ -3085,9 +3085,9 @@ Init_TermVector(void)
  *
  *  == Summary
  *
- *  The IndexWriter is the class used to add documents to an index. You can
+ *  The FrtIndexWriter is the class used to add documents to an index. You can
  *  also delete documents from the index using this class. The indexing
- *  process is highly customizable and the IndexWriter has the following
+ *  process is highly customizable and the FrtIndexWriter has the following
  *  parameters;
  *
  *  dir::                 This is an Ferret::Store::Directory object. You
@@ -3114,7 +3114,7 @@ Init_TermVector(void)
  *                        opened then this parameter is ignored.
  *  analyzer::            Default: Ferret::Analysis::StandardAnalyzer.
  *                        Sets the default analyzer for the index. This is
- *                        used by both the IndexWriter and the QueryParser
+ *                        used by both the FrtIndexWriter and the QueryParser
  *                        to tokenize the input. The default is the
  *                        StandardAnalyzer.
  *  chunk_size::          Default: 0x100000 or 1Mb. Memory performance tuning
@@ -3181,11 +3181,11 @@ Init_TermVector(void)
  *
  *  === Deleting Documents
  *
- *  Both IndexReader and IndexWriter allow you to delete documents. You should
- *  use the IndexReader to delete documents by document id and IndexWriter to
+ *  Both IndexReader and FrtIndexWriter allow you to delete documents. You should
+ *  use the IndexReader to delete documents by document id and FrtIndexWriter to
  *  delete documents by term which we'll explain now. It is preferrable to
- *  delete documents from an index using IndexWriter for performance reasons.
- *  To delete documents using the IndexWriter you should give each document in
+ *  delete documents from an index using FrtIndexWriter for performance reasons.
+ *  To delete documents using the FrtIndexWriter you should give each document in
  *  the index a unique ID. If you are indexing documents from the file-system
  *  this unique ID will be the full file path. If indexing documents from the
  *  database you should use the primary key as the ID field. You can then

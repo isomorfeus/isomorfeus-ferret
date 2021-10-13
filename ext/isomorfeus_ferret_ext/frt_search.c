@@ -508,7 +508,7 @@ static int match_range_cmp(const void *p1, const void *p2)
 
 
 
-/* ** MatchVector ** */
+/* ** FrtMatchVector ** */
 FrtMatchVector *frt_matchv_new()
 {
     FrtMatchVector *matchv = FRT_ALLOC(FrtMatchVector);
@@ -608,6 +608,27 @@ void frt_matchv_destroy(FrtMatchVector *self)
  * Searcher
  *
  ***************************************************************************/
+
+FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
+                                       FrtQuery *query,
+                                       const int doc_num,
+                                       FrtSymbol field)
+{
+    FrtMatchVector *mv = frt_matchv_new();
+    bool rewrite = query->get_matchv_i == q_get_matchv_i;
+    FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
+    if (rewrite) {
+        query = self->rewrite(self, query);
+    }
+    if (tv && tv->term_cnt > 0 && tv->terms[0].positions != NULL) {
+        mv = query->get_matchv_i(query, mv, tv);
+        frt_tv_destroy(tv);
+    }
+    if (rewrite) {
+        frt_q_deref(query);
+    }
+    return mv;
+}
 
 typedef struct Excerpt
 {

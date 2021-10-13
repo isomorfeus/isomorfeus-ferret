@@ -46,6 +46,9 @@ VALUE cFileNotFoundError;
 VALUE cParseError;
 VALUE cStateError;
 
+void Init_Benchmark(void);
+void Init_Test(void);
+
 unsigned long long value_hash(const void *key)
 {
     return (unsigned long long)key;
@@ -176,7 +179,7 @@ rstrdup(VALUE rstr)
     //int len = RSTRING_LEN(rstr);
     //char *new = FRT_ALLOC_N(char, len + 1);
     //memcpy(new, old, len);
-    return strdup(old);
+    return frt_estrdup(old);
 }
 
 FrtSymbol
@@ -379,6 +382,8 @@ void Init_isomorfeus_ferret_ext(void)
     Init_Index();
     Init_Search();
     Init_QueryParser();
+    Init_Test();
+    // Init_Benchmark();
 
     /* Error Classes */
     cParseError =

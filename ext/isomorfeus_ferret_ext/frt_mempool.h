@@ -19,9 +19,12 @@ extern FrtMemoryPool *frt_mp_new_capa(int chunk_size, int init_capa);
 extern void *frt_mp_alloc(FrtMemoryPool *mp, int size);
 extern void frt_mp_reset(FrtMemoryPool *mp);
 extern void frt_mp_destroy(FrtMemoryPool *mp);
+extern char *frt_mp_strdup(FrtMemoryPool *mp, const char *str);
+extern char *frt_mp_strndup(FrtMemoryPool *mp, const char *str, int len);
 extern void *frt_mp_memdup(FrtMemoryPool *mp, const void *p, int len);
 extern int frt_mp_used(FrtMemoryPool *mp);
 
+#define FRT_MP_ALLOC_N(mp,type,n) (type *)frt_mp_alloc(mp, sizeof(type)*(n))
 #define FRT_MP_ALLOC(mp,type) (type *)frt_mp_alloc(mp, sizeof(type))
 
 #define FRT_MP_ALLOC_AND_ZERO_N(mp,type,n)\

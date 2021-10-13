@@ -2133,19 +2133,19 @@ static void Init_StemFilter(void)
  *
  *  == Summary
  *
- *  An Analyzer builds TokenStreams, which analyze text.  It thus represents
+ *  An FrtAnalyzer builds TokenStreams, which analyze text.  It thus represents
  *  a policy for extracting index terms from text.
  *
  *  Typical implementations first build a Tokenizer, which breaks the stream
  *  of characters from the Reader into raw Tokens. One or more TokenFilters
  *  may then be applied to the output of the Tokenizer.
  *
- *  The default Analyzer just creates a LowerCaseTokenizer which converts
+ *  The default FrtAnalyzer just creates a LowerCaseTokenizer which converts
  *  all text to lowercase tokens. See LowerCaseTokenizer for more details.
  *
  *  === Example
  *
- *  To create your own custom Analyzer you simply need to implement a
+ *  To create your own custom FrtAnalyzer you simply need to implement a
  *  token_stream method which takes the field name and the data to be
  *  tokenized as parameters and returns a TokenStream. Most analyzers
  *  typically ignore the field name.
@@ -2469,7 +2469,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *
  *  === Analyzer
  *
- *  Analyzers handle all of your tokenizing needs. You pass an Analyzer to the
+ *  Analyzers handle all of your tokenizing needs. You pass an FrtAnalyzer to the
  *  indexing class when you create it and it will create the TokenStreams
  *  necessary to tokenize the fields in the documents. Most of the time you
  *  won't need to worry about TokenStreams and Tokens, one of the Analyzers
@@ -2507,7 +2507,7 @@ Init_Analysis(void)
     id_clone = rb_intern("clone");
     id_text = rb_intern("@text");
 
-    /* Analyzer Methods */
+    /* FrtAnalyzer Methods */
     id_token_stream = rb_intern("token_stream");
 
     object_space = rb_hash_new();

@@ -432,8 +432,7 @@ extern FrtQuery *frt_csq_new_nr(FrtFilter *filter);
  * FrtFilteredQuery
  ***************************************************************************/
 
-typedef struct FrtFilteredQuery
-{
+typedef struct FrtFilteredQuery {
     FrtQuery   super;
     FrtQuery  *query;
     FrtFilter *filter;
@@ -454,6 +453,8 @@ extern FrtQuery *frt_maq_new();
 extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
                      const char *upper_term, bool include_lower,
                      bool include_upper);
+extern FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term, bool include_upper);
+extern FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_lower);
 
 /***************************************************************************
  * FrtTypedRangeQuery
@@ -462,6 +463,8 @@ extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
 extern FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
                       const char *upper_term, bool include_lower,
                       bool include_upper);
+extern FrtQuery *frt_trq_new_less(FrtSymbol field, const char *upper_term, bool include_upper);
+extern FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term, bool include_lower);
 
 /***************************************************************************
  * FrtSpanQuery
@@ -802,13 +805,23 @@ struct FrtSearcher
     void         (*close)(FrtSearcher *self);
 };
 
+#define frt_searcher_get_doc(s, dn)         s->get_doc(s, dn)
+#define frt_searcher_get_lazy_doc(s, dn)    s->get_lazy_doc(s, dn)
+#define frt_searcher_max_doc(s)             s->max_doc(s)
+#define frt_searcher_rewrite(s, q)          s->rewrite(s, q)
 #define frt_searcher_explain(s, q, dn)      s->explain(s, q, dn)
 #define frt_searcher_close(s)               s->close(s)
 #define frt_searcher_search(s, q, fd, nd, filt, sort, ff)\
     s->search(s, q, fd, nd, filt, sort, ff, false)
 #define frt_searcher_search_each(s, q, filt, ff, fn, arg)\
     s->search_each(s, q, filt, ff, fn, arg)
+#define frt_searcher_search_unscored(s, q, buf, limit, offset_docnum)\
+    s->search_unscored(s, q, buf, limit, offset_docnum)
 
+extern FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
+                                              FrtQuery *query,
+                                              const int doc_num,
+                                              FrtSymbol field);
 extern char **frt_searcher_highlight(FrtSearcher *self,
                                  FrtQuery *query,
                                  const int doc_num,

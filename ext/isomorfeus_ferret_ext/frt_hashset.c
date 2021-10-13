@@ -183,3 +183,9 @@ FrtHashSet *frt_hs_merge(FrtHashSet *hs, FrtHashSet * other)
     frt_hs_free(other);
     return hs;
 }
+
+void *frt_hs_orig(FrtHashSet *hs, const void *elem)
+{
+    FrtHashSetEntry *entry = (FrtHashSetEntry *)frt_h_get(hs->ht, elem);
+    return entry ? entry->elem : NULL;
+}

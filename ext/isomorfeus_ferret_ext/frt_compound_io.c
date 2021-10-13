@@ -244,7 +244,7 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
 
     /* set the length of the final entry */
     if (entry != NULL) {
-        entry->length = is_length(is) - entry->offset;
+        entry->length = frt_is_length(is) - entry->offset;
     }
 
     new_store               = frt_store_new();
@@ -303,7 +303,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
 
     FrtInStream *is = cw->store->open_input(cw->store, src->name);
 
-    remainder = length = is_length(is);
+    remainder = length = frt_is_length(is);
 
     while (remainder > 0) {
         len = FRT_MIN(remainder, FRT_BUFFER_SIZE);

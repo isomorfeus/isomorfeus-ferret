@@ -2016,7 +2016,7 @@ static const char *not_word =   " \t()[]{}!\"~^|<>=";
 /**
  * +get_word+ gets the next query-word from the query string. A query-word is
  * basically a string of non-special or escaped special characters. It is
- * Analyzer agnostic. It is up to the get_*_q methods to tokenize the word and
+ * FrtAnalyzer agnostic. It is up to the get_*_q methods to tokenize the word and
  * turn it into a +Query+. See the documentation for each get_*_q method to
  * see how it handles tokenization.
  *
@@ -2904,12 +2904,12 @@ void frt_qp_add_field(FrtQParser *self,
                   bool is_default,
                   bool is_tokenized)
 {
-    frt_hs_add(self->all_fields, strdup(field));
+    frt_hs_add(self->all_fields, frt_estrdup(field));
     if (is_default) {
-        frt_hs_add(self->def_fields, strdup(field));
+        frt_hs_add(self->def_fields, frt_estrdup(field));
     }
     if (is_tokenized) {
-        frt_hs_add(self->tokenized_fields, strdup(field));
+        frt_hs_add(self->tokenized_fields, frt_estrdup(field));
     }
 }
 

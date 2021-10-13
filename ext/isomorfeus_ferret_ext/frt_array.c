@@ -40,11 +40,79 @@ void frt_ary_resize_i(void ***ary, int size)
     }
 }
 
+void frt_ary_set_i(void ***ary, int index, void *value)
+{
+    if (index < 0) {
+        index += frt_ary_sz(*ary);
+        if (index < 0) {
+            rb_raise(rb_eIndexError, "index %d out array", index);
+        }
+    }
+    frt_ary_resize_i(ary, index);
+    (*ary)[index] = value;
+}
+
+void *frt_ary_get_i(void **ary, int index)
+{
+    if (index < 0) {
+        index += frt_ary_sz(ary);
+    }
+    if (index >= 0 && index < frt_ary_sz(ary)) {
+        return ary[index];
+    }
+    else {
+        return NULL;
+    }
+}
+
 void frt_ary_push_i(void ***ary, void *value)
 {
     int size = frt_ary_sz(*ary);
     frt_ary_resize_i(ary, size);
     (*ary)[size] = value;
+}
+
+void *frt_ary_pop_i(void **ary)
+{
+    void *val = ary[--frt_ary_sz(ary)];
+    ary[frt_ary_sz(ary)] = NULL;
+    return val;
+}
+
+void frt_ary_unshift_i(void ***ary, void *value)
+{
+    int size = frt_ary_sz(*ary);
+    frt_ary_resize_i(ary, size);
+    memmove(*ary + 1, *ary, size * sizeof(void *));
+    (*ary)[0] = value;
+}
+
+void *frt_ary_shift_i(void **ary)
+{
+    void *val = ary[0];
+    int size = --frt_ary_sz(ary);
+    memmove(ary, ary + 1, size * sizeof(void *));
+    ary[size] = NULL;
+    return val;
+}
+
+void *frt_ary_remove_i(void **ary, int index)
+{
+    if (index >= 0 && index < frt_ary_sz(ary)) {
+        void *val = ary[index];
+        memmove(ary + index, ary + index + 1,
+                (frt_ary_sz(ary) - index + 1) * sizeof(void *));
+        frt_ary_sz(ary)--;
+        return val;
+    }
+    else {
+        return NULL;
+    }
+}
+
+void frt_ary_delete_i(void **ary, int index, void (*free_elem)(void *p))
+{
+    free_elem(frt_ary_remove(ary, index));
 }
 
 void frt_ary_destroy_i(void **ary, void (*free_elem)(void *p))

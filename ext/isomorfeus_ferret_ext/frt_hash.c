@@ -55,7 +55,7 @@ typedef FrtHashEntry *(*lookup_ft)(struct FrtHash *self, register const void *ke
  * @param self the Hash to do the fast lookup in
  * @param the hashkey we are looking for
  */
-static FrtHashEntry *h_resize_lookup(FrtHash *self,
+static FrtHashEntry  *frt_h_resize_lookup(FrtHash *self,
                                          register const unsigned long long hash)
 {
     register unsigned long perturb;
@@ -79,7 +79,7 @@ static FrtHashEntry *h_resize_lookup(FrtHash *self,
     }
 }
 
-static FrtHashEntry *h_lookup_ptr(FrtHash *self, const void *key)
+static FrtHashEntry  *frt_h_lookup_ptr(FrtHash *self, const void *key)
 {
     register const unsigned long long hash = (unsigned long long)key;
     register unsigned long perturb;
@@ -189,7 +189,7 @@ FrtHash *frt_h_new_int(frt_free_ft free_value)
 {
     FrtHash *self     = frt_h_new_str(NULL, free_value);
 
-    self->lookup_i = &h_lookup_ptr;
+    self->lookup_i = &frt_h_lookup_ptr;
     self->eq_i     = NULL;
     self->hash_i   = NULL;
 
@@ -293,7 +293,7 @@ void *frt_h_rem(FrtHash *self, const void *key, bool destroy_key)
     }
 }
 
-static int h_resize(FrtHash *self, int min_newsize)
+static int frt_h_resize(FrtHash *self, int min_newsize)
 {
     FrtHashEntry smallcopy[FRT_HASH_MINSIZE];
     FrtHashEntry *oldtable;
@@ -326,7 +326,7 @@ static int h_resize(FrtHash *self, int min_newsize)
     for (num_active = self->size, he_old = oldtable; num_active > 0; he_old++) {
         if (he_old->key && he_old->key != dummy_key) {    /* active entry */
             /*he_new = self->lookup_i(self, he_old->key); */
-            he_new = h_resize_lookup(self, he_old->hash);
+            he_new = frt_h_resize_lookup(self, he_old->hash);
             he_new->key = he_old->key;
             he_new->value = he_old->value;
             num_active--;
@@ -343,7 +343,7 @@ bool frt_h_set_ext(FrtHash *self, const void *key, FrtHashEntry **he)
     *he = self->lookup_i(self, key);
     if ((*he)->key == NULL) {
         if (self->fill * 3 > self->mask * 2) {
-            h_resize(self, self->size * ((self->size > FRT_SLOW_DOWN) ? 4 : 2));
+            frt_h_resize(self, self->size * ((self->size > FRT_SLOW_DOWN) ? 4 : 2));
             *he = self->lookup_i(self, key);
         }
         self->fill++;
@@ -491,6 +491,25 @@ FrtHash *frt_h_clone(FrtHash *self, frt_h_clone_ft clone_key, frt_h_clone_ft clo
         }
     }
     return ht_clone;
+}
+
+void frt_h_str_print_keys(FrtHash *self, FILE *out)
+{
+    FrtHashEntry *he;
+    int i = self->size;
+    char **keys = FRT_ALLOC_N(char *, self->size);
+    for (he = self->table; i > 0; he++) {
+        if (he->key && he->key != dummy_key) {        /* active entry */
+            i--;
+            keys[i] = (char *)he->key;
+        }
+    }
+    frt_strsort(keys, self->size);
+    fprintf(out, "keys:\n");
+    for (i = 0; i < self->size; i++) {
+        fprintf(out, "\t%s\n", keys[i]);
+    }
+    free(keys);
 }
 
 void frt_hash_finalize()

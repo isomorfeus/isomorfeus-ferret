@@ -180,6 +180,13 @@ extern FrtHashKeyStatus frt_hs_exists(FrtHashSet *self, const void *elem);
 extern FrtHashSet *frt_hs_merge(FrtHashSet *self, FrtHashSet *other);
 
 /**
+ * Return the original version of +elem+. So if you allocate two elements
+ * which are equal and add the first to the FrtHashSet, calling this function
+ * with the second element will return the first element from the FrtHashSet.
+ */
+extern void *frt_hs_orig(FrtHashSet *self, const void *elem);
+
+/**
  * Clear all elements from the FrtHashSet. If free_elem was set then use it to
  * free all elements as they are cleared. After the method is called, the
  * HashSets size will be 0.

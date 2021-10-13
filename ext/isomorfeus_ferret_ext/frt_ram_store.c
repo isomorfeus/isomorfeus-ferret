@@ -446,7 +446,7 @@ static void copy_files(const char *fname, void *arg)
     struct CopyFileArg *cfa = (struct CopyFileArg *)arg;
     FrtOutStream *os = cfa->to_store->new_output(cfa->to_store, fname);
     FrtInStream *is = cfa->from_store->open_input(cfa->from_store, fname);
-    int len = (int)is_length(is);
+    int len = (int)frt_is_length(is);
     frt_uchar *buffer = FRT_ALLOC_N(frt_uchar, len + 1);
 
     frt_is_read_bytes(is, buffer, len);
