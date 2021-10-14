@@ -43,7 +43,7 @@ end
 desc "run unit tests in test/unit"
 Rake::TestTask.new("units" => :compile) do |t|
   t.libs << "test/unit"
-  t.pattern = 'test/unit/t[cs]_*.rb'
+  t.pattern = 'test/unit/t[csz]_*.rb'
   t.verbose = true
 end
 task :unit => :units
