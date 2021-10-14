@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include "frt_ind.h"
 #include "frt_array.h"
 #include <string.h>
@@ -195,7 +194,7 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
     td = frt_searcher_search(self->sea, q, 0, 1, NULL, NULL, NULL);
     if (td->total_hits > 1) {
         frt_td_destroy(td);
-        rb_raise(rb_eArgError, "%s", NON_UNIQUE_KEY_ERROR_MSG);
+        FRT_RAISE(FRT_ARG_ERROR, "%s", NON_UNIQUE_KEY_ERROR_MSG);
     } else if (td->total_hits == 1) {
         frt_ir_delete_doc(self->ir, td->hits[0]->doc);
     }

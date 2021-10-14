@@ -1,6 +1,6 @@
-#include "isomorfeus_ferret.h"
 #include "frt_bitvector.h"
 #include "frt_multimapper.h"
+#include "isomorfeus_ferret.h"
 #include <ruby/st.h>
 
 /*****************

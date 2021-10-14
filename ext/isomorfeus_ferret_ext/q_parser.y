@@ -82,7 +82,6 @@
  * FIXME to be continued...
  *****************************************************************************/
 %{
-#include "ruby.h"
 #include <string.h>
 #include <ctype.h>
 #include <wctype.h>

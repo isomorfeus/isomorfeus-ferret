@@ -298,9 +298,10 @@ void frt_print_stacktrace()
 {
     char *stack = frt_get_stacktrace();
 
-    fprintf(EXCEPTION_STREAM, "Stack trace:\n%s",
-            stack ? stack : "Not available\n");
-    if (stack) free(stack);
+    if (stack) {
+        fprintf(EXCEPTION_STREAM, "Stack trace:\n%s", stack);
+        free(stack);
+    }
 }
 
 typedef struct FreeMe

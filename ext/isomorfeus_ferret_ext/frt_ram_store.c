@@ -1,8 +1,5 @@
-#include "ruby.h"
 #include "frt_store.h"
 #include <string.h>
-
-extern VALUE cFileNotFoundError;
 
 static FrtRAMFile *rf_new(const char *name)
 {
@@ -75,7 +72,7 @@ static void ram_rename(FrtStore *store, const char *from, const char *to)
     FrtRAMFile *tmp;
 
     if (rf == NULL) {
-        rb_raise(rb_eIOError, "couldn't rename \"%s\" to \"%s\". \"%s\""
+        FRT_RAISE(FRT_IO_ERROR, "couldn't rename \"%s\" to \"%s\". \"%s\""
               " doesn't exist", from, to, from);
     }
 
@@ -356,10 +353,10 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
         for (i = 0; i <= ht->mask; i++) {
             if (ht->table[i].value)
                 printf("%s, %ld  --  %ld\n", (char *)ht->table[i].key,
-                       str_hash(ht->table[i].key), ht->table[i].hash);
+                       frt_str_hash(ht->table[i].key), ht->table[i].hash);
         }
         */
-        rb_raise(cFileNotFoundError,
+        FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR,
               "tried to open \"%s\" but it doesn't exist", filename);
     }
     FRT_REF(rf);

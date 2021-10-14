@@ -1,9 +1,6 @@
-#include "ruby.h"
 #include <string.h>
 #include "frt_search.h"
 #include "frt_array.h"
-
-extern VALUE cStateError;
 
 #define BQ(query) ((FrtBooleanQuery *)(query))
 #define BW(weight) ((BooleanWeight *)(weight))
@@ -223,11 +220,11 @@ static FrtScorer *disjunction_sum_scorer_new(FrtScorer **sub_scorers, int ss_cnt
 
 #ifdef DEBUG
     if (min_num_matches <= 0) {
-        rb_raise(rb_eArgError, "The min_num_matches value <%d> should not be less "
+        FRT_RAISE(FRT_ARG_ERROR, "The min_num_matches value <%d> should not be less "
               "than 0\n", min_num_matches);
     }
     if (ss_cnt <= 1) {
-        rb_raise(rb_eArgError, "There should be at least 2 sub_scorers in a "
+        FRT_RAISE(FRT_ARG_ERROR, "There should be at least 2 sub_scorers in a "
               "DiscjunctionSumScorer. <%d> is not enough", ss_cnt);
     }
 #endif
@@ -992,7 +989,7 @@ static void bsc_add_scorer(FrtScorer *self, FrtScorer *scorer, unsigned int occu
             bsc->prohibited_scorers[bsc->ps_cnt++] = scorer;
             break;
         default:
-            rb_raise(rb_eArgError, "Invalid value for :occur. Try :should, :must or "
+            FRT_RAISE(FRT_ARG_ERROR, "Invalid value for :occur. Try :should, :must or "
                   ":must_not instead");
     }
 }
@@ -1279,7 +1276,7 @@ void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
             self->is_required = false;
             break;
         default:
-            rb_raise(rb_eArgError, "Invalid value for :occur. Try :occur => :should, "
+            FRT_RAISE(FRT_ARG_ERROR, "Invalid value for :occur. Try :occur => :should, "
                   ":must or :must_not instead");
     }
 }
@@ -1572,7 +1569,7 @@ FrtQuery *frt_bq_new_max(bool coord_disabled, int max)
 FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *bc)
 {
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
-        rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
+        FRT_RAISE(FRT_STATE_ERROR, "Two many clauses. The max clause limit is set to "
               "<%d> but your query has <%d> clauses. You can try increasing "
               ":max_clause_count for the BooleanQuery or using a different "
               "type of query.", BQ(self)->clause_cnt, BQ(self)->max_clause_cnt);
@@ -1596,7 +1593,7 @@ FrtBooleanClause *frt_bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBC
 {
     FrtBooleanClause *bc;
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
-        rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
+        FRT_RAISE(FRT_STATE_ERROR, "Two many clauses. The max clause limit is set to "
               "<%d> but your query has <%d> clauses. You can try increasing "
               ":max_clause_count for the BooleanQuery or using a different "
               "type of query.", BQ(self)->clause_cnt, BQ(self)->max_clause_cnt);

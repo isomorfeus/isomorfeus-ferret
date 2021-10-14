@@ -27,7 +27,6 @@ unsigned long long frt_str_hash(const char *const str)
     for (; *p; p++) {
         h = 37 * h + *p;
     }
-
     return h;
 }
 
@@ -133,8 +132,7 @@ FrtHashEntry *frt_h_lookup(FrtHash *self, register const void *key)
     }
     if (he->key == dummy_key) {
         freeslot = he;
-    }
-    else {
+    } else {
         if ((he->hash == hash) && eq(he->key, key)) {
             return he;
         }

@@ -1,8 +1,8 @@
-#include "isomorfeus_ferret.h"
-#include <ruby/st.h>
 #include <ctype.h>
 #include "frt_array.h"
 #include "frt_search.h"
+#include "isomorfeus_ferret.h"
+#include <ruby/st.h>
 
 VALUE mSearch;
 
@@ -2022,10 +2022,20 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-
+    int ex_code = 0;
+    const char *msg = NULL;
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    f = frt_rfilt_new(frb_field(rfield), lterm, uterm,
-                  include_lower, include_upper);
+    FRT_TRY
+        f = frt_rfilt_new(frb_field(rfield), lterm, uterm, include_lower, include_upper);
+        break;
+    default:
+        ex_code = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+
+    if (ex_code && msg) { frb_raise(ex_code, msg); }
+
     Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
     return self;

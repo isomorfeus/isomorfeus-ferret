@@ -36,7 +36,7 @@ int frt_term_eq(const void *t1, const void *t2)
 
 unsigned long long frt_term_hash(const void *t)
 {
-    return frt_str_hash(((FrtTerm *)t)->text) * frt_sym_hash(((FrtTerm *)t)->field);
+    return frt_str_hash(((FrtTerm *)t)->text) * frt_str_hash(((FrtTerm *)t)->field);
 }
 
 /****************************************************************************

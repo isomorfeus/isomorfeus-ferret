@@ -97,8 +97,10 @@ void test_doc(TestCase *tc, void *data)
     doc = frt_doc_new();
     for (i = 0; i < 1000; i++) {
         char buf[100];
+        char *bufc;
         sprintf(buf, "<<%d>>", i);
-        df = frt_df_add_data(frt_df_new(buf), frt_estrdup(buf));
+        bufc = frt_estrdup(buf);
+        df = frt_df_add_data(frt_df_new(bufc), bufc);
         df->destroy_data = true;
         frt_doc_add_field(doc, df);
         Aiequal(i + 1, doc->size);

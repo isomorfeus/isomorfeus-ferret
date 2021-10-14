@@ -13,7 +13,7 @@ static void add_doc(char *text, FrtIndexWriter *iw)
    frt_doc_destroy(doc);
 }
 
-void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
+extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
                 char *expected_hits, int top);
 void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, char *q_str);
 

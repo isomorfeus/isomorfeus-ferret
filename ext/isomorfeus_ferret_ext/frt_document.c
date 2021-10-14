@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include "frt_document.h"
 #include <string.h>
 
@@ -108,7 +107,7 @@ FrtDocument *frt_doc_new()
 FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 {
     if (!frt_h_set_safe(doc->field_dict, df->name, df)) {
-        rb_raise(rb_eException, "tried to add %s field which alread existed\n",
+        FRT_RAISE(FRT_EXCEPTION, "tried to add %s field which alread existed\n",
               df->name);
     }
     if (doc->size >= doc->capa) {

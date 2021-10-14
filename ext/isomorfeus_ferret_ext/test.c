@@ -3,7 +3,8 @@
 #include "frt_except.h"
 #include "tests_all.h"
 #include "test.h"
-#include "isomorfeus_ferret.h"
+
+extern VALUE mFerret;
 
 static VALUE mTest;
 
@@ -111,11 +112,11 @@ static void end_suite(TestSuite *suite)
             fflush(stdout);
         }
         if (last->failed == 0) {
-            fprintf(stdout, "SUCCESS\n");
+            fprintf(stdout, " -> SUCCESS\n");
             fflush(stdout);
         }
         else {
-            fprintf(stdout, "FAILED %d of %d\n", last->failed,
+            fprintf(stdout, " -> FAILED %d of %d\n", last->failed,
                     last->num_test);
             fflush(stdout);
         }
@@ -737,98 +738,19 @@ bool Assert(int condition, const char *fmt, ...)
 }
 #endif
 
-// #define USAGE "Invalid option: `%s'\n\
-//   -v verbose\n\
-//   -s show stacktrace\n\
-//   -x exclude\n\
-//   -l list tests\n\
-//   -f force\n\
-//   -q quiet\n"
-
-// int not_main(int argc, const char *const argv[])
-// {
-//     clock_t time_taken = clock();
-//     int i;
-//     int rv;
-//     int list_provided = 0;
-//     TestSuite *suite = NULL;
-//     TestSubSuite *subsuite;
-
-//     frt_init(argc, argv);
-
-//     for (i = 1; i < argc; i++) {
-//         if (!strcmp(argv[i], "-v")) {
-//             verbose = true;
-//             continue;
-//         }
-//         if (!strcmp(argv[i], "-s")) {
-//             show_stack = true;
-//             continue;
-//         }
-//         if (!strcmp(argv[i], "-x")) {
-//             exclude = true;
-//             continue;
-//         }
-//         if (!strcmp(argv[i], "-l")) {
-//             list_tests = true;
-//             continue;
-//         }
-//         if (!strcmp(argv[i], "-f")) {
-//             force = true;
-//             continue;
-//         }
-//         if (!strcmp(argv[i], "-q")) {
-//             quiet = true;
-//             continue;
-//         }
-//         if (argv[i][0] == '-') {
-//             fprintf(stderr, USAGE, argv[i]);
-//             exit(1);
-//         }
-//         list_provided = 1;
-//     }
-
-//     if (list_provided) {
-//         /* Waste a little space here, because it is easier than counting the
-//          * number of tests listed.  Besides it is not going to be much */
-//         testlist = (char **)calloc(argc + 1, sizeof(char *));
-//         for (i = 1; i < argc; i++) {
-//             testlist[i - 1] = (char *) argv[i];
-//         }
-//     }
-
-//     for (i = 0; i < (int)FRT_NELEMS(all_tests); i++) {
-//         suite = all_tests[i].func(suite);
-//     }
-
-//     /* print out the test diagnotics */
-
-//     printf("Finished in %0.3f seconds\n",
-//            (double) (clock() - time_taken) / CLOCKS_PER_SEC);
-
-//     /* free allocated test suites */
-//     while ((subsuite = suite->head) != NULL) {
-//         suite->head = subsuite->next;
-//         free(subsuite->name);
-//         free(subsuite);
-//     }
-//     free(suite);
-//     free(testlist);
-//     frt_clean_up();
-
-//     return rv;
-// }
-
 int execute_test(int test_index) {
     int rv = 0;
     TestSuite *suite = NULL;
     TestSubSuite *subsuite;
     verbose = true;
     show_stack = true;
-    clock_t time_taken = clock();
+
+    clock_t start_time = clock();
     suite = all_tests[test_index].func(suite);
-    printf("Finished in %0.3f seconds\n", (double) (clock() - time_taken) / CLOCKS_PER_SEC);
     rv = report(suite);
+
+    printf("\nFinished in %0.3f seconds\n", (double) (clock() - start_time) / CLOCKS_PER_SEC);
+
     while ((subsuite = suite->head) != NULL) {
         suite->head = subsuite->next;
         free(subsuite->name);
@@ -875,6 +797,35 @@ static VALUE frb_ts_term_vectors(void) { return INT2FIX(execute_test(33)); }
 static VALUE frb_ts_test(void)         { return INT2FIX(execute_test(34)); }
 static VALUE frb_ts_threading(void)    { return INT2FIX(execute_test(35)); }
 
+static VALUE frb_ts_run_all(void) {
+    int i, test_count;
+    TestSuite *suite = NULL;
+    TestSubSuite *subsuite;
+    verbose = true;
+    show_stack = true;
+    force = true;
+    test_count = (int)FRT_NELEMS(all_tests);
+
+    clock_t start_time = clock();
+    for (i = 0; i < test_count; i++) {
+        suite = all_tests[i].func(suite);
+    }
+
+    /* print out the test diagnotics */
+    printf("\nFinished in %0.3f seconds\n", (double) (clock() - start_time) / CLOCKS_PER_SEC);
+
+    frt_ruby_raise = true;
+    /* free allocated test suites */
+    while ((subsuite = suite->head) != NULL) {
+        suite->head = subsuite->next;
+        free(subsuite->name);
+        free(subsuite);
+    }
+    free(suite);
+    free(testlist);
+    return INT2FIX(i+1);
+}
+
 void Init_Test(void) {
     mTest = rb_define_module_under(mFerret, "Test");
     rb_define_singleton_method(mTest, "ts_1710",        frb_ts_1710, 0);
@@ -913,4 +864,6 @@ void Init_Test(void) {
     rb_define_singleton_method(mTest, "term_vectors",   frb_ts_term_vectors, 0);
     rb_define_singleton_method(mTest, "test",           frb_ts_test, 0);
     rb_define_singleton_method(mTest, "threading",      frb_ts_threading, 0);
+
+    rb_define_singleton_method(mTest, "run_all",        frb_ts_run_all, 0);
 }

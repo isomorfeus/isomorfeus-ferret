@@ -1,5 +1,5 @@
-#include "isomorfeus_ferret.h"
 #include "frt_store.h"
+#include "isomorfeus_ferret.h"
 
 static ID id_ref_cnt;
 VALUE cLock;

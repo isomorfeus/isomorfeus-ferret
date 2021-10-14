@@ -268,7 +268,7 @@ static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 
 static unsigned long long tq_hash(FrtQuery *self)
 {
-    return frt_str_hash(TQ(self)->term) ^ frt_sym_hash(TQ(self)->field);
+    return frt_str_hash(TQ(self)->term) ^ frt_str_hash(TQ(self)->field);
 }
 
 static int tq_eq(FrtQuery *self, FrtQuery *o)

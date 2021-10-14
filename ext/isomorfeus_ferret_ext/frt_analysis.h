@@ -1,11 +1,11 @@
 #ifndef FRT_ANALYSIS_H
 #define FRT_ANALYSIS_H
 
+#include <wchar.h>
 #include "frt_global.h"
 #include "frt_hash.h"
 #include "frt_multimapper.h"
 #include "frt_symbol.h"
-#include <wchar.h>
 
 /****************************************************************************
  *

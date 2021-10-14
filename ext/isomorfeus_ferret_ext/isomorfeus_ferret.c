@@ -1,11 +1,12 @@
 #include <errno.h>
-#include "ruby.h"
 #include "isomorfeus_ferret.h"
 #include "frt_except.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
-#include "frb_threading.h"
 #include "frt_symbol.h"
+#include "frb_threading.h"
+#include "frb_lang.h"
+
 
 /* Object Map */
 static FrtHash *object_map;
@@ -386,28 +387,27 @@ void Init_isomorfeus_ferret_ext(void)
     // Init_Benchmark();
 
     /* Error Classes */
-    cParseError =
-        rb_define_class_under(mFerret, "ParseError", rb_eStandardError);
-    cStateError =
-        rb_define_class_under(mFerret, "StateError", rb_eStandardError);
-    cFileNotFoundError =
-        rb_define_class_under(mFerret, "FileNotFoundError", rb_eIOError);
+    cParseError = rb_define_class_under(mFerret, "ParseError", rb_eStandardError);
+    cStateError = rb_define_class_under(mFerret, "StateError", rb_eStandardError);
+    cFileNotFoundError = rb_define_class_under(mFerret, "FileNotFoundError", rb_eIOError);
 
     error_map = rb_hash_new();
-    rb_hash_aset(error_map, rb_intern("Exception"),         rb_eStandardError);
-    rb_hash_aset(error_map, rb_intern("IO Error"),          rb_eIOError);
-    rb_hash_aset(error_map, rb_intern("File Not Found Error"),
-                                                            cFileNotFoundError);
-    rb_hash_aset(error_map, rb_intern("Argument Error"),    rb_eArgError);
-    rb_hash_aset(error_map, rb_intern("End-of-File Error"), rb_eEOFError);
-    rb_hash_aset(error_map, rb_intern("Unsupported Function Error"),
-                                                            rb_eNotImpError);
-    rb_hash_aset(error_map, rb_intern("State Error"),       cStateError);
-    rb_hash_aset(error_map, rb_intern("ParseError"),        cParseError);
-    rb_hash_aset(error_map, rb_intern("Memory Error"),      rb_eNoMemError);
-    rb_hash_aset(error_map, rb_intern("Index Error"),       rb_eIndexError);
-    rb_hash_aset(error_map, rb_intern("Lock Error"),        cLockError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[2]), rb_eStandardError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[3]), rb_eIOError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[4]), cFileNotFoundError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[5]), rb_eArgError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[6]), rb_eEOFError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[7]), rb_eNotImpError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[8]), cStateError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[9]), cParseError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[10]), rb_eNoMemError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[11]), rb_eIndexError);
+    rb_hash_aset(error_map, rb_intern(ERROR_TYPES[12]), cLockError);
 
     rb_define_const(mFerret, "EXCEPTION_MAP", error_map);
     rb_define_const(mFerret, "FIX_INT_MAX", INT2FIX(INT_MAX >> 1));
+}
+
+extern void frb_raise(int excode, const char *msg) {
+    rb_raise(frb_get_error(ERROR_TYPES[excode]), "%s", msg);
 }

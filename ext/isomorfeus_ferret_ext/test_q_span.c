@@ -316,20 +316,22 @@ static void test_span_or(TestCase *tc, void *data)
 
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
-
+printf("-1\n");
     q = frt_spanoq_new();
+printf("-1.1\n");
     check_hits(tc, sea, q, "", -1);
+printf("-1.2\n");
     TEST_SE(q, ir, "SpanOrEnum(span_or[])@START");
-
+printf("-2\n");
     frt_spanoq_add_clause_nr(q, frt_spantq_new(field, "flip"));
     check_hits(tc, sea, q, "2, 4, 16, 19, 21, 29", -1);
     TEST_SE(q, ir, "SpanTermEnum(span_terms(field:flip))@START");
-
+printf("-3\n");
     frt_spanoq_add_clause_nr(q, frt_spantq_new(field, "flop"));
     check_hits(tc, sea, q, "2, 4, 12, 16, 19, 21, 27, 29", -1);
     TEST_SE(q, ir, "SpanOrEnum(span_or[span_terms(field:flip),span_terms(field:flop)])@START");
     frt_q_deref(q);
-
+printf("-4\n");
     frt_searcher_close(sea);
 }
 
@@ -563,28 +565,29 @@ TestSuite *ts_q_span(TestSuite *suite)
     span_test_setup(store);
 
     suite = ADD_SUITE(suite);
-
+    printf("1\n");
     tst_run_test(suite, test_span_term, (void *)store);
     tst_run_test(suite, test_span_term_hash, NULL);
-
+    printf("2\n");
     tst_run_test(suite, test_span_multi_term, (void *)store);
     tst_run_test(suite, test_span_multi_term_hash, NULL);
-
+    printf("3\n");
     tst_run_test(suite, test_span_prefix, (void *)store);
     tst_run_test(suite, test_span_prefix_hash, NULL);
-
+    printf("4\n");
     tst_run_test(suite, test_span_first, (void *)store);
     tst_run_test(suite, test_span_first_hash, NULL);
-
+    printf("5\n");
     tst_run_test(suite, test_span_or, (void *)store);
+        printf("5.1\n");
     tst_run_test(suite, test_span_or_hash, NULL);
-
+    printf("6\n");
     tst_run_test(suite, test_span_near, (void *)store);
     tst_run_test(suite, test_span_near_hash, NULL);
-
+    printf("7\n");
     tst_run_test(suite, test_span_not, (void *)store);
     tst_run_test(suite, test_span_not_hash, NULL);
-
+    printf("8\n");
     frt_store_deref(store);
     return suite;
 }

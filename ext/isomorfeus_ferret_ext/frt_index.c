@@ -7,14 +7,12 @@
 #include <limits.h>
 #include <ctype.h>
 
-extern VALUE cFileNotFoundError;
-extern VALUE cLockError;
-extern VALUE cStateError;
+extern void frt_micro_sleep(const int micro_seconds);
 
 #define GET_LOCK(lock, name, store, err_msg) do {\
     lock = store->frt_open_lock(store, name);\
     if (!lock->obtain(lock)) {\
-        rb_raise(cLockError, err_msg);\
+        FRT_RAISE(FRT_LOCK_ERROR, err_msg);\
     }\
 } while(0)
 
@@ -68,7 +66,7 @@ static char *u64_to_str36(char *buf, int buf_size, frt_u64 u)
         }
     }
     if (0 < u) {
-        rb_raise(rb_eIndexError, "Max length of segment filename has been reached. "
+        FRT_RAISE(FRT_INDEX_ERROR, "Max length of segment filename has been reached. "
               "Perhaps it's time to re-index.\n");
     }
     return buf + i;
@@ -271,7 +269,7 @@ static void fi_check_params(int store, int index, int term_vector)
 {
     (void)store;
     if ((index == FRT_INDEX_NO) && (term_vector != FRT_TERM_VECTOR_NO)) {
-        rb_raise(rb_eArgError,
+        FRT_RAISE(FRT_ARG_ERROR,
               "You can't store the term vectors of an unindexed field");
     }
 }
@@ -351,7 +349,7 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
     if (!frt_h_set_safe(fis->field_dict, fi->name, fi)) {
-        rb_raise(rb_eArgError, "Field :%s already exists", (char *)fi->name);
+        FRT_RAISE(FRT_ARG_ERROR, "Field :%s already exists", (char *)fi->name);
     }
     fi->number = fis->size;
     fis->fields[fis->size] = fi;
@@ -835,7 +833,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
             gen = frt_sis_current_segment_generation(store);
             if (gen == -1) {
                 // fprintf(stderr, ">>\n%s\n>>\n", frt_store_to_s(store));
-                rb_raise(cFileNotFoundError, "couldn't find segments file");
+                FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR, "couldn't find segments file");
             }
         }
 
@@ -872,7 +870,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                     break;
                 }
                 /* sleep for 50 milliseconds */
-                micro_sleep(50000);
+                frt_micro_sleep(50000);
             }
         }
 
@@ -901,11 +899,11 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf,
                 strncpy(listing_buffer, listing, 1023);
                 listing_buffer[1023] = '\0';
                 free(listing);
-                rb_raise(rb_eIOError,
+                FRT_RAISE(FRT_IO_ERROR,
                       "Error reading the segment infos. Store:\n %s\n",
                       listing_buffer);
             } else {
-                micro_sleep(50000);
+                frt_micro_sleep(50000);
                 retry = true;
             }
         } else {
@@ -1197,14 +1195,14 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
 void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
 {
     if (start < 0 || start >= self->len) {
-        rb_raise(rb_eIOError, "start out of range in LazyDocField#get_bytes. %d "
+        FRT_RAISE(FRT_IO_ERROR, "start out of range in LazyDocField#get_bytes. %d "
               "is not between 0 and %d", start, self->len);
     }
     if (len <= 0) {
-        rb_raise(rb_eIOError, "len = %d, but should be greater than 0", len);
+        FRT_RAISE(FRT_IO_ERROR, "len = %d, but should be greater than 0", len);
     }
     if (start + len > self->len) {
-        rb_raise(rb_eIOError, "Tried to read past end of field. Field is only %d "
+        FRT_RAISE(FRT_IO_ERROR, "Tried to read past end of field. Field is only %d "
               "bytes long but tried to read to %d", self->len, start + len);
     }
     else {
@@ -1755,7 +1753,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti,
         for (i = 0; NULL != ste_next(index_te); i++) {
 #ifdef DEBUG
             if (i >= index_cnt) {
-                rb_raise(rb_eIndexError, "index term enum read too many terms");
+                FRT_RAISE(FRT_INDEX_ERROR, "index term enum read too many terms");
             }
 #endif
             sti->index_terms[i] = frt_te_get_term(index_te);
@@ -2424,15 +2422,15 @@ static void tw_add(FrtTermWriter *tw,
 
 #ifdef DEBUG
     if (strcmp(tw->last_term, term) > 0) {
-        rb_raise(cStateError, "\"%s\" > \"%s\" %d > %d",
+        FRT_RAISE(FRT_STATE_ERROR, "\"%s\" > \"%s\" %d > %d",
               tw->last_term, term, *tw->last_term, *term);
     }
     if (ti->frq_ptr < tw->last_term_info.frq_ptr) {
-        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->frq_ptr,
+        FRT_RAISE(FRT_STATE_ERROR, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->frq_ptr,
               tw->last_term_info.frq_ptr);
     }
     if (ti->prx_ptr < tw->last_term_info.prx_ptr) {
-        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->prx_ptr,
+        FRT_RAISE(FRT_STATE_ERROR, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->prx_ptr,
               tw->last_term_info.prx_ptr);
     }
 #endif
@@ -2526,7 +2524,7 @@ void frt_tiw_close(FrtTermInfosWriter *tiw)
 
 #define CHECK_STATE(method) do {\
     if (0 == STDE(tde)->count) {\
-        rb_raise(cStateError, "Illegal state of TermDocEnum. You must call #next "\
+        FRT_RAISE(FRT_STATE_ERROR, "Illegal state of TermDocEnum. You must call #next "\
               "before you call #"method);\
     }\
 } while (0)
@@ -2561,7 +2559,7 @@ static void stde_seek_te(FrtTermDocEnum *tde, FrtTermEnum *te)
 {
 #ifdef DEBUG
     if (te->set_field != &ste_set_field) {
-        rb_raise(rb_eArgError, "Passed an incorrect TermEnum type");
+        FRT_RAISE(FRT_ARG_ERROR, "Passed an incorrect TermEnum type");
     }
 #endif
     stde_seek_ti(STDE(tde), &(te->curr_ti));
@@ -2805,7 +2803,7 @@ static bool stpe_next(FrtTermDocEnum *tde)
 static int stpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     (void)tde; (void)docs; (void)freqs; (void)req_num;
-    rb_raise(rb_eArgError, "TermPosEnum does not handle processing multiple documents"
+    FRT_RAISE(FRT_ARG_ERROR, "TermPosEnum does not handle processing multiple documents"
                      " in one call. Use TermDocEnum instead.");
     return -1;
 }
@@ -2901,7 +2899,7 @@ static FrtTermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
 
 #define CHECK_CURR_TDE(method) do {\
     if (NULL == MTDE(tde)->curr_tde) {\
-        rb_raise(cStateError, "Illegal state of TermDocEnum. You must call #next "\
+        FRT_RAISE(FRT_STATE_ERROR, "Illegal state of TermDocEnum. You must call #next "\
               "before you call #"method);\
     }\
 } while (0)
@@ -3114,7 +3112,7 @@ static void mtdpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
     (void)tde;
     (void)field_num;
     (void)term;
-    rb_raise(rb_eNotImpError, "MultipleTermDocPosEnum does not support "
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support "
           " the #seek operation");
 }
 
@@ -3203,7 +3201,7 @@ static int mtdpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
     (void)tde;
     (void)docs;
     (void)freqs;
-    rb_raise(rb_eNotImpError, "MultipleTermDocPosEnum does not support "
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support "
           " the #read operation");
     return req_num;
 }
@@ -3525,7 +3523,7 @@ static void ir_acquire_not_necessary(FrtIndexReader *ir)
 static void ir_acquire_write_lock(FrtIndexReader *ir)
 {
     if (ir->is_stale) {
-        rb_raise(cStateError, "IndexReader out of date and no longer valid for "
+        FRT_RAISE(FRT_STATE_ERROR, "IndexReader out of date and no longer valid for "
                            "delete, undelete, or set_norm operations. To "
                            "perform any of these operations on the index you "
                            "need to close and reopen the index");
@@ -3534,7 +3532,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
     if (NULL == ir->write_lock) {
         ir->write_lock = frt_open_lock(ir->store, FRT_WRITE_LOCK_NAME);
         if (!ir->write_lock->obtain(ir->write_lock)) {/* obtain write lock */
-            rb_raise(cLockError, "Could not obtain write lock when trying to "
+            FRT_RAISE(FRT_LOCK_ERROR, "Could not obtain write lock when trying to "
                               "write changes to the index. Check that there "
                               "are no stale locks in the index. Look for "
                               "files with the \".lck\" prefix. If you know "
@@ -3549,7 +3547,7 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
             ir->write_lock->release(ir->write_lock);
             frt_close_lock(ir->write_lock);
             ir->write_lock = NULL;
-            rb_raise(cStateError, "IndexReader out of date and no longer valid "
+            FRT_RAISE(FRT_STATE_ERROR, "IndexReader out of date and no longer valid "
                                "for delete, undelete, or set_norm operations. "
                                "The current version is <%"I64_PFX"llu>, but this "
                                "readers version is <%"I64_PFX"llu>. To perform "
@@ -4104,7 +4102,7 @@ static FrtDocument *sr_get_doc(FrtIndexReader *ir, int doc_num)
     frt_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         frt_mutex_unlock(&ir->mutex);
-        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
+        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
     }
     doc = frt_fr_get_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
@@ -4117,7 +4115,7 @@ static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
     frt_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         frt_mutex_unlock(&ir->mutex);
-        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
+        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
     }
     lazy_doc = frt_fr_get_lazy_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
@@ -6099,7 +6097,7 @@ FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
     FRT_TRY
         iw->write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
         if (!iw->write_lock->obtain(iw->write_lock)) {
-            rb_raise(cLockError,
+            FRT_RAISE(FRT_LOCK_ERROR,
                   "Couldn't obtain write lock when opening IndexWriter");
         }
 

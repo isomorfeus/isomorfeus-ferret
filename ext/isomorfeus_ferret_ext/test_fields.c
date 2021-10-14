@@ -23,7 +23,7 @@ void field_prop_test(TestCase *tc,
                      bool store_positions,
                      bool store_offsets)
 {
-    tst_ptr_equal(line_num, tc, name, fi->name);
+    tst_str_equal(line_num, tc, name, fi->name);
     tst_flt_equal(line_num, tc, boost, fi->boost);
     tst_int_equal(line_num, tc, is_stored,          fi_is_stored(fi));
     tst_int_equal(line_num, tc, is_indexed,         fi_is_indexed(fi));
@@ -44,13 +44,11 @@ static void test_fi_new(TestCase *tc, void *data)
 {
     FrtFieldInfo *fi;
     (void)data; /* suppress unused argument warning */
-
     fi = frt_fi_new("name", FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     do_field_prop_test(tc, fi, "name", 1.0, F, F, F, F, F, F, F);
     frt_fi_deref(fi);
     fi = frt_fi_new("name", FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     do_field_prop_test(tc, fi, "name", 1.0, T, F, T, F, T, F, F);
-    frt_fi_deref(fi);
     frt_fi_deref(fi);
     fi = frt_fi_new("name", FRT_STORE_NO, FRT_INDEX_YES_OMIT_NORMS,
                    FRT_TERM_VECTOR_WITH_OFFSETS);
@@ -197,24 +195,22 @@ static void test_fis_rw(TestCase *tc, void *data)
     frt_fis_add_field(fis, frt_fi_new("FFTFTTTT", FRT_STORE_NO,
                                  FRT_INDEX_UNTOKENIZED_OMIT_NORMS,
                                  FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
-    fis->fields[1]->boost = 2.0;
-    fis->fields[2]->boost = 3.0;
-    fis->fields[3]->boost = 4.0;
-    fis->fields[4]->boost = 5.0;
-
+    fis->fields[0]->boost = 2.0;
+    fis->fields[1]->boost = 3.0;
+    fis->fields[2]->boost = 4.0;
+    fis->fields[3]->boost = 5.0;
     os = store->new_output(store, "fields");
     frt_fis_write(fis, os);
     frt_os_close(os);
 
-
     /* these fields won't be saved be will added again later */
-    Aiequal(5, fis->size);
+    Aiequal(4, fis->size);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, "new_field"),
                        "new_field", 1.0, T, F, F, T, T, T, T);
-    Aiequal(6, fis->size);
+    Aiequal(5, fis->size);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, "another"),
                        "another", 1.0, T, F, F, T, T, T, T);
-    Aiequal(7, fis->size);
+    Aiequal(6, fis->size);
 
     frt_fis_deref(fis);
 
@@ -225,23 +221,21 @@ static void test_fis_rw(TestCase *tc, void *data)
     Aiequal(FRT_INDEX_UNTOKENIZED_OMIT_NORMS, fis->index);
     Aiequal(FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS, fis->term_vector);
 
-    do_field_prop_test(tc, fis->fields[0], "FFFFFFFF", 1.0,
-                       F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], "TFTTFTFF", 2.0,
+    do_field_prop_test(tc, fis->fields[0], "TFTTFTFF", 2.0,
                        T, F, T, F, T, F, F);
-    do_field_prop_test(tc, fis->fields[2], "TTTFFTTF", 3.0,
+    do_field_prop_test(tc, fis->fields[1], "TTTFFTTF", 3.0,
                        T, T, F, F, T, T, F);
-    do_field_prop_test(tc, fis->fields[3], "FFTTTTFT", 4.0,
+    do_field_prop_test(tc, fis->fields[2], "FFTTTTFT", 4.0,
                        F, F, T, T, T, F, T);
-    do_field_prop_test(tc, fis->fields[4], "FFTFTTTT", 5.0,
+    do_field_prop_test(tc, fis->fields[3], "FFTFTTTT", 5.0,
                        F, F, F, T, T, T, T);
-    Aiequal(5, fis->size);
+    Aiequal(4, fis->size);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, "new_field"),
                        "new_field", 1.0, T, F, F, T, T, T, T);
-    Aiequal(6, fis->size);
+    Aiequal(5, fis->size);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, "another"),
                        "another", 1.0, T, F, F, T, T, T, T);
-    Aiequal(7, fis->size);
+    Aiequal(6, fis->size);
     str = frt_fis_to_s(fis);
     Asequal("default:\n"
             "  store: :yes\n"
@@ -284,7 +278,7 @@ static void test_fis_rw(TestCase *tc, void *data)
             "    index: :untokenized_omit_norms\n"
             "    term_vector: :with_positions_offsets\n", str);
     free(str);
-
+printf("4");
     frt_fis_deref(fis);
     frt_store_deref(store);
 }
@@ -439,9 +433,11 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
     fw = frt_fw_open(store, "_as3", fis);
     for (i = 0; i < 100; i++) {
         char buf[100];
+        char *bufc;
         sprintf(buf, "<<%d>>", i);
+        bufc = frt_estrdup(buf);
         doc = frt_doc_new();
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(buf), buf));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(bufc), bufc));
         frt_fw_add_doc(fw, doc);
         frt_fw_write_tv_index(fw);
        frt_doc_destroy(doc);
@@ -528,7 +524,7 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
     frt_doc_add_field(doc, df);
     frt_fw_add_doc(fw, doc);
     frt_fw_write_tv_index(fw);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
     frt_fw_close(fw);
 
     fr = frt_fr_open(store, "_as3", fis);
@@ -566,7 +562,6 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
 TestSuite *ts_fields(TestSuite *suite)
 {
     suite = ADD_SUITE(suite);
-
     tst_run_test(suite, test_fi_new, NULL);
     tst_run_test(suite, test_fis_basic, NULL);
     tst_run_test(suite, test_fis_with_default, NULL);

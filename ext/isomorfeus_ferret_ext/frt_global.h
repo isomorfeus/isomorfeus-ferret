@@ -272,6 +272,7 @@ extern bool frt_x_do_logging;
 extern void frt_init(int arc, const char *const argv[]);
 extern void frt_setprogname(const char *str);
 extern const char *frt_progname();
+extern void frt_micro_sleep(const int micro_seconds);
 
 /**
  * For general use during testing. Switch this on and off for print statements

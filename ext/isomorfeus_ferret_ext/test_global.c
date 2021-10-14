@@ -281,7 +281,7 @@ TestSuite *ts_global(TestSuite *suite)
     tst_run_test(suite, test_strfmt, NULL);
     tst_run_test(suite, test_dbl_to_s, NULL);
     tst_run_test(suite, test_stacktrace, NULL);
-    tst_run_test(suite, test_sighandler, NULL);
+    // tst_run_test(suite, test_sighandler, NULL);
     tst_run_test(suite, test_count_leading_zeros, NULL);
     tst_run_test(suite, test_count_leading_ones, NULL);
     tst_run_test(suite, test_count_trailing_zeros, NULL);

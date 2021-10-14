@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include <string.h>
 #include "frt_search.h"
 #include "frt_helper.h"
@@ -571,7 +570,7 @@ static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static unsigned long long multi_tq_hash(FrtQuery *self)
 {
     int i;
-    unsigned long long hash = frt_sym_hash(MTQ(self)->field);
+    unsigned long long hash = frt_str_hash(MTQ(self)->field);
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
@@ -626,7 +625,7 @@ FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost)
     FrtQuery *self;
 
     if (max_terms <= 0) {
-        rb_raise(rb_eArgError, ":max_terms must be greater than or equal to zero. "
+        FRT_RAISE(FRT_ARG_ERROR, ":max_terms must be greater than or equal to zero. "
               "%d < 0. ", max_terms);
     }
 

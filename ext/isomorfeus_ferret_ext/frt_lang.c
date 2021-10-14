@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,17 +6,13 @@
 #include "frt_except.h"
 #include "frt_global.h"
 
-void micro_sleep(const int micro_seconds) {
-    rb_thread_wait_for(rb_time_interval(rb_float_new((double)micro_seconds/1000000.0)));
-}
-
 /* emalloc: malloc and report if error */
 void *frt_emalloc(size_t size)
 {
     void *p = malloc(size);
 
     if (p == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate %d bytes", (int)size);
+        FRT_RAISE(FRT_MEM_ERROR, "failed to allocate %d bytes", (int)size);
     }
 
     return p;
@@ -29,7 +24,7 @@ void *frt_ecalloc(size_t size)
     void *p = calloc(1, size);
 
     if (p == NULL) {
-        rb_raise(rb_eNoMemError, "failed to allocate %d bytes", (int)size);
+        FRT_RAISE(FRT_MEM_ERROR, "failed to allocate %d bytes", (int)size);
     }
 
     return p;
@@ -41,7 +36,7 @@ void *frt_erealloc(void *ptr, size_t size)
     void *p = realloc(ptr, size);
 
     if (p == NULL) {
-        rb_raise(rb_eNoMemError, "failed to reallocate %d bytes", (int)size);
+        FRT_RAISE(FRT_MEM_ERROR, "failed to reallocate %d bytes", (int)size);
     }
 
     return p;

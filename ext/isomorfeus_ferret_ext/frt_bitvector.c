@@ -1,8 +1,5 @@
-#include "ruby.h"
 #include "frt_bitvector.h"
 #include <string.h>
-
-extern VALUE cStateError;
 
 FrtBitVector *frt_bv_new_capa(int capa)
 {

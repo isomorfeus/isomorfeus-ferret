@@ -1,5 +1,5 @@
-#include "isomorfeus_ferret.h"
 #include "frt_index.h"
+#include "isomorfeus_ferret.h"
 #include <ruby/st.h>
 
 VALUE mIndex;
@@ -1314,71 +1314,82 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
     FrtIndexWriter *volatile iw = NULL;
     FrtConfig config = frt_default_config;
 
-    rb_scan_args(argc, argv, "01", &roptions);
-    if (argc > 0) {
-        Check_Type(roptions, T_HASH);
+    int ex_code = 0;
+    const char *msg = NULL;
 
-        if ((rval = rb_hash_aref(roptions, sym_dir)) != Qnil) {
-            Check_Type(rval, T_DATA);
-            store = DATA_PTR(rval);
-        } else if ((rval = rb_hash_aref(roptions, sym_path)) != Qnil) {
-            StringValue(rval);
-            frb_create_dir(rval);
-            store = frt_open_fs_store(rs2s(rval));
+    rb_scan_args(argc, argv, "01", &roptions);
+    FRT_TRY
+        if (argc > 0) {
+            Check_Type(roptions, T_HASH);
+
+            if ((rval = rb_hash_aref(roptions, sym_dir)) != Qnil) {
+                Check_Type(rval, T_DATA);
+                store = DATA_PTR(rval);
+            } else if ((rval = rb_hash_aref(roptions, sym_path)) != Qnil) {
+                StringValue(rval);
+                frb_create_dir(rval);
+                store = frt_open_fs_store(rs2s(rval));
+                FRT_DEREF(store);
+            }
+
+            /* Let ruby's garbage collector handle the closing of the store
+            if (!close_dir) {
+            close_dir = RTEST(rb_hash_aref(roptions, sym_close_dir));
+            }
+            */
+            /* use_compound_file defaults to true */
+            config.use_compound_file =
+                (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse)
+                ? false
+                : true;
+
+            if ((rval = rb_hash_aref(roptions, sym_analyzer)) != Qnil) {
+                analyzer = frb_get_cwrapped_analyzer(rval);
+            }
+
+            create = RTEST(rb_hash_aref(roptions, sym_create));
+            if ((rval = rb_hash_aref(roptions, sym_create_if_missing)) != Qnil) {
+                create_if_missing = RTEST(rval);
+            }
+            SET_INT_ATTR(chunk_size);
+            SET_INT_ATTR(max_buffer_memory);
+            SET_INT_ATTR(index_interval);
+            SET_INT_ATTR(skip_interval);
+            SET_INT_ATTR(merge_factor);
+            SET_INT_ATTR(max_buffered_docs);
+            SET_INT_ATTR(max_merge_docs);
+            SET_INT_ATTR(max_field_length);
+        }
+        if (NULL == store) {
+            store = frt_open_ram_store();
             FRT_DEREF(store);
         }
-
-        /* Let ruby's garbage collector handle the closing of the store
-           if (!close_dir) {
-           close_dir = RTEST(rb_hash_aref(roptions, sym_close_dir));
-           }
-           */
-        /* use_compound_file defaults to true */
-        config.use_compound_file =
-            (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse)
-            ? false
-            : true;
-
-        if ((rval = rb_hash_aref(roptions, sym_analyzer)) != Qnil) {
-            analyzer = frb_get_cwrapped_analyzer(rval);
+        if (!create && create_if_missing && !store->exists(store, "segments")) {
+            create = true;
+        }
+        if (create) {
+            FrtFieldInfos *fis;
+            if ((rval = rb_hash_aref(roptions, sym_field_infos)) != Qnil) {
+                Data_Get_Struct(rval, FrtFieldInfos, fis);
+                frt_index_create(store, fis);
+            } else {
+                fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
+                            FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                frt_index_create(store, fis);
+                frt_fis_deref(fis);
+            }
         }
 
-        create = RTEST(rb_hash_aref(roptions, sym_create));
-        if ((rval = rb_hash_aref(roptions, sym_create_if_missing)) != Qnil) {
-            create_if_missing = RTEST(rval);
-        }
-        SET_INT_ATTR(chunk_size);
-        SET_INT_ATTR(max_buffer_memory);
-        SET_INT_ATTR(index_interval);
-        SET_INT_ATTR(skip_interval);
-        SET_INT_ATTR(merge_factor);
-        SET_INT_ATTR(max_buffered_docs);
-        SET_INT_ATTR(max_merge_docs);
-        SET_INT_ATTR(max_field_length);
-    }
-    if (NULL == store) {
-        store = frt_open_ram_store();
-        FRT_DEREF(store);
-    }
-    if (!create && create_if_missing && !store->exists(store, "segments")) {
-        create = true;
-    }
-    if (create) {
-        FrtFieldInfos *fis;
-        if ((rval = rb_hash_aref(roptions, sym_field_infos)) != Qnil) {
-            Data_Get_Struct(rval, FrtFieldInfos, fis);
-            frt_index_create(store, fis);
-        } else {
-            fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                          FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-            frt_index_create(store, fis);
-            frt_fis_deref(fis);
-        }
-    }
+        iw = frt_iw_open(store, analyzer, &config);
 
-    iw = frt_iw_open(store, analyzer, &config);
+        Frt_Wrap_Struct(self, &frb_iw_mark, &frb_iw_free, iw);
+    default:
+        ex_code = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
 
-    Frt_Wrap_Struct(self, &frb_iw_mark, &frb_iw_free, iw);
+    if (ex_code && msg) { frb_raise(ex_code, msg); }
 
     if (rb_block_given_p()) {
         rb_yield(self);
@@ -2077,29 +2088,53 @@ frb_ir_init(VALUE self, VALUE rdir)
     int i;
     FrtFieldInfos *fis;
     VALUE rfield_num_map = rb_hash_new();
+    int ex_code = 0;
+    const char *msg = NULL;
 
-    if (TYPE(rdir) == T_ARRAY) {
-        VALUE rdirs = rdir;
-        const int reader_cnt = RARRAY_LEN(rdir);
-        FrtIndexReader **sub_readers = FRT_ALLOC_N(FrtIndexReader *, reader_cnt);
-        int i;
-        for (i = 0; i < reader_cnt; i++) {
-            rdir = RARRAY_PTR(rdirs)[i];
+    FRT_TRY
+        if (TYPE(rdir) == T_ARRAY) {
+            VALUE rdirs = rdir;
+            const int reader_cnt = RARRAY_LEN(rdir);
+            FrtIndexReader **sub_readers = FRT_ALLOC_N(FrtIndexReader *, reader_cnt);
+            int i;
+            for (i = 0; i < reader_cnt; i++) {
+                rdir = RARRAY_PTR(rdirs)[i];
+                switch (TYPE(rdir)) {
+                    case T_DATA:
+                        if (CLASS_OF(rdir) == cIndexReader) {
+                            Data_Get_Struct(rdir, FrtIndexReader, sub_readers[i]);
+                            FRT_REF(sub_readers[i]);
+                            continue;
+                        } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
+                            store = DATA_PTR(rdir);
+                        } else {
+                            FRT_RAISE(FRT_ARG_ERROR, "A Multi-IndexReader can only "
+                                    "be created from other IndexReaders, "
+                                    "Directory objects or file-system paths. "
+                                    "Not %s",
+                                    rs2s(rb_obj_as_string(rdir)));
+                        }
+                        break;
+                    case T_STRING:
+                        frb_create_dir(rdir);
+                        store = frt_open_fs_store(rs2s(rdir));
+                        FRT_DEREF(store);
+                        break;
+                    default:
+                        FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory "
+                                "argument. You should use either a String or "
+                                "a Directory",
+                                rs2s(rb_obj_as_string(rdir)));
+                        break;
+                }
+                sub_readers[i] = frt_ir_open(store);
+            }
+            ir = frt_mr_open(sub_readers, reader_cnt);
+            Frt_Wrap_Struct(self, &frb_mr_mark, &frb_ir_free, ir);
+        } else {
             switch (TYPE(rdir)) {
                 case T_DATA:
-                    if (CLASS_OF(rdir) == cIndexReader) {
-                        Data_Get_Struct(rdir, FrtIndexReader, sub_readers[i]);
-                        FRT_REF(sub_readers[i]);
-                        continue;
-                    } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
-                        store = DATA_PTR(rdir);
-                    } else {
-                        rb_raise(rb_eArgError, "A Multi-IndexReader can only "
-                                 "be created from other IndexReaders, "
-                                 "Directory objects or file-system paths. "
-                                 "Not %s",
-                                 rs2s(rb_obj_as_string(rdir)));
-                    }
+                    store = DATA_PTR(rdir);
                     break;
                 case T_STRING:
                     frb_create_dir(rdir);
@@ -2107,35 +2142,22 @@ frb_ir_init(VALUE self, VALUE rdir)
                     FRT_DEREF(store);
                     break;
                 default:
-                    rb_raise(rb_eArgError, "%s isn't a valid directory "
-                             "argument. You should use either a String or "
-                             "a Directory",
-                             rs2s(rb_obj_as_string(rdir)));
+                    FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory argument. "
+                            "You should use either a String or a Directory",
+                            rs2s(rb_obj_as_string(rdir)));
                     break;
             }
-            sub_readers[i] = frt_ir_open(store);
+            ir = frt_ir_open(store);
+            Frt_Wrap_Struct(self, &frb_ir_mark, &frb_ir_free, ir);
         }
-        ir = frt_mr_open(sub_readers, reader_cnt);
-        Frt_Wrap_Struct(self, &frb_mr_mark, &frb_ir_free, ir);
-    } else {
-        switch (TYPE(rdir)) {
-            case T_DATA:
-                store = DATA_PTR(rdir);
-                break;
-            case T_STRING:
-                frb_create_dir(rdir);
-                store = frt_open_fs_store(rs2s(rdir));
-                FRT_DEREF(store);
-                break;
-            default:
-                rb_raise(rb_eArgError, "%s isn't a valid directory argument. "
-                         "You should use either a String or a Directory",
-                         rs2s(rb_obj_as_string(rdir)));
-                break;
-        }
-        ir = frt_ir_open(store);
-        Frt_Wrap_Struct(self, &frb_ir_mark, &frb_ir_free, ir);
-    }
+    default:
+        ex_code = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+
+    if (ex_code && msg) { frb_raise(ex_code, msg); }
+
     object_add(ir, self);
 
     fis = ir->fis;

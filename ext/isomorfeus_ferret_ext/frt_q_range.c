@@ -78,7 +78,7 @@ static void range_destroy(Range *range)
 static unsigned long long range_hash(Range *filt)
 {
     return filt->include_lower | (filt->include_upper << 1)
-        | ((frt_sym_hash(filt->field)
+        | ((frt_str_hash(filt->field)
             ^ (filt->lower_term ? frt_str_hash(filt->lower_term) : 0)
             ^ (filt->upper_term ? frt_str_hash(filt->upper_term) : 0)) << 2);
 }
@@ -101,21 +101,21 @@ static Range *range_new(FrtSymbol field, const char *lower_term,
     Range *range;
 
     if (!lower_term && !upper_term) {
-        rb_raise(rb_eArgError, "Nil bounds for range. A range must include either "
+        FRT_RAISE(FRT_ARG_ERROR, "Nil bounds for range. A range must include either "
               "lower bound or an upper bound");
     }
     if (include_lower && !lower_term) {
-        rb_raise(rb_eArgError, "Lower bound must be non-nil to be inclusive. That "
+        FRT_RAISE(FRT_ARG_ERROR, "Lower bound must be non-nil to be inclusive. That "
               "is, if you specify :include_lower => true when you create a "
               "range you must include a :lower_term");
     }
     if (include_upper && !upper_term) {
-        rb_raise(rb_eArgError, "Upper bound must be non-nil to be inclusive. That "
+        FRT_RAISE(FRT_ARG_ERROR, "Upper bound must be non-nil to be inclusive. That "
               "is, if you specify :include_upper => true when you create a "
               "range you must include a :upper_term");
     }
     if (upper_term && lower_term && (strcmp(upper_term, lower_term) < 0)) {
-        rb_raise(rb_eArgError, "Upper bound must be greater than lower bound. "
+        FRT_RAISE(FRT_ARG_ERROR, "Upper bound must be greater than lower bound. "
               "\"%s\" < \"%s\"", upper_term, lower_term);
     }
 
@@ -138,16 +138,16 @@ static Range *trange_new(FrtSymbol field, const char *lower_term,
     double upper_num, lower_num;
 
     if (!lower_term && !upper_term) {
-        rb_raise(rb_eArgError, "Nil bounds for range. A range must include either "
+        FRT_RAISE(FRT_ARG_ERROR, "Nil bounds for range. A range must include either "
               "lower bound or an upper bound");
     }
     if (include_lower && !lower_term) {
-        rb_raise(rb_eArgError, "Lower bound must be non-nil to be inclusive. That "
+        FRT_RAISE(FRT_ARG_ERROR, "Lower bound must be non-nil to be inclusive. That "
               "is, if you specify :include_lower => true when you create a "
               "range you must include a :lower_term");
     }
     if (include_upper && !upper_term) {
-        rb_raise(rb_eArgError, "Upper bound must be non-nil to be inclusive. That "
+        FRT_RAISE(FRT_ARG_ERROR, "Upper bound must be non-nil to be inclusive. That "
               "is, if you specify :include_upper => true when you create a "
               "range you must include a :upper_term");
     }
@@ -160,14 +160,14 @@ static Range *trange_new(FrtSymbol field, const char *lower_term,
               (int)strlen(upper_term) == len)))
         {
             if (upper_num < lower_num) {
-                rb_raise(rb_eArgError, "Upper bound must be greater than lower bound."
+                FRT_RAISE(FRT_ARG_ERROR, "Upper bound must be greater than lower bound."
                       " numbers \"%lg\" < \"%lg\"", upper_num, lower_num);
             }
         }
         else {
             if (upper_term && lower_term &&
                 (strcmp(upper_term, lower_term) < 0)) {
-                rb_raise(rb_eArgError, "Upper bound must be greater than lower bound."
+                FRT_RAISE(FRT_ARG_ERROR, "Upper bound must be greater than lower bound."
                       " \"%s\" < \"%s\"", upper_term, lower_term);
             }
         }

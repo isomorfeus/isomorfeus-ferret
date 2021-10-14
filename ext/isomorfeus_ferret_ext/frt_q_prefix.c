@@ -68,7 +68,7 @@ static void prq_destroy(FrtQuery *self)
 
 static unsigned long long prq_hash(FrtQuery *self)
 {
-    return frt_sym_hash(PfxQ(self)->field) ^ frt_str_hash(PfxQ(self)->prefix);
+    return frt_str_hash(PfxQ(self)->field) ^ frt_str_hash(PfxQ(self)->prefix);
 }
 
 static int prq_eq(FrtQuery *self, FrtQuery *o)

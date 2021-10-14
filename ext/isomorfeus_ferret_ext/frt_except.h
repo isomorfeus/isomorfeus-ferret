@@ -86,18 +86,39 @@
 #define FRT_FILE_NOT_FOUND_ERROR 4
 #define FRT_ARG_ERROR 5
 #define FRT_EOF_ERROR 6
+#define FRT_UNSUPPORTED_ERROR 7
+#define FRT_STATE_ERROR 8
+#define FRT_PARSE_ERROR 9
 #define FRT_MEM_ERROR 10
+#define FRT_INDEX_ERROR 11
 #define FRT_LOCK_ERROR 12
 
+#define FRT_EM_EXCEPTION "Exception"
+#define FRT_EM_IO_ERROR "IO Error"
+#define FRT_EM_FILE_NOT_FOUND_ERROR "File Not Found Error"
+#define FRT_EM_ARG_ERROR "Argument Error"
+#define FRT_EM_EOF_ERROR "End-of-File Error"
+#define FRT_EM_UNSUPPORTED_ERROR "Unsupported Function Error"
+#define FRT_EM_STATE_ERROR "State Error"
+#define FRT_EM_PARSE_ERROR "ParseError"
+#define FRT_EM_MEM_ERROR "Memory Error"
+#define FRT_EM_INDEX_ERROR "Index Error"
+#define FRT_EM_LOCK_ERROR "Lock Error"
+
+extern const char *const ERROR_TYPES[];
 extern const char *const FRT_UNSUPPORTED_ERROR_MSG;
 extern const char *const FRT_EOF_ERROR_MSG;
+extern const char *frt_err_code_to_type(const int err_code);
+
+extern bool frt_ruby_raise;
+extern void frb_rb_raise(const char *file, int line_num, const char *func, const char *err_type, const char *fmt, ...);
 
 typedef struct frt_xcontext_t
 {
     jmp_buf jbuf;
     struct frt_xcontext_t *next;
     const char *msg;
-    volatile int excode;
+    int excode;
     unsigned int handled : 1;
     unsigned int in_finally : 1;
 } frt_xcontext_t;
@@ -105,6 +126,8 @@ typedef struct frt_xcontext_t
 #define FRT_TRY\
   do {\
     frt_xcontext_t xcontext;\
+    xcontext.excode = 0;\
+    xcontext.msg = NULL;\
     frt_xpush_context(&xcontext);\
     switch (setjmp(xcontext.jbuf)) {\
       case FRT_BODY:

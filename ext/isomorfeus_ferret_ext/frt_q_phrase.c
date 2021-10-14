@@ -1088,7 +1088,7 @@ static unsigned long long phq_hash(FrtQuery *self)
 {
     int i, j;
     FrtPhraseQuery *phq = PhQ(self);
-    unsigned long long hash = frt_sym_hash(phq->field);
+    unsigned long long hash = frt_str_hash(phq->field);
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {

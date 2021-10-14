@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include <string.h>
 #include "frt_search.h"
 #include "frt_index.h"
@@ -392,7 +391,7 @@ static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir)
             FrtTermEnum *te = frt_ir_terms(ir, sf->field);
             if (te) {
                 if (!te->next(te) && (ir->num_docs(ir) > 0)) {
-                    rb_raise(rb_eArgError,
+                    FRT_RAISE(FRT_ARG_ERROR,
                         "Cannot sort by field \"%s\" as there are no terms "
                         "in that field in the index.", sf->field);
                 }
@@ -644,7 +643,7 @@ bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
                 } while (0);
                 break;
             default:
-                rb_raise(rb_eArgError, "Unknown sort type: %d.", type);
+                FRT_RAISE(FRT_ARG_ERROR, "Unknown sort type: %d.", type);
                 break;
         }
         if (cmps1[i].reverse) {

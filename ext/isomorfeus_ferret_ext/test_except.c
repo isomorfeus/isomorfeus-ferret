@@ -6,7 +6,7 @@ static char *msg2 = "Message Two";
 
 static void raise_exception()
 {
-    FRT_RAISE(EXCEPTION, "%s", msg1);
+    FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
 }
 
 static void inner_try(TestCase *tc)
@@ -54,7 +54,7 @@ static void test_nested_except(TestCase *tc, void *data)
         ioerror_handled = true;
         FRT_HANDLED();
         break;
-    case EXCEPTION:
+    case FRT_EXCEPTION:
         /* This should be called */
         Assert(false, "Exception should not have been raised");
         break;
@@ -78,7 +78,7 @@ static void test_function_except(TestCase *tc, void *data)
         raise_exception();
         Assert(false, "Exception should have been raised");
         break;
-    case EXCEPTION:
+    case FRT_EXCEPTION:
         /* This should be called */
         Astrstr(xcontext.msg, msg1);
 #if defined(__func__) && defined(FRT_HAS_VARARGS)
@@ -107,7 +107,7 @@ static void test_simple_except(TestCase *tc, void *data)
         FRT_RAISE(FRT_EXCEPTION, "error message %s %d", "string", 20);
         Assert(false, "Exception should have been raised");
         break;
-    case EXCEPTION:
+    case FRT_EXCEPTION:
         /* This should be called */
         Astrstr(xcontext.msg, "error message string 20");
 #if defined(__func__) && defined(FRT_HAS_VARARGS)
@@ -186,7 +186,7 @@ static void test_xfinally(TestCase *tc, void *data)
         try_xcatchall(tc);
         Assert(false, "Exception should have been raised");
         break;
-    case EXCEPTION:
+    case FRT_EXCEPTION:
         /* This should be called */
         Astrstr(xcontext.msg, msg1);
         exception_handled = true;

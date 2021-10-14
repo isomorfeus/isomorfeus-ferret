@@ -1,5 +1,5 @@
-#include "isomorfeus_ferret.h"
 #include "frt_search.h"
+#include "isomorfeus_ferret.h"
 
 static VALUE cQueryParser;
 VALUE cQueryParseException;

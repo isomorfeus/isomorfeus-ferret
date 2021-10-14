@@ -87,7 +87,6 @@
 /* Copy the first part of user declarations.  */
 #line 84 "src/q_parser.y"
 
-#include "ruby.h"
 #include <string.h>
 #include <ctype.h>
 #include <wctype.h>
@@ -3050,8 +3049,6 @@ static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
  * and turns them into a boolean query on the default fields.
  */
 
-extern VALUE cQueryParseException;
-
 FrtQuery *qp_parse(FrtQParser *self, char *qstr)
 {
     FrtQuery *result = NULL;
@@ -3078,7 +3075,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
         result = qp_get_bad_query(self, self->qstr);
     }
     if (self->destruct && !self->handle_parse_errors) {
-        rb_raise(cQueryParseException, frt_xmsg_buffer);
+        FRT_RAISE(FRT_PARSE_ERROR, frt_xmsg_buffer);
     }
     if (!result) {
         result = frt_bq_new(false);

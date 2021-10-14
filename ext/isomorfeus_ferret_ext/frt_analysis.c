@@ -1,10 +1,10 @@
-#include "frt_analysis.h"
-#include "frt_hash.h"
-#include "libstemmer.h"
 #include <string.h>
 #include <ctype.h>
 #include <wctype.h>
 #include <wchar.h>
+#include "frt_analysis.h"
+#include "frt_hash.h"
+#include "libstemmer.h"
 #include "frt_scanner.h"
 
 /****************************************************************************

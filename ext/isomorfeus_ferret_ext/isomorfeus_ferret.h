@@ -1,10 +1,10 @@
 #ifndef __FERRET_H_
 #define __FERRET_H_
-
-#include "ruby.h"
+#include <ruby.h>
 #include "frt_global.h"
 #include "frt_hashset.h"
 #include "frt_document.h"
+#include "frb_lang.h"
 
 /* IDs */
 extern ID id_new;
@@ -37,6 +37,7 @@ extern VALUE mSpans;
 
 /* Classes */
 extern VALUE cDirectory;
+extern VALUE cFileNotFoundError;
 extern VALUE cLockError;
 extern VALUE cTerm;
 
@@ -48,6 +49,7 @@ extern void Init_Index();
 extern void Init_Search();
 extern void Init_QueryParser();
 
+extern void frb_raise(int excode, const char *msg);
 //extern void object_add(void *key, VALUE obj);
 #define object_add(key, obj) object_add2(key, obj,  __FILE__, __LINE__)
 extern void object_add2(void *key, VALUE obj, const char *file, int line);
@@ -69,6 +71,7 @@ extern VALUE frb_get_term(FrtSymbol field, const char *term);
 extern char *json_concat_string(char *s, char *field);
 extern char *rs2s(VALUE rstr);
 extern char *rstrdup(VALUE rstr);
+
 #define Frt_Make_Struct(klass)\
   rb_data_object_wrap(klass,NULL,(RUBY_DATA_FUNC)NULL,(RUBY_DATA_FUNC)NULL)
 

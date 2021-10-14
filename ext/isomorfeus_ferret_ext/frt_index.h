@@ -1,7 +1,6 @@
 #ifndef FRT_INDEX_H
 #define FRT_INDEX_H
 
-#include "ruby.h"
 #include "frt_global.h"
 #include "frt_document.h"
 #include "frt_analysis.h"

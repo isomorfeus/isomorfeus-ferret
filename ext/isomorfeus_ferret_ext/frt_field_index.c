@@ -1,4 +1,3 @@
-#include "ruby.h"
 #include <string.h>
 #include "frt_field_index.h"
 
@@ -11,7 +10,7 @@
 static unsigned long long field_index_hash(const void *p)
 {
     FrtFieldIndex *self = (FrtFieldIndex *)p;
-    return frt_sym_hash(self->field) ^ (unsigned long long)(self->klass);
+    return frt_str_hash(self->field) ^ (unsigned long long)(self->klass);
 }
 
 static int field_index_eq(const void *p1, const void *p2)
@@ -43,7 +42,7 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
     FrtFieldIndex key;
 
     if (field_num < 0) {
-        rb_raise(rb_eArgError,
+        FRT_RAISE(FRT_ARG_ERROR,
               "Cannot sort by field \"%s\". It doesn't exist in the index.",
               field);
     }

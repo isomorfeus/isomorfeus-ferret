@@ -69,7 +69,7 @@ FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
 
 unsigned long long frt_filt_hash(FrtFilter *filt)
 {
-    return frt_sym_hash(filt->name) ^ filt->hash(filt);
+    return frt_str_hash(filt->name) ^ filt->hash(filt);
 }
 
 int frt_filt_eq(FrtFilter *filt, FrtFilter *o)

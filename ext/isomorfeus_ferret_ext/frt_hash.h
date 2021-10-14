@@ -9,9 +9,8 @@
  *
  ****************************************************************************/
 
-#define FRT_HASH_MINSIZE 8
-#define FRT_SLOW_DOWN 50000     /* stop increasing the hash table so quickly to
-                                 * conserve memory */
+#define FRT_HASH_MINSIZE 16
+#define FRT_SLOW_DOWN 50000     /* stop increasing the hash table so quickly to conserve memory */
 
 /**
  * Return values for frt_h_set
@@ -52,7 +51,7 @@ typedef struct FrtHash
      * FRT_HASH_MINSIZE it will point to newly malloced memory as it grows. */
     FrtHashEntry *table;
 
-    /* When a Hash is created it needs an initial table to start if off.
+    /* When a Hash is created it needs an initial table to start it off.
      * All Hashs will start with smalltable and then malloc a larger
      * table as the Hash grows */
     FrtHashEntry smalltable[FRT_HASH_MINSIZE];

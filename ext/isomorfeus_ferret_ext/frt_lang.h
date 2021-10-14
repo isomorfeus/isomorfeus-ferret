@@ -4,8 +4,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-void micro_sleep(const int micro_seconds);
-
 extern void *frt_emalloc(size_t n);
 extern void *frt_ecalloc(size_t n);
 extern void *frt_erealloc(void *ptr, size_t n);

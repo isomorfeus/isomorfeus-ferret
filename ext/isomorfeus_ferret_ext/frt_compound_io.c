@@ -1,8 +1,6 @@
-#include "ruby.h"
 #include "frt_index.h"
 #include "frt_array.h"
 
-extern VALUE cStateError;
 extern void frt_store_destroy(FrtStore *store);
 extern FrtInStream *frt_is_new();
 extern FrtStore *frt_store_new();
@@ -37,7 +35,7 @@ static int cmpd_remove(FrtStore *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return 0;
 }
 
@@ -46,7 +44,7 @@ static void cmpd_rename(FrtStore *store, const char *from, const char *to)
     (void)store;
     (void)from;
     (void)to;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static int cmpd_count(FrtStore *store)
@@ -71,14 +69,14 @@ static void cmpd_each(FrtStore *store,
 static void cmpd_clear(FrtStore *store)
 {
     (void)store;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static void cmpd_close_i(FrtStore *store)
 {
     FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) {
-        rb_raise(rb_eIOError, "Tried to close already closed compound store");
+        FRT_RAISE(FRT_IO_ERROR, "Tried to close already closed compound store");
     }
 
     frt_h_destroy(cmpd->entries);
@@ -125,7 +123,7 @@ static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len)
     off_t start = frt_is_pos(is);
 
     if ((start + len) > cis->length) {
-        rb_raise(rb_eEOFError, "Tried to read past end of file. File length is "
+        FRT_RAISE(FRT_EOF_ERROR, "Tried to read past end of file. File length is "
               "<%"FRT_OFF_T_PFX"d> and tried to read to <%"FRT_OFF_T_PFX"d>",
               cis->length, start + len);
     }
@@ -164,14 +162,14 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
     frt_mutex_lock(&store->mutex);
     if (cmpd->stream == NULL) {
         frt_mutex_unlock(&store->mutex);
-        rb_raise(rb_eIOError, "Can't open compound file input stream. Parent "
+        FRT_RAISE(FRT_IO_ERROR, "Can't open compound file input stream. Parent "
               "stream is closed.");
     }
 
     entry = (FileEntry *)frt_h_get(cmpd->entries, file_name);
     if (entry == NULL) {
         frt_mutex_unlock(&store->mutex);
-        rb_raise(rb_eIOError, "File %s does not exist: ", file_name);
+        FRT_RAISE(FRT_IO_ERROR, "File %s does not exist: ", file_name);
     }
 
     is = cmpd_create_input(cmpd->stream, entry->offset, entry->length);
@@ -184,7 +182,7 @@ static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name)
 {
     (void)store;
     (void)file_name;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -192,14 +190,14 @@ static FrtLock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
 {
     (void)store;
     (void)lock_name;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static void cmpd_close_lock_i(FrtLock *lock)
 {
     (void)lock;
-    rb_raise(rb_eNotImpError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
@@ -286,7 +284,7 @@ void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
 {
     id = frt_estrdup(id);
     if (frt_hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
-        rb_raise(rb_eIOError, "Tried to add file \"%s\" which has already been "
+        FRT_RAISE(FRT_IO_ERROR, "Tried to add file \"%s\" which has already been "
               "added to the compound store", id);
     }
 
@@ -314,7 +312,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
 
     /* Verify that remainder is 0 */
     if (remainder != 0) {
-        rb_raise(rb_eIOError, "There seems to be an error in the compound file "
+        FRT_RAISE(FRT_IO_ERROR, "There seems to be an error in the compound file "
               "should have read to the end but there are <%"FRT_OFF_T_PFX"d> "
               "bytes left", remainder);
     }
@@ -323,7 +321,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     end_ptr = frt_os_pos(os);
     len = end_ptr - start_ptr;
     if (len != length) {
-        rb_raise(rb_eIOError, "Difference in compound file output file offsets "
+        FRT_RAISE(FRT_IO_ERROR, "Difference in compound file output file offsets "
               "<%"FRT_OFF_T_PFX"d> does not match the original file lenght "
               "<%"FRT_OFF_T_PFX"d>", len, length);
     }
@@ -337,7 +335,7 @@ void frt_cw_close(FrtCompoundWriter *cw)
     int i;
 
     if (cw->ids->size <= 0) {
-        rb_raise(cStateError, "Tried to merge compound file with no entries");
+        FRT_RAISE(FRT_STATE_ERROR, "Tried to merge compound file with no entries");
     }
 
     os = cw->store->new_output(cw->store, cw->name);

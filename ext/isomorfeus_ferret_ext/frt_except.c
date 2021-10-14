@@ -3,7 +3,7 @@
 #include "frt_except.h"
 #include "frt_threading.h"
 
-static const char *const ERROR_TYPES[] = {
+const char *const ERROR_TYPES[] = {
     "Body",
     "Finally",
     "Exception",
@@ -18,6 +18,8 @@ static const char *const ERROR_TYPES[] = {
     "Index Error",
     "Lock Error"
 };
+
+bool frt_ruby_raise = true;
 
 const char *const FRT_UNSUPPORTED_ERROR_MSG = "Unsupported operation";
 const char *const FRT_EOF_ERROR_MSG = "Read past end of file";

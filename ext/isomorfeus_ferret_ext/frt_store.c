@@ -1,11 +1,8 @@
-#include "ruby.h"
 #include "frt_store.h"
 #include <string.h>
 
 #define VINT_MAX_LEN 10
 #define VINT_END FRT_BUFFER_SIZE - VINT_MAX_LEN
-
-extern VALUE cLockError;
 
 /*
  * TODO: add try finally
@@ -212,7 +209,7 @@ static void is_refill(FrtInStream *is)
 
     is->buf.len = last - start;
     if (is->buf.len <= 0) {
-        rb_raise(rb_eEOFError, "current pos = %"FRT_OFF_T_PFX"d, "
+        FRT_RAISE(FRT_EOF_ERROR, "current pos = %"FRT_OFF_T_PFX"d, "
               "file length = %"FRT_OFF_T_PFX"d", start, flen);
     }
 
