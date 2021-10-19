@@ -262,7 +262,7 @@ static FrtExplanation *multi_tsc_explain(FrtScorer *self, int doc_num)
             frt_expl_add_detail(expl,
                 frt_expl_new(frt_sim_tf(self->similarity, (float)freq) * tdew->boost,
                          "tf(term_freq(%s:%s)=%d)^%f",
-                         mtsc->field, tdew->term, freq, tdew->boost));
+                         rb_id2name(mtsc->field), tdew->term, freq, tdew->boost));
 
             total_score += frt_sim_tf(self->similarity, (float)freq) * tdew->boost;
 
