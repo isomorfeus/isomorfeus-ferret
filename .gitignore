@@ -2,6 +2,7 @@ Gemfile.lock
 lib/isomorfeus_ferret_ext.so
 misc/ferret/.deps
 test/temp
+test/testdir/*
 test/threading/index
 tmp
 *.o
