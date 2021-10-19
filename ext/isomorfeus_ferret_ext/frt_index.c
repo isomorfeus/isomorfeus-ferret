@@ -2458,10 +2458,6 @@ void frt_tiw_add(FrtTermInfosWriter *tiw,
 {
     off_t tis_pos;
 
-    /*
-    printf("%s:%d:%d:%d:%d\n", term, term_len, ti->doc_freq,
-           ti->frq_ptr, ti->prx_ptr);
-    */
     if (0 == (tiw->tis_writer->counter % tiw->index_interval)) {
         /* add an index term */
         tw_add(tiw->tix_writer,
@@ -2656,7 +2652,6 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
             stde->skip_in = frt_is_clone(stde->frq_in);/* lazily clone */
         }
 
-        //printf("skip_ptr = %lld\n", stde->skip_ptr);
         if (!stde->have_skipped) {                 /* lazily seek skip stream */
             frt_is_seek(stde->skip_in, stde->skip_ptr);
             stde->have_skipped = true;
@@ -2667,7 +2662,6 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
         last_frq_ptr = frt_is_pos(stde->frq_in);
         last_prx_ptr = -1;
         num_skipped = -1 - (stde->count % stde->skip_interval);
-        //printf("%d, %d, %d, %d\n", last_skip_doc, last_frq_ptr, last_prx_ptr, num_skipped);
 
         while (target_doc_num > stde->skip_doc) {
             last_skip_doc = stde->skip_doc;
@@ -2685,7 +2679,6 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num)
             stde->skip_doc += frt_is_read_vint(stde->skip_in);
             stde->frq_ptr  += frt_is_read_vint(stde->skip_in);
             stde->prx_ptr  += frt_is_read_vint(stde->skip_in);
-            //printf("inner-> skip_doc:%d, frq_ptr:%d, prx_ptr:%d\n", stde->skip_doc, stde->frq_ptr, stde->prx_ptr);
 
             stde->skip_count++;
         }
@@ -4703,14 +4696,6 @@ FrtIndexReader *frt_mr_open(FrtIndexReader **sub_readers, const int r_cnt)
                 mr->field_num_map[i][j] = fi_sub ? fi_sub->number : -1;
             }
         }
-        /* print out the field map
-        for (i = 0; i < r_cnt; i++) {
-            for (j = 0; j < fis->size; j++) {
-                printf("%d ", mr->field_num_map[i][j]);
-            }
-            printf("\n");
-        }
-        */
     }
     else {
         mr->field_num_map = NULL;
@@ -5643,12 +5628,6 @@ static void sm_merge_term_infos(SegmentMerger *sm)
             }
         }
         while (sm->queue->size > 0) {
-            /*
-               for (i = 1; i <= sm->queue->count; i++) {
-               printf("<{%s:%s}>", ((SegmentMergeInfo *)sm->queue->heap[i])->tb->field,
-               ((SegmentMergeInfo *)sm->queue->heap[i])->tb->text);
-               }printf("\n\n");
-               */
             match_size = 0;     /* pop matching terms */
             matches[0] = (SegmentMergeInfo *)frt_pq_pop(sm->queue);
             match_size++;
@@ -5660,7 +5639,6 @@ static void sm_merge_term_infos(SegmentMerger *sm)
                 top = (SegmentMergeInfo *)frt_pq_top(sm->queue);
             }
 
-            /* printf(">%s:%s<\n", matches[0]->tb->field, matches[0]->tb->text); */
             sm_merge_term_info(sm, matches, match_size);/* add new FrtTermInfo */
 
             while (match_size > 0) {
