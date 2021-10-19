@@ -15,12 +15,13 @@ static char *prq_to_s(FrtQuery *self, FrtSymbol default_field)
     char *buffer, *bptr;
     const char *prefix = PfxQ(self)->prefix;
     size_t plen = strlen(prefix);
-    size_t flen = strlen(PfxQ(self)->field);
+    const char *field_name = rb_id2name(PfxQ(self)->field);
+    size_t flen = strlen(field_name);
 
     bptr = buffer = FRT_ALLOC_N(char, plen + flen + 35);
 
-    if (default_field != NULL && strcmp(PfxQ(self)->field, default_field) != 0) {
-        bptr += sprintf(bptr, "%s:", PfxQ(self)->field);
+    if (PfxQ(self)->field != default_field) {
+        bptr += sprintf(bptr, "%s:", field_name);
     }
 
     bptr += sprintf(bptr, "%s*", prefix);
@@ -68,13 +69,13 @@ static void prq_destroy(FrtQuery *self)
 
 static unsigned long long prq_hash(FrtQuery *self)
 {
-    return frt_str_hash(PfxQ(self)->field) ^ frt_str_hash(PfxQ(self)->prefix);
+    return frt_str_hash(rb_id2name(PfxQ(self)->field)) ^ frt_str_hash(PfxQ(self)->prefix);
 }
 
 static int prq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(PfxQ(self)->prefix, PfxQ(o)->prefix) == 0)
-        && (strcmp(PfxQ(self)->field, PfxQ(o)->field) == 0);
+        && (PfxQ(self)->field == PfxQ(o)->field);
 }
 
 FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix)

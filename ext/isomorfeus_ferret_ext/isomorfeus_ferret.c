@@ -73,8 +73,8 @@ void
 object_add2(void *key, VALUE obj, const char *file, int line)
 {
     if (frt_h_get(object_map, key))
-        printf("failed adding %lx to %ld; already contains %lx. %s:%d\n",
-               (long)obj, (long)key, (long)frt_h_get(object_map, key), file, line);
+        printf("failed adding %lx to %lld; already contains %llx. %s:%d\n",
+               (long)obj, (long long)key, (long long)frt_h_get(object_map, key), file, line);
     //printf("adding %ld. now contains %d %s:%d\n", (long)key, ++hash_cnt, file, line);
     frt_h_set(object_map, key, (void *)obj);
 }
@@ -93,7 +93,7 @@ void
 object_del2(void *key, const char *file, int line)
 {
     if (object_get(key) == Qnil)
-        printf("failed deleting %ld. %s:%d\n", (long)key, file, line);
+        printf("failed deleting %lld. %s:%d\n", (long long)key, file, line);
     //printf("deleting %ld. now contains %ld, %s:%d\n", (long)key, --hash_cnt, file, line);
     frt_h_del(object_map, key);
 }
@@ -188,12 +188,12 @@ frb_field(VALUE rfield)
 {
     switch (TYPE(rfield)) {
         case T_SYMBOL:
-            return rstrdup(rb_obj_as_string((rfield)));
+            return rb_to_id(rfield);
         case T_STRING:
-            return rstrdup(rfield);
+            return rb_intern_str(rfield);
         default:
             rb_raise(rb_eArgError, "field name must be a symbol or string");
-            return NULL;
+            return (ID)NULL;
     }
 }
 
@@ -290,7 +290,7 @@ static ID id_text;
 VALUE frb_get_term(FrtSymbol field, const char *text)
 {
     return rb_struct_new(cTerm,
-                         ID2SYM(rb_intern(field)),
+                         ID2SYM(field),
                          rb_str_new_cstr(text),
                          NULL);
 }

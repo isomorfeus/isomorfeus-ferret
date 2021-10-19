@@ -111,7 +111,7 @@ typedef struct FrtFilter
     int           ref_cnt;
 } FrtFilter;
 
-#define filt_new(type) frt_filt_create(sizeof(type), #type)
+#define filt_new(type) frt_filt_create(sizeof(type), rb_intern(#type))
 extern FrtFilter *frt_filt_create(size_t size, FrtSymbol name);
 extern FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir);
 extern void frt_filt_destroy_i(FrtFilter *filt);

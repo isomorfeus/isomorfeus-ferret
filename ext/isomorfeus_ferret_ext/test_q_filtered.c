@@ -48,8 +48,8 @@ TestSuite *ts_q_filtered(TestSuite *suite)
     FrtIndexReader *ir;
     FrtSearcher *searcher;
 
-    num      = "num";
-    flipflop = "flipflop";
+    num      = rb_intern("num");
+    flipflop = rb_intern("flipflop");
 
     suite = ADD_SUITE(suite);
 

@@ -251,8 +251,8 @@ int frt_round2(frt_u32 word)
  * the option to set where errors go to with +frt_x_exception_stream+.
  */
 
-extern bool  frt_x_abort_on_exception;
-extern bool  frt_x_has_aborted;
+extern bool frt_x_abort_on_exception;
+extern bool frt_x_has_aborted;
 extern FILE *frt_x_exception_stream;
 
 /**

@@ -198,20 +198,20 @@ static void test_hash_int(TestCase *tc, void *data)
 static void test_hash_ptr(TestCase *tc, void *data)
 {
     FrtHash *h = frt_h_new_ptr(&free);
-    FrtSymbol word1 = "one";
-    FrtSymbol word2 = "two";
+    FrtSymbol word1 = rb_intern("one");
+    FrtSymbol word2 = rb_intern("two");
     char *word_one = frt_estrdup("one");
     int i;
     char buf[100];
     (void)data; /* suppress unused argument warning */
 
-    Aiequal(frt_ptr_hash(word1), "one");
-    Atrue(frt_ptr_eq(word1, "one"));
-    frt_h_set(h, word1, frt_estrdup("1"));
-    frt_h_set(h, word2, frt_estrdup("2"));
+    Aiequal(frt_ptr_hash((void *)word1), rb_intern("one"));
+    Atrue(frt_ptr_eq((void *)word1, (void *)rb_intern("one")));
+    frt_h_set(h, (void *)word1, frt_estrdup("1"));
+    frt_h_set(h, (void *)word2, frt_estrdup("2"));
     frt_h_set(h, word_one, frt_estrdup("3"));
-    Asequal("1", frt_h_get(h, word1));
-    Asequal("2", frt_h_get(h, word2));
+    Asequal("1", frt_h_get(h, (void *)word1));
+    Asequal("2", frt_h_get(h, (void *)word2));
     Asequal("3", frt_h_get(h, word_one));
 
     Aiequal(3, h->size);

@@ -8,7 +8,7 @@ typedef struct QPTestPair {
 
 #define PARSER_TEST(str, res) do {\
     FrtQuery *q = qp_parse(parser, str);\
-    char *qres = q->to_s(q, "xx");\
+    char *qres = q->to_s(q, rb_intern("xx"));\
     Asequal(res, qres);\
     frt_q_deref(q);\
     free(qres);\
@@ -144,10 +144,10 @@ static void test_q_parser(TestCase *tc, void *data)
 
     FRT_REF(analyzer);
     parser = frt_qp_new(analyzer);
-    frt_qp_add_field(parser, "xx",    true,  true);
-    frt_qp_add_field(parser, "f1",    false, true);
-    frt_qp_add_field(parser, "f2",    false, true);
-    frt_qp_add_field(parser, "field", false, false);
+    frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, false);
 
     for (i = 0; i < FRT_NELEMS(pairs); i++) {
         PARSER_TEST(pairs[i].qstr, pairs[i].qres);
@@ -161,10 +161,10 @@ static void test_q_parser(TestCase *tc, void *data)
 
     /* This time let the query parser destroy the analyzer */
     parser = frt_qp_new(analyzer);
-    frt_qp_add_field(parser, "xx",    true, true);
-    frt_qp_add_field(parser, "f1",    false, true);
-    frt_qp_add_field(parser, "f2",    false, true);
-    frt_qp_add_field(parser, "field", false, false);
+    frt_qp_add_field(parser, rb_intern("xx"),    true, true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, false);
 
     parser->clean_str = false;
     parser->allow_any_fields = true;
@@ -310,10 +310,10 @@ static void test_q_parser_standard_analyzer(TestCase *tc, void *data)
 
     FRT_REF(analyzer);
     parser = frt_qp_new(analyzer);
-    frt_qp_add_field(parser, "xx",    true,  true);
-    frt_qp_add_field(parser, "f1",    false, true);
-    frt_qp_add_field(parser, "f2",    false, true);
-    frt_qp_add_field(parser, "field", false, true);
+    frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, true);
 
     for (i = 0; i < FRT_NELEMS(pairs); i++) {
         PARSER_TEST(pairs[i].qstr, pairs[i].qres);
@@ -327,10 +327,10 @@ static void test_q_parser_standard_analyzer(TestCase *tc, void *data)
 
     /* This time let the query parser destroy the analyzer */
     parser = frt_qp_new(analyzer);
-    frt_qp_add_field(parser, "xx",    true,  true);
-    frt_qp_add_field(parser, "f1",    false, true);
-    frt_qp_add_field(parser, "f2",    false, true);
-    frt_qp_add_field(parser, "field", false, true);
+    frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, true);
 
     parser->clean_str = false;
     parser->allow_any_fields = true;
@@ -392,10 +392,10 @@ static void test_qp_bad_queries(TestCase *tc, void *data)
     (void)data;
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
-    frt_qp_add_field(parser, "xx",    true,  true);
-    frt_qp_add_field(parser, "f1",    false, true);
-    frt_qp_add_field(parser, "f2",    false, true);
-    frt_qp_add_field(parser, "field", false, true);
+    frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, true);
 
     parser->handle_parse_errors = true;
 
@@ -416,7 +416,7 @@ static void test_qp_prefix_query(TestCase *tc, void *data)
     (void)data;
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
-    frt_qp_add_field(parser, "xx", true,  true);
+    frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
     q = qp_parse(parser, "asdg*");
     Aiequal(PREFIX_QUERY, q->type);
@@ -439,7 +439,7 @@ static void test_qp_keyword_switch(TestCase *tc, void *data)
     (void)data;
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
-    frt_qp_add_field(parser, "xx", true,  true);
+    frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
     PARSER_TEST("REQ www (xxx AND yyy) OR NOT zzz", "+www (+xxx +yyy) -zzz");
 

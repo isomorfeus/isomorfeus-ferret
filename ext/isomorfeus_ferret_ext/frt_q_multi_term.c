@@ -384,7 +384,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
 
     char *query_str;
     FrtMultiTermQuery *mtq = MTQ(self->query);
-    const char *field = mtq->field;
+    const char *field_name = rb_id2name(mtq->field);
     FrtPriorityQueue *bt_pq = mtq->boosted_terms;
     int i;
     int total_doc_freqs = 0;
@@ -394,10 +394,10 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
 
     if (field_num < 0) {
         return frt_expl_new(0.0f, "field \"%s\" does not exist in the index",
-                        field);
+                        field_name);
     }
 
-    query_str = self->query->to_s(self->query, NULL);
+    query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
 
     expl = frt_expl_new(0.0f, "weight(%s in %d), product of:", query_str, doc_num);
 
@@ -415,8 +415,8 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
     pos -= 2; /* remove " + " from the end */
     sprintf(doc_freqs + pos, "= %d", total_doc_freqs);
 
-    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
-    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field_name, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field_name, doc_freqs);
     free(doc_freqs);
 
     /* explain query weight */
@@ -454,7 +454,7 @@ static FrtExplanation *multi_tw_explain(FrtWeight *self, FrtIndexReader *ir, int
         ? frt_sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0f;
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
-                               field, doc_num);
+                               field_name, doc_num);
 
     frt_expl_add_detail(field_expl, field_norm_expl);
 
@@ -508,19 +508,19 @@ static char *multi_tq_to_s(FrtQuery *self, FrtSymbol default_field)
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms, *bt_pq_clone;
     BoostedTerm *bt;
     char *buffer, *bptr;
-    const char *field = MTQ(self)->field;
-    int flen = (int)strlen(field);
+    const char *field_name = rb_id2name(MTQ(self)->field);
+    int flen = strlen(field_name);
     int tlen = 0;
 
     /* Priority queues skip the first element */
     for (i = boosted_terms->size; i > 0; i--) {
-        tlen += (int)strlen(((BoostedTerm *)boosted_terms->heap[i])->term) + 35;
+        tlen += strlen(((BoostedTerm *)boosted_terms->heap[i])->term) + 35;
     }
 
     bptr = buffer = FRT_ALLOC_N(char, tlen + flen + 35);
 
-    if ((default_field == NULL) || ((default_field != NULL) && (strcmp(default_field, MTQ(self)->field) != 0))) {
-        bptr += sprintf(bptr, "%s:", field);
+    if (default_field != MTQ(self)->field) {
+        bptr += sprintf(bptr, "%s:", field_name);
     }
 
     *(bptr++) = '"';
@@ -570,7 +570,7 @@ static void multi_tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 static unsigned long long multi_tq_hash(FrtQuery *self)
 {
     int i;
-    unsigned long long hash = frt_str_hash(MTQ(self)->field);
+    unsigned long long hash = frt_str_hash(rb_id2name(MTQ(self)->field));
     FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
     for (i = boosted_terms->size; i > 0; i--) {
         BoostedTerm *bt = (BoostedTerm *)boosted_terms->heap[i];
@@ -585,7 +585,7 @@ static int multi_tq_eq(FrtQuery *self, FrtQuery *o)
     FrtPriorityQueue *boosted_terms1 = MTQ(self)->boosted_terms;
     FrtPriorityQueue *boosted_terms2 = MTQ(o)->boosted_terms;
 
-    if ((strcmp(MTQ(self)->field, MTQ(o)->field) != 0)
+    if ((MTQ(self)->field != MTQ(o)->field)
         || boosted_terms1->size != boosted_terms2->size) {
         return false;
     }
@@ -602,7 +602,7 @@ static int multi_tq_eq(FrtQuery *self, FrtQuery *o)
 static FrtMatchVector *multi_tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                           FrtTermVector *tv)
 {
-    if (strcmp(tv->field, MTQ(self)->field) == 0) {
+    if (tv->field == MTQ(self)->field) {
         int i;
         FrtPriorityQueue *boosted_terms = MTQ(self)->boosted_terms;
         for (i = boosted_terms->size; i > 0; i--) {

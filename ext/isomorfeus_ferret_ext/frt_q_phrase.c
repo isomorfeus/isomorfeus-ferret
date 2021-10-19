@@ -593,13 +593,13 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     char *doc_freqs = NULL;
     size_t len = 0, pos = 0;
     const int field_num = frt_fis_get_field_num(ir->fis, phq->field);
-    const char *field = phq->field;
+    const char *field_name = rb_id2name(phq->field);
 
     if (field_num < 0) {
-        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field);
+        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field_name);
     }
 
-    query_str = self->query->to_s(self->query, NULL);
+    query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
 
     expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
 
@@ -625,8 +625,8 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     pos -= 2; /* remove ", " from the end */
     doc_freqs[pos] = 0;
 
-    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
-    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s:<%s>)", field_name, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s:<%s>)", field_name, doc_freqs);
     free(doc_freqs);
 
     /* explain query weight */
@@ -660,7 +660,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
         ? frt_sim_decode_norm(self->similarity, field_norms[doc_num])
         : (float)0.0;
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
-                               field, doc_num);
+                               field_name, doc_num);
 
     frt_expl_add_detail(field_expl, field_norm_expl);
 
@@ -816,10 +816,9 @@ static TVPosEnum *get_tvpe(FrtTermVector *tv, char **terms, int t_cnt, int offse
     return tvpe;
 }
 
-static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
-                                     FrtTermVector *tv)
+static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv)
 {
-    if (strcmp(tv->field, PhQ(self)->field) == 0) {
+    if (tv->field == PhQ(self)->field) {
         const int pos_cnt = PhQ(self)->pos_cnt;
         int i;
         int slop = PhQ(self)->slop;
@@ -952,12 +951,12 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
     FrtPhraseQuery *phq = PhQ(self);
     const int pos_cnt = phq->pos_cnt;
     FrtPhrasePosition *positions = phq->positions;
-    const char *field = phq->field;
+    const char *field_name = rb_id2name(phq->field);
     int flen = 0;
-    if (field) {
-        flen = strlen(field);
+    if (field_name) {
+        flen = strlen(field_name);
     } else {
-        field = "";
+        field_name = "";
         flen = 0;
     }
     int i, j, buf_index = 0, pos, last_pos;
@@ -965,8 +964,8 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
     char *buffer;
 
     if (phq->pos_cnt == 0) {
-        if ((default_field == NULL) || ((default_field != NULL) && (strcmp(default_field, phq->field) != 0))) {
-            return frt_strfmt("%s:\"\"", field);
+        if (default_field != phq->field) {
+            return frt_strfmt("%s:\"\"", field_name);
         }
         else {
             return frt_estrdup("\"\"");
@@ -991,8 +990,8 @@ static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
 
     buffer = FRT_ALLOC_N(char, len);
 
-    if ((default_field != NULL) && (strcmp(default_field, phq->field) != 0)) {
-        memcpy(buffer, field, flen);
+    if (default_field != phq->field) {
+        memcpy(buffer, field_name, flen);
         buffer[flen] = ':';
         buf_index += flen + 1;
     }
@@ -1088,7 +1087,7 @@ static unsigned long long phq_hash(FrtQuery *self)
 {
     int i, j;
     FrtPhraseQuery *phq = PhQ(self);
-    unsigned long long hash = frt_str_hash(phq->field);
+    unsigned long long hash = frt_str_hash(rb_id2name(phq->field));
     for (i = 0; i < phq->pos_cnt; i++) {
         char **terms = phq->positions[i].terms;
         for (j = frt_ary_size(terms) - 1; j >= 0; j--) {
@@ -1105,7 +1104,7 @@ static int phq_eq(FrtQuery *self, FrtQuery *o)
     FrtPhraseQuery *phq1 = PhQ(self);
     FrtPhraseQuery *phq2 = PhQ(o);
     if (phq1->slop != phq2->slop
-        || (strcmp(phq1->field, phq2->field) != 0)
+        || phq1->field != phq2->field
         || phq1->pos_cnt != phq2->pos_cnt) {
         return false;
     }

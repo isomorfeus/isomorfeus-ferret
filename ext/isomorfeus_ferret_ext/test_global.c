@@ -166,6 +166,7 @@ static void test_stacktrace(TestCase *tc, void *data)
 /**
  * Generate a normally fatal signal, which gets caught
  */
+ /*
 static void test_sighandler(TestCase *tc, void *data)
 {
     bool  old_abort = frt_x_abort_on_exception;
@@ -184,6 +185,7 @@ static void test_sighandler(TestCase *tc, void *data)
     frt_x_exception_stream = old_stream;
     frt_x_abort_on_exception = old_abort;
 }
+*/
 
 static void test_count_leading_zeros(TestCase *tc, void *data)
 {

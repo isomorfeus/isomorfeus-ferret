@@ -70,7 +70,7 @@ TestSuite *ts_q_const_score(TestSuite *suite)
     FrtIndexReader *ir;
     FrtSearcher *searcher;
 
-    num = "num";
+    num = rb_intern("num");
 
     suite = ADD_SUITE(suite);
 

@@ -203,7 +203,7 @@ static VALUE
 frb_fi_name(VALUE self)
 {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return rb_str_new_cstr(fi->name);
+    return rb_str_new_cstr(rb_id2name(fi->name));
 }
 
 /*
@@ -621,7 +621,7 @@ frb_fis_get_fields(VALUE self)
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
-        rb_ary_push(rfield_names, ID2SYM(rb_intern(fis->fields[i]->name)));
+        rb_ary_push(rfield_names, ID2SYM(fis->fields[i]->name));
     }
     return rfield_names;
 }
@@ -641,7 +641,7 @@ frb_fis_get_tk_fields(VALUE self)
     int i;
     for (i = 0; i < fis->size; i++) {
         if (!fi_is_tokenized(fis->fields[i])) continue;
-        rb_ary_push(rfield_names, rb_str_new_cstr(fis->fields[i]->name));
+        rb_ary_push(rfield_names, rb_str_new_cstr(rb_id2name(fis->fields[i]->name)));
     }
     return rfield_names;
 }
@@ -1223,7 +1223,7 @@ frb_get_tv(FrtTermVector *tv)
     const int o_cnt = tv->offset_cnt;
     VALUE rfield, rterms;
     VALUE roffsets = Qnil;
-    rfield = ID2SYM(rb_intern(tv->field));
+    rfield = ID2SYM(tv->field);
 
     rterms = rb_ary_new2(t_cnt);
     for (i = 0; i < t_cnt; i++) {
@@ -1964,7 +1964,7 @@ frb_lzd_default(VALUE self, VALUE rkey)
 {
     FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
     FrtSymbol field = frb_field(rkey);
-    VALUE rfield = ID2SYM(rb_intern(field));
+    VALUE rfield = ID2SYM(field);
 
     return frb_lazy_df_load(self, rfield, frt_lazy_doc_get(lazy_doc, field));
 }
@@ -1996,7 +1996,7 @@ frb_lzd_load(VALUE self)
     int i;
     for (i = 0; i < lazy_doc->size; i++) {
         FrtLazyDocField *lazy_df = lazy_doc->fields[i];
-        frb_lazy_df_load(self, ID2SYM(rb_intern(lazy_df->name)), lazy_df);
+        frb_lazy_df_load(self, ID2SYM(lazy_df->name), lazy_df);
     }
     return self;
 }
@@ -2015,7 +2015,7 @@ frb_get_lazy_doc(FrtLazyDoc *lazy_doc)
     rb_ivar_set(self, id_data, rdata);
 
     for (i = 0; i < lazy_doc->size; i++) {
-        rb_ary_store(rfields, i, ID2SYM(rb_intern(lazy_doc->fields[i]->name)));
+        rb_ary_store(rfields, i, ID2SYM(lazy_doc->fields[i]->name));
     }
     rb_ivar_set(self, id_fields, rfields);
 
@@ -2164,7 +2164,7 @@ frb_ir_init(VALUE self, VALUE rdir)
     for (i = 0; i < fis->size; i++) {
         FrtFieldInfo *fi = fis->fields[i];
         rb_hash_aset(rfield_num_map,
-                     ID2SYM(rb_intern(fi->name)),
+                     ID2SYM(fi->name),
                      INT2FIX(fi->number));
     }
     rb_ivar_set(self, id_fld_num_map, rfield_num_map);
@@ -2632,7 +2632,7 @@ frb_ir_fields(VALUE self)
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
-        rb_ary_push(rfield_names, ID2SYM(rb_intern(fis->fields[i]->name)));
+        rb_ary_push(rfield_names, ID2SYM(fis->fields[i]->name));
     }
     return rfield_names;
 }
@@ -2668,7 +2668,7 @@ frb_ir_tk_fields(VALUE self)
     int i;
     for (i = 0; i < fis->size; i++) {
         if (!fi_is_tokenized(fis->fields[i])) continue;
-        rb_ary_push(rfield_names, rb_str_new_cstr(fis->fields[i]->name));
+        rb_ary_push(rfield_names, rb_str_new_cstr(rb_id2name(fis->fields[i]->name)));
     }
     return rfield_names;
 }
@@ -3444,7 +3444,7 @@ Init_Index(void)
     sym_boost     = ID2SYM(rb_intern("boost"));
     sym_analyzer  = ID2SYM(rb_intern("analyzer"));
     sym_close_dir = ID2SYM(rb_intern("close_dir"));
-    fsym_content  = "content";
+    fsym_content  = rb_intern("content");
 
     Init_TermVector();
     Init_TermEnum();

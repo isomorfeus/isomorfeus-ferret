@@ -7,12 +7,12 @@ static FrtSymbol body, title, text, author, year, changing_field, compressed_fie
 static FrtFieldInfos *prep_all_fis()
 {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new("tv", FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new("tv un-t", FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv un-t"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new("tv+offsets", FRT_STORE_NO, FRT_INDEX_YES,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets"), FRT_STORE_NO, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new("tv+offsets un-t", FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets un-t"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_WITH_OFFSETS));
     return fis;
 
@@ -31,7 +31,7 @@ static FrtFieldInfos *prep_book_fis()
 {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new("year", FRT_STORE_YES, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("year"), FRT_STORE_YES, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
     return fis;
 
 }
@@ -463,7 +463,7 @@ FrtDocument **prep_ir_test_docs()
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
                     "word3")))->destroy_data = true;
-    frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new("new field"),
+    frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(rb_intern("new field")),
             frt_estrdup("zdata znot zto zbe zfound")))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(title),
             frt_estrdup("title_too_long_for_max_word_lengthxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")))->destroy_data = true;
@@ -558,7 +558,7 @@ static void test_segment_term_doc_enum(TestCase *tc, void *data)
     tde_reader = frt_stde_new(tir, frq_in, bv, skip_interval);
     tde_skip_to = frt_stde_new(tir, frq_in, bv, skip_interval);
 
-    fi = frt_fis_get_field(fis, "tv");
+    fi = frt_fis_get_field(fis, rb_intern("tv"));
     for (i = 0; i < 300; i++) {
         int cnt = 0, ind = 0, doc_nums[3], freqs[3];
         const char *word = test_word_list[rand()%TEST_WORD_LIST_SIZE];
@@ -600,7 +600,7 @@ static void test_segment_term_doc_enum(TestCase *tc, void *data)
     tde = frt_stpe_new(tir, frq_in, prx_in, bv, skip_interval);
     tde_skip_to = frt_stpe_new(tir, frq_in, prx_in, bv, skip_interval);
 
-    fi = frt_fis_get_field(fis, "tv+offsets");
+    fi = frt_fis_get_field(fis, rb_intern("tv+offsets"));
     for (i = 0; i < 200; i++) {
         const char *word = test_word_list[rand()%TEST_WORD_LIST_SIZE];
         tde->seek(tde, fi->number, word);
@@ -666,10 +666,10 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
         if ((rand() % 2) == 0) {
             frt_bv_set(bv, i);
             Aiequal(1, frt_bv_get(bv, i));
-            frt_doc_add_field(doc, frt_df_add_data(frt_df_new("f"), (char *)double_word));
+            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)double_word));
         }
         else {
-            frt_doc_add_field(doc, frt_df_add_data(frt_df_new("f"), (char *)triple_word));
+            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)triple_word));
         }
         frt_dw_add_doc(dw, doc);
        frt_doc_destroy(doc);
@@ -797,7 +797,7 @@ static void test_fld_inverter(TestCase *tc, void *data)
 
     dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
 
-    df = frt_df_new("no tv");
+    df = frt_df_new(rb_intern("no tv"));
     frt_df_add_data(df, "one two three four five two three four five three "
                 "four five four five");
     frt_df_add_data(df, "ichi ni san yon go ni san yon go san yon go yon go go");
@@ -844,7 +844,7 @@ static void test_fld_inverter(TestCase *tc, void *data)
 
     frt_df_destroy(df);
 
-    df = frt_df_new("no tv");
+    df = frt_df_new(rb_intern("no tv"));
     frt_df_add_data(df, "seven new words and six old ones");
     frt_df_add_data(df, "ichi ni one two quick dogs");
 
@@ -1173,15 +1173,15 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
     FrtIndexWriter *iw;
     FrtDocument *doc;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    frt_fis_add_field(fis, frt_fi_new("no_tv", FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
     iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("tv1"), ""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("tv2"), ""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("no_tv"), "one two three"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), ""));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), ""));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("no_tv")), "one two three"));
 
     frt_iw_add_doc(iw, doc);
     frt_iw_commit(iw);
@@ -1682,7 +1682,7 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
 {
     FrtIndexReader *ir = (FrtIndexReader *)data;
 
-    FrtTermVector *tv = ir->term_vector(ir, 3, "body");
+    FrtTermVector *tv = ir->term_vector(ir, 3, rb_intern("body"));
     FrtHash *tvs;
 
     Asequal("body", tv->field);
@@ -2183,14 +2183,14 @@ TestSuite *ts_index(TestSuite *suite)
     /* FrtStore *store = frt_open_fs_store(TEST_DIR); */
 
     /* initialize FrtSymbols */
-    body             = "body";
-    title            = "title";
-    text             = "text";
-    author           = "author";
-    year             = "year";
-    changing_field   = "changing_field";
-    compressed_field = "compressed_field";
-    tag              = "tag";
+    body             = rb_intern("body");
+    title            = rb_intern("title");
+    text             = rb_intern("text");
+    author           = rb_intern("author");
+    year             = rb_intern("year");
+    changing_field   = rb_intern("changing_field");
+    compressed_field = rb_intern("compressed_field");
+    tag              = rb_intern("tag");
 
     srand(5);
     suite = tst_add_suite(suite, "test_term_doc_enum");

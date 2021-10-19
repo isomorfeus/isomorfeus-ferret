@@ -24,7 +24,7 @@ static FrtDocument *prep_doc()
     frt_doc_add_field(
         doc,
         frt_df_add_data(
-            frt_df_new("content"),
+            frt_df_new(rb_intern("content")),
             frt_estrdup("http://_____________________________________________________")
             )
         )->destroy_data = true;

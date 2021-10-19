@@ -16,12 +16,12 @@
 
 static unsigned long long spanq_hash(FrtQuery *self)
 {
-    return SpQ(self)->field ? frt_sort_add_sort_field : 0ull;
+    return SpQ(self)->field ? frt_str_hash(rb_id2name(SpQ(self)->field)) : 0;
 }
 
 static int spanq_eq(FrtQuery *self, FrtQuery *o)
 {
-    return (strcmp(SpQ(self)->field, SpQ(o)->field) == 0);
+    return SpQ(self)->field == SpQ(o)->field;
 }
 
 static void spanq_destroy_i(FrtQuery *self)
@@ -146,7 +146,7 @@ static FrtTermDocEnum *spanq_ir_term_positions(FrtIndexReader *ir)
 static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                        FrtTermVector *tv)
 {
-    if (strcmp(SpQ(self)->field, tv->field) == 0) {
+    if (SpQ(self)->field == tv->field) {
         FrtSpanEnum *sp_enum;
         FrtIndexReader *ir = FRT_ALLOC(FrtIndexReader);
         FrtMatchVector *full_mv = frt_matchv_new();
@@ -387,7 +387,7 @@ static int spante_end(FrtSpanEnum *self)
 
 static char *spante_to_s(FrtSpanEnum *self)
 {
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     char pos_str[20];
     size_t len = strlen(query_str);
     int pos;
@@ -706,7 +706,7 @@ static int spanfe_end(FrtSpanEnum *self)
 
 static char *spanfe_to_s(FrtSpanEnum *self)
 {
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     char *res = frt_strfmt("SpanFirstEnum(%s)", query_str);
     free(query_str);
     return res;
@@ -860,7 +860,7 @@ static int spanoe_end(FrtSpanEnum *self)
 static char *spanoe_to_s(FrtSpanEnum *self)
 {
     SpanOrEnum *soe = SpOEn(self);
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     char doc_str[62];
     size_t len = strlen(query_str);
     char *str = FRT_ALLOC_N(char, len + 80);
@@ -1172,7 +1172,7 @@ static int spanne_end(FrtSpanEnum *self)
 static char *spanne_to_s(FrtSpanEnum *self)
 {
     SpanNearEnum *sne = SpNEn(self);
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     char doc_str[62];
     size_t len = strlen(query_str);
     char *str = FRT_ALLOC_N(char, len + 80);
@@ -1335,7 +1335,7 @@ static int spanxe_end(FrtSpanEnum *self)
 
 static char *spanxe_to_s(FrtSpanEnum *self)
 {
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     char *res = frt_strfmt("SpanNotEnum(%s)", query_str);
     free(query_str);
     return res;
@@ -1398,7 +1398,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
-    const char *field = SpQ(self->query)->field;
+    const char *field_name = rb_id2name(SpQ(self->query)->field);
 
     char *query_str;
     FrtHashSet *terms = SpW(self)->terms;
@@ -1408,10 +1408,10 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     FrtHashSetEntry *hse;
 
     if (field_num < 0) {
-        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field);
+        return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field_name);
     }
 
-    query_str = self->query->to_s(self->query, NULL);
+    query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
 
     for (hse = terms->first; hse; hse = hse->next) {
         char *term = (char *)hse->elem;
@@ -1432,8 +1432,8 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
 
     /* We need two of these as it's included in both the query explanation
      * and the field explanation */
-    idf_expl1 = frt_expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
-    idf_expl2 = frt_expl_new(self->idf, "idf(%s: %s)", field, doc_freqs);
+    idf_expl1 = frt_expl_new(self->idf, "idf(%s: %s)", field_name, doc_freqs);
+    idf_expl2 = frt_expl_new(self->idf, "idf(%s: %s)", field_name, doc_freqs);
     if (terms->size > 0) {
         free(doc_freqs); /* only free if allocated */
     }
@@ -1455,8 +1455,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
     frt_expl_add_detail(expl, query_expl);
 
     /* explain field weight */
-    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:",
-                          field, query_str, target);
+    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:", field_name, query_str, target);
     free(query_str);
 
     scorer = self->scorer(self, ir);
@@ -1470,7 +1469,7 @@ static FrtExplanation *spanw_explain(FrtWeight *self, FrtIndexReader *ir, int ta
                   ? frt_sim_decode_norm(self->similarity, field_norms[target])
                   : (float)0.0);
     field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)",
-                               field, target);
+                               field_name, target);
     frt_expl_add_detail(field_expl, field_norm_expl);
 
     field_expl->value = tf_expl->value * idf_expl2->value * field_norm_expl->value;
@@ -1528,11 +1527,10 @@ static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)
 
 static char *spantq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
-    if (default_field && (strcmp(default_field, SpQ(self)->field) == 0)) {
+    if (default_field && default_field == SpQ(self)->field) {
         return frt_strfmt("span_terms(%s)", SpTQ(self)->term);
-    }
-    else {
-        return frt_strfmt("span_terms(%s:%s)", SpQ(self)->field, SpTQ(self)->term);
+    } else {
+        return frt_strfmt("span_terms(%s:%s)", rb_id2name(SpQ(self)->field), SpTQ(self)->term);
     }
 }
 
@@ -1606,7 +1604,7 @@ static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field)
     *(p++) = ']';
     *p = '\0';
 
-    if (field != NULL && strcmp(field, SpQ(self)->field) == 0) {
+    if (field == SpQ(self)->field) {
         p = frt_strfmt("span_terms(%s)", terms);
     }
     else {
@@ -1935,7 +1933,7 @@ FrtQuery *frt_spanoq_new()
     SpOQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpOQ(self)->c_capa      = CLAUSE_INIT_CAPA;
 
-    SpQ(self)->field        = NULL;
+    SpQ(self)->field        = (FrtSymbol)NULL;
     SpQ(self)->get_spans    = &spanoq_get_spans;
     SpQ(self)->get_terms    = &spanoq_get_terms;
 
@@ -1962,10 +1960,10 @@ FrtQuery *frt_spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
     }
-    else if (strcmp(SpQ(self)->field, SpQ(clause)->field) != 0) {
+    else if (SpQ(self)->field != SpQ(clause)->field) {
         FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" to a SpanOrQuery "
-              "with field \"%s\"", SpQ(clause)->field, SpQ(self)->field);
+              "with field \"%s\"", rb_id2name(SpQ(clause)->field), rb_id2name(SpQ(self)->field));
     }
     if (curr_index >= SpOQ(self)->c_capa) {
         SpOQ(self)->c_capa <<= 1;
@@ -2127,7 +2125,7 @@ FrtQuery *frt_spannq_new(int slop, bool in_order)
 
     SpQ(self)->get_spans    = &spannq_get_spans;
     SpQ(self)->get_terms    = &spannq_get_terms;
-    SpQ(self)->field        = NULL;
+    SpQ(self)->field        = (FrtSymbol)NULL;
 
     self->type              = SPAN_NEAR_QUERY;
     self->rewrite           = &spannq_rewrite;
@@ -2152,10 +2150,10 @@ FrtQuery *frt_spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
     }
-    else if (strcmp(SpQ(self)->field, SpQ(clause)->field) != 0) {
+    else if (SpQ(self)->field != SpQ(clause)->field) {
         FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" to SpanNearQuery "
-              "with field \"%s\"", SpQ(clause)->field, SpQ(self)->field);
+              "with field \"%s\"", rb_id2name(SpQ(clause)->field), rb_id2name(SpQ(self)->field));
     }
     if (curr_index >= SpNQ(self)->c_capa) {
         SpNQ(self)->c_capa <<= 1;
@@ -2249,11 +2247,11 @@ static int spanxq_eq(FrtQuery *self, FrtQuery *o)
 FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc)
 {
     FrtQuery *self;
-    if (strcmp(SpQ(inc)->field, SpQ(exc)->field) != 0) {
+    if (SpQ(inc)->field != SpQ(exc)->field) {
         FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" along with a "
               "SpanQuery with field \"%s\" to an SpanNotQuery",
-              SpQ(inc)->field, SpQ(exc)->field);
+              rb_id2name(SpQ(inc)->field), rb_id2name(SpQ(exc)->field));
     }
     self = frt_q_new(FrtSpanNotQuery);
 
@@ -2303,14 +2301,16 @@ static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
     const char *prefix = SpPfxQ(self)->prefix;
-    FrtSymbol field = SpQ(self)->field;
     size_t plen = strlen(prefix);
-    size_t flen = strlen(field);
+    FrtSymbol field = SpQ(self)->field;
+    const char *field_name = rb_id2name(field);
+    size_t flen = strlen(field_name);
+
 
     bptr = buffer = FRT_ALLOC_N(char, plen + flen + 35);
 
-    if (default_field == NULL || (strcmp(field, default_field) != 0)) {
-        bptr += sprintf(bptr, "%s:", field);
+    if (default_field == (FrtSymbol)NULL || (field != default_field)) {
+        bptr += sprintf(bptr, "%s:", field_name);
     }
 
     bptr += sprintf(bptr, "%s*", prefix);
@@ -2357,13 +2357,13 @@ static void spanprq_destroy(FrtQuery *self)
 
 static unsigned long long spanprq_hash(FrtQuery *self)
 {
-    return frt_str_hash(SpQ(self)->field) ^ frt_str_hash(SpPfxQ(self)->prefix);
+    return frt_str_hash(rb_id2name(SpQ(self)->field)) ^ frt_str_hash(SpPfxQ(self)->prefix);
 }
 
 static int spanprq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(SpPfxQ(self)->prefix, SpPfxQ(o)->prefix) == 0)
-        && (strcmp(SpQ(self)->field, SpQ(o)->field) == 0);
+        && (SpQ(self)->field == SpQ(o)->field);
 }
 
 FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix)

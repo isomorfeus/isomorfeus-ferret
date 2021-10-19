@@ -19,9 +19,9 @@ void prepare_filter_index(FrtStore *store)
     FrtIndexWriter *iw;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
 
-    num      = "num";
-    date     = "date";
-    flipflop = "flipflop";
+    num      = rb_intern("num");
+    date     = rb_intern("date");
+    flipflop = rb_intern("flipflop");
 
     struct FilterData data[FILTER_DOCS_SIZE] = {
         {"0", "20040601", "on"},
@@ -224,20 +224,20 @@ static void test_query_filter_hash(TestCase *tc, void *data)
 {
     FrtFilter *f1, *f2;
     (void)data;
-    f1 = frt_qfilt_new_nr(frt_tq_new("A", "a"));
-    f2 = frt_qfilt_new_nr(frt_tq_new("A", "a"));
+    f1 = frt_qfilt_new_nr(frt_tq_new(rb_intern("A"), "a"));
+    f2 = frt_qfilt_new_nr(frt_tq_new(rb_intern("A"), "a"));
 
     Aiequal(frt_filt_hash(f1), frt_filt_hash(f2));
     Assert(frt_filt_eq(f1, f2), "Queries are equal");
     Assert(frt_filt_eq(f1, f1), "Queries are equal");
     frt_filt_deref(f2);
 
-    f2 = frt_qfilt_new_nr(frt_tq_new("A", "b"));
+    f2 = frt_qfilt_new_nr(frt_tq_new(rb_intern("A"), "b"));
     Assert(frt_filt_hash(f1) != frt_filt_hash(f2), "texts differ");
     Assert(!frt_filt_eq(f1, f2), "texts differ");
     frt_filt_deref(f2);
 
-    f2 = frt_qfilt_new_nr(frt_tq_new("B", "a"));
+    f2 = frt_qfilt_new_nr(frt_tq_new(rb_intern("B"), "a"));
     Assert(frt_filt_hash(f1) != frt_filt_hash(f2), "fields differ");
     Assert(!frt_filt_eq(f1, f2), "fields differ");
     frt_filt_deref(f2);
@@ -249,7 +249,7 @@ static float odd_number_filter(int doc_num, float score, FrtSearcher *sea, void 
 {
     float is_ok = 0.0;
     FrtLazyDoc *lazy_doc = frt_searcher_get_lazy_doc(sea, doc_num);
-    FrtLazyDocField *lazy_df = frt_lazy_doc_get(lazy_doc, "num");
+    FrtLazyDocField *lazy_df = frt_lazy_doc_get(lazy_doc, rb_intern("num"));
     char *num = frt_lazy_df_get_data(lazy_df, 0);
     (void)score;
     (void)arg;
@@ -267,7 +267,7 @@ static float distance_filter(int doc_num, float score, FrtSearcher *sea, void *a
     int start_point = *((int *)arg);
     float distance = 0.0;
     FrtLazyDoc *lazy_doc = frt_searcher_get_lazy_doc(sea, doc_num);
-    FrtLazyDocField *lazy_df = frt_lazy_doc_get(lazy_doc, "num");
+    FrtLazyDocField *lazy_df = frt_lazy_doc_get(lazy_doc, rb_intern("num"));
     char *num = frt_lazy_df_get_data(lazy_df, 0);
     (void)score;
 

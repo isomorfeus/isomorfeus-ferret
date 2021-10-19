@@ -167,21 +167,21 @@ static void test_sort_field_to_s(TestCase *tc, void *data)
     TEST_SF_TO_S("<DOC>", frt_sort_field_doc_new(false));
     TEST_SF_TO_S("<DOC>!", frt_sort_field_doc_new(true));
     TEST_SF_TO_S("date:<integer>",
-                 frt_sort_field_int_new("date", false));
+                 frt_sort_field_int_new(rb_intern("date"), false));
     TEST_SF_TO_S("date:<integer>!",
-                 frt_sort_field_int_new("date", true));
+                 frt_sort_field_int_new(rb_intern("date"), true));
     TEST_SF_TO_S("price:<float>",
-                 frt_sort_field_float_new("price", false));
+                 frt_sort_field_float_new(rb_intern("price"), false));
     TEST_SF_TO_S("price:<float>!",
-                 frt_sort_field_float_new("price", true));
+                 frt_sort_field_float_new(rb_intern("price"), true));
     TEST_SF_TO_S("content:<string>",
-                 frt_sort_field_string_new("content", false));
+                 frt_sort_field_string_new(rb_intern("content"), false));
     TEST_SF_TO_S("content:<string>!",
-                 frt_sort_field_string_new("content", true));
+                 frt_sort_field_string_new(rb_intern("content"), true));
     TEST_SF_TO_S("auto_field:<auto>",
-                 frt_sort_field_auto_new("auto_field", false));
+                 frt_sort_field_auto_new(rb_intern("auto_field"), false));
     TEST_SF_TO_S("auto_field:<auto>!",
-                 frt_sort_field_auto_new("auto_field", true));
+                 frt_sort_field_auto_new(rb_intern("auto_field"), true));
 }
 
 #define TEST_SORT_TO_S(_expected_str, _sort) \
@@ -201,18 +201,18 @@ static void test_sort_to_s(TestCase *tc, void *data)
     TEST_SORT_TO_S("Sort[<SCORE>]", sort);
     frt_sort_add_sort_field(sort, frt_sort_field_doc_new(true));
     TEST_SORT_TO_S("Sort[<SCORE>, <DOC>!]", sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_int_new("date", true));
+    frt_sort_add_sort_field(sort, frt_sort_field_int_new(rb_intern("date"), true));
     TEST_SORT_TO_S("Sort[<SCORE>, <DOC>!, date:<integer>!]", sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_float_new("price", false));
+    frt_sort_add_sort_field(sort, frt_sort_field_float_new(rb_intern("price"), false));
     TEST_SORT_TO_S("Sort[<SCORE>, <DOC>!, date:<integer>!, price:<float>]", sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_string_new("content", true));
+    frt_sort_add_sort_field(sort, frt_sort_field_string_new(rb_intern("content"), true));
     TEST_SORT_TO_S("Sort[<SCORE>, <DOC>!, date:<integer>!, price:<float>, content:<string>!]", sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_auto_new("auto_field", false));
+    frt_sort_add_sort_field(sort, frt_sort_field_auto_new(rb_intern("auto_field"), false));
     TEST_SORT_TO_S("Sort[<SCORE>, <DOC>!, date:<integer>!, price:<float>, content:<string>!, auto_field:<auto>]", sort);
     frt_sort_clear(sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_string_new("content", true));
+    frt_sort_add_sort_field(sort, frt_sort_field_string_new(rb_intern("content"), true));
     TEST_SORT_TO_S("Sort[content:<string>!]", sort);
-    frt_sort_add_sort_field(sort, frt_sort_field_auto_new("auto_field", false));
+    frt_sort_add_sort_field(sort, frt_sort_field_auto_new(rb_intern("auto_field"), false));
     TEST_SORT_TO_S("Sort[content:<string>!, auto_field:<auto>]", sort);
     frt_sort_destroy(sort);
 }
@@ -313,10 +313,10 @@ TestSuite *ts_sort(TestSuite *suite)
     FrtSearcher *sea, **searchers;
     FrtStore *store = frt_open_ram_store(), *fs_store;
 
-    search = "search";
-    string = "string";
-    integer = "integer";
-    flt = "flt";
+    search = rb_intern("search");
+    string = rb_intern("string");
+    integer = rb_intern("integer");
+    flt = rb_intern("flt");
 
     sort_test_setup(store);
 

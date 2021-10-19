@@ -57,7 +57,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     check_hits(tc, sea, q, "0", -1);
     frt_q_deref(q);
 
-    q = frt_fuzq_new("not a field", "aaaaa");
+    q = frt_fuzq_new(rb_intern("not a field"), "aaaaa");
     check_hits(tc, sea, q, "", -1);
     frt_q_deref(q);
 
@@ -103,7 +103,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     do_prefix_test(tc, sea, "ddddX", "", 5, 0.0);
 
     /* test non-existing field doesn't break search */
-    q = frt_fuzq_new_conf("anotherfield", "ddddX", 0.0, 10, 100);
+    q = frt_fuzq_new_conf(rb_intern("anotherfield"), "ddddX", 0.0, 10, 100);
     top_docs = frt_searcher_search(sea, q, 0, 1, NULL, NULL, NULL);
     frt_q_deref(q);
     Aiequal(0, top_docs->total_hits);
@@ -175,14 +175,14 @@ static void test_fuzzy_query_to_s(TestCase *tc, void *data)
     FrtQuery *q;
     (void)data;
 
-    q = frt_fuzq_new_conf("A", "a", 0.4f, 2, 100);
-    check_to_s(tc, q, "A", "a~0.4");
-    check_to_s(tc, q, "B", "A:a~0.4");
+    q = frt_fuzq_new_conf(rb_intern("A"), "a", 0.4f, 2, 100);
+    check_to_s(tc, q, rb_intern("A"), "a~0.4");
+    check_to_s(tc, q, rb_intern("B"), "A:a~0.4");
     frt_q_deref(q);
 
-    q = frt_fuzq_new_conf("field", "mispell", 0.5f, 2, 100);
-    check_to_s(tc, q, "field", "mispell~");
-    check_to_s(tc, q, "notfield", "field:mispell~");
+    q = frt_fuzq_new_conf(rb_intern("field"), "mispell", 0.5f, 2, 100);
+    check_to_s(tc, q, rb_intern("field"), "mispell~");
+    check_to_s(tc, q, rb_intern("notfield"), "field:mispell~");
     frt_q_deref(q);
 
 }
@@ -195,30 +195,30 @@ static void test_fuzzy_query_hash(TestCase *tc, void *data)
     FrtQuery *q1, *q2;
     (void)data;
 
-    q1 = frt_fuzq_new_conf("A", "a", 0.4f, 2, 100);
-    q2 = frt_fuzq_new_conf("A", "a", 0.4f, 2, 100);
+    q1 = frt_fuzq_new_conf(rb_intern("A"), "a", 0.4f, 2, 100);
+    q2 = frt_fuzq_new_conf(rb_intern("A"), "a", 0.4f, 2, 100);
 
     Assert(frt_q_eq(q1, q1), "Test same queries are equal");
     Aiequal(frt_q_hash(q1), frt_q_hash(q2));
     Assert(frt_q_eq(q1, q2), "Queries are equal");
     frt_q_deref(q2);
 
-    q2 = frt_fuzq_new_conf("A", "a", 0.4f, 0, 100);
+    q2 = frt_fuzq_new_conf(rb_intern("A"), "a", 0.4f, 0, 100);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "prelen differs");
     Assert(!frt_q_eq(q1, q2), "prelen differs");
     frt_q_deref(q2);
 
-    q2 = frt_fuzq_new_conf("A", "a", 0.5f, 2, 100);
+    q2 = frt_fuzq_new_conf(rb_intern("A"), "a", 0.5f, 2, 100);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "similarity differs");
     Assert(!frt_q_eq(q1, q2), "similarity differs");
     frt_q_deref(q2);
 
-    q2 = frt_fuzq_new_conf("A", "b", 0.4f, 2, 100);
+    q2 = frt_fuzq_new_conf(rb_intern("A"), "b", 0.4f, 2, 100);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "term differs");
     Assert(!frt_q_eq(q1, q2), "term differs");
     frt_q_deref(q2);
 
-    q2 = frt_fuzq_new_conf("B", "a", 0.4f, 2, 100);
+    q2 = frt_fuzq_new_conf(rb_intern("B"), "a", 0.4f, 2, 100);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "field differs");
     Assert(!frt_q_eq(q1, q2), "field differs");
     frt_q_deref(q2);
@@ -230,7 +230,7 @@ TestSuite *ts_q_fuzzy(TestSuite *suite)
 {
     FrtStore *store = frt_open_ram_store();
 
-    field = "field";
+    field = rb_intern("field");
 
     suite = ADD_SUITE(suite);
 

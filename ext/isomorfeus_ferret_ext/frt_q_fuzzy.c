@@ -153,10 +153,11 @@ static char *fuzq_to_s(FrtQuery *self, FrtSymbol curr_field)
     char *buffer, *bptr;
     char *term = FzQ(self)->term;
     FrtSymbol field = FzQ(self)->field;
-    bptr = buffer = FRT_ALLOC_N(char, strlen(term) + strlen(field) + 70);
+    const char *field_name = rb_id2name(field);
+    bptr = buffer = FRT_ALLOC_N(char, strlen(term) + strlen(field_name) + 70);
 
-    if (strcmp(curr_field, field) != 0) {
-        bptr += sprintf(bptr, "%s:", field);
+    if (curr_field != field) {
+        bptr += sprintf(bptr, "%s:", field_name);
     }
 
     bptr += sprintf(bptr, "%s~", term);
@@ -236,7 +237,7 @@ static void fuzq_destroy(FrtQuery *self)
 
 static unsigned long long fuzq_hash(FrtQuery *self)
 {
-    return frt_str_hash(FzQ(self)->term) ^ frt_str_hash(FzQ(self)->field)
+    return frt_str_hash(FzQ(self)->term) ^ frt_str_hash(rb_id2name(FzQ(self)->field))
         ^ frt_float2int(FzQ(self)->min_sim) ^ FzQ(self)->pre_len;
 }
 
@@ -246,7 +247,7 @@ static int fuzq_eq(FrtQuery *self, FrtQuery *o)
     FrtFuzzyQuery *fq2 = FzQ(o);
 
     return (strcmp(fq1->term, fq2->term) == 0)
-        && (strcmp(fq1->field, fq2->field) == 0)
+        && (fq1->field == fq2->field)
         && (fq1->pre_len == fq2->pre_len)
         && (fq1->min_sim == fq2->min_sim);
 }

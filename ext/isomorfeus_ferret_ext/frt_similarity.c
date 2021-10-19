@@ -31,12 +31,12 @@ void frt_term_destroy(FrtTerm *self)
 int frt_term_eq(const void *t1, const void *t2)
 {
     return ((strcmp(((FrtTerm *)t1)->text, ((FrtTerm *)t2)->text) == 0) &&
-        (strcmp(((FrtTerm *)t1)->field, ((FrtTerm *)t2)->field) == 0));
+        (((FrtTerm *)t1)->field == ((FrtTerm *)t2)->field));
 }
 
 unsigned long long frt_term_hash(const void *t)
 {
-    return frt_str_hash(((FrtTerm *)t)->text) * frt_str_hash(((FrtTerm *)t)->field);
+    return frt_str_hash(((FrtTerm *)t)->text) * frt_str_hash(rb_id2name(((FrtTerm *)t)->field));
 }
 
 /****************************************************************************

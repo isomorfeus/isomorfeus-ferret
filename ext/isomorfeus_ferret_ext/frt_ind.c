@@ -62,8 +62,8 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
 
     /* options */
     self->key = NULL;
-    self->id_field = "id";
-    self->def_field = "id";
+    self->id_field = rb_intern("id");
+    self->def_field = rb_intern("id");
     self->auto_flush = false;
     self->check_latest = true;
 
@@ -228,7 +228,7 @@ FrtQuery *frt_index_get_query(FrtIndex *self, char *qstr)
     frt_ensure_searcher_open(self);
     fis = self->ir->fis;
     for (i = fis->size - 1; i >= 0; i--) {
-        frt_hs_add(self->qp->all_fields, frt_estrdup(fis->fields[i]->name));
+        frt_hs_add(self->qp->all_fields, (void *)fis->fields[i]->name);
     }
     return qp_parse(self->qp, qstr);
 }

@@ -19,6 +19,10 @@ const char *const ERROR_TYPES[] = {
     "Lock Error"
 };
 
+bool frt_x_do_logging = false;
+bool frt_x_abort_on_exception = true;
+bool frt_x_has_aborted = false;
+FILE *frt_x_exception_stream = NULL;
 bool frt_ruby_raise = true;
 
 const char *const FRT_UNSUPPORTED_ERROR_MSG = "Unsupported operation";

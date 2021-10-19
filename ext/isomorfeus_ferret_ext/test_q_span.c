@@ -84,7 +84,7 @@ static void test_span_term(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
 
-    tq = frt_spantq_new("notafield", "nine");
+    tq = frt_spantq_new(rb_intern("notafield"), "nine");
     check_hits(tc, sea, tq, "", -1);
     TEST_SE(tq, ir, "SpanTermEnum(span_terms(notafield:nine))@START");
     frt_q_deref(tq);
@@ -107,20 +107,20 @@ static void test_span_term_hash(TestCase *tc, void *data)
     FrtQuery *q1, *q2;
     (void)data;
 
-    q1 = frt_spantq_new("A", "a");
+    q1 = frt_spantq_new(rb_intern("A"), "a");
 
-    q2 = frt_spantq_new("A", "a");
+    q2 = frt_spantq_new(rb_intern("A"), "a");
     Aiequal(frt_q_hash(q1), frt_q_hash(q2));
     Assert(frt_q_eq(q1, q2), "Queries are equal");
     Assert(frt_q_eq(q1, q1), "Queries are equal");
     frt_q_deref(q2);
 
-    q2 = frt_spantq_new("A", "b");
+    q2 = frt_spantq_new(rb_intern("A"), "b");
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "Terms differ");
     Assert(!frt_q_eq(q1, q2), "Terms differ");
     frt_q_deref(q2);
 
-    q2 = frt_spantq_new("B", "a");
+    q2 = frt_spantq_new(rb_intern("B"), "a");
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "Fields differ");
     Assert(!frt_q_eq(q1, q2), "Fields differ");
     frt_q_deref(q2);
@@ -138,7 +138,7 @@ static void test_span_multi_term(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
 
-    mtq = frt_spanmtq_new("notafield");
+    mtq = frt_spanmtq_new(rb_intern("notafield"));
     check_hits(tc, sea, mtq, "", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(notafield:[]))@START");
 
@@ -212,18 +212,18 @@ static void test_span_prefix(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
 
-    prq = frt_spanprq_new("notafield", "fl");
-    tmp = prq->to_s(prq, "notafield");
+    prq = frt_spanprq_new(rb_intern("notafield"), "fl");
+    tmp = prq->to_s(prq, rb_intern("notafield"));
     Asequal("fl*", tmp);
     free(tmp);
-    tmp = prq->to_s(prq, "foo");
+    tmp = prq->to_s(prq, rb_intern("foo"));
     Asequal("notafield:fl*", tmp);
     free(tmp);
     check_hits(tc, sea, prq, "", -1);
     frt_q_deref(prq);
 
     prq = frt_spanprq_new(field, "fl");
-    tmp = prq->to_s(prq, "field");
+    tmp = prq->to_s(prq, rb_intern("field"));
     Asequal("fl*", tmp);
     free(tmp);
     check_hits(tc, sea, prq, "2, 4, 12, 16, 19, 21, 27, 29", -1);
@@ -236,20 +236,20 @@ static void test_span_prefix_hash(TestCase *tc, void *data)
 {
     FrtQuery *q1, *q2;
     (void)data;
-    q1 = frt_spanprq_new("A", "a");
+    q1 = frt_spanprq_new(rb_intern("A"), "a");
 
-    q2 = frt_spanprq_new("A", "a");
+    q2 = frt_spanprq_new(rb_intern("A"), "a");
     Aiequal(frt_q_hash(q1), frt_q_hash(q2));
     Assert(frt_q_eq(q1, q2), "SpanPrefixQueries are equal");
     Assert(frt_q_eq(q1, q1), "SpanPrefixQueries are same");
     frt_q_deref(q2);
 
-    q2 = frt_spanprq_new("A", "b");
+    q2 = frt_spanprq_new(rb_intern("A"), "b");
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "SpanPrefixQueries are not equal");
     Assert(!frt_q_eq(q1, q2), "SpanPrefixQueries are not equal");
     frt_q_deref(q2);
 
-    q2 = frt_spanprq_new("B", "a");
+    q2 = frt_spanprq_new(rb_intern("B"), "a");
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "SpanPrefixQueries are not equal");
     Assert(!frt_q_eq(q1, q2), "SpanPrefixQueries are not equal");
     frt_q_deref(q2);
@@ -286,20 +286,20 @@ static void test_span_first_hash(TestCase *tc, void *data)
     FrtQuery *q1, *q2;
     (void)data;
 
-    q1 = frt_spanfq_new_nr(frt_spantq_new("A", "a"), 5);
+    q1 = frt_spanfq_new_nr(frt_spantq_new(rb_intern("A"), "a"), 5);
 
-    q2 = frt_spanfq_new_nr(frt_spantq_new("A", "a"), 5);
+    q2 = frt_spanfq_new_nr(frt_spantq_new(rb_intern("A"), "a"), 5);
     Aiequal(frt_q_hash(q1), frt_q_hash(q2));
     Assert(frt_q_eq(q1, q2), "Queries are equal");
     Assert(frt_q_eq(q1, q1), "Queries are equal");
     frt_q_deref(q2);
 
-    q2 = frt_spanfq_new_nr(frt_spantq_new("A", "a"), 3);
+    q2 = frt_spanfq_new_nr(frt_spantq_new(rb_intern("A"), "a"), 3);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "Ends differ");
     Assert(!frt_q_eq(q1, q2), "Ends differ");
     frt_q_deref(q2);
 
-    q2 = frt_spanfq_new_nr(frt_spantq_new("A", "b"), 5);
+    q2 = frt_spanfq_new_nr(frt_spantq_new(rb_intern("A"), "b"), 5);
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "Terms differ");
     Assert(!frt_q_eq(q1, q2), "Terms differ");
     frt_q_deref(q2);
@@ -527,30 +527,30 @@ static void test_span_not_hash(TestCase *tc, void *data)
     FrtQuery *q1, *q2;
     (void)data;
 
-    q1 = frt_spanxq_new_nr(frt_spantq_new("A", "a"),
-                       frt_spantq_new("A", "b"));
-    q2 = frt_spanxq_new_nr(frt_spantq_new("A", "a"),
-                       frt_spantq_new("A", "b"));
+    q1 = frt_spanxq_new_nr(frt_spantq_new(rb_intern("A"), "a"),
+                       frt_spantq_new(rb_intern("A"), "b"));
+    q2 = frt_spanxq_new_nr(frt_spantq_new(rb_intern("A"), "a"),
+                       frt_spantq_new(rb_intern("A"), "b"));
 
     Aiequal(frt_q_hash(q1), frt_q_hash(q2));
     Assert(frt_q_eq(q1, q2), "Queries are equal");
     Assert(frt_q_eq(q1, q1), "Queries are equal");
     frt_q_deref(q2);
 
-    q2 = frt_spanxq_new_nr(frt_spantq_new("A", "a"),
-                       frt_spantq_new("A", "c"));
+    q2 = frt_spanxq_new_nr(frt_spantq_new(rb_intern("A"), "a"),
+                       frt_spantq_new(rb_intern("A"), "c"));
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "exclude queries differ");
     Assert(!frt_q_eq(q1, q2), "exclude queries differ");
     frt_q_deref(q2);
 
-    q2 = frt_spanxq_new_nr(frt_spantq_new("A", "x"),
-                       frt_spantq_new("A", "b"));
+    q2 = frt_spanxq_new_nr(frt_spantq_new(rb_intern("A"), "x"),
+                       frt_spantq_new(rb_intern("A"), "b"));
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "include queries differ");
     Assert(!frt_q_eq(q1, q2), "include queries differ");
     frt_q_deref(q2);
 
-    q2 = frt_spanxq_new_nr(frt_spantq_new("B", "a"),
-                       frt_spantq_new("B", "b"));
+    q2 = frt_spanxq_new_nr(frt_spantq_new(rb_intern("B"), "a"),
+                       frt_spantq_new(rb_intern("B"), "b"));
     Assert(frt_q_hash(q1) != frt_q_hash(q2), "fields differ");
     Assert(!frt_q_eq(q1, q2), "fields differ");
     frt_q_deref(q2);
@@ -561,7 +561,7 @@ static void test_span_not_hash(TestCase *tc, void *data)
 TestSuite *ts_q_span(TestSuite *suite)
 {
     FrtStore *store = frt_open_ram_store();
-    field = "field";
+    field = rb_intern("field");
     span_test_setup(store);
 
     suite = ADD_SUITE(suite);

@@ -57,9 +57,9 @@ static FrtIndexWriter *create_iw_lucene(FrtStore *store)
 static void add_doc(FrtIndexWriter *iw, int id)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(content_f),
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(content_f)),
                                    frt_estrdup("aaa")))->destroy_data = true;
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(id_f),
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(id_f)),
                                    frt_strfmt("%d", id)))->destroy_data = true;
     frt_iw_add_doc(iw, doc);
    frt_doc_destroy(doc);
@@ -101,7 +101,7 @@ static void test_delete_leftover_files(TestCase *tc, void *data)
     Aiequal(1, ir->max_doc(ir) - ir->num_docs(ir));
 
     /* Set one norm so we get a .s0 file: */
-    frt_ir_set_norm(ir, 21, content_f, 12);
+    frt_ir_set_norm(ir, 21, rb_intern(content_f), 12);
     frt_ir_close(ir);
     store_before = frt_store_to_s(store);
 

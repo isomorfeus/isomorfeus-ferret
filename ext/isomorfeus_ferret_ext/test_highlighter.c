@@ -91,7 +91,7 @@ static void add_string_docs(FrtStore *store, const char *string[])
 
     while (*string) {
         FrtDocument *doc = frt_doc_new();
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new("field"), (char *)*string));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("field")), (char *)*string));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
         string++;
@@ -107,7 +107,7 @@ static void check_searcher_match_vector(TestCase *tc, FrtStore *store,
 {
     FrtIndexReader *ir = frt_ir_open(store);
     FrtSearcher *sea = frt_isea_new(ir);
-    FrtMatchVector *mv = frt_searcher_get_match_vector(sea, query, doc_num, "field");
+    FrtMatchVector *mv = frt_searcher_get_match_vector(sea, query, doc_num, rb_intern("field"));
     static int offset_array[ARRAY_SIZE];
     int matchv_size = s2l(expected, offset_array) / 2;
     int i;
@@ -129,7 +129,7 @@ static void check_match_vector(TestCase *tc, FrtStore *store, FrtQuery *query, i
 {
     FrtIndexReader *ir = frt_ir_open(store);
     FrtMatchVector *mv = frt_matchv_new();
-    FrtTermVector *term_vector = ir->term_vector(ir, doc_num, "field");
+    FrtTermVector *term_vector = ir->term_vector(ir, doc_num, rb_intern("field"));
     static int offset_array[ARRAY_SIZE];
     int matchv_size = s2l(expected, offset_array) / 2;
     int i;
@@ -159,12 +159,12 @@ static void test_term_query(TestCase *tc, void *data)
     };
     make_index(store);
     add_string_docs(store, docs);
-    q = frt_tq_new("field", "rabbit");
+    q = frt_tq_new(rb_intern("field"), "rabbit");
     Chk_mv(q, 0, "5:5");
     Chk_mv(q, 1, "0:0 2:2 4:4 6:6");
     Chk_mv(q, 2, "");
     frt_q_deref(q);
-    q = frt_tq_new("diff_field", "rabbit");
+    q = frt_tq_new(rb_intern("diff_field"), "rabbit");
     Chk_mv(q, 0, "");
     Chk_mv(q, 1, "");
     frt_q_deref(q);
@@ -188,7 +188,7 @@ static void test_phrase_query(TestCase *tc, void *data)
     };
     make_index(store);
     add_string_docs(store, docs);
-    q = frt_phq_new("field");
+    q = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(q, "one", 1);
     frt_phq_add_term(q, "two", 1);
     frt_phq_add_term(q, "three", 1);
@@ -202,7 +202,7 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_q_deref(q);
 
     /* test that it only works for the correct field */
-    q = frt_phq_new("wrong_field");
+    q = frt_phq_new(rb_intern("wrong_field"));
     frt_phq_add_term(q, "one", 1);
     frt_phq_add_term(q, "two", 1);
     frt_phq_add_term(q, "three", 1);
@@ -213,7 +213,7 @@ static void test_phrase_query(TestCase *tc, void *data)
     Chk_mv(q, 0, "");
     frt_q_deref(q);
 
-    q = frt_phq_new("field");
+    q = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(q, "quick", 1);
     frt_phq_append_multi_term(q, "fast");
     frt_phq_append_multi_term(q, "agile");
@@ -244,11 +244,11 @@ static void test_boolean_query(TestCase *tc, void *data)
     make_index(store);
     add_string_docs(store, docs);
     q = frt_bq_new(false);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "one"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "one"), FRT_BC_SHOULD);
     Chk_mv(q, 0, "0:0 12:12");
-    frt_bq_add_query_nr(q, frt_tq_new("field", "two"), FRT_BC_MUST);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "two"), FRT_BC_MUST);
     Chk_mv(q, 0, "0:0 5:5 12:12 13:13");
-    phq = frt_phq_new("field");
+    phq = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(phq, "one", 1);
     frt_phq_add_term(phq, "two", 1);
     Chk_mv(phq, 0, "12:13");
@@ -267,7 +267,7 @@ static void test_multi_term_query(TestCase *tc, void *data)
     };
     make_index(store);
     add_string_docs(store, docs);
-    q = frt_multi_tq_new("field");
+    q = frt_multi_tq_new(rb_intern("field"));
     frt_multi_tq_add_term(q, "one");
     Chk_mv(q, 0, "0:0 12:12");
     frt_multi_tq_add_term(q, "two");
@@ -288,11 +288,11 @@ static void test_span_queries(TestCase *tc, void *data)
     };
     make_index(store);
     add_string_docs(store, docs);
-    q = frt_spantq_new("wrong_field", "words");
+    q = frt_spantq_new(rb_intern("wrong_field"), "words");
     Chk_mv(q, 0, "");
     frt_q_deref(q);
 
-    q = frt_spantq_new("field", "words");
+    q = frt_spantq_new(rb_intern("field"), "words");
     Chk_mv(q, 0, "3:3 8:8 12:12");
     q = frt_spanfq_new_nr(q, 4);
     Chk_mv(q, 0, "3:3");
@@ -308,17 +308,17 @@ static void test_span_queries(TestCase *tc, void *data)
     oq = frt_spanoq_new();
     frt_spanoq_add_clause_nr(oq, q);
     Chk_mv(oq, 0, "3:3 8:8 12:12");
-    frt_spanoq_add_clause_nr(oq, frt_spantq_new("field", "one"));
+    frt_spanoq_add_clause_nr(oq, frt_spantq_new(rb_intern("field"), "one"));
     Chk_mv(oq, 0, "0:0 3:3 8:8 12:12 13:13");
-    frt_spanoq_add_clause_nr(oq, frt_spantq_new("field", "two"));
+    frt_spanoq_add_clause_nr(oq, frt_spantq_new(rb_intern("field"), "two"));
     Chk_mv(oq, 0, "0:0 3:3 5:5 8:8 12:12 13:13 14:14");
     frt_q_deref(oq);
 
     q = frt_spannq_new(1, true);
-    frt_spannq_add_clause_nr(q, frt_spantq_new("field", "worda"));
+    frt_spannq_add_clause_nr(q, frt_spantq_new(rb_intern("field"), "worda"));
     Chk_mv(q, 0, "");
     Chk_mv(q, 1, "0:0 4:4 10:10");
-    frt_spannq_add_clause_nr(q, frt_spantq_new("field", "wordb"));
+    frt_spannq_add_clause_nr(q, frt_spantq_new(rb_intern("field"), "wordb"));
     Chk_mv(q, 1, "0:0 2:2");
     ((FrtSpanNearQuery *)q)->in_order = false;
     Chk_mv(q, 1, "0:0 2:2 4:4");
@@ -327,7 +327,7 @@ static void test_span_queries(TestCase *tc, void *data)
     ((FrtSpanNearQuery *)q)->slop = 3;
     Chk_mv(q, 1, "0:0 2:2 4:4 7:7 10:10 14:14");
 
-    q = frt_spanxq_new_nr(q, frt_spantq_new("field", "2"));
+    q = frt_spanxq_new_nr(q, frt_spantq_new(rb_intern("field"), "2"));
     Chk_mv(q, 1, "0:0 2:2 4:4 10:10 14:14");
     frt_q_deref(q);
 }
@@ -342,15 +342,15 @@ static void test_searcher_get_match_vector(TestCase *tc, void *data)
     };
     make_index(store);
     add_string_docs(store, docs);
-    q = frt_fuzq_new_conf("field", "funnyword", 0.9f, 0, 512);
+    q = frt_fuzq_new_conf(rb_intern("field"), "funnyword", 0.9f, 0, 512);
     Chk_sea_mv(q, 0, "0:0");
     frt_q_deref(q);
 
-    q = frt_fuzq_new_conf("field", "funnyword", 0.8f, 0, 512);
+    q = frt_fuzq_new_conf(rb_intern("field"), "funnyword", 0.8f, 0, 512);
     Chk_sea_mv(q, 0, "0:0 2:2 4:4 5:5");
     frt_q_deref(q);
 
-    q = frt_fuzq_new_conf("field", "funnyword", 0.5f, 0, 512);
+    q = frt_fuzq_new_conf(rb_intern("field"), "funnyword", 0.5f, 0, 512);
     Chk_sea_mv(q, 0, "0:0 1:1 2:2 3:3 4:4 5:5 6:6");
     frt_q_deref(q);
 }
@@ -375,7 +375,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     add_string_docs(store, docs);
 
     iw = frt_iw_open(store, frt_letter_analyzer_new(true), NULL);
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("field"), "That's how it goes now."));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("field")), "That's how it goes now."));
     frt_iw_add_doc(iw, doc);
    frt_doc_destroy(doc);
     frt_iw_close(iw);
@@ -383,21 +383,21 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
 
-    q = frt_tq_new("field", "one");
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 1,
+    q = frt_tq_new(rb_intern("field"), "one");
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 1,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     Asequal("...are <b>one</b>...", highlights[0]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 2,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 2,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("...are <b>one</b>...", highlights[0]);
     Asequal("...this; <b>one</b>...", highlights[1]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 3,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 3,
                                     "<b>", "</b>", "...");
     Aiequal(3, frt_ary_size(highlights));
     Asequal("the words...", highlights[0]);
@@ -405,7 +405,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     Asequal("...this; <b>one</b>...", highlights[2]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 4,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 4,
                                     "<b>", "</b>", "...");
     Aiequal(3, frt_ary_size(highlights));
     Asequal("the words we are...", highlights[0]);
@@ -413,14 +413,14 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     Asequal("...this; <b>one</b>...", highlights[2]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 5,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 5,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("the words we are searching for are <b>one</b>...", highlights[0]);
     Asequal("...this; <b>one</b>...", highlights[1]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 20,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 20,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     Asequal("the words we are searching for are <b>one</b> and two also "
@@ -428,7 +428,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
             "two lets see how it goes", highlights[0]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 1000, 1,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 1000, 1,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     Asequal("the words we are searching for are <b>one</b> and two also "
@@ -439,73 +439,73 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     frt_q_deref(q);
 
     q = frt_bq_new(false);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "one"), FRT_BC_SHOULD);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "two"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "one"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "two"), FRT_BC_SHOULD);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 15, 2,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 15, 2,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("...<b>one</b> and <b>two</b>...", highlights[0]);
     Asequal("...this; <b>one</b> <b>two</b>...", highlights[1]);
     frt_ary_destroy(highlights, &free);
 
-    phq = frt_phq_new("field");
+    phq = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(phq, "one", 1);
     frt_phq_add_term(phq, "two", 1);
 
     frt_bq_add_query_nr(q, phq, FRT_BC_SHOULD);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 15, 2,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 15, 2,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("...<b>one</b> and <b>two</b>...", highlights[0]);
     Asequal("...this; <b>one two</b>...", highlights[1]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 15, 1,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 15, 1,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     /* should have a higher priority since it the merger of three matches */
     Asequal("...this; <b>one two</b>...", highlights[0]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "not_a_field", 15, 1,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("not_a_field"), 15, 1,
                                     "<b>", "</b>", "...");
     Apnull(highlights);
 
     frt_q_deref(q);
 
-    q = frt_tq_new("wrong_field", "one");
-    highlights = frt_searcher_highlight(sea, q, 0, "not_a_field", 15, 1,
+    q = frt_tq_new(rb_intern("wrong_field"), "one");
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("not_a_field"), 15, 1,
                                     "<b>", "</b>", "...");
     Apnull(highlights);
 
     frt_q_deref(q);
 
     q = frt_bq_new(false);
-    phq = frt_phq_new("field");
+    phq = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(phq, "the", 1);
     frt_phq_add_term(phq, "words", 1);
     frt_bq_add_query_nr(q, phq, FRT_BC_SHOULD);
-    phq = frt_phq_new("field");
+    phq = frt_phq_new(rb_intern("field"));
     frt_phq_add_term(phq, "for", 1);
     frt_phq_add_term(phq, "are", 1);
     frt_phq_add_term(phq, "one", 1);
     frt_phq_add_term(phq, "and", 1);
     frt_phq_add_term(phq, "two", 1);
     frt_bq_add_query_nr(q, phq, FRT_BC_SHOULD);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "words"), FRT_BC_SHOULD);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "one"), FRT_BC_SHOULD);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "two"), FRT_BC_SHOULD);
-    frt_bq_add_query_nr(q, frt_tq_new("field", "UnKnOwNfIeLd"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "words"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "one"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "two"), FRT_BC_SHOULD);
+    frt_bq_add_query_nr(q, frt_tq_new(rb_intern("field"), "UnKnOwNfIeLd"), FRT_BC_SHOULD);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 1,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 1,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     Asequal("<b>the words</b>...", highlights[0]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 10, 2,
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 10, 2,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("<b>the words</b>...", highlights[0]);
@@ -514,15 +514,15 @@ static void test_searcher_highlight(TestCase *tc, void *data)
 
     frt_q_deref(q);
 
-    q = frt_tq_new("field", "goes");
-    highlights = frt_searcher_highlight(sea, q, 0, "field", 13, 2,
+    q = frt_tq_new(rb_intern("field"), "goes");
+    highlights = frt_searcher_highlight(sea, q, 0, rb_intern("field"), 13, 2,
                                     "<b>", "</b>", "...");
     Aiequal(2, frt_ary_size(highlights));
     Asequal("the words we...", highlights[0]);
     Asequal("...how it <b>goes</b>", highlights[1]);
     frt_ary_destroy(highlights, &free);
 
-    highlights = frt_searcher_highlight(sea, q, 1, "field", 16, 1,
+    highlights = frt_searcher_highlight(sea, q, 1, rb_intern("field"), 16, 1,
                                     "<b>", "</b>", "...");
     Aiequal(1, frt_ary_size(highlights));
     Asequal("...how it <b>goes</b> now.", highlights[0]);

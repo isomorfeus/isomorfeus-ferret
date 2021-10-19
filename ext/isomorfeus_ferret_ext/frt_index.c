@@ -331,7 +331,7 @@ FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
 {
     FrtFieldInfos *fis = FRT_ALLOC(FrtFieldInfos);
     fi_check_params(store, index, term_vector);
-    fis->field_dict = frt_h_new_str(NULL, (frt_free_ft)&frt_fi_deref);
+    fis->field_dict = frt_h_new_ptr((frt_free_ft)&frt_fi_deref);
     fis->size = 0;
     fis->capa = FIELD_INFOS_INIT_CAPA;
     fis->fields = FRT_ALLOC_N(FrtFieldInfo *, fis->capa);
@@ -348,7 +348,7 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
         fis->capa <<= 1;
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
-    if (!frt_h_set_safe(fis->field_dict, fi->name, fi)) {
+    if (!frt_h_set_safe(fis->field_dict, (void *)fi->name, fi)) {
         FRT_RAISE(FRT_ARG_ERROR, "Field :%s already exists", (char *)fi->name);
     }
     fi->number = fis->size;
@@ -359,19 +359,19 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
 
 FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name)
 {
-    return (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
+    return (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
 }
 
 int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (fi) { return fi->number; }
     else { return -1; }
 }
 
 FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, name);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (!fi) {
         fi = (FrtFieldInfo*)frt_fi_new(name, fis->store, fis->index, fis->term_vector);
         frt_fis_add_field(fis, fi);
@@ -382,6 +382,7 @@ FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name)
 FrtFieldInfos *frt_fis_read(FrtInStream *is)
 {
     FrtFieldInfos *volatile fis = NULL;
+    char *field_name;
     FRT_TRY
         do {
             FrtStoreValue store_val;
@@ -397,7 +398,9 @@ FrtFieldInfos *frt_fis_read(FrtInStream *is)
             for (i = frt_is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
                 FRT_TRY
-                    fi->name = frt_is_read_string_safe(is);
+                    field_name = frt_is_read_string_safe(is);
+                    fi->name = rb_intern(field_name);
+                    free(field_name);
                     tmp.i = frt_is_read_u32(is);
                     fi->boost = tmp.f;
                     fi->bits = frt_is_read_vint(is);
@@ -429,7 +432,7 @@ void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os)
     for (i = 0; i < fis_size; i++) {
         fi = fis->fields[i];
 
-        frt_os_write_string(os, fi->name);
+        frt_os_write_string(os, rb_id2name(fi->name));
         tmp.f = fi->boost;
         frt_os_write_u32(os, tmp.i);
         frt_os_write_vint(os, fi->bits);
@@ -1220,7 +1223,7 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
 static FrtLazyDoc *lazy_doc_new(int size, FrtInStream *fdt_in)
 {
     FrtLazyDoc *self = FRT_ALLOC(FrtLazyDoc);
-    self->field_dictionary = frt_h_new_str(NULL, (frt_free_ft)&lazy_df_destroy);
+    self->field_dictionary = frt_h_new_ptr((frt_free_ft)&lazy_df_destroy);
     self->size = size;
     self->fields = FRT_ALLOC_AND_ZERO_N(FrtLazyDocField *, size);
     self->fields_in = frt_is_clone(fdt_in);
@@ -1239,13 +1242,13 @@ static void lazy_doc_add_field(FrtLazyDoc *self, FrtLazyDocField *lazy_df, int i
 {
     self->fields[i] = lazy_df;
 
-    frt_h_set(self->field_dictionary, lazy_df->name, lazy_df);
+    frt_h_set(self->field_dictionary, (void *)lazy_df->name, lazy_df);
     lazy_df->doc = self;
 }
 
 FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, FrtSymbol field)
 {
-    return (FrtLazyDocField *)frt_h_get(self->field_dictionary, field);
+    return (FrtLazyDocField *)frt_h_get(self->field_dictionary, (void *)field);
 }
 
 /****************************************************************************
@@ -1449,7 +1452,7 @@ static FrtTermVector *frt_fr_read_term_vector(FrtFieldsReader *fr, int field_num
 
 FrtHash *frt_fr_get_tv(FrtFieldsReader *fr, int doc_num)
 {
-    FrtHash *term_vectors = frt_h_new_str(NULL, (frt_free_ft)&frt_tv_destroy);
+    FrtHash *term_vectors = frt_h_new_ptr((frt_free_ft)&frt_tv_destroy);
     int i;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
@@ -1479,7 +1482,7 @@ FrtHash *frt_fr_get_tv(FrtFieldsReader *fr, int doc_num)
 
         for (i = 0; i < field_cnt; i++) {
             FrtTermVector *tv = frt_fr_read_term_vector(fr, field_nums[i]);
-            frt_h_set(term_vectors, tv->field, tv);
+            frt_h_set(term_vectors, (void *)tv->field, tv);
         }
         free(field_nums);
     }
@@ -4178,7 +4181,7 @@ static FrtTermDocEnum *sr_term_positions(FrtIndexReader *ir)
 static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num,
                                   FrtSymbol field)
 {
-    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(ir->fis->field_dict, field);
+    FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(ir->fis->field_dict, (void *)field);
     FrtFieldsReader *fr;
 
     if (!fi || !fi_store_term_vector(fi) || !SR(ir)->fr ||

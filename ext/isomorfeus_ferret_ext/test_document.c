@@ -7,7 +7,7 @@ void test_df_standard(TestCase *tc, void *data)
     FrtDocField *df;
     (void)data;
 
-    df = frt_df_add_data(frt_df_new("title"), frt_estrdup("Life of Pi"));
+    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Life of Pi"));
     df->destroy_data = true;
     Aiequal(1, df->size);
     Asequal("title", df->name);
@@ -18,7 +18,7 @@ void test_df_standard(TestCase *tc, void *data)
     free(s);
     frt_df_destroy(df);
 
-    df = frt_df_add_data_len(frt_df_new("title"), "new title", 9);
+    df = frt_df_add_data_len(frt_df_new(rb_intern("title")), "new title", 9);
     Aiequal(1, df->size);
     Asequal("title", df->name);
     Asequal("new title", df->data[0]);
@@ -33,7 +33,7 @@ void test_df_multi_fields(TestCase *tc, void *data)
     FrtDocField *df;
     (void)data;
 
-    df = frt_df_add_data(frt_df_new("title"), frt_estrdup("Vernon God Little"));
+    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Vernon God Little"));
     df->destroy_data = true;
     Aiequal(1, df->size);
     Asequal("title", df->name);
@@ -54,7 +54,7 @@ void test_df_multi_fields(TestCase *tc, void *data)
 
     frt_df_destroy(df);
 
-    df = frt_df_add_data(frt_df_new("data"), frt_estrdup("start"));
+    df = frt_df_add_data(frt_df_new(rb_intern("data")), frt_estrdup("start"));
     df->destroy_data = true;
     Aiequal(1, df->size);
     for (i = 0; i < 1000; i++) {
@@ -74,23 +74,23 @@ void test_doc(TestCase *tc, void *data)
     (void)data;
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("title"), "title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), "title"));
     Aiequal(1, doc->size);
-    df = frt_df_add_data(frt_df_new("data"), "data1");
+    df = frt_df_add_data(frt_df_new(rb_intern("data")), "data1");
     frt_df_add_data(df, "data2");
     frt_df_add_data(df, "data3");
     frt_df_add_data(df, "data4");
     frt_doc_add_field(doc, df);
     Aiequal(2, doc->size);
-    Asequal("title", frt_doc_get_field(doc, "title")->name);
-    Aiequal(1, frt_doc_get_field(doc, "title")->size);
-    Asequal("title", frt_doc_get_field(doc, "title")->data[0]);
-    Asequal("data", frt_doc_get_field(doc, "data")->name);
-    Aiequal(4, frt_doc_get_field(doc, "data")->size);
-    Asequal("data1", frt_doc_get_field(doc, "data")->data[0]);
-    Asequal("data2", frt_doc_get_field(doc, "data")->data[1]);
-    Asequal("data3", frt_doc_get_field(doc, "data")->data[2]);
-    Asequal("data4", frt_doc_get_field(doc, "data")->data[3]);
+    Asequal("title", frt_doc_get_field(doc, rb_intern("title"))->name);
+    Aiequal(1, frt_doc_get_field(doc, rb_intern("title"))->size);
+    Asequal("title", frt_doc_get_field(doc, rb_intern("title"))->data[0]);
+    Asequal("data", frt_doc_get_field(doc, rb_intern("data"))->name);
+    Aiequal(4, frt_doc_get_field(doc, rb_intern("data"))->size);
+    Asequal("data1", frt_doc_get_field(doc, rb_intern("data"))->data[0]);
+    Asequal("data2", frt_doc_get_field(doc, rb_intern("data"))->data[1]);
+    Asequal("data3", frt_doc_get_field(doc, rb_intern("data"))->data[2]);
+    Asequal("data4", frt_doc_get_field(doc, rb_intern("data"))->data[3]);
     Afequal(1.0, doc->boost);
    frt_doc_destroy(doc);
 
@@ -100,7 +100,7 @@ void test_doc(TestCase *tc, void *data)
         char *bufc;
         sprintf(buf, "<<%d>>", i);
         bufc = frt_estrdup(buf);
-        df = frt_df_add_data(frt_df_new(bufc), bufc);
+        df = frt_df_add_data(frt_df_new(rb_intern(bufc)), bufc);
         df->destroy_data = true;
         frt_doc_add_field(doc, df);
         Aiequal(i + 1, doc->size);
@@ -109,9 +109,9 @@ void test_doc(TestCase *tc, void *data)
     for (i = 0; i < 1000; i++) {
         char buf[100];
         sprintf(buf, "<<%d>>", i);
-        Aiequal(1, frt_doc_get_field(doc, buf)->size);
-        Aiequal(strlen(buf), frt_doc_get_field(doc, buf)->lengths[0]);
-        Asequal(buf, frt_doc_get_field(doc, buf)->data[0]);
+        Aiequal(1, frt_doc_get_field(doc, rb_intern(buf))->size);
+        Aiequal(strlen(buf), frt_doc_get_field(doc, rb_intern(buf))->lengths[0]);
+        Asequal(buf, frt_doc_get_field(doc, rb_intern(buf))->data[0]);
     }
    frt_doc_destroy(doc);
 }
@@ -124,10 +124,10 @@ void test_double_field_exception(TestCase *tc, void *data)
     (void)data;
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new("title"), "title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), "title"));
 
     FRT_TRY
-        df = frt_df_add_data_len(frt_df_new("title"), "title", 5);
+        df = frt_df_add_data_len(frt_df_new(rb_intern("title")), "title", 5);
         frt_doc_add_field(doc, df);
     case FRT_EXCEPTION:
         exception_thrown = true;

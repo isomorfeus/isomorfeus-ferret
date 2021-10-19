@@ -21,16 +21,16 @@ static char *range_to_s(Range *range, FrtSymbol default_field, float boost)
 {
     char *buffer, *b;
     size_t flen, llen, ulen;
-    const char *field = range->field;
+    const char *field_name = rb_id2name(range->field);
 
-    flen = strlen(field);
+    flen = strlen(field_name);
     llen = range->lower_term ? strlen(range->lower_term) : 0;
     ulen = range->upper_term ? strlen(range->upper_term) : 0;
     buffer = FRT_ALLOC_N(char, flen + llen + ulen + 40);
     b = buffer;
 
-    if ((default_field != NULL) && (strcmp(default_field, range->field) != 0)) {
-        memcpy(buffer, field, flen * sizeof(char));
+    if (default_field != range->field) {
+        memcpy(buffer, field_name, flen * sizeof(char));
         b += flen;
         *b = ':';
         b++;
@@ -78,7 +78,7 @@ static void range_destroy(Range *range)
 static unsigned long long range_hash(Range *filt)
 {
     return filt->include_lower | (filt->include_upper << 1)
-        | ((frt_str_hash(filt->field)
+        | ((frt_str_hash(rb_id2name(filt->field))
             ^ (filt->lower_term ? frt_str_hash(filt->lower_term) : 0)
             ^ (filt->upper_term ? frt_str_hash(filt->upper_term) : 0)) << 2);
 }
@@ -87,7 +87,7 @@ static int range_eq(Range *filt, Range *o)
 {
     if ((filt->lower_term && !o->lower_term) || (!filt->lower_term && o->lower_term)) { return false; }
     if ((filt->upper_term && !o->upper_term) || (!filt->upper_term && o->upper_term)) { return false; }
-    return ((strcmp(filt->field, o->field) == 0)
+    return ((filt->field == o->field)
             && ((filt->lower_term && o->lower_term) ? (strcmp(filt->lower_term, o->lower_term) == 0) : 1)
             && ((filt->upper_term && o->upper_term) ? (strcmp(filt->upper_term, o->upper_term) == 0) : 1)
             && (filt->include_lower == o->include_lower)
@@ -205,7 +205,7 @@ static void frt_rfilt_destroy_i(FrtFilter *filt)
 
 static char *frt_rfilt_to_s(FrtFilter *filt)
 {
-    char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
+    char *rstr = range_to_s(RF(filt)->range, (FrtSymbol)NULL, 1.0);
     char *rfstr = frt_strfmt("RangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
@@ -303,7 +303,7 @@ FrtFilter *frt_rfilt_new(FrtSymbol field,
 
 static char *frt_trfilt_to_s(FrtFilter *filt)
 {
-    char *rstr = range_to_s(RF(filt)->range, NULL, 1.0);
+    char *rstr = range_to_s(RF(filt)->range, (FrtSymbol)NULL, 1.0);
     char *rfstr = frt_strfmt("TypedRangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
@@ -460,7 +460,7 @@ static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                     FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
-    if (strcmp(tv->field, range->field) == 0) {
+    if (tv->field == range->field) {
         const int term_cnt = tv->term_cnt;
         int i, j;
         char *upper_text = range->upper_term;
@@ -565,7 +565,7 @@ static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                      FrtTermVector *tv)
 {
     Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
-    if (strcmp(tv->field, range->field) == 0) {
+    if (tv->field == range->field) {
         double lnum = 0.0, unum = 0.0;
         int len = 0;
         const char *lt = range->lower_term;

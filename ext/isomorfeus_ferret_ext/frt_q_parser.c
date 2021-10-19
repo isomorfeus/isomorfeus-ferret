@@ -2203,11 +2203,11 @@ static int yyerror(FrtQParser *qp, char const *msg)
 static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text)
 {
     FrtTokenStream *ts;
-    if (frt_hs_exists(qp->tokenized_fields, field)) {
-        ts = (FrtTokenStream *)frt_h_get(qp->ts_cache, field);
+    if (frt_hs_exists(qp->tokenized_fields, (void *)field)) {
+        ts = (FrtTokenStream *)frt_h_get(qp->ts_cache, (void *)field);
         if (!ts) {
             ts = frt_a_get_ts(qp->analyzer, field, text);
-            frt_h_set(qp->ts_cache, field, ts);
+            frt_h_set(qp->ts_cache, (void *)field, ts);
         }
         else {
             ts->reset(ts, text);
@@ -2478,7 +2478,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
     int len = (int)strlen(pattern);
 
     if (qp->wild_lower
-        && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, field))) {
+        && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
         lower_str(pattern);
     }
 
@@ -2516,8 +2516,9 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
  */
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name)
 {
-    if (qp->allow_any_fields || frt_hs_exists(qp->all_fields, field_name)) {
-        frt_hs_add(qp->fields, (FrtSymbol)strdup(field_name));
+    FrtSymbol field = rb_intern(field_name);
+    if (qp->allow_any_fields || frt_hs_exists(qp->all_fields, (void *)field)) {
+        frt_hs_add(qp->fields, (void *)field);
     }
     return qp->fields;
 }
@@ -2529,7 +2530,7 @@ static FrtHashSet *add_field(FrtQParser *qp, const char *field_name)
  */
 static FrtHashSet *first_field(FrtQParser *qp, const char *field)
 {
-    qp_push_fields(qp, frt_hs_new_str(NULL), true);
+    qp_push_fields(qp, frt_hs_new_ptr(NULL), true);
     return add_field(qp, field);
 }
 
@@ -2772,7 +2773,7 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
 {
     FrtQuery *rq;
     if (qp->wild_lower
-        && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, field))) {
+        && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
         if (from) {
             lower_str(from);
         }
@@ -2882,15 +2883,15 @@ FrtQParser *frt_qp_new(FrtAnalyzer *analyzer)
     self->use_typed_range_query = false;
     self->def_slop = 0;
 
-    self->def_fields = frt_hs_new_str(NULL);
-    self->all_fields = frt_hs_new_str(NULL);
-    self->tokenized_fields = frt_hs_new_str(NULL);
+    self->def_fields = frt_hs_new_ptr(NULL);
+    self->all_fields = frt_hs_new_ptr(NULL);
+    self->tokenized_fields = frt_hs_new_ptr(NULL);
     self->fields_top = NULL;
 
     qp_push_fields(self, self->def_fields, false);
 
     self->analyzer = analyzer;
-    self->ts_cache = frt_h_new_str(NULL, (frt_free_ft)&frt_ts_deref);
+    self->ts_cache = frt_h_new_ptr((frt_free_ft)&frt_ts_deref);
     self->buf_index = 0;
     self->dynbuf = NULL;
     self->non_tokenizer = frt_non_tokenizer_new();
@@ -2898,17 +2899,14 @@ FrtQParser *frt_qp_new(FrtAnalyzer *analyzer)
     return self;
 }
 
-void frt_qp_add_field(FrtQParser *self,
-                  FrtSymbol field,
-                  bool is_default,
-                  bool is_tokenized)
+void frt_qp_add_field(FrtQParser *self, FrtSymbol field, bool is_default, bool is_tokenized)
 {
-    frt_hs_add(self->all_fields, frt_estrdup(field));
+    frt_hs_add(self->all_fields, (void *)field);
     if (is_default) {
-        frt_hs_add(self->def_fields, frt_estrdup(field));
+        frt_hs_add(self->def_fields, (void *)field);
     }
     if (is_tokenized) {
-        frt_hs_add(self->tokenized_fields, frt_estrdup(field));
+        frt_hs_add(self->tokenized_fields, (void *)field);
     }
 }
 

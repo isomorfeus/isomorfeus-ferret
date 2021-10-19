@@ -1188,7 +1188,7 @@ static FrtTokenStream *
 cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text)
 {
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
-                           rb_str_new_cstr(field), rb_str_new_cstr(text));
+                           rb_str_new_cstr(rb_id2name(field)), rb_str_new_cstr(text));
     return frb_get_cwrapped_rts(rts);
 }
 
@@ -1521,13 +1521,13 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
     GET_A(pfa, self);
 
     StringValue(rstring);
-    a = (FrtAnalyzer *)frt_h_get(PFA(pfa)->dict, field);
+    a = (FrtAnalyzer *)frt_h_get(PFA(pfa)->dict, (void *)field);
     if (a == NULL) {
         a = PFA(pfa)->default_a;
     }
     if (a->get_ts == cwa_get_ts) {
         return rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
-                          rb_str_new_cstr(field), rb_str_new_cstr(rs2s(rstring)));
+                          rb_str_new_cstr(rb_id2name(field)), rb_str_new_cstr(rs2s(rstring)));
     }
     else {
         return get_rb_ts_from_a(a, rfield, rstring);

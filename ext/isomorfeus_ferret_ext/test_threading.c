@@ -72,8 +72,8 @@ static void do_add_doc(FrtIndex *index)
     FrtDocument *doc = frt_doc_new();
     int n = rand();
 
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(id), frt_strfmt("%d", n)))->destroy_data = true;
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(contents), num_to_str(n)))->destroy_data = true;
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(id)), frt_strfmt("%d", n)))->destroy_data = true;
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(contents)), num_to_str(n)))->destroy_data = true;
     tlog("Adding %d\n", n);
     frt_index_add_doc(index, doc);
    frt_doc_destroy(doc);
@@ -157,7 +157,7 @@ TestSuite *ts_threading(TestSuite *suite)
     FrtHashSet *def_fields = frt_hs_new_str(NULL);
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(id, FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern(id), FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_YES));
     frt_index_create(store, fis);
     frt_fis_deref(fis);

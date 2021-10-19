@@ -1609,7 +1609,7 @@ static void pfa_destroy_i(FrtAnalyzer *self)
 static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self,
                                FrtSymbol field, char *text)
 {
-    FrtAnalyzer *a = (FrtAnalyzer *)frt_h_get(PFA(self)->dict, field);
+    FrtAnalyzer *a = (FrtAnalyzer *)frt_h_get(PFA(self)->dict, (void *)field);
     if (a == NULL) {
         a = PFA(self)->default_a;
     }
@@ -1626,7 +1626,7 @@ void frt_pfa_add_field(FrtAnalyzer *self,
                    FrtSymbol field,
                    FrtAnalyzer *analyzer)
 {
-    frt_h_set(PFA(self)->dict, field, analyzer);
+    frt_h_set(PFA(self)->dict, (void *)field, analyzer);
 }
 
 FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *default_a)
@@ -1634,7 +1634,7 @@ FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *default_a)
     FrtAnalyzer *a = (FrtAnalyzer *)frt_ecalloc(sizeof(FrtPerFieldAnalyzer));
 
     PFA(a)->default_a = default_a;
-    PFA(a)->dict = frt_h_new_str(NULL, &pfa_sub_a_destroy_i);
+    PFA(a)->dict = frt_h_new_ptr(&pfa_sub_a_destroy_i);
 
     a->destroy_i = &pfa_destroy_i;
     a->get_ts    = pfa_get_ts;

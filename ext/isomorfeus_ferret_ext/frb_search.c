@@ -249,7 +249,7 @@ frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
          * 4 times field elements to make space for '"' around fields and ','
          * between fields. Add 100 for '[', ']' and good safety.
          */
-        len += strlen(f->name) + f->len * 3 + 100 + 4 * f->size;
+        len += strlen(rb_id2name(f->name)) + f->len * 3 + 100 + 4 * f->size;
     }
 
     if (len > *slen) {
@@ -261,7 +261,7 @@ frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
 	for (i = 0; i < lzd->size; i++) {
         const char *field_name;
 		f = lzd->fields[i];
-        field_name = f->name;
+        field_name = rb_id2name(f->name);
 		if (i)  *(s++) = ',';
         *(s++) = '"';
         l = strlen(field_name);
@@ -403,7 +403,7 @@ frb_q_to_s(int argc, VALUE *argv, VALUE self)
     GET_Q();
     VALUE rstr, rfield;
     char *str;
-    FrtSymbol field = NULL;
+    FrtSymbol field = (FrtSymbol)NULL;
     if (rb_scan_args(argc, argv, "01", &rfield)) {
         field = frb_field(rfield);
     }
@@ -918,7 +918,7 @@ frb_bc_to_s(VALUE self)
     const char *ostr = "";
     int len;
     GET_BC();
-    qstr = bc->query->to_s(bc->query, NULL);
+    qstr = bc->query->to_s(bc->query, (FrtSymbol)NULL);
     switch (bc->occur) {
         case FRT_BC_SHOULD:
             ostr = "Should";
@@ -2207,7 +2207,7 @@ frb_sf_init(int argc, VALUE *argv, VALUE self)
     field = frb_field(rfield);
 
     sf = frt_sort_field_new(field, type, is_reverse);
-    if (sf->field == NULL) {
+    if (sf->field == (FrtSymbol)NULL) {
         sf->field = field;
     }
 
@@ -2242,7 +2242,7 @@ static VALUE
 frb_sf_get_name(VALUE self)
 {
     GET_SF();
-    return sf->field ? ID2SYM(rb_intern(sf->field)) : Qnil;
+    return sf->field ? ID2SYM(sf->field) : Qnil;
 }
 
 /*
@@ -2364,7 +2364,7 @@ frb_parse_sort_str(FrtSort *sort, char *xsort_str)
         } else if (strcmp("DOC_ID", s) == 0) {
             sf = frt_sort_field_doc_new(reverse);
         } else {
-            sf = frt_sort_field_auto_new(strdup(s), reverse);
+            sf = frt_sort_field_auto_new(rb_intern(s), reverse);
         }
         frb_get_sf(sf);
         frt_sort_add_sort_field(sort, sf);
@@ -4420,7 +4420,7 @@ Init_Search(void)
 {
     mSearch = rb_define_module_under(mFerret, "Search");
 
-    fsym_id = "id";
+    fsym_id = rb_intern("id");
 
     Init_Hit();
     Init_TopDocs();

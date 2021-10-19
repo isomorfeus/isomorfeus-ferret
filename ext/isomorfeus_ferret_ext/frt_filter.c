@@ -39,7 +39,7 @@ FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
 
 static char *filt_to_s_i(FrtFilter *filt)
 {
-    return frt_estrdup(filt->name);
+    return frt_estrdup(rb_id2name(filt->name));
 }
 
 static unsigned long long frt_filt_hash_default(FrtFilter *filt)
@@ -69,13 +69,13 @@ FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
 
 unsigned long long frt_filt_hash(FrtFilter *filt)
 {
-    return frt_str_hash(filt->name) ^ filt->hash(filt);
+    return frt_str_hash(rb_id2name(filt->name)) ^ filt->hash(filt);
 }
 
 int frt_filt_eq(FrtFilter *filt, FrtFilter *o)
 {
     return ((filt == o)
-            || ((strcmp(filt->name, o->name) == 0)
+            || ((filt->name == o->name)
                 && (filt->eq == o->eq)
                 && (filt->eq(filt, o))));
 }
@@ -96,7 +96,7 @@ typedef struct QueryFilter
 static char *qfilt_to_s(FrtFilter *filt)
 {
     FrtQuery *query = QF(filt)->query;
-    char *query_str = query->to_s(query, NULL);
+    char *query_str = query->to_s(query, (FrtSymbol)NULL);
     char *filter_str = frt_strfmt("QueryFilter< %s >", query_str);
     free(query_str);
     return filter_str;

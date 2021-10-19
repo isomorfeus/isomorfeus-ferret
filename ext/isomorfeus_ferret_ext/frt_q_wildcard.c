@@ -13,11 +13,11 @@
 static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
-    const char *field_str = WCQ(self)->field;
+    const char *field_str = rb_id2name(WCQ(self)->field);
     const char *pattern = WCQ(self)->pattern;
     bptr = buffer = FRT_ALLOC_N(char, strlen(pattern) + strlen(field_str) + 35);
 
-    if (default_field != NULL && strcmp(WCQ(self)->field, default_field) != 0) {
+    if (WCQ(self)->field != default_field) {
         bptr += sprintf(bptr, "%s:", field_str);
     }
     bptr += sprintf(bptr, "%s", pattern);
@@ -137,13 +137,13 @@ static void wcq_destroy(FrtQuery *self)
 
 static unsigned long long wcq_hash(FrtQuery *self)
 {
-    return frt_str_hash(WCQ(self)->field) ^ frt_str_hash(WCQ(self)->pattern);
+    return frt_str_hash(rb_id2name(WCQ(self)->field)) ^ frt_str_hash(WCQ(self)->pattern);
 }
 
 static int wcq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(WCQ(self)->pattern, WCQ(o)->pattern) == 0)
-        && (strcmp(WCQ(self)->field, WCQ(o)->field) == 0);
+        && (WCQ(self)->field == WCQ(o)->field);
 }
 
 FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern)

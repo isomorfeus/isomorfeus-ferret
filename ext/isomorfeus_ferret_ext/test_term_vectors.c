@@ -37,17 +37,17 @@ static FrtFieldInfos *create_tv_fis()
 {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new("tv", FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new("tv2", FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv2"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new("tv_with_positions", FRT_STORE_NO,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions"), FRT_STORE_NO,
                               FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new("tv_with_offsets", FRT_STORE_NO,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_offsets"), FRT_STORE_NO,
                               FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new("tv_with_positions_offsets", FRT_STORE_NO,
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions_offsets"), FRT_STORE_NO,
                               FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
     return fis;
@@ -117,15 +117,10 @@ static void test_tv_single_doc(TestCase *tc, void *data)
 
     fw = frt_fw_open(store, "_0", fis);
     frt_fw_add_doc(fw, doc);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_positions")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw,
-                    frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
     frt_fw_write_tv_index(fw);
     frt_fw_close(fw);
    frt_doc_destroy(doc);
@@ -134,9 +129,9 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     Aiequal(1, fr->size);
 
     /* test individual field's term vectors */
-    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv")->number, tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(0, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {
@@ -149,9 +144,9 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     if (tv) frt_tv_destroy(tv);
 
     tv = frt_fr_get_field_tv(fr, 0,
-                         frt_fis_get_field(fis, "tv_with_positions")->number);
+                         frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_positions")->number,
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number,
                 tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(0, tv->offset_cnt);
@@ -166,10 +161,9 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     }
     if (tv) frt_tv_destroy(tv);
 
-    tv = frt_fr_get_field_tv(fr, 0,
-                         frt_fis_get_field(fis, "tv_with_offsets")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_offsets")->number, tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(NUM_TERMS, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {
@@ -184,9 +178,9 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     }
     if (tv) frt_tv_destroy(tv);
 
-    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv_with_positions_offsets")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_positions_offsets")->number, tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(NUM_TERMS, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {
@@ -203,9 +197,9 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     }
     if (tv) frt_tv_destroy(tv);
 
-    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_or_add_field(fis, "tv2")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_or_add_field(fis, rb_intern("tv2"))->number);
     Apnull(tv);
-    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_or_add_field(fis, "new")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_or_add_field(fis, rb_intern("new"))->number);
     Apnull(tv);
 
     /* test document's term vectors */
@@ -218,8 +212,7 @@ static void test_tv_single_doc(TestCase *tc, void *data)
 
     tv = (FrtTermVector*)frt_h_get(tvs, "tv_with_positions_offsets");
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
-                tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(NUM_TERMS, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {
@@ -258,36 +251,26 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
 
     fw = frt_fw_open(store, "_0", fis);
     frt_fw_add_doc(fw, doc);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv")->number,
-                     plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
 
     frt_fw_write_tv_index(fw); frt_fw_add_doc(fw, doc);
 
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_positions")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
 
     frt_fw_write_tv_index(fw); frt_fw_add_doc(fw, doc);
 
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
 
     frt_fw_write_tv_index(fw); frt_fw_add_doc(fw, doc);
 
-    frt_fw_add_postings(fw,
-                    frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
 
     frt_fw_write_tv_index(fw); frt_fw_add_doc(fw, doc);
 
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_positions")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw, frt_fis_get_field(fis, "tv_with_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
-    frt_fw_add_postings(fw,
-                    frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
-                    plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
+    frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
 
     frt_fw_write_tv_index(fw);
     frt_fw_close(fw);
@@ -296,9 +279,9 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
     fr = frt_fr_open(store, "_0", fis);
     Aiequal(5, fr->size);
 
-    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv")->number);
+    tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv")->number, tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(0, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {
@@ -308,15 +291,15 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
         }
         Apnull(tv->offsets);
     }
-    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv_with_positions")->number));
-    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv_with_offsets")->number));
-    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, "tv_with_positions_offsets")->number));
+    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_positions"))->number));
+    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_offsets"))->number));
+    Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number));
     frt_tv_destroy(tv);
 
     tv = frt_fr_get_field_tv(fr, 3,
-                         frt_fis_get_field(fis, "tv_with_positions_offsets")->number);
+                         frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number);
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number,
                 tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(NUM_TERMS, tv->offset_cnt);
@@ -348,8 +331,7 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
 
     tv = (FrtTermVector*)frt_h_get(tvs, "tv_with_positions_offsets");
     if (Apnotnull(tv)) {
-        Aiequal(frt_fis_get_field(fis, "tv_with_positions_offsets")->number,
-                tv->field_num);
+        Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
         Aiequal(NUM_TERMS, tv->offset_cnt);
         for (i = 0; i < NUM_TERMS; i++) {

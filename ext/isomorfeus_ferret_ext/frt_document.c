@@ -57,13 +57,14 @@ void frt_df_destroy(FrtDocField *df)
  */
 char *frt_df_to_s(FrtDocField *df)
 {
-    int i, len = 0, namelen = strlen(df->name);
+    const char *df_name = rb_id2name(df->name);
+    int i, len = 0, namelen = strlen(df_name);
     char *str, *s;
     for (i = 0; i < df->size; i++) {
         len += df->lengths[i] + 4;
     }
     s = str = FRT_ALLOC_N(char, namelen + len + 5);
-    memcpy(s, df->name, namelen);
+    memcpy(s, df_name, namelen);
     s += namelen;
     s = frt_strapp(s, ": ");
 
@@ -96,7 +97,7 @@ char *frt_df_to_s(FrtDocField *df)
 FrtDocument *frt_doc_new()
 {
     FrtDocument *doc = FRT_ALLOC(FrtDocument);
-    doc->field_dict = frt_h_new_str(NULL, (frt_free_ft)&frt_df_destroy);
+    doc->field_dict = frt_h_new_ptr((frt_free_ft)&frt_df_destroy);
     doc->size = 0;
     doc->capa = FRT_DOC_INIT_CAPA;
     doc->fields = FRT_ALLOC_N(FrtDocField *, doc->capa);
@@ -106,9 +107,9 @@ FrtDocument *frt_doc_new()
 
 FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 {
-    if (!frt_h_set_safe(doc->field_dict, df->name, df)) {
+    if (!frt_h_set_safe(doc->field_dict, (void *)df->name, df)) {
         FRT_RAISE(FRT_EXCEPTION, "tried to add %s field which alread existed\n",
-              df->name);
+              rb_id2name(df->name));
     }
     if (doc->size >= doc->capa) {
         doc->capa <<= 1;
@@ -121,7 +122,7 @@ FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df)
 
 FrtDocField *frt_doc_get_field(FrtDocument *doc, FrtSymbol name)
 {
-    return (FrtDocField *)frt_h_get(doc->field_dict, name);
+    return (FrtDocField *)frt_h_get(doc->field_dict, (void *)name);
 }
 
 void frt_doc_destroy(FrtDocument *doc)

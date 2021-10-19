@@ -1,7 +1,9 @@
 #ifndef FRT_SYMBOL_H
 #define FRT_SYMBOL_H
 
-typedef char *FrtSymbol;
+#include <ruby.h>
+
+typedef ID FrtSymbol;
 
 extern void symbol_init();
 

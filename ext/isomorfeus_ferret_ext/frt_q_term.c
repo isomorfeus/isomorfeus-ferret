@@ -160,7 +160,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
-    char *query_str = self->query->to_s(self->query, NULL);
+    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
     FrtTermQuery *tq = TQ(self->query);
     char *term = tq->term;
     FrtExplanation *expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
@@ -240,13 +240,13 @@ static void tq_destroy(FrtQuery *self)
 
 static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
-    const char *field = TQ(self)->field;
+    const char *field = rb_id2name(TQ(self)->field);
     const char *term = TQ(self)->term;
     size_t flen = strlen(field);
     size_t tlen = strlen(term);
     char *buffer = FRT_ALLOC_N(char, 34 + flen + tlen);
     char *b = buffer;
-    if ((default_field != NULL) && (strcmp(default_field, field) != 0)) {
+    if (default_field != TQ(self)->field) {
         memcpy(b, field, sizeof(char) * flen);
         b[flen] = ':';
         b += flen + 1;
@@ -268,19 +268,19 @@ static void tq_extract_terms(FrtQuery *self, FrtHashSet *terms)
 
 static unsigned long long tq_hash(FrtQuery *self)
 {
-    return frt_str_hash(TQ(self)->term) ^ frt_str_hash(TQ(self)->field);
+    return frt_str_hash(TQ(self)->term) ^ frt_str_hash(rb_id2name(TQ(self)->field));
 }
 
 static int tq_eq(FrtQuery *self, FrtQuery *o)
 {
     return (strcmp(TQ(self)->term, TQ(o)->term) == 0)
-        && (strcmp(TQ(self)->field, TQ(o)->field) == 0);
+        && (TQ(self)->field == TQ(o)->field);
 }
 
 static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                     FrtTermVector *tv)
 {
-    if (strcmp(tv->field, TQ(self)->field) == 0) {
+    if (tv->field == TQ(self)->field) {
         int i;
         FrtTVTerm *tv_term = frt_tv_get_tv_term(tv, TQ(self)->term);
         if (tv_term) {

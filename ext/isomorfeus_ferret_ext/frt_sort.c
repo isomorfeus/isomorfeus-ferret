@@ -91,8 +91,9 @@ char *frt_sort_field_to_s(FrtSortField *self)
             break;
     }
     if (self->field) {
-        str = FRT_ALLOC_N(char, 3 + strlen(self->field) + strlen(type));
-        sprintf(str, "%s:%s%s", self->field, type, (self->reverse ? "!" : ""));
+        const char *field_name = rb_id2name(self->field);
+        str = FRT_ALLOC_N(char, 3 + strlen(field_name) + strlen(type));
+        sprintf(str, "%s:%s%s", field_name, type, (self->reverse ? "!" : ""));
     }
     else {
         str = FRT_ALLOC_N(char, 2 + strlen(type));
@@ -124,13 +125,13 @@ static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1)
 
 FrtSortField *frt_sort_field_score_new(bool reverse)
 {
-    return sort_field_alloc(NULL, FRT_SORT_TYPE_SCORE, reverse,
+    return sort_field_alloc((ID)NULL, FRT_SORT_TYPE_SCORE, reverse,
                             &sf_score_compare, &sf_score_get_val, NULL);
 }
 
 const FrtSortField FRT_SORT_FIELD_SCORE = {
     NULL,               /* field_index_class */
-    NULL,               /* field */
+    (ID)NULL,               /* field */
     FRT_SORT_TYPE_SCORE,    /* type */
     false,              /* reverse */
     &sf_score_compare,  /* compare */
@@ -139,7 +140,7 @@ const FrtSortField FRT_SORT_FIELD_SCORE = {
 
 const FrtSortField FRT_SORT_FIELD_SCORE_REV = {
     NULL,               /* field_index_class */
-    NULL,               /* field */
+    (ID)NULL,               /* field */
     FRT_SORT_TYPE_SCORE,    /* type */
     true,               /* reverse */
     &sf_score_compare,  /* compare */
@@ -169,13 +170,13 @@ static int sf_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2)
 
 FrtSortField *frt_sort_field_doc_new(bool reverse)
 {
-    return sort_field_alloc(NULL, FRT_SORT_TYPE_DOC, reverse,
+    return sort_field_alloc((ID)NULL, FRT_SORT_TYPE_DOC, reverse,
                             &sf_doc_compare, &sf_doc_get_val, NULL);
 }
 
 const FrtSortField FRT_SORT_FIELD_DOC = {
     NULL,               /* field_index_class */
-    NULL,               /* field */
+    (ID)NULL,               /* field */
     FRT_SORT_TYPE_DOC,      /* type */
     false,              /* reverse */
     &sf_doc_compare,    /* compare */
@@ -184,7 +185,7 @@ const FrtSortField FRT_SORT_FIELD_DOC = {
 
 const FrtSortField FRT_SORT_FIELD_DOC_REV = {
     NULL,               /* field_index_class */
-    NULL,               /* field */
+    (ID)NULL,               /* field */
     FRT_SORT_TYPE_DOC,      /* type */
     true,               /* reverse */
     &sf_doc_compare,    /* compare */
@@ -393,7 +394,7 @@ static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir)
                 if (!te->next(te) && (ir->num_docs(ir) > 0)) {
                     FRT_RAISE(FRT_ARG_ERROR,
                         "Cannot sort by field \"%s\" as there are no terms "
-                        "in that field in the index.", sf->field);
+                        "in that field in the index.", rb_id2name(sf->field));
                 }
                 sort_field_auto_evaluate(sf, te->curr_term);
                 te->close(te);

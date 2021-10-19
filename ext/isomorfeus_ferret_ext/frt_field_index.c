@@ -10,14 +10,14 @@
 static unsigned long long field_index_hash(const void *p)
 {
     FrtFieldIndex *self = (FrtFieldIndex *)p;
-    return frt_str_hash(self->field) ^ (unsigned long long)(self->klass);
+    return frt_str_hash(rb_id2name(self->field)) ^ (unsigned long long)(self->klass);
 }
 
 static int field_index_eq(const void *p1, const void *p2)
 {
     FrtFieldIndex *fi1 = (FrtFieldIndex *)p1;
     FrtFieldIndex *fi2 = (FrtFieldIndex *)p2;
-    return (strcmp(fi1->field, fi2->field) == 0) &&
+    return (fi1->field == fi2->field) &&
         (fi1->klass->type == fi2->klass->type);
 }
 
@@ -44,7 +44,7 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
     if (field_num < 0) {
         FRT_RAISE(FRT_ARG_ERROR,
               "Cannot sort by field \"%s\". It doesn't exist in the index.",
-              field);
+              rb_id2name(field));
     }
 
     if (!ir->field_index_cache) {

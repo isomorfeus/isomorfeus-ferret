@@ -15,11 +15,6 @@
 
 const char *FRT_EMPTY_STRING = "";
 
-bool  frt_x_do_logging = false;
-bool  frt_x_abort_on_exception = true;
-bool  frt_x_has_aborted = false;
-FILE *frt_x_exception_stream = NULL;
-
 int frt_scmp(const void *p1, const void *p2)
 {
     return strcmp(*(char **) p1, *(char **) p2);

@@ -120,7 +120,7 @@ static void test_non_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_non_analyzer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token(frt_ts_next(ts), text, 0, strlen(text));
@@ -218,7 +218,7 @@ static void test_whitespace_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_whitespace_analyzer_new(false);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18);
@@ -241,7 +241,7 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
     FrtAnalyzer *a = frt_mb_whitespace_analyzer_new(false);
     char text[100] =
         "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmän@gmail.com", 0, 18);
@@ -257,7 +257,7 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_whitespace_analyzer_new(true);
-    ts = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
     ts->reset(ts, text);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
@@ -371,7 +371,7 @@ static void test_letter_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_letter_analyzer_new(true);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token(frt_ts_next(ts), "dbalmain", 0, 8);
@@ -395,7 +395,7 @@ static void test_mb_letter_analyzer(TestCase *tc, void *data)
     char text[100] =
         "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmän", 0, 8);
@@ -414,7 +414,7 @@ static void test_mb_letter_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_letter_analyzer_new(true);
-    ts = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -595,7 +595,7 @@ static void test_standard_analyzer(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
@@ -624,7 +624,7 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text), *ts2;
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text), *ts2;
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
@@ -646,7 +646,7 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new(true);
-    ts = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);
@@ -665,8 +665,8 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new_with_words(words, true);
-    ts = frt_a_get_ts(a, "random", text);
-    ts2 = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts2 = frt_a_get_ts(a, rb_intern("random"), text);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 2);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 1);
@@ -720,7 +720,7 @@ static void test_legacy_standard_analyzer(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
@@ -749,7 +749,7 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text), *ts2;
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text), *ts2;
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
@@ -771,7 +771,7 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_legacy_standard_analyzer_new(true);
-    ts = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);
@@ -790,8 +790,8 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_legacy_standard_analyzer_new_with_words(words, true);
-    ts = frt_a_get_ts(a, "random", text);
-    ts2 = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts2 = frt_a_get_ts(a, rb_intern("random"), text);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 2);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 1);
@@ -847,7 +847,7 @@ static void test_long_word(TestCase *tc, void *data)
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" " two";
-    FrtTokenStream *ts = frt_a_get_ts(a, "random", text);
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), text, 0, 290, 1);        /* text gets truncated anyway */
@@ -856,7 +856,7 @@ static void test_long_word(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
-    ts = frt_a_get_ts(a, "random", text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text);
     test_token_pi(frt_ts_next(ts), text, 0, 290, 1);        /* text gets truncated anyway */
     test_token_pi(frt_ts_next(ts), "two", 291, 294, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
@@ -1084,12 +1084,12 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     FrtAnalyzer *pfa = frt_per_field_analyzer_new(frt_standard_analyzer_new(true));
     (void)data;
 
-    frt_pfa_add_field(pfa, "white", frt_whitespace_analyzer_new(false));
-    frt_pfa_add_field(pfa, "white_l", frt_whitespace_analyzer_new(true));
-    frt_pfa_add_field(pfa, "letter", frt_letter_analyzer_new(false));
-    frt_pfa_add_field(pfa, "letter", frt_letter_analyzer_new(true));
-    frt_pfa_add_field(pfa, "letter_u", frt_letter_analyzer_new(false));
-    ts = frt_a_get_ts(pfa, "white", text);
+    frt_pfa_add_field(pfa, rb_intern("white"), frt_whitespace_analyzer_new(false));
+    frt_pfa_add_field(pfa, rb_intern("white_l"), frt_whitespace_analyzer_new(true));
+    frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(false));
+    frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(true));
+    frt_pfa_add_field(pfa, rb_intern("letter_u"), frt_letter_analyzer_new(false));
+    ts = frt_a_get_ts(pfa, rb_intern("white"), text);
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);
     test_token_pi(frt_ts_next(ts), "My", 22, 24, 1);
@@ -1100,7 +1100,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token_pi(frt_ts_next(ts), "23#!$", 49, 54, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, "white_l", text);
+    ts = frt_a_get_ts(pfa, rb_intern("white_l"), text);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 1);
@@ -1111,7 +1111,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token_pi(frt_ts_next(ts), "23#!$", 49, 54, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, "letter_u", text);
+    ts = frt_a_get_ts(pfa, rb_intern("letter_u"), text);
     test_token(frt_ts_next(ts), "DBalmain", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -1122,7 +1122,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "address", 40, 47);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, "letter", text);
+    ts = frt_a_get_ts(pfa, rb_intern("letter"), text);
     test_token(frt_ts_next(ts), "dbalmain", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -1133,7 +1133,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "address", 40, 47);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, "XXX", text);        /* should use default analyzer */
+    ts = frt_a_get_ts(pfa, rb_intern("XXX"), text);        /* should use default analyzer */
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);
