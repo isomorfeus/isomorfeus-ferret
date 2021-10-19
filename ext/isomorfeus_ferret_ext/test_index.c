@@ -1566,15 +1566,10 @@ static void test_ir_term_doc_enum(TestCase *tc, void *data)
     int docs[3], expected_docs[3];
     int freqs[3], expected_freqs[3];
 
-    /*
-    printf("%s\n", doc_to_s(ir->get_doc(ir, 2)));
-    printf("%s\n", doc_to_s(ir->get_doc(ir, 1)));
-    printf("%s\n", doc_to_s(ir->get_doc(ir, 0)));
-    */
     Apnotnull(doc);
     Asequal("id_test", frt_doc_get_field(doc, tag)->data[0]);
     Asequal("Some Random Sentence read", frt_doc_get_field(doc, body)->data[0]);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 
     /* test scanning */
     tde = ir_term_docs_for(ir, body, "Wally");
@@ -1685,7 +1680,7 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
     FrtTermVector *tv = ir->term_vector(ir, 3, rb_intern("body"));
     FrtHash *tvs;
 
-    Asequal("body", tv->field);
+    Asequal("body", rb_id2name(tv->field));
     Aiequal(4, tv->term_cnt);
     Asequal("word1", tv->terms[0].text);
     Asequal("word2", tv->terms[1].text);
@@ -1735,19 +1730,19 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
     Aiequal(3, tvs->size);
     tv = (FrtTermVector *)frt_h_get(tvs, "author");
     if (Apnotnull(tv)) {
-        Asequal("author", tv->field);
+        Asequal("author", rb_id2name(tv->field));
         Aiequal(2, tv->term_cnt);
         Aiequal(0, tv->offset_cnt);
         Apnull(tv->offsets);
     }
     tv = (FrtTermVector *)frt_h_get(tvs, "body");
     if (Apnotnull(tv)) {
-        Asequal("body", tv->field);
+        Asequal("body", rb_id2name(tv->field));
         Aiequal(4, tv->term_cnt);
     }
     tv = (FrtTermVector *)frt_h_get(tvs, "title");
     if (Apnotnull(tv)) {
-        Asequal("title", tv->field);
+        Asequal("title", rb_id2name(tv->field));
         Aiequal(1, tv->term_cnt); /* untokenized */
         Aiequal(1, tv->offset_cnt);
         Asequal("War And Peace", tv->terms[0].text);
@@ -1766,22 +1761,22 @@ static void test_ir_get_doc(TestCase *tc, void *data)
     Aiequal(4, doc->size);
 
     df = frt_doc_get_field(doc, author);
-    Asequal(author, df->name);
+    Asequal(rb_id2name(author), rb_id2name(df->name));
     Asequal("Leo Tolstoy", df->data[0]);
     Afequal(df->boost, 1.0);
 
     df = frt_doc_get_field(doc, body);
-    Asequal(body, df->name);
+    Asequal(rb_id2name(body), rb_id2name(df->name));
     Asequal("word3 word4 word1 word2 word1 "
             "word3 word4 word1 word3 word3", df->data[0]);
     Afequal(df->boost, 1.0);
     df = frt_doc_get_field(doc, title);
-    Asequal(title, df->name);
+    Asequal(rb_id2name(title), rb_id2name(df->name));
     Asequal("War And Peace", df->data[0]);
     Afequal(df->boost, 1.0);
 
     df = frt_doc_get_field(doc, year);
-    Asequal(year, df->name);
+    Asequal(rb_id2name(year), rb_id2name(df->name));
     Asequal("1865", df->data[0]);
     Afequal(df->boost, 1.0);
 
@@ -1837,8 +1832,6 @@ static void test_ir_compression(TestCase *tc, void *data)
     frt_lazy_df_get_bytes(lz_df1, buf1, 5, 11);
     frt_lazy_df_get_bytes(lz_df2, buf2, 5, 11);
     buf2[11] = buf1[11] = '\0';
-    //printf("Read in buf1 <%s>\n", buf1);
-    //printf("Read in buf2 <%s>\n", buf2);
     Asequal(buf1, buf2);
     frt_lazy_doc_close(lz_doc);
 }
@@ -2223,26 +2216,15 @@ TestSuite *ts_index(TestSuite *suite)
     /* Test SEGMENT Reader */
     rte = reader_test_env_new(segment_reader_type);
     ir = reader_test_env_ir_open(rte);
-
-    tst_run_test_with_name(suite, test_ir_basic_ops, ir,
-                           "test_segment_reader_basic_ops");
-    tst_run_test_with_name(suite, test_ir_get_doc, ir,
-                           "test_segment_get_doc");
-    tst_run_test_with_name(suite, test_ir_compression, ir,
-                           "test_segment_compression");
-    tst_run_test_with_name(suite, test_ir_term_enum, ir,
-                           "test_segment_term_enum");
-    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir,
-                           "test_segment_term_doc_enum");
-    tst_run_test_with_name(suite, test_ir_term_vectors, ir,
-                           "test_segment_term_vectors");
-    tst_run_test_with_name(suite, test_ir_mtdpe, ir,
-                           "test_segment_multiple_term_doc_pos_enum");
-
-    tst_run_test_with_name(suite, test_ir_norms, &segment_reader_type,
-                           "test_segment_norms");
-    tst_run_test_with_name(suite, test_ir_delete, &segment_reader_type,
-                           "test_segment_reader_delete");
+    tst_run_test_with_name(suite, test_ir_basic_ops, ir, "test_segment_reader_basic_ops");
+    tst_run_test_with_name(suite, test_ir_get_doc, ir, "test_segment_get_doc");
+    tst_run_test_with_name(suite, test_ir_compression, ir, "test_segment_compression");
+    tst_run_test_with_name(suite, test_ir_term_enum, ir, "test_segment_term_enum");
+    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir, "test_segment_term_doc_enum");
+    tst_run_test_with_name(suite, test_ir_term_vectors, ir, "test_segment_term_vectors");
+    tst_run_test_with_name(suite, test_ir_mtdpe, ir, "test_segment_multiple_term_doc_pos_enum");
+    tst_run_test_with_name(suite, test_ir_norms, &segment_reader_type, "test_segment_norms");
+    tst_run_test_with_name(suite, test_ir_delete, &segment_reader_type, "test_segment_reader_delete");
     frt_ir_close(ir);
     reader_test_env_destroy(rte);
 
