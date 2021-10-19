@@ -549,7 +549,6 @@ cwrts_destroy_i(FrtTokenStream *ts)
         object_del(&ts->text);
     }
     rb_hash_delete(object_space, ((VALUE)ts)|1);
-    /*printf("rb_hash_size = %d\n", frb_rb_hash_size(object_space)); */
     free(ts);
 }
 
@@ -635,7 +634,6 @@ rets_destroy_i(FrtTokenStream *ts)
         object_del(&ts->text);
     }
     rb_hash_delete(object_space, ((VALUE)ts)|1);
-    /*printf("rb_hash_size = %d\n", frb_rb_hash_size(object_space)); */
     free(ts);
 }
 
@@ -1180,7 +1178,6 @@ static void
 cwa_destroy_i(FrtAnalyzer *a)
 {
     rb_hash_delete(object_space, ((VALUE)a)|1);
-    /*printf("rb_hash_size = %d\n", frb_rb_hash_size(object_space)); */
     free(a);
 }
 
