@@ -259,7 +259,6 @@ static FrtBitVector *frt_rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
                 tde->seek_te(tde, te);
                 while (tde->next(tde)) {
                     frt_bv_set(bv, tde->doc_num(tde));
-                    /* printf("Setting %d\n", tde->doc_num(tde)); */
                 }
             }
         } while (te->next(te));
@@ -286,7 +285,6 @@ FrtFilter *frt_rfilt_new(FrtSymbol field,
     FrtFilter *filt = filt_new(RangeFilter);
     RF(filt)->range =  range_new(field, lower_term, upper_term,
                                  include_lower, include_upper);
-
     filt->get_bv_i  = &frt_rfilt_get_bv_i;
     filt->hash      = &frt_rfilt_hash;
     filt->eq        = &frt_rfilt_eq;
