@@ -69,7 +69,6 @@ static void check_filtered_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *q
         Aiequal(top, top_docs->hits[0]->doc);
     }
 
-    /* printf("top_docs->size = %d\n", top_docs->size); */
     for (i = 0; i < top_docs->size; i++) {
         FrtHit *hit = top_docs->hits[i];
         char buf[1000];
@@ -80,7 +79,6 @@ static void check_filtered_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *q
         if (total_hits == top_docs->total_hits) {
             FrtExplanation *e = searcher->explain(searcher, query, hit->doc);
             float escore = e->value;
-            /* char *t; printf("%s\n", t = frt_expl_to_s(e, 0)); free(t); */
             if (post_filter) {
                 escore *= post_filter->filter_func(hit->doc, escore, searcher,
                                                    post_filter->arg);
