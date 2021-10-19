@@ -104,7 +104,7 @@ static FrtExplanation *tsc_explain(FrtScorer *self, int doc_num)
     }
     return frt_expl_new(frt_sim_tf(self->similarity, (float)tf),
                     "tf(term_freq(%s:%s)=%d)",
-                    TQ(query)->field, TQ(query)->term, tf);
+                    rb_id2name(TQ(query)->field), TQ(query)->term, tf);
 }
 
 static void tsc_destroy(FrtScorer *self)
@@ -181,16 +181,15 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
         * idf_expl1->value * qnorm_expl->value;
     frt_expl_add_detail(expl, query_expl);
     /* explain field weight */
-    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:", tq->field, term, doc_num);
+    field_expl = frt_expl_new(0.0, "field_weight(%s:%s in %d), product of:", rb_id2name(tq->field), term, doc_num);
     scorer = self->scorer(self, ir);
     tf_expl = scorer->explain(scorer, doc_num);
     scorer->destroy(scorer);
     frt_expl_add_detail(field_expl, tf_expl);
     frt_expl_add_detail(field_expl, idf_expl2);
-
     field_norms = frt_ir_get_norms(ir, tq->field);
     field_norm = (field_norms ? frt_sim_decode_norm(self->similarity, field_norms[doc_num]) : (float)0.0);
-    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)", tq->field, doc_num);
+    field_norm_expl = frt_expl_new(field_norm, "field_norm(field=%s, doc=%d)", rb_id2name(tq->field), doc_num);
     frt_expl_add_detail(field_expl, field_norm_expl);
     field_expl->value = tf_expl->value * idf_expl2->value * field_norm_expl->value;
     /* combine them */
@@ -295,11 +294,9 @@ static FrtMatchVector *tq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
 
 FrtQuery *frt_tq_new(FrtSymbol field, const char *term)
 {
-    FrtQuery *self             = frt_q_new(FrtTermQuery);
-
+    FrtQuery *self          = frt_q_new(FrtTermQuery);
     TQ(self)->field         = field;
     TQ(self)->term          = frt_estrdup(term);
-
     self->type              = TERM_QUERY;
     self->extract_terms     = &tq_extract_terms;
     self->to_s              = &tq_to_s;

@@ -1608,7 +1608,7 @@ static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field)
         p = frt_strfmt("span_terms(%s)", terms);
     }
     else {
-        p = frt_strfmt("span_terms(%s:%s)", SpQ(self)->field, terms);
+        p = frt_strfmt("span_terms(%s:%s)", rb_id2name(SpQ(self)->field), terms);
     }
     free(terms);
     return p;
