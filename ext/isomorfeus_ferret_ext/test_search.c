@@ -258,9 +258,6 @@ void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, char *q_str)
 {
     char *q_res = query->to_s(query, field);
     Asequal(q_str, q_res);
-    /*
-    printf("%s\n", q_res);
-    */
     free(q_res);
 }
 
@@ -271,8 +268,7 @@ void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
     static int num_array2[ARRAY_SIZE];
     int i, count;
     int total_hits = s2l(expected_hits, num_array);
-    FrtTopDocs *top_docs
-        = frt_searcher_search(searcher, query, 0, total_hits + 1, NULL, NULL, NULL);
+    FrtTopDocs *top_docs = frt_searcher_search(searcher, query, 0, total_hits + 1, NULL, NULL, NULL);
     frt_p_pause();
     if (!tc->failed && !Aiequal(total_hits, top_docs->total_hits)) {
         int i;
@@ -287,7 +283,6 @@ void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
         Tmsg_nf("\n");
     }
     Aiequal(total_hits, top_docs->size);
-
     /* FIXME add this code once search_unscored is working
     frt_searcher_search_unscored(searcher, query, buf, ARRAY_SIZE, 0);
     Aaiequal(num_array, buf, total_hits);
@@ -295,30 +290,20 @@ void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
 
     if ((top >= 0) && top_docs->size)
         Aiequal(top, top_docs->hits[0]->doc);
-
-    /* printf("top_docs->size = %d\n", top_docs->size); */
     for (i = 0; i < top_docs->size; i++) {
         FrtHit *hit = top_docs->hits[i];
         float normalized_score = hit->score / top_docs->max_score;
-        Assert(0.0 < normalized_score && normalized_score <= 1.0,
-               "hit->score <%f> is out of range (0.0..1.0]", normalized_score);
-        Assert(frt_ary_includes(num_array, total_hits, hit->doc),
-               "doc %d was found unexpectedly", hit->doc);
+        Assert(0.0 < normalized_score && normalized_score <= 1.0, "hit->score <%f> is out of range (0.0..1.0]", normalized_score);
+        Assert(frt_ary_includes(num_array, total_hits, hit->doc), "doc %d was found unexpectedly", hit->doc);
         /* only check the explanation if we got the correct docs. Obviously we
          * might want to remove this to visually check the explanations */
         if (!tc->failed && total_hits == top_docs->total_hits) {
             FrtExplanation *e = frt_searcher_explain(searcher, query, hit->doc);
             if (! Afequal(hit->score, e->value)) {
                char *t;
-               Tmsg("\n\"\"\"\n%d>>\n%f\n%s\n\"\"\"\n", hit->doc, hit->score,
-                      t = frt_expl_to_s(e));
+               Tmsg("\n\"\"\"\n%d>>\n%f\n%s\n\"\"\"\n", hit->doc, hit->score, t = frt_expl_to_s(e));
                free(t);
             }
-/*
-char *t;
-printf("\n\"\"\"\n%d>>\n%f\n%s\n\"\"\"\n", hit->doc, hit->score, t = frt_expl_to_s(e));
-free(t);
-*/
             frt_expl_destroy(e);
         }
     }
@@ -326,12 +311,10 @@ free(t);
 
     /* test search_unscored method */
     qsort(num_array, total_hits, sizeof(int), &frt_icmp_risky);
-    count = frt_searcher_search_unscored(searcher, query,
-                                     num_array2, ARRAY_SIZE, 0);
+    count = frt_searcher_search_unscored(searcher, query, num_array2, ARRAY_SIZE, 0);
     Aaiequal(num_array, num_array2, total_hits);
     if (count > 3) {
-        count = frt_searcher_search_unscored(searcher, query,
-                                         num_array2, ARRAY_SIZE, num_array2[3]);
+        count = frt_searcher_search_unscored(searcher, query, num_array2, ARRAY_SIZE, num_array2[3]);
         Aaiequal(num_array + 3, num_array2, count);
     }
     frt_p_resume();
