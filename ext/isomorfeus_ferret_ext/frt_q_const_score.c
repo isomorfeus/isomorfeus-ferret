@@ -73,15 +73,11 @@ static FrtExplanation *csw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     FrtBitVector *bv = frt_filt_get_bv(filter, ir);
 
     if (frt_bv_get(bv, doc_num)) {
-        expl = frt_expl_new(self->value,
-                        "ConstantScoreQuery(%s), product of:", filter_str);
+        expl = frt_expl_new(self->value, "ConstantScoreQuery(%s), product of:", filter_str);
         frt_expl_add_detail(expl, frt_expl_new(self->query->boost, "boost"));
         frt_expl_add_detail(expl, frt_expl_new(self->qnorm, "query_norm"));
-    }
-    else {
-        expl = frt_expl_new(self->value,
-                        "ConstantScoreQuery(%s), does not match id %d",
-                        filter_str, doc_num);
+    } else {
+        expl = frt_expl_new(self->value, "ConstantScoreQuery(%s), does not match id %d", filter_str, doc_num);
     }
     free(filter_str);
     return expl;

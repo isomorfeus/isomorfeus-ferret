@@ -83,8 +83,7 @@ static FrtExplanation *maw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
         frt_expl_add_detail(expl, frt_expl_new(self->query->boost, "boost"));
         frt_expl_add_detail(expl, frt_expl_new(self->qnorm, "query_norm"));
     } else {
-        expl = frt_expl_new(self->value,
-                        "MatchAllQuery: doc %d was deleted", doc_num);
+        expl = frt_expl_new(self->value, "MatchAllQuery: doc %d was deleted", doc_num);
     }
 
     return expl;

@@ -170,11 +170,9 @@ static char *fq_to_s(FrtQuery *self, FrtSymbol default_field)
     char *query_str = fq->query->to_s(fq->query, default_field);
     char *buffer;
     if (self->boost == 1.0) {
-        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)",
-                        query_str, filter_str);
+        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)", query_str, filter_str);
     } else {
-        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)^%f",
-                        query_str, filter_str, self->boost);
+        buffer = frt_strfmt("FilteredQuery(query:%s, filter:%s)^%f", query_str, filter_str, self->boost);
     }
     free(filter_str);
     free(query_str);
