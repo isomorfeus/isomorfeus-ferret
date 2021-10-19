@@ -301,9 +301,10 @@ void frt_fi_deref(FrtFieldInfo *fi)
 
 char *frt_fi_to_s(FrtFieldInfo *fi)
 {
-    char *str = FRT_ALLOC_N(char, strlen((char *)fi->name) + 200);
+    const char *fi_name = rb_id2name(fi->name);
+    char *str = FRT_ALLOC_N(char, strlen(fi_name) + 200);
     char *s = str;
-    s += sprintf(str, "[\"%s\":(%s%s%s%s%s%s%s", (char *)fi->name,
+    s += sprintf(str, "[\"%s\":(%s%s%s%s%s%s%s", fi_name,
                  fi_is_stored(fi) ? "is_stored, " : "",
                  fi_is_indexed(fi) ? "is_indexed, " : "",
                  fi_is_tokenized(fi) ? "is_tokenized, " : "",
@@ -349,7 +350,7 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
     if (!frt_h_set_safe(fis->field_dict, (void *)fi->name, fi)) {
-        FRT_RAISE(FRT_ARG_ERROR, "Field :%s already exists", (char *)fi->name);
+        FRT_RAISE(FRT_ARG_ERROR, "Field :%s already exists", rb_id2name(fi->name));
     }
     fi->number = fis->size;
     fis->fields[fis->size] = fi;
@@ -506,7 +507,7 @@ char *frt_fis_to_s(FrtFieldInfos *fis)
                        "    store: %s\n"
                        "    index: %s\n"
                        "    term_vector: %s\n",
-                       (char *)fi->name, fi->boost, fi_store_str(fi),
+                       rb_id2name(fi->name), fi->boost, fi_store_str(fi),
                        fi_index_str(fi), fi_term_vector_str(fi));
     }
 

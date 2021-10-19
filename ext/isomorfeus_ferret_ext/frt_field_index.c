@@ -60,7 +60,7 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
         self = FRT_ALLOC(FrtFieldIndex);
         self->klass = klass;
         /* FieldIndex only lives as long as the IndexReader lives so we can
-         * just use the field_infos field string */
+         * just use the field_infos field symbol */
         self->field = fi->name;
 
         length = ir->max_doc(ir);
