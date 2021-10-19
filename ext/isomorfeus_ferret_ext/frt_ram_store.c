@@ -346,18 +346,7 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename)
     FrtInStream *is = NULL;
 
     if (rf == NULL) {
-        /*
-        FrtHash *ht = store->dir.ht;
-        int i;
-        printf("\nlooking for %s, %ld\n", filename, frt_str_hash(filename));
-        for (i = 0; i <= ht->mask; i++) {
-            if (ht->table[i].value)
-                printf("%s, %ld  --  %ld\n", (char *)ht->table[i].key,
-                       frt_str_hash(ht->table[i].key), ht->table[i].hash);
-        }
-        */
-        FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR,
-              "tried to open \"%s\" but it doesn't exist", filename);
+        FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR, "tried to open \"%s\" but it doesn't exist", filename);
     }
     FRT_REF(rf);
     is = frt_is_new();

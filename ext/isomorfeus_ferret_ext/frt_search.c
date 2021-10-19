@@ -1088,10 +1088,6 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
         score_docs = FRT_ALLOC_N(FrtHit *, num_docs);
         for (i = num_docs - 1; i >= 0; i--) {
             score_docs[i] = hq_pop(hq);
-            /*
-            printf("score_docs[i][%d] = [%ld] => %d-->%f\n", i,
-                   score_docs[i], score_docs[i]->doc, score_docs[i]->score);
-            */
         }
     } else {
         num_docs = 0;
@@ -1679,20 +1675,16 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
         hq_pop = &hit_pq_pop;
     }
 
-    /*if (sort) printf("sort = %s\n", frt_sort_to_s(sort)); */
     for (i = 0; i < MSEA(self)->s_cnt; i++) {
         FrtSearcher *s = MSEA(self)->searchers[i];
         FrtTopDocs *td = s->search_w(s, weight, 0, max_size,
                                   filter, sort, post_filter, true);
-        /*if (sort) printf("sort = %s\n", frt_sort_to_s(sort)); */
         if (td->size > 0) {
-            /*printf("td->size = %d %d\n", td->size, num_docs); */
             int j;
             int start = MSEA(self)->starts[i];
             for (j = 0; j < td->size; j++) {
                 FrtHit *hit = td->hits[j];
                 hit->doc += start;
-                // printf("adding hit = %d:%f from %i\n", hit->doc, hit->score, i);
                 hq_insert(hq, hit);
             }
             td->size = 0;
@@ -1709,10 +1701,6 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
         score_docs = FRT_ALLOC_N(FrtHit *, num_docs);
         for (i = num_docs - 1; i >= 0; i--) {
             score_docs[i] = hq_pop(hq);
-            /*
-            FrtHit *hit = score_docs[i] = hq_pop(hq);
-            printf("popped hit = %d-->%f\n", hit->doc, hit->score);
-            */
         }
     } else {
         num_docs = 0;

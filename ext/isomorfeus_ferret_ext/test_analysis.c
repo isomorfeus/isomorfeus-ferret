@@ -1025,7 +1025,6 @@ static void test_stemmer(TestCase *tc, void *data)
 
     while (*st) {
         stemmer_cnt++;
-        /* printf("%d. -> %s\n", stemmer_cnt, *st); */
         st++;
     }
 
