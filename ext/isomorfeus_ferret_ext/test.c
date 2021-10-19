@@ -46,7 +46,7 @@ static int f_cnt = 0;/* number of failures */
 /* This is the size of the error diagnostics buffer. If you are getting too
  * many errors and the end of the buffer is being reached you can set it here.
  */
-#define MAX_MSG_SIZE 100000
+#define MAX_MSG_SIZE 1000000
 static char msg_buf[MAX_MSG_SIZE] = "";
 static char *msg_bufp = msg_buf;
 
