@@ -358,8 +358,7 @@ static const char *signal_to_string(int signum)
 static void sighandler_crash(int signum)
 {
     frt_print_stacktrace();
-    FRT_XEXIT("Signal", "Exiting on signal %s (%d)",
-             signal_to_string(signum), signum);
+    FRT_XEXIT("Signal", "Exiting on signal %s (%d)", signal_to_string(signum), signum);
 }
 
 #define SETSIG_IF_UNSET(sig, handler) do { \
