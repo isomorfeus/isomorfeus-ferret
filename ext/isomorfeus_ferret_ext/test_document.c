@@ -10,7 +10,7 @@ void test_df_standard(TestCase *tc, void *data)
     df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Life of Pi"));
     df->destroy_data = true;
     Aiequal(1, df->size);
-    Asequal("title", df->name);
+    Asequal("title", rb_id2name(df->name));
     Asequal("Life of Pi", df->data[0]);
     Aiequal(strlen("Life of Pi"), df->lengths[0]);
     Asequal("title: \"Life of Pi\"", s = frt_df_to_s(df));
@@ -20,7 +20,7 @@ void test_df_standard(TestCase *tc, void *data)
 
     df = frt_df_add_data_len(frt_df_new(rb_intern("title")), "new title", 9);
     Aiequal(1, df->size);
-    Asequal("title", df->name);
+    Asequal("title", rb_id2name(df->name));
     Asequal("new title", df->data[0]);
     Aiequal(9, df->lengths[0]);
     frt_df_destroy(df);
@@ -36,7 +36,7 @@ void test_df_multi_fields(TestCase *tc, void *data)
     df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Vernon God Little"));
     df->destroy_data = true;
     Aiequal(1, df->size);
-    Asequal("title", df->name);
+    Asequal("title", rb_id2name(df->name));
     Asequal("Vernon God Little", df->data[0]);
     Aiequal(strlen("Vernon God Little"), df->lengths[0]);
 
@@ -47,7 +47,7 @@ void test_df_multi_fields(TestCase *tc, void *data)
     free(s);
     frt_df_add_data_len(df, frt_estrdup("and more data"), 14);
     Aiequal(3, df->size);
-    Asequal("title", df->name);
+    Asequal("title", rb_id2name(df->name));
     Asequal("Vernon God Little", df->data[0]);
     Asequal("some more data", df->data[1]);
     Asequal("and more data", df->data[2]);
@@ -82,10 +82,10 @@ void test_doc(TestCase *tc, void *data)
     frt_df_add_data(df, "data4");
     frt_doc_add_field(doc, df);
     Aiequal(2, doc->size);
-    Asequal("title", frt_doc_get_field(doc, rb_intern("title"))->name);
+    Asequal("title", rb_id2name(frt_doc_get_field(doc, rb_intern("title"))->name));
     Aiequal(1, frt_doc_get_field(doc, rb_intern("title"))->size);
     Asequal("title", frt_doc_get_field(doc, rb_intern("title"))->data[0]);
-    Asequal("data", frt_doc_get_field(doc, rb_intern("data"))->name);
+    Asequal("data", rb_id2name(frt_doc_get_field(doc, rb_intern("data"))->name));
     Aiequal(4, frt_doc_get_field(doc, rb_intern("data"))->size);
     Asequal("data1", frt_doc_get_field(doc, rb_intern("data"))->data[0]);
     Asequal("data2", frt_doc_get_field(doc, rb_intern("data"))->data[1]);
