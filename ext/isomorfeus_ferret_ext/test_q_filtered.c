@@ -15,8 +15,7 @@ static void test_filtered_query(TestCase *tc, void *data)
     q = frt_fq_new(frt_maq_new(), frt_rfilt_new(num, "2", "6", true, true));
     check_hits(tc, searcher, q, "2,3,4,5,6", -1);
     frt_q_deref(q);
-    q = frt_fq_new(frt_tq_new(flipflop, "on"),
-                  frt_rfilt_new(num, "2", "6", true, true));
+    q = frt_fq_new(frt_tq_new(flipflop, "on"), frt_rfilt_new(num, "2", "6", true, true));
     check_hits(tc, searcher, q, "2,4,6", -1);
     frt_q_deref(q);
     q = frt_fq_new(frt_maq_new(), frt_rfilt_new(num, "2", "6", true, false));
