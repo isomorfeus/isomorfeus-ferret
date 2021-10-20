@@ -214,8 +214,7 @@ static bool phsc_do_next(FrtScorer *self)
                 first = phrase_positions[pp_first_idx];
                 last =  phrase_positions[FRT_PREV_NUM(pp_first_idx, pp_cnt)];
                 phsc->more = pp_next(last);     /* trigger further scanning */
-            }
-            else {
+            } else {
                 self->doc = first->doc;
                 return true;                    /* found a match */
             }
@@ -449,6 +448,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
     bool done = false;
     bool check_repeats = phsc->check_repeats;
     float freq = 0.0f;
+
     for (i = 0; i < pp_cnt; i++) {
         bool res;
         pp = phsc->phrase_pos[i];
