@@ -2464,7 +2464,7 @@ frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
 static void
 frb_add_each_tv(void *key, void *value, void *rtvs)
 {
-    rb_hash_aset((VALUE)rtvs, ID2SYM(rb_intern(key)), frb_get_tv(value));
+    rb_hash_aset((VALUE)rtvs, ID2SYM((FrtSymbol)key), frb_get_tv(value));
 }
 
 /*
@@ -2483,7 +2483,6 @@ frb_ir_term_vectors(VALUE self, VALUE rdoc_id)
     VALUE rtvs = rb_hash_new();
     frt_h_each(tvs, &frb_add_each_tv, (void *)rtvs);
     frt_h_destroy(tvs);
-
     return rtvs;
 }
 
