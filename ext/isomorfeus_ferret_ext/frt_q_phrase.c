@@ -23,8 +23,7 @@ static int phrase_pos_cmp(const void *p1, const void *p2)
     if (pos1 < pos2) {
         return -1;
     }
-    return strcmp(((FrtPhrasePosition *)p1)->terms[0],
-                  ((FrtPhrasePosition *)p2)->terms[0]);
+    return strcmp(((FrtPhrasePosition *)p1)->terms[0], ((FrtPhrasePosition *)p2)->terms[0]);
 }
 
 
@@ -474,9 +473,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
         next_pos = PP(frt_pq_top(pq))->position;
         while (pos <= next_pos) {
             start = pos;        /* advance pp to min window */
-            if (!pp_next_position(pp)
-                || (check_repeats
-                    && !sphsc_check_repeats(pp, phsc->phrase_pos, pp_cnt))) {
+            if (!pp_next_position(pp) || (check_repeats && !sphsc_check_repeats(pp, phsc->phrase_pos, pp_cnt))) {
                 done = true;
                 break;
             }
@@ -756,8 +753,7 @@ static TVPosEnum *tvpe_new(int *positions, int size, int offset)
     return self;
 }
 
-static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
-                                 int offset)
+static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv, int offset)
 {
     int i, total_positions = 0;
     FrtPriorityQueue *tvpe_pq = frt_pq_new(t_cnt, (frt_lt_ft)tvpe_lt, &free);
@@ -776,8 +772,7 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
     }
     if (tvpe_pq->size == 0) {
         frt_pq_destroy(tvpe_pq);
-    }
-    else {
+    } else {
         int index = 0;
         self = (TVPosEnum *)frt_emalloc(sizeof(TVPosEnum)
                                     + total_positions * sizeof(int));
@@ -788,11 +783,10 @@ static TVPosEnum *tvpe_new_merge(char **terms, int t_cnt, FrtTermVector *tv,
         while (tvpe_pq->size > 0) {
             TVPosEnum *top = (TVPosEnum *)frt_pq_top(tvpe_pq);
             self->positions[index++] = top->pos;
-            if (! tvpe_next(top)) {
+            if (!tvpe_next(top)) {
                 frt_pq_pop(tvpe_pq);
                 free(top);
-            }
-            else {
+            } else {
                 frt_pq_down(tvpe_pq);
             }
         }
@@ -809,8 +803,7 @@ static TVPosEnum *get_tvpe(FrtTermVector *tv, char **terms, int t_cnt, int offse
         if (tv_term) {
             tvpe = tvpe_new(tv_term->positions, tv_term->freq, offset);
         }
-    }
-    else {
+    } else {
         tvpe = tvpe_new_merge(terms, t_cnt, tv, offset);
     }
     return tvpe;
@@ -836,14 +829,13 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtT
                         last_pos = tvpe->pos;
                     }
                     frt_pq_push(tvpe_pq, tvpe);
-                }
-                else {
+                } else {
                     done = true;
                     free(tvpe);
                     break;
                 }
             }
-            while (! done) {
+            while (!done) {
                 TVPosEnum *tvpe = (TVPosEnum *)frt_pq_pop(tvpe_pq);
                 int pos;
                 int start = pos = tvpe->pos;
@@ -857,7 +849,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtT
                     pos = tvpe->pos;
                 }
 
-                if (last_pos - start <= slop) {
+                if ((last_pos - start) <= slop) {
                     int min, max = min = start + tvpe->offset;
                     for (i = tvpe_pq->size; i > 0; i--) {
                         TVPosEnum *t = (TVPosEnum *)tvpe_pq->heap[i];
@@ -874,8 +866,7 @@ static FrtMatchVector *phq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtT
             }
 
             frt_pq_destroy(tvpe_pq);
-        }
-        else { /* exact match */
+        } else { /* exact match */
             TVPosEnum **tvpe_a = FRT_ALLOC_AND_ZERO_N(TVPosEnum *, pos_cnt);
             TVPosEnum *first, *last;
             int first_index = 0;
