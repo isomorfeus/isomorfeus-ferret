@@ -217,18 +217,18 @@ static void test_hash_ptr(TestCase *tc, void *data)
     Aiequal(3, h->size);
     for (i = 0; i < HASH_INT_TEST_SIZE; i++) {
         char *str = frt_strfmt("<%d>", i);
-        frt_h_set(h, str, str);
+        frt_h_set(h, (void *)rb_intern(str), str);
     }
-    Asequal("<0>", frt_h_get(h, "<0>"));
-    Asequal("<100>", frt_h_get(h, "<100>"));
+    Asequal("<0>", frt_h_get(h, (void *)rb_intern("<0>")));
+    Asequal("<100>", frt_h_get(h, (void *)rb_intern("<100>")));
     for (i = 0; i < HASH_INT_TEST_SIZE; i++) {
         sprintf(buf, "<%d>", i);
-        Asequal(buf, frt_h_get(h, buf));
+        Asequal(buf, frt_h_get(h, (void *)rb_intern(buf)));
     }
 
     for (i = 0; i < HASH_INT_TEST_SIZE; i++) {
         sprintf(buf, "<%d>", i);
-        frt_h_del(h, buf);
+        frt_h_del(h, (void *)rb_intern(buf));
     }
     Aiequal(3, h->size);
 

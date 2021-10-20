@@ -70,21 +70,21 @@ static void test_hs_ptr(TestCase *tc, void *data)
     Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_add(hs, (void *)word1));
     Aiequal(1, hs->size);
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_exists(hs, (void *)word1));
-    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, (void *)rb_intern("one")));
+    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, "one"));
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_add(hs, (void *)word1));
     Aiequal(1, hs->size);
 
     Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_add(hs, (void *)word2));
     Aiequal(2, hs->size);
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_exists(hs, (void *)word2));
-    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, (void *)rb_intern("two")));
+    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, "two"));
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_add(hs, (void *)word2));
     Aiequal(2, hs->size);
 
     Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_add(hs, (void *)word_one));
     Aiequal(3, hs->size);
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_exists(hs, word_one));
-    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, (void *)rb_intern("one")));
+    Aiequal(FRT_HASH_KEY_DOES_NOT_EXIST, frt_hs_exists(hs, "one"));
     Aiequal(FRT_HASH_KEY_SAME, frt_hs_add(hs, (void *)word_one));
     Aiequal(3, hs->size);
 
