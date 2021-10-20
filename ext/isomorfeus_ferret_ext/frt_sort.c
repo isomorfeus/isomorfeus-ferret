@@ -16,7 +16,7 @@ static FrtSortField *sort_field_alloc(FrtSymbol field,
     void (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable),
     const FrtFieldIndexClass *field_index_class)
 {
-    FrtSortField *self         = FRT_ALLOC(FrtSortField);
+    FrtSortField *self      = FRT_ALLOC(FrtSortField);
     self->field             = field;
     self->type              = type;
     self->reverse           = reverse;
@@ -579,8 +579,7 @@ FrtHit *frt_fshq_pq_pop_fd(FrtPriorityQueue *pq)
         pq->size--;
         fshq_pq_down(pq);                   /* adjust heap */
 
-        field_doc = (FrtFieldDoc *)frt_emalloc(sizeof(FrtFieldDoc)
-                                        + sizeof(FrtComparable) * cmp_cnt);
+        field_doc = (FrtFieldDoc *)frt_emalloc(sizeof(FrtFieldDoc) + sizeof(FrtComparable) * cmp_cnt);
         comparables = field_doc->comparables;
         memcpy(field_doc, hit, sizeof(FrtHit));
         field_doc->size = cmp_cnt;
