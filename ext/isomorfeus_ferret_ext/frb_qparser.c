@@ -52,7 +52,7 @@ frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
 
     if (rfields == Qnil) return NULL;
 
-    fields = frt_hs_new_str(NULL);
+    fields = frt_hs_new_ptr(NULL);
     if (TYPE(rfields) == T_ARRAY) {
         int i;
         for (i = 0; i < RARRAY_LEN(rfields); i++) {
@@ -182,7 +182,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
         }
     }
     if (all_fields == NULL) {
-        all_fields = frt_hs_new_str(NULL);
+        all_fields = frt_hs_new_ptr(NULL);
     }
     if (!analyzer) {
         analyzer = frt_mb_standard_analyzer_new(true);
@@ -304,7 +304,7 @@ frb_qp_set_fields(VALUE self, VALUE rfields)
     if (qp->tokenized_fields == qp->all_fields) qp->tokenized_fields = NULL;
 
     if (fields == NULL) {
-        fields = frt_hs_new_str(NULL);
+        fields = frt_hs_new_ptr(NULL);
     }
 
     /* make sure all the fields in tokenized fields are contained in
