@@ -333,7 +333,7 @@ TestSuite *ts_sort(TestSuite *suite)
 
     do_byte_test = false;
 
-#ifdef POSH_OS_WIN32
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
     fs_store = frt_open_fs_store(".\\test\\testdir\\store");
 #else
     fs_store = frt_open_fs_store("./test/testdir/store");

@@ -6,7 +6,7 @@
 #define TEST_WORD_LIST_SIZE 1930
 #define TEST_WORD_LIST_MAX_LEN 23
 
-#ifdef POSH_OS_WIN32
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
 #define TEST_DIR ".\\test\\testdir\\store"
 #else
 #define TEST_DIR "./test/testdir/store"
