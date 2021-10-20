@@ -1149,6 +1149,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
 TestSuite *ts_analysis(TestSuite *suite)
 {
     bool u = false;
+    char *original_locale = setlocale(LC_ALL, NULL);
     char *locale = setlocale(LC_ALL, "");
     if (locale && (strstr(locale, "utf") || strstr(locale, "UTF"))) u = true;
 
@@ -1217,5 +1218,6 @@ TestSuite *ts_analysis(TestSuite *suite)
         tst_run_test(suite, test_stem_filter, NULL);
     }
 
+    setlocale(LC_ALL, original_locale);
     return suite;
 }
