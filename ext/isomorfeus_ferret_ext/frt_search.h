@@ -811,12 +811,9 @@ struct FrtSearcher
 #define frt_searcher_rewrite(s, q)          s->rewrite(s, q)
 #define frt_searcher_explain(s, q, dn)      s->explain(s, q, dn)
 #define frt_searcher_close(s)               s->close(s)
-#define frt_searcher_search(s, q, fd, nd, filt, sort, ff)\
-    s->search(s, q, fd, nd, filt, sort, ff, false)
-#define frt_searcher_search_each(s, q, filt, ff, fn, arg)\
-    s->search_each(s, q, filt, ff, fn, arg)
-#define frt_searcher_search_unscored(s, q, buf, limit, offset_docnum)\
-    s->search_unscored(s, q, buf, limit, offset_docnum)
+#define frt_searcher_search(s, q, fd, nd, filt, sort, ff)   s->search(s, q, fd, nd, filt, sort, ff, false)
+#define frt_searcher_search_each(s, q, filt, ff, fn, arg)   s->search_each(s, q, filt, ff, fn, arg)
+#define frt_searcher_search_unscored(s, q, buf, limit, offset_docnum)   s->search_unscored(s, q, buf, limit, offset_docnum)
 
 extern FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
                                               FrtQuery *query,
