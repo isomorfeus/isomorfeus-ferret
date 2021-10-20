@@ -1728,19 +1728,19 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
 
     tvs = ir->term_vectors(ir, 3);
     Aiequal(3, tvs->size);
-    tv = (FrtTermVector *)frt_h_get(tvs, "author");
+    tv = (FrtTermVector *)frt_h_get(tvs, (void *)rb_intern("author"));
     if (Apnotnull(tv)) {
         Asequal("author", rb_id2name(tv->field));
         Aiequal(2, tv->term_cnt);
         Aiequal(0, tv->offset_cnt);
         Apnull(tv->offsets);
     }
-    tv = (FrtTermVector *)frt_h_get(tvs, "body");
+    tv = (FrtTermVector *)frt_h_get(tvs, (void *)rb_intern("body"));
     if (Apnotnull(tv)) {
         Asequal("body", rb_id2name(tv->field));
         Aiequal(4, tv->term_cnt);
     }
-    tv = (FrtTermVector *)frt_h_get(tvs, "title");
+    tv = (FrtTermVector *)frt_h_get(tvs, (void *)rb_intern("title"));
     if (Apnotnull(tv)) {
         Asequal("title", rb_id2name(tv->field));
         Aiequal(1, tv->term_cnt); /* untokenized */
