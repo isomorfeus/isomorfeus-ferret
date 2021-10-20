@@ -111,7 +111,7 @@ class IndexTest < Test::Unit::TestCase
     assert_equal(7, index.size)
     q = "two AND (field3:f*)"
     check_results(index, q, [7])
-    
+
     doc.load
     doc[:field2] = "dave"
     index << doc
@@ -477,7 +477,6 @@ class IndexTest < Test::Unit::TestCase
 
   def test_index_key_batch1
     data0 = {
-      #"0" => {:id => "0", :val => "one"},
       "0" => {:id => "0", :val => "two"},
       "1" =>{:id => "1", :val => "three"},
       "2" => {:id => "1", :val => "four"},
@@ -543,8 +542,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_index_multi_key
-    index = Index.new(:analyzer => WhiteSpaceAnalyzer.new,
-                      :key => [:id, :table])
+    index = Index.new(:analyzer => WhiteSpaceAnalyzer.new, :key => [:id, :table])
     [
       {:id => 0, :table => "product", :product => "tent"},
       {:id => 0, :table => "location", :location => "first floor"},
@@ -635,7 +633,7 @@ class IndexTest < Test::Unit::TestCase
 
     index.close
   end
-  
+
   # this test has been corrected to work as intended
   # it now fails the same way on both 1.8 and 1.9 -- sds
   def test_auto_flush
@@ -690,7 +688,7 @@ class IndexTest < Test::Unit::TestCase
     field_infos.add_field(:id, :store => :yes, :index => :untokenized)
 
     i = Isomorfeus::Ferret::Index::Index.new(:or_default => false, :default_search_field => '*')
- 
+
     # adding this additional field to the document leads to failure below
     # comment out this statement and all tests pass:
     i << {:id => 1, :content => "Move or shake"}
@@ -724,7 +722,7 @@ class IndexTest < Test::Unit::TestCase
     end
 
     threads.each{|t| t.join }
-  end 
+  end
 
   def test_wildcard
     j = nil
@@ -739,7 +737,7 @@ class IndexTest < Test::Unit::TestCase
       assert_equal(2, i.search('id:?*').total_hits)
       j = i
     end
-    assert_raise(StandardError) {j.close} 
+    assert_raise(StandardError) {j.close}
   end
 
   def check_highlight(index, q, excerpt_length, num_excerpts, expected, field = :field)
@@ -775,7 +773,7 @@ class IndexTest < Test::Unit::TestCase
         "how it goes"
       ]
     ].each {|doc| index << doc }
-    
+
     check_highlight(index, "one", 10, 1, ["...are <b>one</b>..."])
     check_highlight(index, "one", 10, 2,
                     ["...are <b>one</b>...","...this; <b>one</b>..."])
@@ -793,17 +791,17 @@ class IndexTest < Test::Unit::TestCase
                     ["the words we are searching for are <b>one</b> and two also " +
                      "sometimes looking for them as a phrase like this; <b>one</b> " +
                      "two lets see how it goes"])
-    check_highlight(index, "(one two)", 15, 2, 
+    check_highlight(index, "(one two)", 15, 2,
                     ["...<b>one</b> and <b>two</b>...","...this; <b>one</b> <b>two</b>..."])
-    check_highlight(index, 'one two "one two"', 15, 2, 
+    check_highlight(index, 'one two "one two"', 15, 2,
                     ["...<b>one</b> and <b>two</b>...","...this; <b>one two</b>..."])
-    check_highlight(index, 'one two "one two"', 15, 1, 
+    check_highlight(index, 'one two "one two"', 15, 1,
                     ["...this; <b>one two</b>..."])
     check_highlight(index, '"one two"', 15, 1, nil, :not_a_field)
     check_highlight(index, 'wrong_field:one', 15, 1, nil, :wrong_field)
-    check_highlight(index, '"the words" "for are one and two" words one two', 10, 1, 
+    check_highlight(index, '"the words" "for are one and two" words one two', 10, 1,
                     ["<b>the words</b>..."])
-    check_highlight(index, '"the words" "for are one and two" words one two', 20, 2, 
+    check_highlight(index, '"the words" "for are one and two" words one two', 20, 2,
                     ["<b>the words</b> we are...","...<b>for are one and two</b>..."])
     index.close
   end
