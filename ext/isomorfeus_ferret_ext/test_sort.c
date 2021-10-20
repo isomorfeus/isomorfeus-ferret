@@ -102,8 +102,7 @@ static void do_test_top_docs(TestCase *tc, FrtSearcher *searcher, FrtQuery *quer
     static int num_array[ARRAY_SIZE];
     int i;
     int total_hits = s2l(expected_hits, num_array);
-    FrtTopDocs *top_docs = frt_searcher_search(searcher, query, 0,
-                                        total_hits, NULL, sort, NULL);
+    FrtTopDocs *top_docs = frt_searcher_search(searcher, query, 0, total_hits, NULL, sort, NULL);
     Aiequal(total_hits, top_docs->total_hits);
     Aiequal(total_hits, top_docs->size);
 
