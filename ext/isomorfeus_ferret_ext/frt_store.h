@@ -172,7 +172,7 @@ struct FrtStore
         FrtCompoundStore *cmpd; /* for compound_store only */
     } dir;
 
-#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
     int file_mode;
 #else
     mode_t file_mode;

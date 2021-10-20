@@ -122,7 +122,7 @@ DJGPP:
 
 Cray's C compiler:
    - _ADDR64: if 64-bit pointers
-   - _UNICOS: 
+   - _UNICOS:
    - __unix:
 
 SGI's CC compiler predefines the following (and more) with -ansi:
@@ -227,12 +227,12 @@ Metrowerks:
 
 #if ( defined __host_mips || defined __sgi ) && !defined __GNUC__
 #  define POSH_COMPILER_STRING    "MIPSpro C/C++"
-#  define POSH_COMPILER_MIPSPRO 1 
+#  define POSH_COMPILER_MIPSPRO 1
 #endif
 
 #if defined __hpux && !defined __GNUC__
 #  define POSH_COMPILER_STRING "HP-UX CC"
-#  define POSH_COMPILER_HPCC 1 
+#  define POSH_COMPILER_HPCC 1
 #endif
 
 #if defined __GNUC__
@@ -256,7 +256,7 @@ Metrowerks:
 #endif
 
 #if defined __SUNPRO_C
-#  define POSH_COMPILER_STRING "Sun Pro" 
+#  define POSH_COMPILER_STRING "Sun Pro"
 #  define POSH_COMPILER_SUN 1
 #endif
 
@@ -290,7 +290,7 @@ Metrowerks:
 ** ----------------------------------------------------------------------------
 */
 #if defined linux || defined __linux__
-#  define POSH_OS_LINUX 1 
+#  define POSH_OS_LINUX 1
 #  define POSH_OS_STRING "Linux"
 #endif
 
@@ -327,7 +327,7 @@ Metrowerks:
 #  endif
 #endif
 
-#if defined GO32 && defined DJGPP && defined __MSDOS__ 
+#if defined GO32 && defined DJGPP && defined __MSDOS__
 #  define POSH_OS_GO32 1
 #  define POSH_OS_STRING "GO32/MS-DOS"
 #endif
@@ -391,7 +391,7 @@ Metrowerks:
 #endif
 
 #if defined __unix__
-#  define POSH_OS_UNIX 1 
+#  define POSH_OS_UNIX 1
 #  if !defined POSH_OS_STRING
 #     define POSH_OS_STRING "Unix-like(generic)"
 #  endif
@@ -466,7 +466,7 @@ Metrowerks:
 
 #if defined __sparc__ || defined __sparc
 #  if defined __arch64__ || defined __sparcv9 || defined __sparc_v9__
-#     define POSH_CPU_SPARC64 1 
+#     define POSH_CPU_SPARC64 1
 #     define POSH_CPU_STRING "Sparc/64"
 #  else
 #     define POSH_CPU_STRING "Sparc/32"
@@ -480,7 +480,7 @@ Metrowerks:
 #endif
 
 #if defined mips || defined __mips__ || defined __MIPS__ || defined _MIPS
-#  define POSH_CPU_MIPS 1 
+#  define POSH_CPU_MIPS 1
 #  if defined _R5900
 #    define POSH_CPU_STRING "MIPS R5900 (PS2)"
 #  else
@@ -488,7 +488,7 @@ Metrowerks:
 #  endif
 #endif
 
-#if defined __ia64 || defined _M_IA64 || defined __ia64__ 
+#if defined __ia64 || defined _M_IA64 || defined __ia64__
 #  define POSH_CPU_IA64 1
 #  define POSH_CPU_STRING "IA64"
 #endif
@@ -496,7 +496,7 @@ Metrowerks:
 #if defined __X86__ || defined __i386__ || defined i386 || defined _M_IX86 || defined __386__ || defined __x86_64__ || defined _M_X64
 #  define POSH_CPU_X86 1
 #  if defined __x86_64__ || defined _M_X64
-#     define POSH_CPU_X86_64 1 
+#     define POSH_CPU_X86_64 1
 #  endif
 #  if defined POSH_CPU_X86_64
 #     define POSH_CPU_STRING "AMD x86-64"
@@ -526,7 +526,7 @@ Metrowerks:
 ** -----------------------------------------------------------------------------
 */
 #if !defined POSH_OS_STRING
-#  define POSH_OS_EMBEDDED 1 
+#  define POSH_OS_EMBEDDED 1
 #  if defined _R5900
 #     define POSH_OS_STRING "Sony PS2(embedded)"
 #  else
@@ -550,9 +550,9 @@ Metrowerks:
 #     define POSH_FASTCALL __fastcall
 #  endif
 #else
-#  define POSH_CDECL    
-#  define POSH_STDCALL  
-#  define POSH_FASTCALL 
+#  define POSH_CDECL
+#  define POSH_STDCALL
+#  define POSH_FASTCALL
 #endif
 
 /*
@@ -570,7 +570,7 @@ Metrowerks:
 
 #if defined POSH_DLL
 #   if defined POSH_OS_WIN32
-#      if defined _MSC_VER 
+#      if defined _MSC_VER
 #         if ( _MSC_VER >= 800 )
 #            if defined POSH_BUILDING_LIB
 #               define POSH_IMPORTEXPORT __declspec( dllexport )
@@ -581,13 +581,13 @@ Metrowerks:
 #            if defined POSH_BUILDING_LIB
 #               define POSH_IMPORTEXPORT __export
 #            else
-#               define POSH_IMPORTEXPORT 
+#               define POSH_IMPORTEXPORT
 #            endif
 #         endif
 #      endif  /* defined _MSC_VER */
 #      if defined __BORLANDC__
 #         if ( __BORLANDC__ >= 0x500 )
-#            if defined POSH_BUILDING_LIB 
+#            if defined POSH_BUILDING_LIB
 #               define POSH_IMPORTEXPORT __declspec( dllexport )
 #            else
 #               define POSH_IMPORTEXPORT __declspec( dllimport )
@@ -596,7 +596,7 @@ Metrowerks:
 #            if defined POSH_BUILDING_LIB
 #               define POSH_IMPORTEXPORT __export
 #            else
-#               define POSH_IMPORTEXPORT 
+#               define POSH_IMPORTEXPORT
 #            endif
 #         endif
 #      endif /* defined __BORLANDC__ */
@@ -621,7 +621,7 @@ Metrowerks:
 
 /*
 ** ----------------------------------------------------------------------------
-** (Re)define POSH_PUBLIC_API export signature 
+** (Re)define POSH_PUBLIC_API export signature
 ** ----------------------------------------------------------------------------
 */
 #ifdef POSH_PUBLIC_API
@@ -629,7 +629,7 @@ Metrowerks:
 #endif
 
 #if ( ( defined _MSC_VER ) && ( _MSC_VER < 800 ) ) || ( defined __BORLANDC__ && ( __BORLANDC__ < 0x500 ) )
-#  define POSH_PUBLIC_API(rtype) extern rtype POSH_IMPORTEXPORT 
+#  define POSH_PUBLIC_API(rtype) extern rtype POSH_IMPORTEXPORT
 #else
 #  define POSH_PUBLIC_API(rtype) extern POSH_IMPORTEXPORT rtype
 #endif
@@ -639,11 +639,11 @@ Metrowerks:
 ** Try to infer endianess.  Basically we just go through the CPUs we know are
 ** little endian, and assume anything that isn't one of those is big endian.
 ** As a sanity check, we also do this with operating systems we know are
-** little endian, such as Windows.  Some processors are bi-endian, such as 
+** little endian, such as Windows.  Some processors are bi-endian, such as
 ** the MIPS series, so we have to be careful about those.
 ** ----------------------------------------------------------------------------
 */
-#if defined POSH_CPU_X86 || defined POSH_CPU_AXP || defined POSH_CPU_STRONGARM || defined POSH_OS_WIN32 || defined POSH_OS_WINCE || defined __MIPSEL__
+#if defined POSH_CPU_X86 || defined POSH_CPU_AXP || defined POSH_CPU_STRONGARM || defined POSH_OS_WIN32 || defined POSH_OS_WIN64 || defined POSH_OS_WINCE || defined __MIPSEL__
 #  define POSH_ENDIAN_STRING "little"
 #  define POSH_LITTLE_ENDIAN 1
 #else
@@ -669,7 +669,7 @@ Metrowerks:
 */
 #if defined ( __LP64__ ) || defined ( __powerpc64__ ) || defined POSH_CPU_SPARC64
 #  define POSH_64BIT_INTEGER 1
-typedef long posh_i64_t; 
+typedef long posh_i64_t;
 typedef unsigned long posh_u64_t;
 #  define POSH_I64( x ) ((posh_i64_t)x)
 #  define POSH_U64( x ) ((posh_u64_t)x)
@@ -716,8 +716,8 @@ typedef unsigned long long posh_u64_t;
 ** serialization.
 ** ----------------------------------------------------------------------------
 */
-#define POSH_FALSE 0 
-#define POSH_TRUE  1 
+#define POSH_FALSE 0
+#define POSH_TRUE  1
 
 typedef int            posh_bool_t;
 typedef unsigned char  posh_byte_t;
@@ -732,7 +732,7 @@ typedef signed char    posh_i8_t;
 #  endif /* CHAR_BITS > 8 */
 
 /* 16-bit */
-#  if ( USHRT_MAX == 65535 ) 
+#  if ( USHRT_MAX == 65535 )
    typedef unsigned short posh_u16_t;
    typedef short          posh_i16_t;
 #  else
@@ -773,7 +773,7 @@ typedef signed char    posh_i8_t;
 /** Minimum value for a byte */
 #define POSH_I16_MIN     ( ( posh_i16_t ) 0x8000 )
 /** Maximum value for a 16-bit signed value */
-#define POSH_I16_MAX     ( ( posh_i16_t ) 0x7FFF ) 
+#define POSH_I16_MAX     ( ( posh_i16_t ) 0x7FFF )
 /** Minimum value for a 16-bit unsigned value */
 #define POSH_U16_MIN     0
 /** Maximum value for a 16-bit unsigned value */
@@ -836,7 +836,7 @@ POSH_COMPILE_TIME_ASSERT(posh_i32_t, sizeof(posh_i32_t) == 4);
    triggering this assertion to make sure you're aware of the situation,
    so feel free to delete it.
 
-   If this assertion is triggered on a known 32 or 64-bit platform, 
+   If this assertion is triggered on a known 32 or 64-bit platform,
    please let us know (poshlib@poshlib.org) */
    POSH_COMPILE_TIME_ASSERT( posh_32bit_pointer, sizeof( void * ) == 4 );
 #endif
@@ -847,7 +847,7 @@ POSH_COMPILE_TIME_ASSERT(posh_i32_t, sizeof(posh_i32_t) == 4);
 **
 ** These are optional POSH utility functions that are not required if you don't
 ** need anything except static checking of your host and target environment.
-** 
+**
 ** These functions are NOT wrapped with POSH_PUBLIC_API because I didn't want
 ** to enforce their export if your own library is only using them internally.
 ** ----------------------------------------------------------------------------

@@ -68,7 +68,7 @@ typedef void (*frt_free_ft)(void *key);
     }\
   } while (0)
 
-#if POSH_OS_WIN32
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
 # define Jx fprintf(stderr,"%s, %d\n", __FILE__, __LINE__);
 # define Xj fprintf(stdout,"%s, %d\n", __FILE__, __LINE__);
 #else

@@ -51,7 +51,7 @@ extern int unlink(const char *path);
 
 /* void micro_sleep(const int micro_seconds)
 {
-#if (defined POSH_OS_WIN32 || POSH_OS_WIN64) && !defined __MINGW32__
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64) && !defined __MINGW32__
     Sleep(micro_seconds / 1000);
 #else
     usleep(micro_seconds);

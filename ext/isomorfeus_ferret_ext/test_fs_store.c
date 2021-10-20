@@ -8,7 +8,7 @@
 TestSuite *ts_fs_store(TestSuite *suite)
 {
 
-#ifdef POSH_OS_WIN32
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
     FrtStore *store = frt_open_fs_store(".\\test\\testdir\\store");
 #else
     FrtStore *store = frt_open_fs_store("./test/testdir/store");
