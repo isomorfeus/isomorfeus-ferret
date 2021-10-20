@@ -2591,8 +2591,7 @@ static bool stde_next(FrtTermDocEnum *tde)
         stde->doc_num += doc_code >> 1;    /* shift off low bit */
         if (0 != (doc_code & 1)) {         /* if low bit is set */
             stde->freq = 1;                /* freq is one */
-        }
-        else {
+        } else {
             stde->freq = (int)frt_is_read_vint(stde->frq_in); /* read freq */
         }
 
@@ -2790,8 +2789,7 @@ static bool stpe_next(FrtTermDocEnum *tde)
         stde->prx_cnt = stde->freq;
         stde->position = 0;
         return true;
-    }
-    else {
+    } else {
         stde->prx_cnt = stde->position = 0;
         return false;
     }
