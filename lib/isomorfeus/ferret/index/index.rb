@@ -238,26 +238,26 @@ module Isomorfeus
         # IndexWriter::MAX_FIELD_LENGTH terms for a given field, the remainder are
         # discarded.
         #
-        # There are three ways to add a document to the index. 
+        # There are three ways to add a document to the index.
         # To add a document you can simply add a string or an array of strings.
         # This will store all the strings in the "" (ie empty string) field
         # (unless you specify the default_field when you create the index).
         #
         #   index << "This is a new document to be indexed"
         #   index << ["And here", "is another", "new document", "to be indexed"]
-        # 
+        #
         # But these are pretty simple documents. If this is all you want to index
         # you could probably just use SimpleSearch. So let's give our documents
         # some fields;
-        # 
+        #
         #   index << {:title => "Programming Ruby", :content => "blah blah blah"}
         #   index << {:title => "Programming Ruby", :content => "yada yada yada"}
-        # 
+        #
         # Or if you are indexing data stored in a database, you'll probably want
         # to store the id;
-        # 
+        #
         #   index << {:id => row.id, :title => row.title, :date => row.date}
-        # 
+        #
         # See FieldInfos for more information on how to set field properties.
         def add_document(doc, analyzer = nil)
           @dir.synchronize do
@@ -371,7 +371,7 @@ module Isomorfeus
         #               and the Searcher object as its parameters and returns a
         #               Boolean value specifying whether the result should be
         #               included in the result set.
-        # 
+        #
         # returns:: The total number of hits.
         #
         # === Example
@@ -401,7 +401,7 @@ module Isomorfeus
         # to look at every single match to decide which one has the highest score.
         # This search method just needs to find +:limit+ number of matches before
         # it returns.
-        # 
+        #
         # === Options
         #
         # start_doc::     Default: 0. The start document to start the search from.
@@ -532,7 +532,7 @@ module Isomorfeus
         end
 
         # Delete all documents returned by the query.
-        # 
+        #
         # query:: The query to find documents you wish to delete. Can either be a
         #         string (in which case it is parsed by the standard query parser)
         #         or an actual query object.
@@ -548,11 +548,11 @@ module Isomorfeus
           end
         end
 
-        # Returns true if document +n+ has been deleted 
+        # Returns true if document +n+ has been deleted
         def deleted?(n)
-          @dir.synchronize do 
+          @dir.synchronize do
             ensure_reader_open()
-            return @reader.deleted?(n) 
+            return @reader.deleted?(n)
           end
         end
 
@@ -629,8 +629,7 @@ module Isomorfeus
             when Array
               ids = docs.collect{|doc| doc[@id_field].to_s}
               if ids.include?(nil)
-                raise ArgumentError, "all documents must have an #{@id_field} " 
-                                    "field when doing a batch update"
+                raise ArgumentError, "all documents must have an #{@id_field} field when doing a batch update"
               end
             when Hash
               ids = docs.keys
@@ -662,7 +661,7 @@ module Isomorfeus
         #   index << {:id => "26", :title => "Babylon", :artist => "David Grey"}
         #   index << {:id => "29", :title => "My Oh My", :artist => "David Grey"}
         #
-        #   # correct 
+        #   # correct
         #   index.query_update('artist:"David Grey"', {:artist => "David Gray"})
         #
         #   index["26"]
@@ -700,7 +699,7 @@ module Isomorfeus
             return @reader.has_deletions?
           end
         end
-        
+
         # Flushes all writes to the index. This will not optimize the index but it
         # will make sure that all writes are written to it.
         #
@@ -814,7 +813,7 @@ module Isomorfeus
 
         # Returns an Explanation that describes how +doc+ scored against
         # +query+.
-        # 
+        #
         # This is intended to be used in developing Similarity implementations,
         # and, for good performance, should not be displayed with every hit.
         # Computing an explanation is as expensive as executing the query over the
