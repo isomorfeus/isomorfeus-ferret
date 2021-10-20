@@ -2410,8 +2410,7 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
-                          char *slop_str)
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str)
 {
     FrtQuery *q;
     FrtToken *token;
@@ -2642,8 +2641,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field,
-                               Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str)
 {
     const int pos_cnt = phrase->size;
     FrtQuery *q = NULL;
@@ -2768,8 +2766,7 @@ static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str)
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
-                      bool inc_lower, bool inc_upper)
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper)
 {
     FrtQuery *rq;
     if (qp->wild_lower
