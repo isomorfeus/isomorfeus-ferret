@@ -195,12 +195,12 @@ static void test_tv_single_doc(TestCase *tc, void *data)
     /* test document's term vectors */
     tvs = frt_fr_get_tv(fr, 0);
     Aiequal(4, tvs->size);
-    tv = (FrtTermVector*)frt_h_get(tvs, "tv2");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("tv2"));
     Apnull(tv);
-    tv = (FrtTermVector*)frt_h_get(tvs, "other");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("other"));
     Apnull(tv);
 
-    tv = (FrtTermVector*)frt_h_get(tvs, "tv_with_positions_offsets");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("tv_with_positions_offsets"));
     if (Apnotnull(tv)) {
         Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
@@ -239,7 +239,6 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
     FrtOffset *offsets = create_tv_offsets(mp);
     FrtDocument *doc = frt_doc_new();
 
-    printf("test_tv_multi_doc 1\n");
     fw = frt_fw_open(store, "_0", fis);
     frt_fw_add_doc(fw, doc);
     frt_fw_add_postings(fw, frt_fis_get_field(fis, rb_intern("tv"))->number, plists, NUM_TERMS, offsets, NUM_TERMS);
@@ -262,8 +261,6 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
     fr = frt_fr_open(store, "_0", fis);
     Aiequal(5, fr->size);
 
-    printf("test_tv_multi_doc 2\n");
-
     tv = frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv"))->number);
     if (Apnotnull(tv)) {
         Aiequal(frt_fis_get_field(fis, rb_intern("tv"))->number, tv->field_num);
@@ -281,7 +278,6 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
     Apnull(frt_fr_get_field_tv(fr, 0, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number));
     frt_tv_destroy(tv);
 
-    printf("test_tv_multi_doc 3\n");
     tv = frt_fr_get_field_tv(fr, 3, frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number);
     if (Apnotnull(tv)) {
         Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number,
@@ -309,13 +305,12 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
 
     tvs = frt_fr_get_tv(fr, 4);
     Aiequal(4, tvs->size);
-    tv = (FrtTermVector*)frt_h_get(tvs, "tv2");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("tv2"));
     Apnull(tv);
-    tv = (FrtTermVector*)frt_h_get(tvs, "other");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("other"));
     Apnull(tv);
 
-    printf("test_tv_multi_doc 4\n");
-    tv = (FrtTermVector*)frt_h_get(tvs, "tv_with_positions_offsets");
+    tv = (FrtTermVector*)frt_h_get(tvs, (void *)rb_intern("tv_with_positions_offsets"));
     if (Apnotnull(tv)) {
         Aiequal(frt_fis_get_field(fis, rb_intern("tv_with_positions_offsets"))->number, tv->field_num);
         Aiequal(NUM_TERMS, tv->term_cnt);
@@ -332,12 +327,11 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
             Aiequal(i * 5 + 4, tv->offsets[i].end);
         }
     }
-    printf("test_tv_multi_doc 5\n");
+
     for (i = 0; i < NUM_TERMS; i++) {
         char buf[100];
         int len = sprintf(buf, "%s", tv->terms[i].text);
         assert(strlen(tv->terms[i].text) < 100);
-
         Aiequal(i, frt_tv_get_term_index(tv, buf));
 
         /* make the word lexically less than it was but greater than any other
@@ -355,10 +349,8 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
         Aiequal(-1, frt_tv_get_term_index(tv, buf));
         Aiequal(i + 1, frt_tv_scan_to_term_index(tv, buf));
     }
-    printf("test_tv_multi_doc 5.5\n");
     Aiequal(-1, frt_tv_get_term_index(tv, "UnKnOwN TeRm"));
     frt_h_destroy(tvs);
-    printf("test_tv_multi_doc 6\n");
     frt_fr_close(fr);
     frt_fis_deref(fis);
     frt_store_deref(store);
@@ -371,15 +363,11 @@ TestSuite *ts_term_vectors(TestSuite *suite)
 
     suite = ADD_SUITE(suite);
 
-    printf("ts_term_vectors 1\n");
     tst_run_test(suite, test_posting, mp);
     frt_mp_reset(mp);
-    printf("ts_term_vectors 2\n");
     tst_run_test(suite, test_tv_single_doc, mp);
     frt_mp_reset(mp);
-    printf("ts_term_vectors 3\n");
     tst_run_test(suite, test_tv_multi_doc, mp);
-    printf("ts_term_vectors 4\n");
     frt_mp_destroy(mp);
     return suite;
 }
