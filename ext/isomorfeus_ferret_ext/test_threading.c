@@ -154,7 +154,7 @@ TestSuite *ts_threading(TestSuite *suite)
     FrtAnalyzer *a = frt_letter_analyzer_new(true);
     FrtStore *store = frt_open_fs_store("./test/testdir/store");
     FrtIndex *index;
-    FrtHashSet *def_fields = frt_hs_new_str(NULL);
+    FrtHashSet *def_fields = frt_hs_new_ptr(NULL);
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     frt_fis_add_field(fis, frt_fi_new(rb_intern(id), FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
