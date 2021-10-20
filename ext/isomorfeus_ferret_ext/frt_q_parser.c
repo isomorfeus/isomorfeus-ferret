@@ -2630,7 +2630,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  *
  *      "email: dbalmain@gmail.com"
  *
- * the Phrase object will contain to positions with the words 'email:' and
+ * the Phrase object will contain two positions with the words 'email:' and
  * 'dbalmain@gmail.com'. Now, if you are using a LetterTokenizer then the
  * second word will be tokenized into the tokens ['dbalmain', 'gmail', 'com']
  * and only the first token will be used, so the resulting phrase query will
