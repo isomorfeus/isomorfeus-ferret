@@ -5,6 +5,4 @@
 
 typedef ID FrtSymbol;
 
-extern void symbol_init();
-
 #endif

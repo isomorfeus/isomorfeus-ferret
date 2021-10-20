@@ -379,8 +379,6 @@ void frt_init(int argc, const char *const argv[])
 #endif
     SETSIG_IF_UNSET(SIGSEGV, sighandler_crash);
 
-    symbol_init();
-
     atexit(&frt_hash_finalize);
 }
 
