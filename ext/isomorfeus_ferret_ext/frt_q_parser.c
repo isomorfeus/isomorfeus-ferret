@@ -177,8 +177,8 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
                           char *slop);
 static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
 
-static FrtHashSet *first_field(FrtQParser *qp, const char *field);
-static FrtHashSet *add_field(FrtQParser *qp, const char *field);
+static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
+static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
 
 static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop);
 
@@ -2393,7 +2393,7 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
             do {
                 if (token->pos_inc) {
                     frt_phq_add_term(q, token->text, token->pos_inc);
-                    /* add some slop since single term  was expected */
+                    /* add some slop since single term was expected */
                     ((FrtPhraseQuery *)q)->slop++;
                 }
                 else {
@@ -2527,10 +2527,10 @@ static FrtHashSet *add_field(FrtQParser *qp, const char *field_name)
  * will push a new FieldStack object onto the stack and add +field+ to its
  * fields set.
  */
-static FrtHashSet *first_field(FrtQParser *qp, const char *field)
+static FrtHashSet *first_field(FrtQParser *qp, const char *field_name)
 {
     qp_push_fields(qp, frt_hs_new_ptr(NULL), true);
-    return add_field(qp, field);
+    return add_field(qp, field_name);
 }
 
 /**
