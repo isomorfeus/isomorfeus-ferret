@@ -12,6 +12,11 @@ static bool str_lt(void *p1, void *p2)
     return (strcmp((char *) p1, (char *) p2) < 0);
 }
 
+static bool str_lt_rev(void *p1, void *p2)
+{
+    return (strcmp((char *) p1, (char *) p2) > 0);
+}
+
 /**
  * Test basic FrtPriorityQueue functions.
  */
@@ -45,6 +50,44 @@ static void test_pq(TestCase *tc, void *data)
     Aiequal(1, pq->size);
     free(tmp);
     Asequal("dword", tmp = (char *) frt_pq_pop(pq));
+    Aiequal(0, pq->size);
+    free(tmp);
+    frt_pq_destroy(pq);
+}
+
+/**
+ * Test basic FrtPriorityQueue functions.
+ */
+static void test_pq_reverse(TestCase *tc, void *data)
+{
+    char *tmp;
+    FrtPriorityQueue *pq = frt_pq_new(4, (frt_lt_ft)&str_lt_rev, &free);
+    (void)data; /* suppress unused argument warning */
+
+    Aiequal(0, pq->size);
+    Aiequal(4, pq->capa);
+    frt_pq_push(pq, frt_estrdup("bword"));
+    Aiequal(1, pq->size);
+    Asequal("bword", (char *) frt_pq_top(pq));
+    frt_pq_push(pq, frt_estrdup("cword"));
+    Aiequal(2, pq->size);
+    Asequal("cword", (char *) frt_pq_top(pq));
+    frt_pq_push(pq, frt_estrdup("aword"));
+    Aiequal(3, pq->size);
+    Asequal("cword", (char *) frt_pq_top(pq));
+    frt_pq_push(pq, frt_estrdup("dword"));
+    Aiequal(4, pq->size);
+    Asequal("dword", (char *) frt_pq_top(pq));
+    Asequal("dword", tmp = (char *) frt_pq_pop(pq));
+    Aiequal(3, pq->size);
+    free(tmp);
+    Asequal("cword", tmp = (char *) frt_pq_pop(pq));
+    Aiequal(2, pq->size);
+    free(tmp);
+    Asequal("bword", tmp = (char *) frt_pq_pop(pq));
+    Aiequal(1, pq->size);
+    free(tmp);
+    Asequal("aword", tmp = (char *) frt_pq_pop(pq));
     Aiequal(0, pq->size);
     free(tmp);
     frt_pq_destroy(pq);
@@ -161,6 +204,7 @@ TestSuite *ts_priorityqueue(TestSuite *suite)
     suite = ADD_SUITE(suite);
 
     tst_run_test(suite, test_pq, NULL);
+    tst_run_test(suite, test_pq_reverse, NULL);
     tst_run_test(suite, test_pq_clear, NULL);
     tst_run_test(suite, test_pq_insert_overflow, NULL);
     tst_run_test(suite, stress_pq, NULL);
