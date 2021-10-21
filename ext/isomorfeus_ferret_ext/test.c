@@ -82,6 +82,12 @@ static bool should_test_run(const char *testname)
     return false;
 }
 
+static void reset_stats(void) {
+    t_cnt = 0;
+    a_cnt = 0;
+    f_cnt = 0;
+}
+
 static void reset_status(void)
 {
     curr_char = 0;
@@ -756,6 +762,7 @@ int execute_test(int test_index) {
         free(subsuite->name);
         free(subsuite);
     }
+    reset_stats();
     free(suite);
     return rv;
 }
@@ -821,6 +828,7 @@ static VALUE frb_ts_run_all(void) {
         free(subsuite->name);
         free(subsuite);
     }
+    reset_stats();
     free(suite);
     free(testlist);
     return INT2FIX(i+1);
