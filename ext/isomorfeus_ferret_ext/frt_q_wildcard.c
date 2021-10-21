@@ -13,12 +13,12 @@
 static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
     char *buffer, *bptr;
-    const char *field_str = rb_id2name(WCQ(self)->field);
+    const char *field_name = rb_id2name(WCQ(self)->field);
     const char *pattern = WCQ(self)->pattern;
-    bptr = buffer = FRT_ALLOC_N(char, strlen(pattern) + strlen(field_str) + 35);
+    bptr = buffer = FRT_ALLOC_N(char, strlen(pattern) + strlen(field_name) + 35);
 
     if (WCQ(self)->field != default_field) {
-        bptr += sprintf(bptr, "%s:", field_str);
+        bptr += sprintf(bptr, "%s:", field_name);
     }
     bptr += sprintf(bptr, "%s", pattern);
 
