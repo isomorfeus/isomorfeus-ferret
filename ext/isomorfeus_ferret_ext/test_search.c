@@ -206,9 +206,7 @@ static void prepare_search_index(FrtStore *store)
     int i;
     FrtIndexWriter *iw;
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES,
-                              FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     FrtFieldInfo *fi = frt_fi_new(rb_intern("empty-field"), FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     frt_fis_add_field(fis, fi);
     frt_index_create(store, fis);
