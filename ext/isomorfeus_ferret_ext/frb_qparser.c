@@ -57,7 +57,7 @@ frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
         int i;
         for (i = 0; i < RARRAY_LEN(rfields); i++) {
             rval = rb_obj_as_string(RARRAY_PTR(rfields)[i]);
-            frt_hs_add(fields, rstrdup(rval));
+            frt_hs_add(fields, rb_intern(rs2s(rval)));
         }
     } else {
         rval = rb_obj_as_string(rfields);
@@ -68,10 +68,10 @@ frb_get_fields(VALUE rfields, FrtHashSet *other_fields)
             s = str = rstrdup(rval);
             while ((p = strchr(s, '|')) && *p != '\0') {
                 *p = '\0';
-                frt_hs_add(fields, frt_estrdup(s));
+                frt_hs_add(fields, rb_intern(s));
                 s = p + 1;
             }
-            frt_hs_add(fields, frt_estrdup(s));
+            frt_hs_add(fields, rb_intern(s));
             free(str);
         }
     }
