@@ -93,8 +93,7 @@ static void do_search(FrtIndex *index)
     for (i = 0; i < td->size; i++) {
         FrtHit *hit = td->hits[i];
         FrtDocument *doc = frt_index_get_doc(index, hit->doc);
-        tlog("Hit for %d: %s - %f\n",
-             hit->doc, frt_doc_get_field(doc, id)->data[0], hit->score);
+        tlog("Hit for %d: %s - %f\n", hit->doc, frt_doc_get_field(doc, rb_intern(id))->data[0], hit->score);
        frt_doc_destroy(doc);
     }
     tlog("Searched for %d: total = %d\n", n, td->total_hits);
@@ -162,7 +161,7 @@ TestSuite *ts_threading(TestSuite *suite)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    frt_hs_add(def_fields, contents);
+    frt_hs_add(def_fields, rb_intern(contents));
     store->clear_all(store);
     index = frt_index_new(store, a, def_fields, true);
     frt_hs_destroy(def_fields);
