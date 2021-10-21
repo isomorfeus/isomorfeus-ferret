@@ -60,7 +60,7 @@ void frt_pq_destroy(FrtPriorityQueue *pq)
  *
  * @param pq the PriorityQueue to reorder
  */
-static void pq_up(FrtPriorityQueue *pq)
+static void frt_pq_up(FrtPriorityQueue *pq)
 {
     void **heap = pq->heap;
     void *node;
@@ -110,7 +110,7 @@ void frt_pq_push(FrtPriorityQueue *pq, void *elem)
         FRT_REALLOC_N(pq->heap, void *, pq->mem_capa);
     }
     pq->heap[pq->size] = elem;
-    pq_up(pq);
+    frt_pq_up(pq);
 }
 
 FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *pq,
