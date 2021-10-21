@@ -1677,8 +1677,7 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
 
     for (i = 0; i < MSEA(self)->s_cnt; i++) {
         FrtSearcher *s = MSEA(self)->searchers[i];
-        FrtTopDocs *td = s->search_w(s, weight, 0, max_size,
-                                  filter, sort, post_filter, true);
+        FrtTopDocs *td = s->search_w(s, weight, 0, max_size, filter, sort, post_filter, true);
         if (td->size > 0) {
             int j;
             int start = MSEA(self)->starts[i];
