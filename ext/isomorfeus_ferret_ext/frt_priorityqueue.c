@@ -50,9 +50,6 @@ void frt_pq_destroy(FrtPriorityQueue *pq)
     frt_pq_free(pq);
 }
 
-
-
-
 /**
  * This method is used internally by frt_pq_push. It is similar to frt_pq_down except
  * that where frt_pq_down reorders the elements from the top, pq_up reorders from
