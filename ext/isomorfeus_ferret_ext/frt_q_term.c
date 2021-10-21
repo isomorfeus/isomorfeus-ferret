@@ -239,14 +239,14 @@ static void tq_destroy(FrtQuery *self)
 
 static char *tq_to_s(FrtQuery *self, FrtSymbol default_field)
 {
-    const char *field = rb_id2name(TQ(self)->field);
+    const char *field_name = rb_id2name(TQ(self)->field);
+    size_t flen = strlen(field_name);
     const char *term = TQ(self)->term;
-    size_t flen = strlen(field);
     size_t tlen = strlen(term);
     char *buffer = FRT_ALLOC_N(char, 34 + flen + tlen);
     char *b = buffer;
     if (default_field != TQ(self)->field) {
-        memcpy(b, field, sizeof(char) * flen);
+        memcpy(b, field_name, sizeof(char) * flen);
         b[flen] = ':';
         b += flen + 1;
     }
