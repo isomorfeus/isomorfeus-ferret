@@ -125,8 +125,7 @@ static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1)
 
 FrtSortField *frt_sort_field_score_new(bool reverse)
 {
-    return sort_field_alloc((ID)NULL, FRT_SORT_TYPE_SCORE, reverse,
-                            &sf_score_compare, &sf_score_get_val, NULL);
+    return sort_field_alloc((ID)NULL, FRT_SORT_TYPE_SCORE, reverse, &sf_score_compare, &sf_score_get_val, NULL);
 }
 
 const FrtSortField FRT_SORT_FIELD_SCORE = {
