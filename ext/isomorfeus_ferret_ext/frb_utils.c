@@ -747,7 +747,7 @@ static bool frb_pq_lt(VALUE proc, VALUE v1, VALUE v2)
     }
 }
 
-static void pq_up(PriQ *pq)
+static void frb_pq_up(PriQ *pq)
 {
     VALUE *heap = pq->heap;
     VALUE node;
@@ -789,7 +789,7 @@ static void frb_pq_down(PriQ *pq)
     heap[i] = node;
 }
 
-static void frt_pq_push(PriQ *pq, VALUE elem)
+static void frb_pq_push(PriQ *pq, VALUE elem)
 {
     pq->size++;
     if (pq->size >= pq->mem_capa) {
@@ -797,7 +797,7 @@ static void frt_pq_push(PriQ *pq, VALUE elem)
         REALLOC_N(pq->heap, VALUE, pq->mem_capa);
     }
     pq->heap[pq->size] = elem;
-    pq_up(pq);
+    frb_pq_up(pq);
 }
 
 static VALUE cPriorityQueue;
@@ -938,7 +938,7 @@ frb_pq_insert(VALUE self, VALUE elem)
     PriQ *pq;
     GET_PQ(pq, self);
     if (pq->size < pq->capa) {
-        frt_pq_push(pq, elem);
+        frb_pq_push(pq, elem);
     }
     else if (pq->size > 0 && frb_pq_lt(pq->proc, pq->heap[1], elem)) {
         pq->heap[1] = elem;
