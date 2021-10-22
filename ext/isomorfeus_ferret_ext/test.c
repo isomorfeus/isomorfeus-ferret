@@ -753,8 +753,8 @@ int execute_test(int test_index) {
 
     clock_t start_time = clock();
     suite = all_tests[test_index].func(suite);
-    rv = report(suite);
 
+    rv = report(suite);
     printf("\nFinished in %0.3f seconds\n", (double) (clock() - start_time) / CLOCKS_PER_SEC);
 
     while ((subsuite = suite->head) != NULL) {
@@ -806,6 +806,7 @@ static VALUE frb_ts_threading(void)    { return INT2FIX(execute_test(35)); }
 
 static VALUE frb_ts_run_all(void) {
     int i, test_count;
+    int rv = 0;
     TestSuite *suite = NULL;
     TestSubSuite *subsuite;
     verbose = true;
@@ -819,6 +820,7 @@ static VALUE frb_ts_run_all(void) {
     }
 
     /* print out the test diagnotics */
+    rv = report(suite);
     printf("\nFinished in %0.3f seconds\n", (double) (clock() - start_time) / CLOCKS_PER_SEC);
 
     frt_ruby_raise = true;
@@ -831,7 +833,7 @@ static VALUE frb_ts_run_all(void) {
     reset_stats();
     free(suite);
     free(testlist);
-    return INT2FIX(i+1);
+    return INT2FIX(rv);
 }
 
 void Init_Test(void) {
