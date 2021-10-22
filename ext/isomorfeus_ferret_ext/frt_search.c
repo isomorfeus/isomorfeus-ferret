@@ -77,22 +77,11 @@ char *frt_expl_to_html(FrtExplanation *expl)
  *
  ***************************************************************************/
 
-static bool hit_less_than(const FrtHit *hit1, const FrtHit *hit2)
-{
-    if (hit1->score == hit2->score) {
-        return hit1->doc > hit2->doc;
-    }
-    else {
-        return hit1->score < hit1->score;
-    }
-}
-
 static bool hit_lt(FrtHit *hit1, FrtHit *hit2)
 {
     if (hit1->score == hit2->score) {
         return hit1->doc > hit2->doc;
-    }
-    else {
+    } else {
         return hit1->score < hit2->score;
     }
 }
@@ -1052,7 +1041,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
             hq_pop = &frt_fshq_pq_pop;
         }
     } else {
-        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_lt, &free);
         hq_pop = &hit_pq_pop;
         hq_insert = &hit_pq_insert;
         hq_destroy = &frt_pq_destroy;
@@ -1666,11 +1655,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = frt_pq_new(max_size, (frt_lt_ft)frt_fdshq_lt, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)&frt_fdshq_lt, &free);
         hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&frt_pq_insert;
         hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&frt_pq_pop;
     } else {
-        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_less_than, &free);
+        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_lt, &free);
         hq_insert = &hit_pq_multi_insert;
         hq_pop = &hit_pq_pop;
     }
