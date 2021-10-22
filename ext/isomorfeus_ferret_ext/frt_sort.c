@@ -601,60 +601,120 @@ FrtHit *frt_fshq_pq_pop_fd(FrtPriorityQueue *pq)
 
 bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2)
 {
-    int c = 0, i;
+    int i;
+    bool c = false;
+    bool all_equal = false;
+    int sc;
     FrtComparable *cmps1 = fd1->comparables;
     FrtComparable *cmps2 = fd2->comparables;
 
-    for (i = 0; i < fd1->size && c == 0; i++) {
+    for (i = 0; (i < fd1->size) && (!c); i++) {
         int type = cmps1[i].type;
-        switch (type) {
-            case FRT_SORT_TYPE_SCORE:
-                if (cmps1[i].val.f < cmps2[i].val.f) c =  1;
-                if (cmps1[i].val.f > cmps2[i].val.f) c = -1;
-                break;
-            case FRT_SORT_TYPE_FLOAT:
-                if (cmps1[i].val.f > cmps2[i].val.f) c =  1;
-                if (cmps1[i].val.f < cmps2[i].val.f) c = -1;
-                break;
-            case FRT_SORT_TYPE_DOC:
-                if (fd1->hit.doc > fd2->hit.doc) c =  1;
-                if (fd1->hit.doc < fd2->hit.doc) c = -1;
-                break;
-            case FRT_SORT_TYPE_INTEGER:
-                if (cmps1[i].val.l > cmps2[i].val.l) c =  1;
-                if (cmps1[i].val.l < cmps2[i].val.l) c = -1;
-                break;
-            case FRT_SORT_TYPE_BYTE:
-                if (cmps1[i].val.l > cmps2[i].val.l) c =  1;
-                if (cmps1[i].val.l < cmps2[i].val.l) c = -1;
-                break;
-            case FRT_SORT_TYPE_STRING:
-                do {
-                    char *s1 = cmps1[i].val.s;
-                    char *s2 = cmps2[i].val.s;
-                    if (s1 == NULL) c = s2 ? 1 : 0;
-                    else if (s2 == NULL) c = -1;
-#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
-                    else c = strcmp(s1, s2);
-#else
-                    else c = strcoll(s1, s2);
-#endif
-                } while (0);
-                break;
-            default:
-                FRT_RAISE(FRT_ARG_ERROR, "Unknown sort type: %d.", type);
-                break;
-        }
         if (cmps1[i].reverse) {
-            c = -c;
+            switch (type) {
+                case FRT_SORT_TYPE_SCORE:
+                    if (cmps1[i].val.f > cmps2[i].val.f) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.f == cmps2[i].val.f) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_FLOAT:
+                    if (cmps1[i].val.f < cmps2[i].val.f) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.f == cmps2[i].val.f) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_DOC:
+                    if (fd1->hit.doc < fd2->hit.doc) { all_equal = false; c = true; }
+                    break;
+                case FRT_SORT_TYPE_INTEGER:
+                    if (cmps1[i].val.l < cmps2[i].val.l) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.l == cmps2[i].val.l) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_BYTE:
+                    if (cmps1[i].val.l > cmps2[i].val.l) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.l == cmps2[i].val.l) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_STRING:
+                    do {
+                        char *s1 = cmps1[i].val.s;
+                        char *s2 = cmps2[i].val.s;
+                        if ((s1 == NULL) && s2) { all_equal = false; }
+                        else if (s1 && (s2 == NULL)) { all_equal = false; c = true; }
+                        else if (s1 && s2) {
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
+                            sc = strcmp(s1, s2);
+#else
+                            sc = strcoll(s1, s2);
+#endif
+                            if (sc < 0) { all_equal = false; c = true; }
+                            else if (sc == 0) { if (!c) all_equal = true; }
+                            else { all_equal = false; }
+                        } else { all_equal = false; }
+                    } while (0);
+                    break;
+                default:
+                    FRT_RAISE(FRT_ARG_ERROR, "Unknown sort type: %d.", type);
+                    break;
+            }
+        } else {
+            switch (type) {
+                case FRT_SORT_TYPE_SCORE:
+                    if (cmps1[i].val.f < cmps2[i].val.f) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.f == cmps2[i].val.f) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_FLOAT:
+                    if (cmps1[i].val.f > cmps2[i].val.f) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.f == cmps2[i].val.f) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_DOC:
+                    if (fd1->hit.doc > fd2->hit.doc) { all_equal = false; c = true; }
+                    break;
+                case FRT_SORT_TYPE_INTEGER:
+                    if (cmps1[i].val.l > cmps2[i].val.l) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.l == cmps2[i].val.l) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_BYTE:
+                    if (cmps1[i].val.l < cmps2[i].val.l) { all_equal = false; c = true; }
+                    else if (cmps1[i].val.l == cmps2[i].val.l) { if (!c) all_equal = true; }
+                    else { all_equal = false; }
+                    break;
+                case FRT_SORT_TYPE_STRING:
+                    do {
+                        char *s1 = cmps1[i].val.s;
+                        char *s2 = cmps2[i].val.s;
+                        if (s1 && (s2 == NULL)) { if (!c) all_equal = false; }
+                        else if ((s1 == NULL) && s2) { all_equal = false; c = true; }
+                        else if (s1 && s2) {
+#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
+                            sc = strcmp(s1, s2);
+#else
+                            sc = strcoll(s1, s2);
+#endif
+                            if (sc > 0) { all_equal = false; c = true; }
+                            else if (sc == 0) { if (!c) all_equal = true; }
+                            else { all_equal = false; }
+                        } else { all_equal = false; }
+                    } while (0);
+                    break;
+                default:
+                    FRT_RAISE(FRT_ARG_ERROR, "Unknown sort type: %d.", type);
+                    break;
+            }
+        }
+        if (!all_equal) break;
+    }
+    if (all_equal) {
+        if (cmps1[0].reverse) {
+            if (fd1->hit.doc > fd2->hit.doc) c = true;
+        } else {
+            if (fd1->hit.doc > fd2->hit.doc) c = true;
         }
     }
-    if (c == 0) {
-        return fd1->hit.doc > fd2->hit.doc;
-    }
-    else {
-        return c > 0;
-    }
+    return c;
 }
 
 /***************************************************************************
