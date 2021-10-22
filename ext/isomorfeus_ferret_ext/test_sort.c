@@ -25,7 +25,7 @@ static void add_sort_test_data(SortTestData *std, FrtIndexWriter *iw)
     sscanf(std->flt, "%f", &doc->boost);
 
     frt_iw_add_doc(iw, doc);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 }
 
 static SortTestData data[] = {     /* len mod */
@@ -62,18 +62,6 @@ static void sort_multi_test_setup(FrtStore *store1, FrtStore *store2)
     int i;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     FrtIndexWriter *iw;
-    SortTestData data[] = {            /* len mod */
-        {"findall","a","6","0.01"},    /*  4   0  */
-        {"findall","c","5","0.1"},     /*  3   3  */
-        {"findall","e","2","0.001"},   /*  5   1  */
-        {"findall","g","1","1.0"},     /*  3   3  */
-        {"findall","i","3","0.0001"},  /*  6   2  */
-        {"findall","", "4","10.0"},    /*  4   0  */
-        {"findall","h","5","0.00001"}, /*  7   3  */
-        {"findall","f","2","100.0"},   /*  5   1  */
-        {"findall","d","3","1000.0"},  /*  6   2  */
-        {"findall","b","4","0.000001"} /*  8   0  */
-    };
 
     frt_index_create(store1, fis);
     frt_index_create(store2, fis);
@@ -135,8 +123,7 @@ static void do_test_top_docs(TestCase *tc, FrtSearcher *searcher, FrtQuery *quer
     frt_td_destroy(top_docs);
 
     if (total_hits >= R_END) {
-        top_docs = frt_searcher_search(searcher, query, R_START, R_END - R_START,
-                                   NULL, sort, NULL);
+        top_docs = frt_searcher_search(searcher, query, R_START, R_END - R_START, NULL, sort, NULL);
         for (i = R_START; i < R_END; i++) {
             FrtHit *hit = top_docs->hits[i - R_START];
             Aiequal(num_array[i], hit->doc);
@@ -165,22 +152,14 @@ static void test_sort_field_to_s(TestCase *tc, void *data)
     TEST_SF_TO_S("<SCORE>!", frt_sort_field_score_new(true));
     TEST_SF_TO_S("<DOC>", frt_sort_field_doc_new(false));
     TEST_SF_TO_S("<DOC>!", frt_sort_field_doc_new(true));
-    TEST_SF_TO_S("date:<integer>",
-                 frt_sort_field_int_new(rb_intern("date"), false));
-    TEST_SF_TO_S("date:<integer>!",
-                 frt_sort_field_int_new(rb_intern("date"), true));
-    TEST_SF_TO_S("price:<float>",
-                 frt_sort_field_float_new(rb_intern("price"), false));
-    TEST_SF_TO_S("price:<float>!",
-                 frt_sort_field_float_new(rb_intern("price"), true));
-    TEST_SF_TO_S("content:<string>",
-                 frt_sort_field_string_new(rb_intern("content"), false));
-    TEST_SF_TO_S("content:<string>!",
-                 frt_sort_field_string_new(rb_intern("content"), true));
-    TEST_SF_TO_S("auto_field:<auto>",
-                 frt_sort_field_auto_new(rb_intern("auto_field"), false));
-    TEST_SF_TO_S("auto_field:<auto>!",
-                 frt_sort_field_auto_new(rb_intern("auto_field"), true));
+    TEST_SF_TO_S("date:<integer>", frt_sort_field_int_new(rb_intern("date"), false));
+    TEST_SF_TO_S("date:<integer>!", frt_sort_field_int_new(rb_intern("date"), true));
+    TEST_SF_TO_S("price:<float>", frt_sort_field_float_new(rb_intern("price"), false));
+    TEST_SF_TO_S("price:<float>!", frt_sort_field_float_new(rb_intern("price"), true));
+    TEST_SF_TO_S("content:<string>", frt_sort_field_string_new(rb_intern("content"), false));
+    TEST_SF_TO_S("content:<string>!", frt_sort_field_string_new(rb_intern("content"), true));
+    TEST_SF_TO_S("auto_field:<auto>", frt_sort_field_auto_new(rb_intern("auto_field"), false));
+    TEST_SF_TO_S("auto_field:<auto>!", frt_sort_field_auto_new(rb_intern("auto_field"), true));
 }
 
 #define TEST_SORT_TO_S(_expected_str, _sort) \
