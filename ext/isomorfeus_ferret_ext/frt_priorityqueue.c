@@ -110,8 +110,7 @@ void frt_pq_push(FrtPriorityQueue *pq, void *elem)
     frt_pq_up(pq);
 }
 
-FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *pq,
-                                  void *elem)
+FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *pq, void *elem)
 {
     if (pq->size < pq->capa) {
         frt_pq_push(pq, elem);
