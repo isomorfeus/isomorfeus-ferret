@@ -154,8 +154,7 @@ static void hit_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
         }
         pq->heap[pq->size] = new_hit;
         hit_pq_up(pq);
-    }
-    else if (pq->size > 0 && hit_lt((FrtHit *)pq->heap[1], hit)) {
+    } else if (pq->size > 0 && hit_lt((FrtHit *)pq->heap[1], hit)) {
         memcpy(pq->heap[1], hit, sizeof(FrtHit));
         hit_pq_down(pq);
     }
