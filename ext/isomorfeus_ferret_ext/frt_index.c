@@ -2533,8 +2533,7 @@ static void stde_seek_ti(FrtSegmentTermDocEnum *stde, FrtTermInfo *ti)
 {
     if (NULL == ti) {
         stde->doc_freq = 0;
-    }
-    else {
+    } else {
         stde->count = 0;
         stde->doc_freq = ti->doc_freq;
         stde->doc_num = 0;
@@ -2597,8 +2596,7 @@ static bool stde_next(FrtTermDocEnum *tde)
 
         stde->count++;
 
-        if (NULL == stde->deleted_docs
-            || 0 == frt_bv_get(stde->deleted_docs, stde->doc_num)) {
+        if (NULL == stde->deleted_docs || 0 == frt_bv_get(stde->deleted_docs, stde->doc_num)) {
             break; /* We found an undeleted doc so return */
         }
 
@@ -2619,8 +2617,7 @@ static int stde_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
         stde->doc_num += (doc_code >> 1);            /* shift off low bit */
         if (0 != (doc_code & 1)) {                   /* if low bit is set */
             stde->freq = 1;                            /* freq is one */
-        }
-        else {
+        } else {
             stde->freq = frt_is_read_vint(stde->frq_in);  /* else read freq */
         }
 
