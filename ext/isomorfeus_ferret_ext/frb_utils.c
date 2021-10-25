@@ -794,7 +794,7 @@ static void frb_pq_push(PriQ *pq, VALUE elem)
     pq->size++;
     if (pq->size >= pq->mem_capa) {
         pq->mem_capa <<= 1;
-        REALLOC_N(pq->heap, VALUE, pq->mem_capa);
+        FRT_REALLOC_N(pq->heap, VALUE, pq->mem_capa);
     }
     pq->heap[pq->size] = elem;
     frb_pq_up(pq);

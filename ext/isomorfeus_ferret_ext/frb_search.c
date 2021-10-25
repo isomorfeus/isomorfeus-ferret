@@ -220,7 +220,7 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self)
         }
         if (p + value_len + 64 > capa) {
             capa += (value_len + 64) * (len - i);
-            REALLOC_N(str, char, capa);
+            FRT_REALLOC_N(str, char, capa);
         }
 
         sprintf(str + p, "\t%d \"%s\": %0.5f\n", doc_id, value,
@@ -254,7 +254,7 @@ frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
 
     if (len > *slen) {
         while (len > *slen) *slen = *slen << 1;
-        REALLOC_N(*str, char, *slen);
+        FRT_REALLOC_N(*str, char, *slen);
         s = *str + diff;
     }
 
@@ -3130,7 +3130,7 @@ frb_ms_init(int argc, VALUE *argv, VALUE self)
         switch (TYPE(rsearcher)) {
             case T_ARRAY:
                 capa += RARRAY_LEN(rsearcher);
-                REALLOC_N(searchers, FrtSearcher *, capa);
+                FRT_REALLOC_N(searchers, FrtSearcher *, capa);
                 for (j = 0; j < RARRAY_LEN(rsearcher); j++) {
                     VALUE rs = RARRAY_PTR(rsearcher)[j];
                     Data_Get_Struct(rs, FrtSearcher, s);

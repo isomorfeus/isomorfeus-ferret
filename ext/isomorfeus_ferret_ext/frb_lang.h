@@ -13,7 +13,5 @@
 #define frt_emalloc xmalloc
 #define frt_ecalloc(n) xcalloc(n, 1)
 #define frt_erealloc xrealloc
-/* FIXME: should eventually delete this */
-#define FRT_REALLOC_N REALLOC_N
 
 #endif

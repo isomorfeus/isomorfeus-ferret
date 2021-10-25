@@ -840,7 +840,7 @@ frb_te_to_json(int argc, VALUE *argv, VALUE self)
             *(jp++) = '[';
             if (te->curr_term_len * 3 + (jp - json) + 100 > capa) {
                 capa <<= 1;
-                REALLOC_N(json, char, capa);
+                FRT_REALLOC_N(json, char, capa);
             }
             jp = json_concat_string(jp, term);
             *(jp++) = ',';
@@ -856,7 +856,7 @@ frb_te_to_json(int argc, VALUE *argv, VALUE self)
              * plus some extra for good measure */
             if (te->curr_term_len * 3 + (jp - json) + 100 > capa) {
                 capa <<= 1;
-                REALLOC_N(json, char, capa);
+                FRT_REALLOC_N(json, char, capa);
             }
             *(jp++) = '{';
             memcpy(jp, "\"term\":", 7);
@@ -1098,7 +1098,7 @@ frb_tde_to_json(int argc, VALUE *argv, VALUE self)
         /* 100 chars should be enough room for an extra entry */
         if ((jp - json) + 100 + tde->freq(tde) * 20 > capa) {
             capa <<= 1;
-            REALLOC_N(json, char, capa);
+            FRT_REALLOC_N(json, char, capa);
         }
         sprintf(jp, format, tde->doc_num(tde), tde->freq(tde));
         jp += strlen(jp);
