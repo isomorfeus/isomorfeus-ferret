@@ -12,7 +12,7 @@
 
 static FrtSymbol field;
 
-static void add_doc(char *text, FrtIndexWriter *iw)
+static void add_doc(const char *text, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), text));
@@ -23,10 +23,10 @@ static void add_doc(char *text, FrtIndexWriter *iw)
 
 static void span_test_setup(FrtStore *store)
 {
-    char **d;
+    const char **d;
     FrtIndexWriter *iw;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    char *data[] = {
+    const char *data[] = {
         "start finish one two three four five six seven",
         "start one finish two three four five six seven",
         "start one two finish three four five six seven flip",
@@ -71,8 +71,7 @@ static void span_test_setup(FrtStore *store)
     frt_iw_close(iw);
 }
 
-extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                       char *expected_hits, int top);
+extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const char *expected_hits, int top);
 
 static void test_span_term(TestCase *tc, void *data)
 {
