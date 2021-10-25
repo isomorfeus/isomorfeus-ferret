@@ -16,8 +16,8 @@ static void test_asserts(TestCase *tc, void *data)
     int ia1[3] = { 1, 2, 3 };
     int ia2[3] = { 1, 2, 3 };
 
-    static char *sa1[10] = { "one", "two", "three" };
-    static char *sa2[10] = { "one", "two", "three" };
+    static const char *sa1[10] = { "one", "two", "three" };
+    static const char *sa2[10] = { "one", "two", "three" };
     (void)data; /* suppress unused argument warning */
 
     Aaiequal(ia1, ia2, 3);
@@ -51,8 +51,8 @@ static void test_failures(TestCase *tc, void *data)
     int ia1[3] = { 1, 2, 3 };
     int ia2[3] = { 1, 2, 4 };
 
-    static char *sa1[10] = { "one", "two", "three" };
-    static char *sa2[10] = { "one", "two", "there" };
+    static const char *sa1[10] = { "one", "two", "three" };
+    static const char *sa2[10] = { "one", "two", "there" };
     (void)data; /* suppress unused argument warning */
 
     Aaiequal(ia1, ia2, 3);
