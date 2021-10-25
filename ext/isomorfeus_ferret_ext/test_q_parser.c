@@ -2,12 +2,12 @@
 #include "test.h"
 
 typedef struct QPTestPair {
-    char *qstr;
-    char *qres;
+    const char *qstr;
+    const char *qres;
 } QPTestPair;
 
 #define PARSER_TEST(str, res) do {\
-    FrtQuery *q = qp_parse(parser, str);\
+    FrtQuery *q = qp_parse(parser, (char *)str);\
     char *qres = q->to_s(q, rb_intern("xx"));\
     Asequal(res, qres);\
     frt_q_deref(q);\
@@ -373,7 +373,7 @@ static void test_qp_clean_str(TestCase *tc, void *data)
     };
     (void)data;
     for (i = 0; i < FRT_NELEMS(pairs); i++) {
-        char *qres = frt_qp_clean_str(pairs[i].qstr);\
+        char *qres = frt_qp_clean_str((char *)pairs[i].qstr);\
                      Asequal(pairs[i].qres, qres);\
                      free(qres);\
     }
@@ -418,16 +418,16 @@ static void test_qp_prefix_query(TestCase *tc, void *data)
     parser = frt_qp_new(frt_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
-    q = qp_parse(parser, "asdg*");
+    q = qp_parse(parser, (char *)"asdg*");
     Aiequal(PREFIX_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, "a?dg*");
+    q = qp_parse(parser, (char *)"a?dg*");
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, "a*dg*");
+    q = qp_parse(parser, (char *)"a*dg*");
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, "asdg*a");
+    q = qp_parse(parser, (char *)"asdg*a");
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
     frt_qp_destroy(parser);
