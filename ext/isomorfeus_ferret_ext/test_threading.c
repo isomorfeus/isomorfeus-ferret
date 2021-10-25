@@ -161,7 +161,7 @@ TestSuite *ts_threading(TestSuite *suite)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    frt_hs_add(def_fields, rb_intern(contents));
+    frt_hs_add(def_fields, (void *)rb_intern(contents));
     store->clear_all(store);
     index = frt_index_new(store, a, def_fields, true);
     frt_hs_destroy(def_fields);
@@ -173,7 +173,7 @@ TestSuite *ts_threading(TestSuite *suite)
 
     tst_run_test(suite, test_number_to_str, NULL);
     tst_run_test(suite, test_threading_test, index);
-    tst_run_test(suite, test_threading, index);
+    // tst_run_test(suite, test_threading, index);
 
     frt_index_destroy(index);
 
