@@ -295,6 +295,8 @@ void frt_print_stacktrace()
     if (stack) {
         fprintf(EXCEPTION_STREAM, "Stack trace:\n%s", stack);
         free(stack);
+    } else {
+        fprintf(EXCEPTION_STREAM, "Stack trace not avaialble\n");
     }
 }
 

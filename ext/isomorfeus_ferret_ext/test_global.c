@@ -153,13 +153,15 @@ static void test_stacktrace(TestCase *tc, void *data)
 {
     FILE *old_stream = frt_x_exception_stream;
     (void)data; /* suppress warning */
-    (void)tc;   /* won't be used when no variadic arg macro support */
 
     frt_x_exception_stream = tmpfile();
-    frt_print_stacktrace();
-
-    Assert(ftell(frt_x_exception_stream), "Stream position should not be 0");
-    fclose(frt_x_exception_stream);
+    Atrue(frt_x_exception_stream != NULL);
+    if (frt_x_exception_stream) {
+        frt_print_stacktrace();
+        long int f = ftell(frt_x_exception_stream);
+        Assert(f, "Stream position should not be 0");
+        fclose(frt_x_exception_stream);
+    }
     frt_x_exception_stream = old_stream;
 }
 

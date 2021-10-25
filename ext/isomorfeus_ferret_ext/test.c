@@ -41,8 +41,8 @@ static int f_cnt = 0;/* number of failures */
  * many errors and the end of the buffer is being reached you can set it here.
  */
 #define MAX_MSG_SIZE 1000000
-static char msg_buf[MAX_MSG_SIZE] = "";
-static char *msg_bufp = msg_buf;
+static char *msg_buf;
+static char *msg_bufp;
 
 /* Determine if the test should be run at all */
 static bool should_test_run(const char *testname)
@@ -259,14 +259,13 @@ static int report(TestSuite *suite)
 
 static const char *curr_err_func = "";
 
-#define MSG_BUF_HAVE sizeof(msg_buf) - (msg_bufp - msg_buf) - 1
+#define MSG_BUF_HAVE MAX_MSG_SIZE - (msg_bufp - msg_buf) - 1
 static void vappend_to_msg_buf(const char *fmt, va_list args)
 {
     int v = vsnprintf(msg_bufp, MSG_BUF_HAVE, fmt, args);
     if (v < 0) {
         rb_raise(rb_eStandardError, "Error: can't write to test message buffer\n");
-    }
-    else {
+    } else {
         msg_bufp += v;
     }
 }
@@ -330,10 +329,8 @@ void Tmsg_nf(const char *fmt, ...)
     va_end(args);
 }
 
-void tst_msg(const char *func, const char *fname, int line_num,
-             const char *fmt, ...)
+void tst_msg(const char *func, const char *fname, int line_num, const char *fmt, ...)
 {
-
     int i;
     va_list args;
 
@@ -646,8 +643,7 @@ bool tst_fail(int line_num, TestCase *tc, const char *fmt, ...)
     return false;
 }
 
-bool tst_assert(int line_num, TestCase *tc, int condition,
-                const char *fmt, ...)
+bool tst_assert(int line_num, TestCase *tc, int condition, const char *fmt, ...)
 {
     va_list args;
     a_cnt++;
@@ -721,6 +717,8 @@ int execute_test(int test_index) {
     TestSubSuite *subsuite;
     verbose = true;
     show_stack = true;
+    msg_buf = FRT_ALLOC_N(char, MAX_MSG_SIZE);
+    msg_bufp = msg_buf;
 
     clock_t start_time = clock();
     suite = all_tests[test_index].func(suite);
@@ -735,6 +733,7 @@ int execute_test(int test_index) {
     }
     reset_stats();
     free(suite);
+    free(msg_buf);
     return rv;
 }
 
@@ -784,6 +783,8 @@ static VALUE frb_ts_run_all(VALUE v) {
     show_stack = true;
     force = true;
     test_count = (int)FRT_NELEMS(all_tests);
+    msg_buf = FRT_ALLOC_N(char, MAX_MSG_SIZE);
+    msg_bufp = msg_buf;
 
     clock_t start_time = clock();
     for (i = 0; i < test_count; i++) {
@@ -802,6 +803,7 @@ static VALUE frb_ts_run_all(VALUE v) {
     }
     reset_stats();
     free(suite);
+    free(msg_buf);
     return INT2FIX(rv);
 }
 
