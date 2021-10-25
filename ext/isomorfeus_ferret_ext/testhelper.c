@@ -417,11 +417,11 @@ int nth_word_eql(char *words, char *word, int n)
     }
 }
 
-int s2l(char *str, int *arr)
+int s2l(const char *str, int *arr)
 {
     int i = 0;
     int num = 0;
-    char *p = str;
+    const char *p = str;
     bool in_number = false;
     do {
         if (isdigit(*p)) {

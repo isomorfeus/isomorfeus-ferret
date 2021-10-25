@@ -8,10 +8,10 @@
 static FrtSymbol search, string, integer, flt;
 
 typedef struct SortTestData {
-    char *search;
-    char *string;
-    char *integer;
-    char *flt;
+    const char *search;
+    const char *string;
+    const char *integer;
+    const char *flt;
 } SortTestData;
 
 static void add_sort_test_data(SortTestData *std, FrtIndexWriter *iw)
@@ -84,8 +84,7 @@ static void sort_multi_test_setup(FrtStore *store1, FrtStore *store2)
 
 #define R_START 3
 #define R_END 6
-static void do_test_top_docs(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                      char *expected_hits, FrtSort *sort)
+static void do_test_top_docs(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const char *expected_hits, FrtSort *sort)
 {
     static int num_array[ARRAY_SIZE];
     int i;
