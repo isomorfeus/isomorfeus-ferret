@@ -11,8 +11,8 @@ Segments ->
 Compound(.cfs) ->
   VInt FileCount
   {
-    UInt64 DataOffset 
-    String FileName 
+    UInt64 DataOffset
+    String FileName
   } * FileCount
   {
     Chars FileData
@@ -22,9 +22,9 @@ Fields ->
   Int StoreDefault
   Int IndexDefault
   Int TermVectorDefault
-  Int FeildCount
+  Int FieldCount
   {
-    String FieldName 
+    String FieldName
     Int    Boost          # CastAsInt
     Byte   FieldBits
     <
@@ -39,13 +39,13 @@ Fields ->
     > FieldBits
   } * FieldCount
 
-FieldIndex(.fdx) -> 
+FieldIndex(.fdx) ->
   {
     UInt32 FieldValuesPosition
     UInt32 FieldTermVectorsPosition
   } * SegSize
 
-FieldData(.fdt) ->  
+FieldData(.fdt) ->
   {
     VInt FieldCount
     {
