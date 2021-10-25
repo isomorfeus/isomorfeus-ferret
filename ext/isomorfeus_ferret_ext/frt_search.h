@@ -1,14 +1,14 @@
 #ifndef FRT_SEARCH_H
 #define FRT_SEARCH_H
 
+#include "frt_priorityqueue.h"
+#include "frt_field_index.h"
+#include "frt_bitvector.h"
+#include "frt_similarity.h"
+
 typedef struct FrtQuery FrtQuery;
 typedef struct FrtWeight FrtWeight;
 typedef struct FrtScorer FrtScorer;
-
-#include "frt_index.h"
-#include "frt_bitvector.h"
-#include "frt_similarity.h"
-#include "frt_field_index.h"
 
 /***************************************************************************
  *
@@ -37,6 +37,7 @@ extern char *frt_expl_to_html(FrtExplanation *expl);
  * Highlighter
  *
  ***************************************************************************/
+typedef struct FrtSearcher FrtSearcher;
 
 typedef struct FrtMatchRange
 {

@@ -2517,7 +2517,7 @@ frb_sea_close(VALUE self)
  *  Return the IndexReader wrapped by this searcher.
  */
 static VALUE
-frb_sea_get_reader(VALUE self, VALUE rterm)
+frb_sea_get_reader(VALUE self)
 {
     GET_SEA();
     return object_get(((FrtIndexSearcher *)sea)->ir);

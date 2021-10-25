@@ -4,10 +4,10 @@
 #define ARRAY_SIZE 20
 #define TEST_SE(query, ir, expected) do { \
     FrtSpanEnum *__se = ((FrtSpanQuery *)query)->get_spans(query, ir); \
-    char *__tmp = __se->to_s(__se);                              \
-    Asequal(expected, __tmp);                                     \
-    __se->destroy(__se);                                          \
-    free(__tmp);                                                  \
+    char *__tmp = __se->to_s(__se);                                    \
+    Asequal(expected, __tmp);                                          \
+    __se->destroy(__se);                                               \
+    free(__tmp);                                                       \
 } while(0)
 
 static FrtSymbol field;
@@ -15,7 +15,7 @@ static FrtSymbol field;
 static void add_doc(const char *text, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), text));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)text));
     frt_iw_add_doc(iw, doc);
    frt_doc_destroy(doc);
 }
@@ -71,8 +71,6 @@ static void span_test_setup(FrtStore *store)
     frt_iw_close(iw);
 }
 
-extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const char *expected_hits, int top);
-
 static void test_span_term(TestCase *tc, void *data)
 {
     FrtStore *store = (FrtStore *)data;
@@ -84,17 +82,17 @@ static void test_span_term(TestCase *tc, void *data)
     sea = frt_isea_new(ir);
 
     tq = frt_spantq_new(rb_intern("notafield"), "nine");
-    check_hits(tc, sea, tq, "", -1);
+    tst_check_hits(tc, sea, tq, "", -1);
     TEST_SE(tq, ir, "SpanTermEnum(span_terms(notafield:nine))@START");
     frt_q_deref(tq);
 
     tq = frt_spantq_new(field, "nine");
-    check_hits(tc, sea, tq, "7,23", -1);
+    tst_check_hits(tc, sea, tq, "7,23", -1);
     TEST_SE(tq, ir, "SpanTermEnum(span_terms(field:nine))@START");
     frt_q_deref(tq);
 
     tq = frt_spantq_new(field, "eight");
-    check_hits(tc, sea, tq, "6,7,8,22,23,24", -1);
+    tst_check_hits(tc, sea, tq, "6,7,8,22,23,24", -1);
     TEST_SE(tq, ir, "SpanTermEnum(span_terms(field:eight))@START");
     frt_q_deref(tq);
 
@@ -138,32 +136,32 @@ static void test_span_multi_term(TestCase *tc, void *data)
     sea = frt_isea_new(ir);
 
     mtq = frt_spanmtq_new(rb_intern("notafield"));
-    check_hits(tc, sea, mtq, "", -1);
+    tst_check_hits(tc, sea, mtq, "", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(notafield:[]))@START");
 
     frt_spanmtq_add_term(mtq, "nine");
-    check_hits(tc, sea, mtq, "", -1);
+    tst_check_hits(tc, sea, mtq, "", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(notafield:[nine]))@START");
 
     frt_spanmtq_add_term(mtq, "finish");
-    check_hits(tc, sea, mtq, "", -1);
+    tst_check_hits(tc, sea, mtq, "", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(notafield:[nine,finish]))@START");
     frt_q_deref(mtq);
 
     mtq = frt_spanmtq_new_conf(field, 4);
-    check_hits(tc, sea, mtq, "", -1);
+    tst_check_hits(tc, sea, mtq, "", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(field:[]))@START");
 
     frt_spanmtq_add_term(mtq, "nine");
-    check_hits(tc, sea, mtq, "7, 23", -1);
+    tst_check_hits(tc, sea, mtq, "7, 23", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(field:[nine]))@START");
 
     frt_spanmtq_add_term(mtq, "flop");
-    check_hits(tc, sea, mtq, "7, 12, 16, 21, 23, 27", -1);
+    tst_check_hits(tc, sea, mtq, "7, 12, 16, 21, 23, 27", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(field:[nine,flop]))@START");
 
     frt_spanmtq_add_term(mtq, "toot");
-    check_hits(tc, sea, mtq, "7, 12, 14, 16, 21, 23, 27", -1);
+    tst_check_hits(tc, sea, mtq, "7, 12, 14, 16, 21, 23, 27", -1);
     TEST_SE(mtq, ir, "SpanTermEnum(span_terms(field:[nine,flop,toot]))@START");
     frt_q_deref(mtq);
 
@@ -218,14 +216,14 @@ static void test_span_prefix(TestCase *tc, void *data)
     tmp = prq->to_s(prq, rb_intern("foo"));
     Asequal("notafield:fl*", tmp);
     free(tmp);
-    check_hits(tc, sea, prq, "", -1);
+    tst_check_hits(tc, sea, prq, "", -1);
     frt_q_deref(prq);
 
     prq = frt_spanprq_new(field, "fl");
     tmp = prq->to_s(prq, rb_intern("field"));
     Asequal("fl*", tmp);
     free(tmp);
-    check_hits(tc, sea, prq, "2, 4, 12, 16, 19, 21, 27, 29", -1);
+    tst_check_hits(tc, sea, prq, "2, 4, 12, 16, 19, 21, 27, 29", -1);
     frt_q_deref(prq);
 
     frt_searcher_close(sea);
@@ -267,12 +265,12 @@ static void test_span_first(TestCase *tc, void *data)
     sea = frt_isea_new(ir);
 
     q = frt_spanfq_new_nr(frt_spantq_new(field, "finish"), 1);
-    check_hits(tc, sea, q, "16,17,18,19,20,21,22,23,24,25,26,27,28,29,30", -1);
+    tst_check_hits(tc, sea, q, "16,17,18,19,20,21,22,23,24,25,26,27,28,29,30", -1);
     TEST_SE(q, ir, "SpanFirstEnum(span_first(span_terms(field:finish), 1))");
     frt_q_deref(q);
 
     q = frt_spanfq_new_nr(frt_spantq_new(field, "finish"), 5);
-    check_hits(tc, sea, q, "0,1,2,3,11,12,13,14,16,17,18,19,20,21,22,23,24,25,"
+    tst_check_hits(tc, sea, q, "0,1,2,3,11,12,13,14,16,17,18,19,20,21,22,23,24,25,"
                "26,27,28,29,30", -1);
     TEST_SE(q, ir, "SpanFirstEnum(span_first(span_terms(field:finish), 5))");
     frt_q_deref(q);
@@ -316,13 +314,13 @@ static void test_span_or(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     sea = frt_isea_new(ir);
     q = frt_spanoq_new();
-    check_hits(tc, sea, q, "", -1);
+    tst_check_hits(tc, sea, q, "", -1);
     TEST_SE(q, ir, "SpanOrEnum(span_or[])@START");
     frt_spanoq_add_clause_nr(q, frt_spantq_new(field, "flip"));
-    check_hits(tc, sea, q, "2, 4, 16, 19, 21, 29", -1);
+    tst_check_hits(tc, sea, q, "2, 4, 16, 19, 21, 29", -1);
     TEST_SE(q, ir, "SpanTermEnum(span_terms(field:flip))@START");
     frt_spanoq_add_clause_nr(q, frt_spantq_new(field, "flop"));
-    check_hits(tc, sea, q, "2, 4, 12, 16, 19, 21, 27, 29", -1);
+    tst_check_hits(tc, sea, q, "2, 4, 12, 16, 19, 21, 27, 29", -1);
     TEST_SE(q, ir, "SpanOrEnum(span_or[span_terms(field:flip),span_terms(field:flop)])@START");
     frt_q_deref(q);
     frt_searcher_close(sea);
@@ -376,24 +374,24 @@ static void test_span_near(TestCase *tc, void *data)
     TEST_SE(q, ir, "SpanTermEnum(span_terms(field:start))@START");
     frt_spannq_add_clause_nr(q, frt_spantq_new(field, "finish"));
     TEST_SE(q, ir, "SpanNearEnum(span_near[span_terms(field:start),span_terms(field:finish)])@START");
-    check_hits(tc, sea, q, "0, 14", -1);
+    tst_check_hits(tc, sea, q, "0, 14", -1);
 
     ((FrtSpanNearQuery *)q)->in_order = false;
-    check_hits(tc, sea, q, "0,14,16,30", -1);
+    tst_check_hits(tc, sea, q, "0,14,16,30", -1);
 
     ((FrtSpanNearQuery *)q)->in_order = true;
     ((FrtSpanNearQuery *)q)->slop = 1;
-    check_hits(tc, sea, q, "0,1,13,14", -1);
+    tst_check_hits(tc, sea, q, "0,1,13,14", -1);
 
     ((FrtSpanNearQuery *)q)->in_order = false;
-    check_hits(tc, sea, q, "0,1,13,14,16,17,29,30", -1);
+    tst_check_hits(tc, sea, q, "0,1,13,14,16,17,29,30", -1);
 
     ((FrtSpanNearQuery *)q)->in_order = true;
     ((FrtSpanNearQuery *)q)->slop = 4;
-    check_hits(tc, sea, q, "0,1,2,3,4,10,11,12,13,14", -1);
+    tst_check_hits(tc, sea, q, "0,1,2,3,4,10,11,12,13,14", -1);
 
     ((FrtSpanNearQuery *)q)->in_order = false;
-    check_hits(tc, sea, q, "0,1,2,3,4,10,11,12,13,14,16,17,18,19,20,26,27,"
+    tst_check_hits(tc, sea, q, "0,1,2,3,4,10,11,12,13,14,16,17,18,19,20,26,27,"
                "28,29,30", -1);
 
     frt_q_deref(q);
@@ -402,7 +400,7 @@ static void test_span_near(TestCase *tc, void *data)
     frt_spannq_add_clause_nr(q, frt_spanprq_new(field, "fi"));
     frt_spannq_add_clause_nr(q, frt_spanprq_new(field, "fin"));
     frt_spannq_add_clause_nr(q, frt_spanprq_new(field, "si"));
-    check_hits(tc, sea, q, "5, 9, 4, 10", -1);
+    tst_check_hits(tc, sea, q, "5, 9, 4, 10", -1);
     frt_q_deref(q);
 
     frt_searcher_close(sea);
@@ -488,7 +486,7 @@ static void test_span_not(TestCase *tc, void *data)
 
     q = frt_spanxq_new(nearq0, nearq1);
     TEST_SE(q, ir, "SpanNotEnum(span_not(inc:<span_near[span_terms(field:start),span_terms(field:finish)]>, exc:<span_near[span_terms(field:two),span_terms(field:five)]>))");
-    check_hits(tc, sea, q, "0,1,13,14", -1);
+    tst_check_hits(tc, sea, q, "0,1,13,14", -1);
     frt_q_deref(q);
     frt_q_deref(nearq0);
 
@@ -497,7 +495,7 @@ static void test_span_not(TestCase *tc, void *data)
     frt_spannq_add_clause_nr(nearq0, frt_spantq_new(field, "finish"));
 
     q = frt_spanxq_new_nr(nearq0, nearq1);
-    check_hits(tc, sea, q, "0,1,13,14,16,17,29,30", -1);
+    tst_check_hits(tc, sea, q, "0,1,13,14,16,17,29,30", -1);
     frt_q_deref(q);
 
     nearq0 = frt_spannq_new(4, true);
@@ -509,7 +507,7 @@ static void test_span_not(TestCase *tc, void *data)
     frt_spannq_add_clause_nr(nearq1, frt_spantq_new(field, "five"));
 
     q = frt_spanxq_new_nr(nearq0, nearq1);
-    check_hits(tc, sea, q, "2,3,4,5,6,7,8,9,10,11,12,15", -1);
+    tst_check_hits(tc, sea, q, "2,3,4,5,6,7,8,9,10,11,12,15", -1);
     frt_q_deref(q);
 
     frt_searcher_close(sea);

@@ -7,7 +7,7 @@
 #define BV_INT 33
 
 #define SET_BITS_MAX_CNT 100
-static FrtBitVector *set_bits(FrtBitVector *bv, char *bits)
+static FrtBitVector *set_bits(FrtBitVector *bv, const char *bits)
 {
     static int bit_array[SET_BITS_MAX_CNT];
     const int bit_cnt = s2l(bits, bit_array);

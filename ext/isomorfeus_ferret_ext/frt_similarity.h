@@ -1,8 +1,6 @@
 #ifndef FRT_SIMILARITY_H
 #define FRT_SIMILARITY_H
 
-#include "frt_symbol.h"
-
 typedef struct FrtSearcher FrtSearcher;
 
 /****************************************************************************

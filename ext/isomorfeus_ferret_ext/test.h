@@ -2,6 +2,7 @@
 #define TEST_H
 
 #include "frt_global.h"
+#include "frt_search.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +30,7 @@ typedef struct TestSuite
 
 typedef struct TestCase
 {
-    char *name;
+    const char *name;
     int failed;
     TestSubSuite *suite;
 } TestCase;
@@ -74,9 +75,8 @@ extern TestSuite *tst_add_suite(TestSuite *suite, const char *suite_name);
  *   output. Use the tst_run_tests macro if you just want the name of the
  *   function to be used. This will suffice in most cases.
  */
-extern void tst_run_test_with_name(TestSuite *suite, test_func func,
-                                   void *value, char *test_name);
-#define tst_run_test(ts, f, val) tst_run_test_with_name(ts, f, (val), #f)
+extern void tst_run_test_with_name(TestSuite *suite, test_func func, void *value, const char *test_name);
+#define tst_run_test(ts, f, val) tst_run_test_with_name(ts, f, (val), (char *)#f)
 
 /**
  * Add a message to the test output diagnostics. This function should be used
@@ -410,5 +410,7 @@ extern bool tst_assert(int line_num, TestCase *tc, int condition,
 #else
 extern bool Assert(int condition, const char *fmt, ...);
 #endif
+
+extern void tst_check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const char *expected_hits, int top);
 
 #endif

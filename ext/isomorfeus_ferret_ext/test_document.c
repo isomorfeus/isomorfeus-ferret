@@ -18,7 +18,7 @@ void test_df_standard(TestCase *tc, void *data)
     free(s);
     frt_df_destroy(df);
 
-    df = frt_df_add_data_len(frt_df_new(rb_intern("title")), "new title", 9);
+    df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"new title", 9);
     Aiequal(1, df->size);
     Asequal("title", rb_id2name(df->name));
     Asequal("new title", df->data[0]);
@@ -74,12 +74,12 @@ void test_doc(TestCase *tc, void *data)
     (void)data;
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), "title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title"));
     Aiequal(1, doc->size);
-    df = frt_df_add_data(frt_df_new(rb_intern("data")), "data1");
-    frt_df_add_data(df, "data2");
-    frt_df_add_data(df, "data3");
-    frt_df_add_data(df, "data4");
+    df = frt_df_add_data(frt_df_new(rb_intern("data")), (char *)"data1");
+    frt_df_add_data(df, (char *)"data2");
+    frt_df_add_data(df, (char *)"data3");
+    frt_df_add_data(df, (char *)"data4");
     frt_doc_add_field(doc, df);
     Aiequal(2, doc->size);
     Asequal("title", rb_id2name(frt_doc_get_field(doc, rb_intern("title"))->name));
@@ -124,10 +124,10 @@ void test_double_field_exception(TestCase *tc, void *data)
     (void)data;
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), "title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title"));
 
     FRT_TRY
-        df = frt_df_add_data_len(frt_df_new(rb_intern("title")), "title", 5);
+        df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"title", 5);
         frt_doc_add_field(doc, df);
     case FRT_EXCEPTION:
         exception_thrown = true;

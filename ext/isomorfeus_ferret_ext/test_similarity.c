@@ -1,3 +1,4 @@
+#include "frt_global.h"
 #include "frt_similarity.h"
 #include "test.h"
 

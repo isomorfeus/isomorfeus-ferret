@@ -5,36 +5,33 @@ static FrtSymbol num;
 
 extern void prepare_filter_index(FrtStore *store);
 
-extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                       char *expected_hits, int top);
-
 static void test_const_score_query(TestCase *tc, void *data)
 {
     FrtSearcher *searcher = (FrtSearcher *)data;
     FrtQuery *q;
     q = frt_csq_new_nr(frt_rfilt_new(num, "2", "6", true, true));
-    check_hits(tc, searcher, q, "2,3,4,5,6", -1);
+    tst_check_hits(tc, searcher, q, "2,3,4,5,6", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, "2", "6", true, false));
-    check_hits(tc, searcher, q, "2,3,4,5", -1);
+    tst_check_hits(tc, searcher, q, "2,3,4,5", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, "2", "6", false, true));
-    check_hits(tc, searcher, q, "3,4,5,6", -1);
+    tst_check_hits(tc, searcher, q, "3,4,5,6", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, "2", "6", false, false));
-    check_hits(tc, searcher, q, "3,4,5", -1);
+    tst_check_hits(tc, searcher, q, "3,4,5", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, "6", NULL, true, false));
-    check_hits(tc, searcher, q, "6,7,8,9", -1);
+    tst_check_hits(tc, searcher, q, "6,7,8,9", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, "6", NULL, false, false));
-    check_hits(tc, searcher, q, "7,8,9", -1);
+    tst_check_hits(tc, searcher, q, "7,8,9", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, NULL, "2", false, true));
-    check_hits(tc, searcher, q, "0,1,2", -1);
+    tst_check_hits(tc, searcher, q, "0,1,2", -1);
     frt_q_deref(q);
     q = frt_csq_new_nr(frt_rfilt_new(num, NULL, "2", false, false));
-    check_hits(tc, searcher, q, "0,1", -1);
+    tst_check_hits(tc, searcher, q, "0,1", -1);
     frt_q_deref(q);
 }
 

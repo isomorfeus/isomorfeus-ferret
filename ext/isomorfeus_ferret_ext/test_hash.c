@@ -1,5 +1,4 @@
 #include "frt_hash.h"
-#include "frt_symbol.h"
 #include "frt_global.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,10 +43,12 @@ static void test_hash_str(TestCase *tc, void *data)
     frt_h_set(h, "three", malloc_int(3));
     frt_h_set(h, "four", malloc_int(4));
 
+    size_t res;
     f = temp_open();
     frt_h_str_print_keys(h, f);
     fseek(f, 0, SEEK_SET);
-    fread(buf, 1, 100, f);
+    res = fread(buf, 1, 100, f);
+    Atrue(res > 0);
     fclose(f);
     Asequal("keys:\n\tfour\n\tone\n\tthree\n\ttwo\n", buf);
     frt_h_destroy(h);
@@ -55,12 +56,12 @@ static void test_hash_str(TestCase *tc, void *data)
     /* test frt_h_rem with allocated key */
     strcpy(buf, "key");
     frt_h_new_str(&mark_free, (frt_free_ft)NULL);
-    frt_h_set(h, buf, "val");
+    frt_h_set(h, buf, (char *)"val");
     Asequal("val", frt_h_get(h, "key"));
     t = (char *)frt_h_rem(h, "key", false);
     Asequal("val", t);
     Asequal("key", buf);
-    frt_h_set(h, buf, "new val");
+    frt_h_set(h, buf, (char *)"new val");
     Asequal("new val", frt_h_get(h, "key"));
     t = (char *)frt_h_rem(h, "key", true);
     Asequal("new val", t);
@@ -156,7 +157,7 @@ static void test_hash_int(TestCase *tc, void *data)
     Aiequal(1, h->size);
     Atrue(frt_h_has_key_int(h, 0));
     Assert(frt_h_set_safe_int(h, 10, frt_estrdup("ten")), "Not existing");
-    Assert(!frt_h_set_safe_int(h, 10, "10"), "Won't overwrite existing");
+    Assert(!frt_h_set_safe_int(h, 10, (char *)"10"), "Won't overwrite existing");
     Asequal("ten", frt_h_get_int(h, 10));
     Aiequal(2, h->size);
     Atrue(frt_h_has_key_int(h, 10));
@@ -352,9 +353,8 @@ static void test_each_ekv(void *key, void *value, FrtHash *h)
  */
 static void test_hash_each_and_clone(TestCase *tc, void *data)
 {
-    char *strs[] =
-        { "one", "two", "three", "four", "five", "six", "seven", NULL };
-    char **s = strs;
+    const char *strs[] = { "one", "two", "three", "four", "five", "six", "seven", NULL };
+    const char **s = strs;
     FrtHash *h = frt_h_new_str(&free, &free);
     FrtHash *ht2;
     (void)data; /* suppress unused argument warning */

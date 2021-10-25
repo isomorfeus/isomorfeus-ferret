@@ -110,7 +110,6 @@ extern const char *const FRT_UNSUPPORTED_ERROR_MSG;
 extern const char *const FRT_EOF_ERROR_MSG;
 extern const char *frt_err_code_to_type(const int err_code);
 
-extern bool frt_ruby_raise;
 extern void frb_rb_raise(const char *file, int line_num, const char *func, const char *err_type, const char *fmt, ...);
 
 typedef struct frt_xcontext_t

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "frt_lang.h"
 #include "frt_except.h"
 #include "frt_global.h"
@@ -41,13 +42,6 @@ void *frt_erealloc(void *ptr, size_t size)
 
     return p;
 }
-
-#if defined FRT_IS_C99 && !defined __MINGW32__
-extern void usleep(unsigned long usec);
-extern int unlink(const char *path);
-#else
-#  include <unistd.h>
-#endif
 
 /* void micro_sleep(const int micro_seconds)
 {

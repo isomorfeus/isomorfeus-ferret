@@ -10,8 +10,8 @@
  * the algorithm can be found in the file dictobject.c in Python's src
  ****************************************************************************/
 
-static char *dummy_key = "";
-static char *dummy_int_key = "i";
+static const char *dummy_key = "";
+static const char *dummy_int_key = "i";
 
 #define PERTURB_SHIFT 5
 #define MAX_FREE_HASH_TABLES 80
@@ -260,7 +260,7 @@ int frt_h_del(FrtHash *self, const void *key)
     if (he->key != NULL && he->key != dummy_key) {
         self->free_key_i(he->key);
         self->free_value_i(he->value);
-        he->key = dummy_key;
+        he->key = (char *)dummy_key;
         he->value = NULL;
         self->size--;
         return true;
@@ -280,7 +280,7 @@ void *frt_h_rem(FrtHash *self, const void *key, bool destroy_key)
             self->free_key_i(he->key);
         }
 
-        he->key = dummy_key;
+        he->key = (char *)dummy_key;
         val = he->value;
         he->value = NULL;
         self->size--;
@@ -433,7 +433,7 @@ FrtHashKeyStatus frt_h_set_int(FrtHash *self,
         }
         ret_val = FRT_HASH_KEY_EQUAL;
     }
-    he->key = dummy_int_key;
+    he->key = (char *)dummy_int_key;
     he->value = value;
 
     return ret_val;
@@ -443,7 +443,7 @@ int frt_h_set_safe_int(FrtHash *self, const unsigned long long key, void *value)
 {
     FrtHashEntry *he;
     if (frt_h_set_ext(self, (const void *)key, &he)) {
-        he->key = dummy_int_key;
+        he->key = (char *)dummy_int_key;
         he->value = value;
         return true;
     }

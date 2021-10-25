@@ -216,10 +216,10 @@ static void prepare_search_index(FrtStore *store)
     for (i = 0; i < SEARCH_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), test_data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), test_data[i].field));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), test_data[i].cat));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), test_data[i].number));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)test_data[i].date));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)test_data[i].field));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)test_data[i].cat));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)test_data[i].number));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }
@@ -259,8 +259,7 @@ void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, const char *q_st
     free(q_res);
 }
 
-void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                const char *expected_hits, int top)
+void tst_check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const char *expected_hits, int top)
 {
     static int num_array[ARRAY_SIZE];
     static int num_array2[ARRAY_SIZE];
@@ -345,7 +344,7 @@ static void test_term_query(TestCase *tc, void *data)
     check_to_s(tc, tq, field, "word2");
     check_to_s(tc, tq, (FrtSymbol)NULL, "field:word2");
     tq->boost = 100;
-    check_hits(tc, searcher, tq, "4, 8, 1", -1);
+    tst_check_hits(tc, searcher, tq, "4, 8, 1", -1);
     check_to_s(tc, tq, field, "word2^100.0");
     check_to_s(tc, tq, (FrtSymbol)NULL, "field:word2^100.0");
 
@@ -361,15 +360,15 @@ static void test_term_query(TestCase *tc, void *data)
     frt_q_deref(tq);
 
     tq = frt_tq_new(field, "2342");
-    check_hits(tc, searcher, tq, "", -1);
+    tst_check_hits(tc, searcher, tq, "", -1);
     frt_q_deref(tq);
 
     tq = frt_tq_new(field, "");
-    check_hits(tc, searcher, tq, "", -1);
+    tst_check_hits(tc, searcher, tq, "", -1);
     frt_q_deref(tq);
 
     tq = frt_tq_new(rb_intern("not_a_field"), "word2");
-    check_hits(tc, searcher, tq, "", -1);
+    tst_check_hits(tc, searcher, tq, "", -1);
     frt_q_deref(tq);
 
     tq = frt_tq_new(field, "word1");
@@ -391,7 +390,7 @@ static void test_term_query(TestCase *tc, void *data)
 
     tq = frt_tq_new(field, "quick");
     /* test get_matchv_i */
-    check_hits(tc, searcher, tq, "1,11,14,16,17", -1);
+    tst_check_hits(tc, searcher, tq, "1,11,14,16,17", -1);
     check_match_vector(tc, searcher, tq, 1, field, "3,3,7,7");
 
     /* test extract_terms */
@@ -438,10 +437,10 @@ static void test_boolean_query(TestCase *tc, void *data)
     FrtQuery *tq3 = frt_tq_new(field, "word2");
     frt_bq_add_query_nr(bq, tq1, FRT_BC_MUST);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_MUST);
-    check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 14);
+    tst_check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 14);
 
     frt_bq_add_query_nr(bq, tq3, FRT_BC_SHOULD);
-    check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 8);
+    tst_check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 8);
     frt_q_deref(bq);
 
     tq2 = frt_tq_new(field, "word3");
@@ -449,19 +448,19 @@ static void test_boolean_query(TestCase *tc, void *data)
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_MUST);
     frt_bq_add_query_nr(bq, tq3, FRT_BC_MUST_NOT);
-    check_hits(tc, searcher, bq, "2, 3, 6, 11, 14", -1);
+    tst_check_hits(tc, searcher, bq, "2, 3, 6, 11, 14", -1);
     frt_q_deref(bq);
 
     tq2 = frt_tq_new(field, "word3");
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_MUST_NOT);
-    check_hits(tc, searcher, bq, "0,1,4,5,7,9,10,12,13,15,16,17", -1);
+    tst_check_hits(tc, searcher, bq, "0,1,4,5,7,9,10,12,13,15,16,17", -1);
     frt_q_deref(bq);
 
     tq2 = frt_tq_new(field, "word3");
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_SHOULD);
-    check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 14);
+    tst_check_hits(tc, searcher, bq, "2, 3, 6, 8, 11, 14", 14);
     frt_q_deref(bq);
 
     tq2 = frt_tq_new(field, "word3");
@@ -469,7 +468,7 @@ static void test_boolean_query(TestCase *tc, void *data)
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_SHOULD);
     frt_bq_add_query_nr(bq, tq3, FRT_BC_SHOULD);
-    check_hits(tc, searcher, bq, "1, 2, 3, 4, 6, 8, 11, 14", -1);
+    tst_check_hits(tc, searcher, bq, "1, 2, 3, 4, 6, 8, 11, 14", -1);
     frt_q_deref(bq);
 
     bq = frt_bq_new(false);
@@ -478,10 +477,10 @@ static void test_boolean_query(TestCase *tc, void *data)
     tq3 = frt_tq_new(field, "word2");
     frt_bq_add_query_nr(bq, tq1, FRT_BC_SHOULD);
     frt_bq_add_query_nr(bq, tq2, FRT_BC_SHOULD);
-    check_hits(tc, searcher, bq, "", -1);
+    tst_check_hits(tc, searcher, bq, "", -1);
 
     frt_bq_add_query_nr(bq, tq3, FRT_BC_SHOULD);
-    check_hits(tc, searcher, bq, "1, 4, 8", 4);
+    tst_check_hits(tc, searcher, bq, "1, 4, 8", 4);
 
     frt_q_deref(bq);
 }
@@ -563,10 +562,10 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "fox", 1);
     check_to_s(tc, phq, field, "\"quick brown fox\"");
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick brown fox\"");
-    check_hits(tc, searcher, phq, "1", 1);
+    tst_check_hits(tc, searcher, phq, "1", 1);
 
     frt_phq_set_slop(phq, 4);
-    check_hits(tc, searcher, phq, "1, 16, 17", 17);
+    tst_check_hits(tc, searcher, phq, "1, 16, 17", 17);
 
     /* test PhraseWeight.to_s */
     w = searcher->create_weight(searcher, phq);
@@ -584,39 +583,39 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "fox", 2);
     check_to_s(tc, phq, field, "\"quick <> fox\"");
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick <> fox\"");
-    check_hits(tc, searcher, phq, "1, 11, 14", 14);
+    tst_check_hits(tc, searcher, phq, "1, 11, 14", 14);
 
     frt_phq_set_slop(phq, 1);
-    check_hits(tc, searcher, phq, "1, 11, 14, 16", 14);
+    tst_check_hits(tc, searcher, phq, "1, 11, 14, 16", 14);
 
     frt_phq_set_slop(phq, 4);
-    check_hits(tc, searcher, phq, "1, 11, 14, 16, 17", 14);
+    tst_check_hits(tc, searcher, phq, "1, 11, 14, 16, 17", 14);
     frt_phq_add_term(phq, "red", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick red fox\"~4");
-    check_hits(tc, searcher, phq, "11", 11);
+    tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "RED", 0);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick red RED&fox\"~4");
-    check_hits(tc, searcher, phq, "11", 11);
+    tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "QUICK", -1);
     frt_phq_add_term(phq, "red", 0);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick QUICK&red&red RED&fox\"~4");
-    check_hits(tc, searcher, phq, "11", 11);
+    tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "green", 0);
     frt_phq_add_term(phq, "yellow", 0);
     frt_phq_add_term(phq, "sentinel", 1);
     check_to_s(tc, phq, (FrtSymbol)NULL,
                "field:\"quick QUICK&red&red RED&fox&green&yellow sentinel\"~4");
-    check_hits(tc, searcher, phq, "", -1);
+    tst_check_hits(tc, searcher, phq, "", -1);
     frt_q_deref(phq);
 
     phq = frt_phq_new(field);
     frt_phq_add_term(phq, "the", 0);
     frt_phq_add_term(phq, "WORD3", 0);
-    check_hits(tc, searcher, phq, "8, 11, 14", 14);
+    tst_check_hits(tc, searcher, phq, "8, 11, 14", 14);
     frt_phq_add_term(phq, "THE", 1);
     frt_phq_add_term(phq, "quick", 0);
     frt_phq_add_term(phq, "QUICK", 1);
-    check_hits(tc, searcher, phq, "11, 14", 14);
+    tst_check_hits(tc, searcher, phq, "11, 14", 14);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3&the THE&quick QUICK\"");
     frt_q_deref(phq);
 
@@ -625,15 +624,15 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "one", 0);
     frt_phq_add_term(phq, "two", 1);
     frt_phq_add_term(phq, "one", 1);
-    check_hits(tc, searcher, phq, "2", 2);
+    tst_check_hits(tc, searcher, phq, "2", 2);
     frt_phq_set_slop(phq, 2);
-    check_hits(tc, searcher, phq, "2", 2);
+    tst_check_hits(tc, searcher, phq, "2", 2);
     frt_q_deref(phq);
 
     phq = frt_phq_new(rb_intern("not a field"));
     frt_phq_add_term(phq, "the", 0);
     frt_phq_add_term(phq, "quick", 1);
-    check_hits(tc, searcher, phq, "", -1);
+    tst_check_hits(tc, searcher, phq, "", -1);
     explanation = searcher->explain(searcher, phq, 0);
     Afequal(0.0, explanation->value);
     frt_expl_destroy(explanation);
@@ -642,14 +641,14 @@ static void test_phrase_query(TestCase *tc, void *data)
     /* test single-term case, query is rewritten to TermQuery */
     phq = frt_phq_new(field);
     frt_phq_add_term(phq, "word2", 1);
-    check_hits(tc, searcher, phq, "4, 8, 1", -1);
+    tst_check_hits(tc, searcher, phq, "4, 8, 1", -1);
     q = frt_searcher_rewrite(searcher, phq);
     Aiequal(q->type, TERM_QUERY);
     frt_q_deref(q);
 
     /* test single-position/multi-term query is rewritten as MultiTermQuery */
     frt_phq_append_multi_term(phq, "word3");
-    check_hits(tc, searcher, phq, "1,2,3,4,6,8,11,14", -1);
+    tst_check_hits(tc, searcher, phq, "1,2,3,4,6,8,11,14", -1);
     q = frt_searcher_rewrite(searcher, phq);
     Aiequal(q->type, MULTI_TERM_QUERY);
     frt_q_deref(q);
@@ -657,22 +656,22 @@ static void test_phrase_query(TestCase *tc, void *data)
     /* check boost doesn't break anything */;
     frt_phq_add_term(phq, "one", 1); /* make sure it won't be rewritten */
     phq->boost = 10.0;
-    check_hits(tc, searcher, phq, "2,3", -1);
+    tst_check_hits(tc, searcher, phq, "2,3", -1);
     frt_q_deref(phq);
 
     /* test get_matchv_i */
     phq = frt_phq_new(field);
     frt_phq_add_term(phq, "quick", 0);
     frt_phq_add_term(phq, "brown", 1);
-    check_hits(tc, searcher, phq, "1", -1);
+    tst_check_hits(tc, searcher, phq, "1", -1);
     check_match_vector(tc, searcher, phq, 1, field, "3,4,7,8");
 
     frt_phq_set_slop(phq, 4);
-    check_hits(tc, searcher, phq, "1,16,17", -1);
+    tst_check_hits(tc, searcher, phq, "1,16,17", -1);
     check_match_vector(tc, searcher, phq, 16, field, "2,5");
 
     frt_phq_add_term(phq, "chicken", 1);
-    check_hits(tc, searcher, phq, "", -1);
+    tst_check_hits(tc, searcher, phq, "", -1);
     check_match_vector(tc, searcher, phq, 16, field, "");
     frt_q_deref(phq);
 }
@@ -740,7 +739,7 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     /* ok to use append_multi_term to start */
     frt_phq_append_multi_term(phq, "quick");
     frt_phq_append_multi_term(phq, "fast");
-    check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
+    tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, phq, field, "\"quick|fast\"");
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast\"");
 
@@ -750,21 +749,21 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "fox", 1);
     check_to_s(tc, phq, field, "\"quick|fast brown|red|hairy fox\"");
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast brown|red|hairy fox\"");
-    check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
+    tst_check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
 
     frt_phq_set_slop(phq, 4);
-    check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
+    tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast brown|red|hairy fox\"~4");
 
     frt_phq_add_term(phq, "QUICK", -1);
     frt_phq_append_multi_term(phq, "FAST");
-    check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
+    tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL,
                "field:\"quick|fast QUICK|FAST&brown|red|hairy fox\"~4");
 
     frt_phq_add_term(phq, "WORD3", -3);
     frt_phq_append_multi_term(phq, "WORD2");
-    check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
+    tst_check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|WORD2 quick|fast "
                "QUICK|FAST&brown|red|hairy fox\"~4");
 
@@ -777,11 +776,11 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "one", 0);
     frt_phq_add_term(phq, "two", 1);
     frt_phq_add_term(phq, "one", 1);
-    check_hits(tc, searcher, phq, "2", -1);
+    tst_check_hits(tc, searcher, phq, "2", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|x&one two one\"");
 
     frt_phq_set_slop(phq, 4);
-    check_hits(tc, searcher, phq, "2", -1);
+    tst_check_hits(tc, searcher, phq, "2", -1);
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|x&one two one\"~4");
     frt_q_deref(phq);
 
@@ -790,13 +789,13 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "the", 0);
     frt_phq_add_term(phq, "quick", 1);
     frt_phq_append_multi_term(phq, "THE");
-    check_hits(tc, searcher, phq, "", -1);
+    tst_check_hits(tc, searcher, phq, "", -1);
     frt_q_deref(phq);
 
     phq = frt_phq_new(field);
     frt_phq_add_term(phq, "word2", 1);
     frt_phq_append_multi_term(phq, "word3");
-    check_hits(tc, searcher, phq, "1, 2, 3, 4, 6, 8, 11, 14", -1);
+    tst_check_hits(tc, searcher, phq, "1, 2, 3, 4, 6, 8, 11, 14", -1);
     q = frt_searcher_rewrite(searcher, phq);
     Aiequal(q->type, MULTI_TERM_QUERY);
     frt_q_deref(phq);
@@ -808,17 +807,17 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "brown", 1);
     frt_phq_append_multi_term(phq, "dirty");
     frt_phq_append_multi_term(phq, "red");
-    check_hits(tc, searcher, phq, "1,11", -1);
+    tst_check_hits(tc, searcher, phq, "1,11", -1);
     check_match_vector(tc, searcher, phq, 1, field, "3,4,7,8");
 
     frt_phq_set_slop(phq, 1);
-    check_hits(tc, searcher, phq, "1,11,17", -1);
+    tst_check_hits(tc, searcher, phq, "1,11,17", -1);
     check_match_vector(tc, searcher, phq, 1, field, "3,4,7,8");
     check_match_vector(tc, searcher, phq, 17, field, "5,7");
 
     frt_phq_add_term(phq, "chicken", 1);
     frt_phq_append_multi_term(phq, "turtle");
-    check_hits(tc, searcher, phq, "", -1);
+    tst_check_hits(tc, searcher, phq, "", -1);
     check_match_vector(tc, searcher, phq, 17, field, "");
     frt_q_deref(phq);
 }
@@ -900,30 +899,30 @@ static void test_multi_term_query(TestCase *tc, void *data)
     Araise(FRT_ARG_ERROR, &mtq_zero_max_terms, NULL);
 
     mtq = frt_multi_tq_new_conf(field, 4, 0.5);
-    check_hits(tc, searcher, mtq, "", -1);
+    tst_check_hits(tc, searcher, mtq, "", -1);
     check_to_s(tc, mtq, field, "\"\"");
     check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"\"");
 
     frt_multi_tq_add_term(mtq, "brown");
-    check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
+    tst_check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"brown\"");
     check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown\"");
 
 
     /* 0.4f boost is below the 0.5 threshold so term is ignored */
     frt_multi_tq_add_term_boost(mtq, "fox", 0.4f);
-    check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
+    tst_check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"brown\"");
     check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown\"");
 
     /* 0.6f boost is above the 0.5 threshold so term is included */
     frt_multi_tq_add_term_boost(mtq, "fox", 0.6f);
-    check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", -1);
+    tst_check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"fox^0.6|brown\"");
     check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown\"");
 
     frt_multi_tq_add_term_boost(mtq, "fast", 50.0f);
-    check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", 8);
+    tst_check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", 8);
     check_to_s(tc, mtq, field, "\"fox^0.6|brown|fast^50.0\"");
     check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown|fast^50.0\"");
 
@@ -956,7 +955,7 @@ static void test_multi_term_query(TestCase *tc, void *data)
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, frt_tq_new(field, "quick"), FRT_BC_MUST);
     frt_bq_add_query(bq, mtq, FRT_BC_MUST);
-    check_hits(tc, searcher, bq, "1, 11, 14, 16, 17", -1);
+    tst_check_hits(tc, searcher, bq, "1, 11, 14, 16, 17", -1);
     check_to_s(tc, bq, field, "+quick +\"fox^0.6|brown|word1\"");
     check_to_s(tc, bq, (FrtSymbol)NULL, "+field:quick +field:\"fox^0.6|brown|word1\"");
     frt_q_deref(bq);
@@ -1010,29 +1009,29 @@ static void test_prefix_query(TestCase *tc, void *data)
     FrtSearcher *searcher = (FrtSearcher *)data;
     FrtQuery *prq = frt_prefixq_new(cat, "cat1");
     check_to_s(tc, prq, cat, "cat1*");
-    check_hits(tc, searcher, prq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
+    tst_check_hits(tc, searcher, prq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
     frt_q_deref(prq);
 
     prq = frt_prefixq_new(cat, "cat1/sub2");
     check_to_s(tc, prq, cat, "cat1/sub2*");
     prq->boost = 20.0f;
     check_to_s(tc, prq, cat, "cat1/sub2*^20.0");
-    check_hits(tc, searcher, prq, "3, 4, 13, 15", -1);
+    tst_check_hits(tc, searcher, prq, "3, 4, 13, 15", -1);
     frt_q_deref(prq);
 
     prq = frt_prefixq_new(cat, "cat1/sub");
     check_to_s(tc, prq, cat, "cat1/sub*");
-    check_hits(tc, searcher, prq, "1, 2, 3, 4, 13, 14, 15, 16", -1);
+    tst_check_hits(tc, searcher, prq, "1, 2, 3, 4, 13, 14, 15, 16", -1);
     frt_q_deref(prq);
 
     prq = frt_prefixq_new(rb_intern("unknown field"), "cat1/sub");
     check_to_s(tc, prq, cat, "unknown field:cat1/sub*");
-    check_hits(tc, searcher, prq, "", -1);
+    tst_check_hits(tc, searcher, prq, "", -1);
     frt_q_deref(prq);
 
     prq = frt_prefixq_new(cat, "unknown_term");
     check_to_s(tc, prq, cat, "unknown_term*");
-    check_hits(tc, searcher, prq, "", -1);
+    tst_check_hits(tc, searcher, prq, "", -1);
     frt_q_deref(prq);
 }
 
@@ -1084,65 +1083,65 @@ static void test_range_query(TestCase *tc, void *data)
     Araise(FRT_ARG_ERROR, &rq_new_null_lower_and_upper, NULL);
 
     rq = frt_rq_new(date, "20051006", "20051010", true, true);
-    check_hits(tc, searcher, rq, "6,7,8,9,10", -1);
+    tst_check_hits(tc, searcher, rq, "6,7,8,9,10", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, "20051006", "20051010", false, true);
-    check_hits(tc, searcher, rq, "7,8,9,10", -1);
+    tst_check_hits(tc, searcher, rq, "7,8,9,10", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, "20051006", "20051010", true, false);
-    check_hits(tc, searcher, rq, "6,7,8,9", -1);
+    tst_check_hits(tc, searcher, rq, "6,7,8,9", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, "20051006", "20051010", false, false);
-    check_hits(tc, searcher, rq, "7,8,9", -1);
+    tst_check_hits(tc, searcher, rq, "7,8,9", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, NULL, "20051003", false, true);
-    check_hits(tc, searcher, rq, "0,1,2,3", -1);
+    tst_check_hits(tc, searcher, rq, "0,1,2,3", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, NULL, "20051003", false, false);
-    check_hits(tc, searcher, rq, "0,1,2", -1);
+    tst_check_hits(tc, searcher, rq, "0,1,2", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new_less(date, "20051003", true);
-    check_hits(tc, searcher, rq, "0,1,2,3", -1);
+    tst_check_hits(tc, searcher, rq, "0,1,2,3", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new_less(date, "20051003", false);
-    check_hits(tc, searcher, rq, "0,1,2", -1);
+    tst_check_hits(tc, searcher, rq, "0,1,2", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, "20051014", NULL, true, false);
-    check_hits(tc, searcher, rq, "14,15,16,17", -1);
+    tst_check_hits(tc, searcher, rq, "14,15,16,17", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(date, "20051014", NULL, false, false);
-    check_hits(tc, searcher, rq, "15,16,17", -1);
+    tst_check_hits(tc, searcher, rq, "15,16,17", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new_more(date, "20051014", true);
-    check_hits(tc, searcher, rq, "14,15,16,17", -1);
+    tst_check_hits(tc, searcher, rq, "14,15,16,17", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new_more(date, "20051014", false);
-    check_hits(tc, searcher, rq, "15,16,17", -1);
+    tst_check_hits(tc, searcher, rq, "15,16,17", -1);
     frt_q_deref(rq);
 
     rq = frt_rq_new(rb_intern("not_a_field"), "20051006", "20051010", false, false);
-    check_hits(tc, searcher, rq, "", -1);
+    tst_check_hits(tc, searcher, rq, "", -1);
     frt_q_deref(rq);
 
     /* below range - no results */
     rq = frt_rq_new(date, "10051006", "10051010", false, false);
-    check_hits(tc, searcher, rq, "", -1);
+    tst_check_hits(tc, searcher, rq, "", -1);
     frt_q_deref(rq);
 
     /* above range - no results */
     rq = frt_rq_new(date, "30051006", "30051010", false, false);
-    check_hits(tc, searcher, rq, "", -1);
+    tst_check_hits(tc, searcher, rq, "", -1);
     frt_q_deref(rq);
 
     /* test get_matchv_i */
@@ -1151,7 +1150,7 @@ static void test_range_query(TestCase *tc, void *data)
      * on an untokenized field. This is just done for testing purposes to
      * check that it works correctly. */
     rq = frt_rq_new(field, "word1", "word3", true, true);
-    check_hits(tc, searcher, rq, "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17", -1);
+    tst_check_hits(tc, searcher, rq, "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17", -1);
     check_match_vector(tc, searcher, rq, 2, rb_intern("not a field"), "");
     check_match_vector(tc, searcher, rq, 2, field, "0,0,1,1");
     frt_q_deref(rq);
@@ -1263,7 +1262,7 @@ static void test_typed_range_query(TestCase *tc, void *data)
     Araise(FRT_ARG_ERROR, trq_new_null_lower_and_upper, NULL);
 
     trq = frt_trq_new(number, "-1.0", "1.0", true, true);
-    check_hits(tc, searcher, trq, "0,1,4,10,15,17", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,4,10,15,17", -1);
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     check_match_vector(tc, searcher, trq, 10, number, "0,0");
     check_match_vector(tc, searcher, trq, 17, number, "0,0");
@@ -1271,21 +1270,21 @@ static void test_typed_range_query(TestCase *tc, void *data)
     frt_q_deref(trq);
 
     trq = frt_trq_new(number, "-1.0", "1.0", false, false);
-    check_hits(tc, searcher, trq, "0,1,4,15", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,4,15", -1);
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     check_match_vector(tc, searcher, trq, 10, number, "");
     check_match_vector(tc, searcher, trq, 17, number, "");
     frt_q_deref(trq);
 
     trq = frt_trq_new(number, "-1.0", "1.0", false, true);
-    check_hits(tc, searcher, trq, "0,1,4,10,15", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,4,10,15", -1);
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     check_match_vector(tc, searcher, trq, 10, number, "0,0");
     check_match_vector(tc, searcher, trq, 17, number, "");
     frt_q_deref(trq);
 
     trq = frt_trq_new(number, "-1.0", "1.0", true, false);
-    check_hits(tc, searcher, trq, "0,1,4,15,17", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,4,15,17", -1);
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     check_match_vector(tc, searcher, trq, 10, number, "");
     check_match_vector(tc, searcher, trq, 17, number, "0,0");
@@ -1293,13 +1292,13 @@ static void test_typed_range_query(TestCase *tc, void *data)
 
     /* test field with no numbers */
     trq = frt_trq_new(field, "-1.0", "1.0", false, true);
-    check_hits(tc, searcher, trq, "", -1);
+    tst_check_hits(tc, searcher, trq, "", -1);
     check_match_vector(tc, searcher, trq, 0, number, "");
     frt_q_deref(trq);
 
     /* test empty field */
     trq = frt_trq_new(rb_intern("empty-field"), "-1.0", "1.0", false, true);
-    check_hits(tc, searcher, trq, "", -1);
+    tst_check_hits(tc, searcher, trq, "", -1);
     check_match_vector(tc, searcher, trq, 0, number, "");
     frt_q_deref(trq);
 
@@ -1308,72 +1307,72 @@ static void test_typed_range_query(TestCase *tc, void *data)
      * ./configure when we eventually integrate autotools */
     /* text hexadecimal */
     trq = frt_trq_new(number, "1.0", "10", false, true);
-    check_hits(tc, searcher, trq, "6,7,9,12", -1);
+    tst_check_hits(tc, searcher, trq, "6,7,9,12", -1);
     frt_q_deref(trq);
 
     /* test single bound */
     trq = frt_trq_new(number, NULL, "0", false, true);
-    check_hits(tc, searcher, trq, "1,5,11,15,16,17", -1);
+    tst_check_hits(tc, searcher, trq, "1,5,11,15,16,17", -1);
     check_match_vector(tc, searcher, trq, 1, number, "0.0");
     check_match_vector(tc, searcher, trq, 5, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new_less(number, "0", true);
-    check_hits(tc, searcher, trq, "1,5,11,15,16,17", -1);
+    tst_check_hits(tc, searcher, trq, "1,5,11,15,16,17", -1);
     check_match_vector(tc, searcher, trq, 1, number, "0.0");
     check_match_vector(tc, searcher, trq, 5, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new(number, NULL, "0", false, false);
-    check_hits(tc, searcher, trq, "5,11,15,16,17", -1);
+    tst_check_hits(tc, searcher, trq, "5,11,15,16,17", -1);
     check_match_vector(tc, searcher, trq, 1, number, "");
     check_match_vector(tc, searcher, trq, 5, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new_less(number, "0", false);
-    check_hits(tc, searcher, trq, "5,11,15,16,17", -1);
+    tst_check_hits(tc, searcher, trq, "5,11,15,16,17", -1);
     check_match_vector(tc, searcher, trq, 1, number, "");
     check_match_vector(tc, searcher, trq, 5, number, "0,0");
     frt_q_deref(trq);
 
     /* test single bound */
     trq = frt_trq_new(number, "0", NULL, true, false);
-    check_hits(tc, searcher, trq, "0,1,2,3,4,6,7,8,9,10,12,13,14", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,2,3,4,6,7,8,9,10,12,13,14", -1);
     check_match_vector(tc, searcher, trq, 1, number, "0.0");
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new_more(number, "0", true);
-    check_hits(tc, searcher, trq, "0,1,2,3,4,6,7,8,9,10,12,13,14", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,2,3,4,6,7,8,9,10,12,13,14", -1);
     check_match_vector(tc, searcher, trq, 1, number, "0.0");
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new(number, "0", NULL, false, false);
-    check_hits(tc, searcher, trq, "0,2,3,4,6,7,8,9,10,12,13,14", -1);
+    tst_check_hits(tc, searcher, trq, "0,2,3,4,6,7,8,9,10,12,13,14", -1);
     check_match_vector(tc, searcher, trq, 1, number, "");
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     frt_q_deref(trq);
 
     trq = frt_trq_new_more(number, "0", false);
-    check_hits(tc, searcher, trq, "0,2,3,4,6,7,8,9,10,12,13,14", -1);
+    tst_check_hits(tc, searcher, trq, "0,2,3,4,6,7,8,9,10,12,13,14", -1);
     check_match_vector(tc, searcher, trq, 1, number, "");
     check_match_vector(tc, searcher, trq, 0, number, "0,0");
     frt_q_deref(trq);
 
     /* below range - no results */
     trq = frt_trq_new(number, "10051006", "10051010", false, false);
-    check_hits(tc, searcher, trq, "", -1);
+    tst_check_hits(tc, searcher, trq, "", -1);
     frt_q_deref(trq);
 
     /* above range - no results */
     trq = frt_trq_new(number, "-12518421", "-12518420", true, true);
-    check_hits(tc, searcher, trq, "", -1);
+    tst_check_hits(tc, searcher, trq, "", -1);
     frt_q_deref(trq);
 
     /* should be normal range query for string fields */
     trq = frt_trq_new(cat, "cat2", NULL, true, false);
-    check_hits(tc, searcher, trq, "5,6,7,8,9,10,11,12", -1);
+    tst_check_hits(tc, searcher, trq, "5,6,7,8,9,10,11,12", -1);
     frt_q_deref(trq);
 
     /* test get_matchv_i */
@@ -1383,7 +1382,7 @@ static void test_typed_range_query(TestCase *tc, void *data)
      * check that it works correctly. */
     /* The following tests should use the basic RangeQuery functionality */
     trq = frt_trq_new(field, "word1", "word3", true, true);
-    check_hits(tc, searcher, trq, "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17", -1);
+    tst_check_hits(tc, searcher, trq, "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17", -1);
     check_match_vector(tc, searcher, trq, 2, rb_intern("not a field"), "");
     check_match_vector(tc, searcher, trq, 2, field, "0,0,1,1");
     frt_q_deref(trq);
@@ -1508,36 +1507,36 @@ static void test_wildcard_query(TestCase *tc, void *data)
 {
     FrtSearcher *searcher = (FrtSearcher *)data;
     FrtQuery *wq = frt_wcq_new(cat, "cat1*"), *bq;
-    check_hits(tc, searcher, wq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
+    tst_check_hits(tc, searcher, wq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
     frt_q_deref(wq);
 
     wq = frt_wcq_new(cat, "cat1*/s*sub2");
-    check_hits(tc, searcher, wq, "4, 16", -1);
+    tst_check_hits(tc, searcher, wq, "4, 16", -1);
     frt_q_deref(wq);
 
     wq = frt_wcq_new(cat, "cat1/sub?/su??ub2");
-    check_hits(tc, searcher, wq, "4, 16", -1);
+    tst_check_hits(tc, searcher, wq, "4, 16", -1);
     frt_q_deref(wq);
 
     wq = frt_wcq_new(cat, "cat1/");
-    check_hits(tc, searcher, wq, "0, 17", -1);
+    tst_check_hits(tc, searcher, wq, "0, 17", -1);
     frt_q_deref(wq);
 
     wq = frt_wcq_new(rb_intern("unknown_field"), "cat1/");
-    check_hits(tc, searcher, wq, "", -1);
+    tst_check_hits(tc, searcher, wq, "", -1);
     frt_q_deref(wq);
 
     wq = frt_wcq_new(cat, "unknown_term");
-    check_hits(tc, searcher, wq, "", -1);
+    tst_check_hits(tc, searcher, wq, "", -1);
     frt_q_deref(wq);
 
     bq = frt_bq_new(false);
     frt_bq_add_query_nr(bq, frt_tq_new(field, "word1"), FRT_BC_MUST);
     wq = frt_wcq_new(cat, "cat1*");
-    check_hits(tc, searcher, wq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
+    tst_check_hits(tc, searcher, wq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
 
     frt_bq_add_query_nr(bq, wq, FRT_BC_MUST);
-    check_hits(tc, searcher, bq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
+    tst_check_hits(tc, searcher, bq, "0, 1, 2, 3, 4, 13, 14, 15, 16, 17", -1);
 
     frt_q_deref(bq);
 }
@@ -1716,10 +1715,10 @@ static void prepare_multi_search_index(FrtStore *store, struct Data data[],
     for (i = 0; i < d_cnt; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+w);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), data[i].field));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), data[i].cat));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), data[i].number));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)data[i].field));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)data[i].cat));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)data[i].number));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }

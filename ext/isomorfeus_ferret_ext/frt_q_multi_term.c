@@ -1,7 +1,7 @@
 #include <string.h>
+#include "frt_global.h"
 #include "frt_search.h"
 #include "frt_helper.h"
-#include "frt_symbol.h"
 
 #define MTQ(query) ((FrtMultiTermQuery *)(query))
 

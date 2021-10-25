@@ -1629,7 +1629,7 @@ frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
  *
  *     puts Ferret.locale #=> "en_US.UTF-8"
  */
-static VALUE frb_get_locale(VALUE self, VALUE locale)
+static VALUE frb_get_locale(VALUE self)
 {
     return (frb_locale ? rb_str_new2(frb_locale) : Qnil);
 }

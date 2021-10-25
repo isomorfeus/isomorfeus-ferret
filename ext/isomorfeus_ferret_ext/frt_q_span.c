@@ -1,8 +1,8 @@
 #include <string.h>
 #include <limits.h>
+#include "frt_global.h"
 #include "frt_search.h"
 #include "frt_hashset.h"
-#include "frt_symbol.h"
 
 #define CLAUSE_INIT_CAPA 4
 

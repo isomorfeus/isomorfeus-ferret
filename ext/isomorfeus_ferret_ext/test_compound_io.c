@@ -45,9 +45,9 @@ void test_compound_writer(TestCase *tc, void *data)
     frt_os_write_string(os2,"this is file2");
     frt_os_close(os1);
     frt_os_close(os2);
-    cw = frt_open_cw(store, "cfile");
-    frt_cw_add_file(cw, "file1");
-    frt_cw_add_file(cw, "file2");
+    cw = frt_open_cw(store, (char *)"cfile");
+    frt_cw_add_file(cw, (char *)"file1");
+    frt_cw_add_file(cw, (char *)"file2");
     frt_cw_close(cw);
 
     is = store->open_input(store, "cfile");
@@ -73,7 +73,7 @@ void test_compound_io(TestCase *tc, void *data)
     FrtOutStream *os2 = store->new_output(store, "file2");
     FrtOutStream *os3 = store->new_output(store, "file3");
     char long_string[10000];
-    char *short_string = "this is a short string";
+    const char *short_string = "this is a short string";
     int slen = (int)strlen(short_string);
     int i;
 
@@ -90,10 +90,10 @@ void test_compound_io(TestCase *tc, void *data)
     frt_os_close(os1);
     frt_os_close(os2);
     frt_os_close(os3);
-    cw = frt_open_cw(store, "cfile");
-    frt_cw_add_file(cw, "file1");
-    frt_cw_add_file(cw, "file2");
-    frt_cw_add_file(cw, "file3");
+    cw = frt_open_cw(store, (char *)"cfile");
+    frt_cw_add_file(cw, (char *)"file1");
+    frt_cw_add_file(cw, (char *)"file2");
+    frt_cw_add_file(cw, (char *)"file3");
     frt_cw_close(cw);
 
     c_reader = frt_open_cmpd_store(store, "cfile");
@@ -128,7 +128,7 @@ void test_compound_io_many_files(TestCase *tc, void *data)
     FrtCompoundWriter *cw;
     FrtStore *c_reader;
 
-    cw = frt_open_cw(store, "_.cfs");
+    cw = frt_open_cw(store, (char *)"_.cfs");
     for (i = 0; i < TEST_FILE_CNT; i++) {
         sprintf(buf, "_%d.txt", i);
         frt_cw_add_file(cw, buf);

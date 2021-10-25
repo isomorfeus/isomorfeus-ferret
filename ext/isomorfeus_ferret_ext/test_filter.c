@@ -6,9 +6,9 @@
 #define ARRAY_SIZE 20
 
 struct FilterData {
-    char *num;
-    char *date;
-    char *flipflop;
+    const char *num;
+    const char *date;
+    const char *flipflop;
 };
 
 static FrtSymbol num, date, flipflop;
@@ -43,9 +43,9 @@ void prepare_filter_index(FrtStore *store)
     for (i = 0; i < FILTER_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(num), data[i].num));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flipflop), data[i].flipflop));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(num), (char *)data[i].num));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flipflop), (char *)data[i].flipflop));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }
@@ -53,9 +53,7 @@ void prepare_filter_index(FrtStore *store)
     return;
 }
 
-static void check_filtered_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                                FrtFilter *f, FrtPostFilter *post_filter,
-                                char *expected_hits, int top)
+static void check_filtered_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, FrtFilter *f, FrtPostFilter *post_filter, const char *expected_hits, int top)
 {
     static int num_array[ARRAY_SIZE];
     int i;
@@ -89,9 +87,6 @@ static void check_filtered_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *q
     }
     frt_td_destroy(top_docs);
 }
-
-extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                       char *expected_hits, int top);
 
 #define TEST_TO_S(mstr, mfilt) \
     do {\

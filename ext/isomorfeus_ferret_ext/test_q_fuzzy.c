@@ -5,23 +5,20 @@
 
 static FrtSymbol field;
 
-static void add_doc(char *text, FrtIndexWriter *iw)
+static void add_doc(const char *text, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), text));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)text));
     frt_iw_add_doc(iw, doc);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 }
 
-extern void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                char *expected_hits, int top);
-void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, char *q_str);
+void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, const char *q_str);
 
-static void do_prefix_test(TestCase *tc, FrtSearcher *searcher, char *qstr,
-                    char *expected_hits, int pre_len, float min_sim)
+static void do_prefix_test(TestCase *tc, FrtSearcher *searcher, const char *qstr, const char *expected_hits, int pre_len, float min_sim)
 {
     FrtQuery *fq = frt_fuzq_new_conf(field, qstr, min_sim, pre_len, 10);
-    check_hits(tc, searcher, fq, expected_hits, -1);
+    tst_check_hits(tc, searcher, fq, expected_hits, -1);
     frt_q_deref(fq);
 }
 
@@ -54,11 +51,11 @@ static void test_fuzziness(TestCase *tc, void *data)
     sea = frt_isea_new(ir);
 
     q = frt_fuzq_new_conf(field, "aaaaa", 0.0, 5, 10);
-    check_hits(tc, sea, q, "0", -1);
+    tst_check_hits(tc, sea, q, "0", -1);
     frt_q_deref(q);
 
     q = frt_fuzq_new(rb_intern("not a field"), "aaaaa");
-    check_hits(tc, sea, q, "", -1);
+    tst_check_hits(tc, sea, q, "", -1);
     frt_q_deref(q);
 
     /* test prefix length */

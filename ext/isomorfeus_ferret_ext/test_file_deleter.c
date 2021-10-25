@@ -3,8 +3,8 @@
 #include <limits.h>
 #include "test.h"
 
-static char *content_f = "content";
-static char *id_f = "id";
+static const char *content_f = "content";
+static const char *id_f = "id";
 const FrtConfig lucene_config = {
     0x100000,       /* chunk size is 1Mb */
     0x1000000,      /* Max memory used for buffer is 16 Mb */
@@ -73,7 +73,7 @@ static void add_docs(FrtIndexWriter *iw, int count)
     }
 }
 
-static void copy_file(FrtStore *store, char *src, char *dest)
+static void copy_file(FrtStore *store, const char *src, const char *dest)
 {
     FrtInStream *is = store->open_input(store, src);
     FrtOutStream *os = store->new_output(store, dest);

@@ -1,8 +1,8 @@
 #include "frt_except.h"
 #include "test.h"
 
-static char *msg1 = "Message One";
-static char *msg2 = "Message Two";
+static const char *msg1 = "Message One";
+static const char *msg2 = "Message Two";
 
 static void raise_exception()
 {

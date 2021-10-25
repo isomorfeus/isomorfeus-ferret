@@ -7,8 +7,7 @@
 #define test_token(mtk, mstr, mstart, mend) \
   tt_token(mtk, mstr, mstart, mend, tc, __LINE__)
 
-static void tt_token(FrtToken *tk,
-                     char *str, int start, int end, TestCase *tc, int line_num)
+static void tt_token(FrtToken *tk, const char *str, int start, int end, TestCase *tc, int line_num)
 {
     FrtToken frt_tk_exp;
     static char buf[3000];
@@ -18,7 +17,7 @@ static void tt_token(FrtToken *tk,
         tst_assert(line_num, tc, false, buf);
         return;
     }
-    if (!frt_tk_eq(frt_tk_set(&frt_tk_exp, str, (int)strlen(str), start, end, 1), tk)) {
+    if (!frt_tk_eq(frt_tk_set(&frt_tk_exp, (char *)str, (int)strlen(str), start, end, 1), tk)) {
         sprintf(buf, "Token1[%d:%d:%s] != Token2[%d:%d:%s]\n",
                 (int)tk->start, (int)tk->end, tk->text, start, end, str);
         tst_assert(line_num, tc, false, buf);
@@ -26,8 +25,7 @@ static void tt_token(FrtToken *tk,
     tst_int_equal(line_num, tc, strlen(tk->text), tk->len);
 }
 
-static void tt_token_pi(FrtToken *tk, char *str,
-                        int start, int end, int pi, TestCase *tc, int line_num)
+static void tt_token_pi(FrtToken *tk, const char *str, int start, int end, int pi, TestCase *tc, int line_num)
 {
     FrtToken frt_tk_exp;
     static char buf[3000];
@@ -37,7 +35,7 @@ static void tt_token_pi(FrtToken *tk, char *str,
         tst_assert(line_num, tc, false, buf);
         return;
     }
-    if (!frt_tk_eq(frt_tk_set(&frt_tk_exp, str, (int)strlen(str), start, end, pi), tk)) {
+    if (!frt_tk_eq(frt_tk_set(&frt_tk_exp, (char *)str, (int)strlen(str), start, end, pi), tk)) {
         sprintf(buf, "Token1[%d:%d:%s-%d] != Token2[%d:%d:%s-%d]\n",
                 (int)tk->start, (int)tk->end, tk->text, tk->pos_inc,
                 start, end, str, pi);
@@ -55,30 +53,30 @@ static void test_tk(TestCase *tc, void *data)
     FrtToken *tk2 = frt_tk_new();
     (void)data;
 
-    frt_tk_set_no_len(tk1, "DBalmain", 1, 8, 5);
-    frt_tk_set_no_len(tk2, "DBalmain", 1, 8, 5);
+    frt_tk_set_no_len(tk1, (char *)"DBalmain", 1, 8, 5);
+    frt_tk_set_no_len(tk2, (char *)"DBalmain", 1, 8, 5);
     Assert(frt_tk_eq(tk1, tk2), "tokens are equal");
-    frt_tk_set_no_len(tk2, "DBalmain", 1, 8, 1);
+    frt_tk_set_no_len(tk2, (char *)"DBalmain", 1, 8, 1);
     Assert(!frt_tk_eq(tk1, tk2), "tokens are not equal");
 
-    frt_tk_set_no_len(tk2, "CBalmain", 1, 8, 5);
+    frt_tk_set_no_len(tk2, (char *)"CBalmain", 1, 8, 5);
     Assert(!frt_tk_eq(tk1, tk2), "tokens aren't equal");
-    frt_tk_set_no_len(tk2, "DBalmain", 0, 8, 5);
+    frt_tk_set_no_len(tk2, (char *)"DBalmain", 0, 8, 5);
     Assert(!frt_tk_eq(tk1, tk2), "tokens aren't equal");
-    frt_tk_set_no_len(tk2, "DBalmain", 1, 7, 5);
+    frt_tk_set_no_len(tk2, (char *)"DBalmain", 1, 7, 5);
     Assert(!frt_tk_eq(tk1, tk2), "tokens aren't equal");
 
-    frt_tk_set_no_len(tk2, "CBalmain", 2, 7, 1);
+    frt_tk_set_no_len(tk2, (char *)"CBalmain", 2, 7, 1);
     Aiequal(-1, frt_tk_cmp(tk1, tk2));
-    frt_tk_set_no_len(tk2, "EBalmain", 0, 9, 1);
+    frt_tk_set_no_len(tk2, (char *)"EBalmain", 0, 9, 1);
     Aiequal(1, frt_tk_cmp(tk1, tk2));
-    frt_tk_set_no_len(tk2, "CBalmain", 1, 9, 1);
+    frt_tk_set_no_len(tk2, (char *)"CBalmain", 1, 9, 1);
     Aiequal(-1, frt_tk_cmp(tk1, tk2));
-    frt_tk_set_no_len(tk2, "EBalmain", 1, 7, 1);
+    frt_tk_set_no_len(tk2, (char *)"EBalmain", 1, 7, 1);
     Aiequal(1, frt_tk_cmp(tk1, tk2));
-    frt_tk_set_no_len(tk2, "EBalmain", 1, 8, 1);
+    frt_tk_set_no_len(tk2, (char *)"EBalmain", 1, 8, 1);
     Aiequal(-1, frt_tk_cmp(tk1, tk2));
-    frt_tk_set_no_len(tk2, "CBalmain", 1, 8, 1);
+    frt_tk_set_no_len(tk2, (char *)"CBalmain", 1, 8, 1);
     Aiequal(1, frt_tk_cmp(tk1, tk2));
 
     Asequal("DBalmain", tk1->text);
@@ -468,7 +466,7 @@ static void do_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
     Aiequal(2, ts->ref_cnt);
     frt_ts_deref(ts);
     Aiequal(1, ts->ref_cnt);
-    ts->reset(ts, "http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ts->reset(ts, (char *)"http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -548,7 +546,7 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
     Aiequal(2, ts->ref_cnt);
     frt_ts_deref(ts);
     Aiequal(1, ts->ref_cnt);
-    ts->reset(ts, "http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ts->reset(ts, (char *)"http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -559,7 +557,7 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxx", 0, 280);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
-    ts->reset(ts, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    ts->reset(ts, (char *)"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"

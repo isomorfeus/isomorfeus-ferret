@@ -1,5 +1,5 @@
+#include "frt_global.h"
 #include "frt_search.h"
-#include "frt_symbol.h"
 #include "frt_ind.h"
 #include "testhelper.h"
 #include "test.h"
@@ -64,16 +64,16 @@ static void do_delete_doc(FrtIndex *index)
     }
 }
 
-static char *id = "id";
-static char *contents = "contents";
+ID id;
+ID contents;
 
 static void do_add_doc(FrtIndex *index)
 {
     FrtDocument *doc = frt_doc_new();
     int n = rand();
 
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(id)), frt_strfmt("%d", n)))->destroy_data = true;
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(contents)), num_to_str(n)))->destroy_data = true;
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(id), frt_strfmt("%d", n)))->destroy_data = true;
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(contents), num_to_str(n)))->destroy_data = true;
     tlog("Adding %d\n", n);
     frt_index_add_doc(index, doc);
    frt_doc_destroy(doc);
@@ -93,7 +93,7 @@ static void do_search(FrtIndex *index)
     for (i = 0; i < td->size; i++) {
         FrtHit *hit = td->hits[i];
         FrtDocument *doc = frt_index_get_doc(index, hit->doc);
-        tlog("Hit for %d: %s - %f\n", hit->doc, frt_doc_get_field(doc, rb_intern(id))->data[0], hit->score);
+        tlog("Hit for %d: %s - %f\n", hit->doc, frt_doc_get_field(doc, id)->data[0], hit->score);
        frt_doc_destroy(doc);
     }
     tlog("Searched for %d: total = %d\n", n, td->total_hits);
@@ -150,18 +150,21 @@ static void test_threading(TestCase *tc, void *data)
 
 TestSuite *ts_threading(TestSuite *suite)
 {
+    id = rb_intern("id");
+    contents = rb_intern("contents");
+
     FrtAnalyzer *a = frt_letter_analyzer_new(true);
     FrtStore *store = frt_open_fs_store("./test/testdir/store");
     FrtIndex *index;
     FrtHashSet *def_fields = frt_hs_new_ptr(NULL);
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern(id), FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
+    frt_fis_add_field(fis, frt_fi_new(id, FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_YES));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    frt_hs_add(def_fields, (void *)rb_intern(contents));
+    frt_hs_add(def_fields, (void *)contents);
     store->clear_all(store);
     index = frt_index_new(store, a, def_fields, true);
     frt_hs_destroy(def_fields);

@@ -5,7 +5,6 @@
 #include "test.h"
 
 extern VALUE mFerret;
-
 static VALUE mTest;
 
 #define TST_STAT_SIZE 4
@@ -175,8 +174,7 @@ TestSuite *tst_add_suite(TestSuite *suite, const char *suite_name_full)
     return suite;
 }
 
-void tst_run_test_with_name(TestSuite *ts, test_func f, void *value,
-                            char *func_name)
+void tst_run_test_with_name(TestSuite *ts, test_func f, void *value, const char *func_name)
 {
     TestCase tc;
     TestSubSuite *ss;
@@ -740,44 +738,44 @@ int execute_test(int test_index) {
     return rv;
 }
 
-static VALUE frb_ts_1710(void)         { return INT2FIX(execute_test(0)); }
-static VALUE frb_ts_analysis(void)     { return INT2FIX(execute_test(1)); }
-static VALUE frb_ts_array(void)        { return INT2FIX(execute_test(2)); }
-static VALUE frb_ts_bitvector(void)    { return INT2FIX(execute_test(3)); }
-static VALUE frb_ts_compound_io(void)  { return INT2FIX(execute_test(4)); }
-static VALUE frb_ts_document(void)     { return INT2FIX(execute_test(5)); }
-static VALUE frb_ts_except(void)       { return INT2FIX(execute_test(6)); }
-static VALUE frb_ts_fields(void)       { return INT2FIX(execute_test(7)); }
-static VALUE frb_ts_file_deleter(void) { return INT2FIX(execute_test(8)); }
-static VALUE frb_ts_filter(void)       { return INT2FIX(execute_test(9)); }
-static VALUE frb_ts_fs_store(void)     { return INT2FIX(execute_test(10)); }
-static VALUE frb_ts_global(void)       { return INT2FIX(execute_test(11)); }
-static VALUE frb_ts_hash(void)         { return INT2FIX(execute_test(12)); }
-static VALUE frb_ts_hashset(void)      { return INT2FIX(execute_test(13)); }
-static VALUE frb_ts_helper(void)       { return INT2FIX(execute_test(14)); }
-static VALUE frb_ts_highlighter(void)  { return INT2FIX(execute_test(15)); }
-static VALUE frb_ts_index(void)        { return INT2FIX(execute_test(16)); }
-static VALUE frb_ts_lang(void)         { return INT2FIX(execute_test(17)); }
-static VALUE frb_ts_mem_pool(void)     { return INT2FIX(execute_test(18)); }
-static VALUE frb_ts_multimapper(void)  { return INT2FIX(execute_test(19)); }
-static VALUE frb_ts_priorityqueue(void){ return INT2FIX(execute_test(20)); }
-static VALUE frb_ts_q_const_score(void){ return INT2FIX(execute_test(21)); }
-static VALUE frb_ts_q_filtered(void)   { return INT2FIX(execute_test(22)); }
-static VALUE frb_ts_q_fuzzy(void)      { return INT2FIX(execute_test(23)); }
-static VALUE frb_ts_q_parser(void)     { return INT2FIX(execute_test(24)); }
-static VALUE frb_ts_q_span(void)       { return INT2FIX(execute_test(25)); }
-static VALUE frb_ts_ram_store(void)    { return INT2FIX(execute_test(26)); }
-static VALUE frb_ts_search(void)       { return INT2FIX(execute_test(27)); }
-static VALUE frb_ts_multi_search(void) { return INT2FIX(execute_test(28)); }
-static VALUE frb_ts_segments(void)     { return INT2FIX(execute_test(29)); }
-static VALUE frb_ts_similarity(void)   { return INT2FIX(execute_test(30)); }
-static VALUE frb_ts_sort(void)         { return INT2FIX(execute_test(31)); }
-static VALUE frb_ts_term(void)         { return INT2FIX(execute_test(32)); }
-static VALUE frb_ts_term_vectors(void) { return INT2FIX(execute_test(33)); }
-static VALUE frb_ts_test(void)         { return INT2FIX(execute_test(34)); }
-static VALUE frb_ts_threading(void)    { return INT2FIX(execute_test(35)); }
+static VALUE frb_ts_1710(VALUE v)         { return INT2FIX(execute_test(0)); }
+static VALUE frb_ts_analysis(VALUE v)     { return INT2FIX(execute_test(1)); }
+static VALUE frb_ts_array(VALUE v)        { return INT2FIX(execute_test(2)); }
+static VALUE frb_ts_bitvector(VALUE v)    { return INT2FIX(execute_test(3)); }
+static VALUE frb_ts_compound_io(VALUE v)  { return INT2FIX(execute_test(4)); }
+static VALUE frb_ts_document(VALUE v)     { return INT2FIX(execute_test(5)); }
+static VALUE frb_ts_except(VALUE v)       { return INT2FIX(execute_test(6)); }
+static VALUE frb_ts_fields(VALUE v)       { return INT2FIX(execute_test(7)); }
+static VALUE frb_ts_file_deleter(VALUE v) { return INT2FIX(execute_test(8)); }
+static VALUE frb_ts_filter(VALUE v)       { return INT2FIX(execute_test(9)); }
+static VALUE frb_ts_fs_store(VALUE v)     { return INT2FIX(execute_test(10)); }
+static VALUE frb_ts_global(VALUE v)       { return INT2FIX(execute_test(11)); }
+static VALUE frb_ts_hash(VALUE v)         { return INT2FIX(execute_test(12)); }
+static VALUE frb_ts_hashset(VALUE v)      { return INT2FIX(execute_test(13)); }
+static VALUE frb_ts_helper(VALUE v)       { return INT2FIX(execute_test(14)); }
+static VALUE frb_ts_highlighter(VALUE v)  { return INT2FIX(execute_test(15)); }
+static VALUE frb_ts_index(VALUE v)        { return INT2FIX(execute_test(16)); }
+static VALUE frb_ts_lang(VALUE v)         { return INT2FIX(execute_test(17)); }
+static VALUE frb_ts_mem_pool(VALUE v)     { return INT2FIX(execute_test(18)); }
+static VALUE frb_ts_multimapper(VALUE v)  { return INT2FIX(execute_test(19)); }
+static VALUE frb_ts_priorityqueue(VALUE v){ return INT2FIX(execute_test(20)); }
+static VALUE frb_ts_q_const_score(VALUE v){ return INT2FIX(execute_test(21)); }
+static VALUE frb_ts_q_filtered(VALUE v)   { return INT2FIX(execute_test(22)); }
+static VALUE frb_ts_q_fuzzy(VALUE v)      { return INT2FIX(execute_test(23)); }
+static VALUE frb_ts_q_parser(VALUE v)     { return INT2FIX(execute_test(24)); }
+static VALUE frb_ts_q_span(VALUE v)       { return INT2FIX(execute_test(25)); }
+static VALUE frb_ts_ram_store(VALUE v)    { return INT2FIX(execute_test(26)); }
+static VALUE frb_ts_search(VALUE v)       { return INT2FIX(execute_test(27)); }
+static VALUE frb_ts_multi_search(VALUE v) { return INT2FIX(execute_test(28)); }
+static VALUE frb_ts_segments(VALUE v)     { return INT2FIX(execute_test(29)); }
+static VALUE frb_ts_similarity(VALUE v)   { return INT2FIX(execute_test(30)); }
+static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(31)); }
+static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(32)); }
+static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(33)); }
+static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(34)); }
+static VALUE frb_ts_threading(VALUE v)    { return INT2FIX(execute_test(35)); }
 
-static VALUE frb_ts_run_all(void) {
+static VALUE frb_ts_run_all(VALUE v) {
     int i, test_count;
     int rv = 0;
     TestSuite *suite = NULL;
@@ -796,7 +794,6 @@ static VALUE frb_ts_run_all(void) {
     rv = report(suite);
     printf("\nFinished in %0.3f seconds\n", (double) (clock() - start_time) / CLOCKS_PER_SEC);
 
-    frt_ruby_raise = true;
     /* free allocated test suites */
     while ((subsuite = suite->head) != NULL) {
         suite->head = subsuite->next;

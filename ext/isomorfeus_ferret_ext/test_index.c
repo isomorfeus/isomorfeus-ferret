@@ -798,10 +798,9 @@ static void test_fld_inverter(TestCase *tc, void *data)
     dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
 
     df = frt_df_new(rb_intern("no tv"));
-    frt_df_add_data(df, "one two three four five two three four five three "
-                "four five four five");
-    frt_df_add_data(df, "ichi ni san yon go ni san yon go san yon go yon go go");
-    frt_df_add_data(df, "The quick brown fox jumped over five lazy dogs");
+    frt_df_add_data(df, (char *)"one two three four five two three four five three four five four five");
+    frt_df_add_data(df, (char *)"ichi ni san yon go ni san yon go san yon go yon go go");
+    frt_df_add_data(df, (char *)"The quick brown fox jumped over five lazy dogs");
 
     curr_plists = frt_dw_invert_field(
         dw,
@@ -845,8 +844,8 @@ static void test_fld_inverter(TestCase *tc, void *data)
     frt_df_destroy(df);
 
     df = frt_df_new(rb_intern("no tv"));
-    frt_df_add_data(df, "seven new words and six old ones");
-    frt_df_add_data(df, "ichi ni one two quick dogs");
+    frt_df_add_data(df, (char *)"seven new words and six old ones");
+    frt_df_add_data(df, (char *)"ichi ni one two quick dogs");
 
     dw->doc_num++;
     frt_dw_reset_postings(dw->curr_plists);
@@ -1179,9 +1178,9 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
 
     iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), ""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), ""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("no_tv")), "one two three"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), (char *)""));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), (char *)""));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("no_tv")), (char *)"one two three"));
 
     frt_iw_add_doc(iw, doc);
     frt_iw_commit(iw);
@@ -1198,7 +1197,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     FrtIndexWriter *iw;
     FrtIndexReader *ir;
     FrtDocument **docs = prep_book_list();
-    char *terms[3];
+    const char *terms[3];
     config.merge_factor = 4;
     config.max_buffered_docs = 3;
 
@@ -1231,7 +1230,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     terms[0] = "Berger";
     terms[1] = "Middleton";
     terms[2] = "DBC";
-    frt_iw_delete_terms(iw, author, terms, 3);
+    frt_iw_delete_terms(iw, author, (char **)terms, 3);
     frt_iw_close(iw);
 
     ir = frt_ir_open(store);
@@ -1839,10 +1838,9 @@ static void test_ir_compression(TestCase *tc, void *data)
 static void test_ir_mtdpe(TestCase *tc, void *data)
 {
     FrtIndexReader *ir = (FrtIndexReader *)data;
-    char *terms[3] = {"Where", "is", "books."};
+    const char *terms[3] = {"Where", "is", "books."};
 
-    FrtTermDocEnum *tde = frt_mtdpe_new(ir, frt_fis_get_field(ir->fis, body)->number,
-                                 terms, 3);
+    FrtTermDocEnum *tde = frt_mtdpe_new(ir, frt_fis_get_field(ir->fis, body)->number, (char **)terms, 3);
 
     Atrue(tde->next(tde));
     Aiequal(0, tde->doc_num(tde));
@@ -2103,21 +2101,21 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     FrtIndexWriter *iw;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    char *body_text = "this is the body FrtDocument Field";
-    char *title_text = "this is the title FrtDocument Field";
-    char *author_text = "this is the author FrtDocument Field";
+    const char *body_text = "this is the body FrtDocument Field";
+    const char *title_text = "this is the title FrtDocument Field";
+    const char *author_text = "this is the author FrtDocument Field";
 
     frt_index_create(store, fis);
     frt_fis_deref(fis);
     iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
 
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(tag), "Ruby"));
-    frt_df_add_data(df, "C");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(body), body_text));
-    frt_df_add_data(df, "Lucene");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(title), title_text));
-    frt_df_add_data(df, "Ferret");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(author), author_text));
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(tag), (char *)"Ruby"));
+    frt_df_add_data(df, (char *)"C");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(body), (char *)body_text));
+    frt_df_add_data(df, (char *)"Lucene");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(title), (char *)title_text));
+    frt_df_add_data(df, (char *)"Ferret");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(author), (char *)author_text));
 
     Aiequal(0, iw->fis->size);
 

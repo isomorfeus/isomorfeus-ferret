@@ -1,5 +1,5 @@
+#include "frt_global.h"
 #include "frt_search.h"
-#include "frt_symbol.h"
 #include <string.h>
 
 /***************************************************************************

@@ -1,9 +1,9 @@
 #include <errno.h>
 #include "isomorfeus_ferret.h"
+#include "frt_global.h"
 #include "frt_except.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
-#include "frt_symbol.h"
 #include "frb_threading.h"
 #include "frb_lang.h"
 

@@ -1,5 +1,5 @@
+#include "frt_global.h"
 #include "testhelper.h"
-#include "frt_symbol.h"
 #include "frt_search.h"
 #include "test.h"
 
@@ -17,10 +17,10 @@ typedef struct SortTestData {
 static void add_sort_test_data(SortTestData *std, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(search), std->search));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(string), std->string));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(integer), std->integer));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flt), std->flt));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(search), (char *)std->search));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(string), (char *)std->string));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(integer), (char *)std->integer));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flt), (char *)std->flt));
 
     sscanf(std->flt, "%f", &doc->boost);
 

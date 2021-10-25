@@ -17,12 +17,13 @@ typedef struct FrtStringIndex {
     int v_capa;
 } FrtStringIndex;
 
-typedef struct FrtFieldIndexClass {
+typedef struct FrtFieldIndexClass FrtFieldIndexClass;
+struct FrtFieldIndexClass {
     const char *type;
     void *(*create_index)(int size);
     void  (*destroy_index)(void *p);
     void  (*handle_term)(void *index, FrtTermDocEnum *tde, const char *text);
-} FrtFieldIndexClass;
+};
 
 typedef struct FrtFieldIndex {
     FrtSymbol field;

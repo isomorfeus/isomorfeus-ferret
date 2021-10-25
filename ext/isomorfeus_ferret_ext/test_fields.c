@@ -276,22 +276,22 @@ static FrtDocument *prepare_doc()
     FrtDocField *df;
     char *bin_data = prepare_bin_data(BIN_DATA_LEN);
 
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("ignored")), "this fld's ignored"));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("unstored")), "unstored ignored"));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored")), "Yay, a stored field"));
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored_array")), "one"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("ignored")), (char *)"this fld's ignored"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("unstored")), (char *)"unstored ignored"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored")), (char *)"Yay, a stored field"));
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored_array")), (char *)"one"));
     df->destroy_data = false;
-    frt_df_add_data(df, "two");
-    frt_df_add_data(df, "three");
-    frt_df_add_data(df, "four");
+    frt_df_add_data(df, (char *)"two");
+    frt_df_add_data(df, (char *)"three");
+    frt_df_add_data(df, (char *)"four");
     frt_df_add_data_len(df, bin_data, BIN_DATA_LEN);
     frt_doc_add_field(doc, frt_df_add_data_len(frt_df_new(rb_intern("binary")), bin_data,
                                        BIN_DATA_LEN))->destroy_data = true;
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("array")), "ichi"));
-    frt_df_add_data(df, "ni");
-    frt_df_add_data(df, "san");
-    frt_df_add_data(df, "yon");
-    frt_df_add_data(df, "go");
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("array")), (char *)"ichi"));
+    frt_df_add_data(df, (char *)"ni");
+    frt_df_add_data(df, (char *)"san");
+    frt_df_add_data(df, (char *)"yon");
+    frt_df_add_data(df, (char *)"go");
 
     return doc;
 }
@@ -464,11 +464,11 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
     fw = frt_fw_open(store, "_as3", fis);
     doc = frt_doc_new();
     df = frt_df_new(rb_intern("stored"));
-    frt_df_add_data(df, "this is a stored field");
-    frt_df_add_data(df, "to be or not to be");
-    frt_df_add_data(df, "a stitch in time, saves nine");
-    frt_df_add_data(df, "the quick brown fox jumped over the lazy dog");
-    frt_df_add_data(df, "that's it folks");
+    frt_df_add_data(df, (char *)"this is a stored field");
+    frt_df_add_data(df, (char *)"to be or not to be");
+    frt_df_add_data(df, (char *)"a stitch in time, saves nine");
+    frt_df_add_data(df, (char *)"the quick brown fox jumped over the lazy dog");
+    frt_df_add_data(df, (char *)"that's it folks");
     frt_doc_add_field(doc, df);
     frt_fw_add_doc(fw, doc);
     frt_fw_write_tv_index(fw);

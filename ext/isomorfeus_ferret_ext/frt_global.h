@@ -9,6 +9,9 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <string.h>
+#include <ruby.h>
+
+typedef ID FrtSymbol;
 
 #define FRT_MAX_WORD_SIZE 255
 #define FRT_MAX_FILE_PATH 1024

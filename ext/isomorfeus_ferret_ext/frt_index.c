@@ -1,5 +1,5 @@
+#include "frt_global.h"
 #include "frt_index.h"
-#include "frt_symbol.h"
 #include "frt_similarity.h"
 #include "frt_helper.h"
 #include "frt_array.h"
@@ -610,19 +610,6 @@ bool frt_si_has_deletions(FrtSegmentInfo *si)
     return si->del_gen >= 0;
 }
 
-/*
-FIXME: not used
-static char *si_del_file_name(FrtSegmentInfo *si, char *buf)
-{
-    if (si->del_gen < 0) {
-        return NULL;
-    }
-    else {
-        return frt_fn_for_generation(buf, si->name, ".del", si->del_gen);
-    }
-}
-*/
-
 bool frt_si_has_separate_norms(FrtSegmentInfo *si)
 {
     if (si->use_compound_file && si->norm_gens) {
@@ -756,9 +743,9 @@ void frt_sis_put(FrtSegmentInfos *sis, FILE *stream)
 {
     int i;
     fprintf(stream, "SegmentInfos {\n");
-    fprintf(stream, "\tcounter = %"POSH_I64_PRINTF_PREFIX"llu\n", sis->counter);
-    fprintf(stream, "\tversion = %"POSH_I64_PRINTF_PREFIX"llu\n", sis->version);
-    fprintf(stream, "\tgeneration = %"POSH_I64_PRINTF_PREFIX"lli\n", sis->generation);
+    fprintf(stream, "\tcounter = %lu\n", sis->counter);
+    fprintf(stream, "\tversion = %lu\n", sis->version);
+    fprintf(stream, "\tgeneration = %li\n", sis->generation);
     fprintf(stream, "\tformat = %d\n", sis->format);
     fprintf(stream, "\tsize = %d\n", sis->size);
     fprintf(stream, "\tcapa = %d\n", sis->capa);
@@ -3541,8 +3528,8 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
             ir->write_lock = NULL;
             FRT_RAISE(FRT_STATE_ERROR, "IndexReader out of date and no longer valid "
                                "for delete, undelete, or set_norm operations. "
-                               "The current version is <%"I64_PFX"llu>, but this "
-                               "readers version is <%"I64_PFX"llu>. To perform "
+                               "The current version is <%lu>, but this "
+                               "readers version is <%lu>. To perform "
                                "any of these operations on the index you need "
                                "to close and reopen the index",
                                frt_sis_read_current_version(ir->store),

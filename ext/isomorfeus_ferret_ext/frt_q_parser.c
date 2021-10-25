@@ -91,10 +91,10 @@
 #include <ctype.h>
 #include <wctype.h>
 #include <assert.h>
+#include "frt_global.h"
 #include "frt_except.h"
 #include "frt_search.h"
 #include "frt_array.h"
-#include "frt_symbol.h"
 
 typedef struct Phrase {
     int             size;

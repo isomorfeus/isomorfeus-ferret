@@ -1,4 +1,4 @@
-#include "frt_symbol.h"
+#include "frt_global.h"
 #include <string.h>
 #include "frt_search.h"
 

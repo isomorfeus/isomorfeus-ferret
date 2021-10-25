@@ -1,8 +1,8 @@
 #include <string.h>
+#include "frt_global.h"
 #include "frt_index.h"
 #include "frt_array.h"
 #include "frt_helper.h"
-#include "frt_symbol.h"
 
 /****************************************************************************
  *
