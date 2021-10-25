@@ -28,7 +28,7 @@ bool frt_ruby_raise = true;
 const char *const FRT_UNSUPPORTED_ERROR_MSG = "Unsupported operation";
 const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
 char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
-char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
+char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_FINAL_SIZE];
 
 static frt_thread_key_t exception_stack_key;
 static frt_thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;

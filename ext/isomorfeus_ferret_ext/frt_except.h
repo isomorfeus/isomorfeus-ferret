@@ -156,11 +156,12 @@ typedef struct frt_xcontext_t
 #define FRT_HANDLED() xcontext.handled = 1; /* true */
 
 #define FRT_XMSG_BUFFER_SIZE 2048
+#define FRT_XMSG_BUFFER_FINAL_SIZE 2248
 
 #ifdef FRT_HAS_ISO_VARARGS
 # define FRT_RAISE(excode, ...) do {\
   snprintf(frt_xmsg_buffer, FRT_XMSG_BUFFER_SIZE, __VA_ARGS__);\
-  snprintf(frt_xmsg_buffer_final, FRT_XMSG_BUFFER_SIZE,\
+  snprintf(frt_xmsg_buffer_final, FRT_XMSG_BUFFER_FINAL_SIZE,\
           "Error occurred in %s:%d - %s\n\t%s",\
           __FILE__, __LINE__, __func__, frt_xmsg_buffer);\
   frt_xraise(excode, frt_xmsg_buffer_final);\
@@ -168,7 +169,7 @@ typedef struct frt_xcontext_t
 #elif defined(FRT_HAS_GNUC_VARARGS)
 # define FRT_RAISE(excode, args...) do {\
   snprintf(frt_xmsg_buffer, FRT_XMSG_BUFFER_SIZE, ##args);\
-  snprintf(frt_xmsg_buffer_final, FRT_XMSG_BUFFER_SIZE,\
+  snprintf(frt_xmsg_buffer_final, FRT_XMSG_BUFFER_FINAL_SIZE,\
           "Error occurred in %s:%d - %s\n\t%s\n",\
           __FILE__, __LINE__, __func__, frt_xmsg_buffer);\
   frt_xraise(excode, frt_xmsg_buffer_final);\
@@ -183,6 +184,6 @@ extern void frt_xpush_context(frt_xcontext_t *context);
 extern void frt_xpop_context();
 
 extern char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
-extern char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_SIZE];
+extern char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_FINAL_SIZE];
 
 #endif
