@@ -11,7 +11,7 @@ typedef struct WithLockTestArg {
 } WithLockTestArg;
 
 typedef struct WithLockNameTestArg {
-    char *lock_name;
+    const char *lock_name;
     FrtStore *store;
     TestCase *tc;
 } WithLockNameTestArg;
@@ -39,7 +39,7 @@ static void test_lock(TestCase *tc, void *data)
 {
     FrtStore *store = (FrtStore *)data;
     FrtLock *lock, *lock1, *lock2;
-    bool handled = false;
+    bool handled;
     WithLockTestArg wlta;
     WithLockNameTestArg wlnta;
 
