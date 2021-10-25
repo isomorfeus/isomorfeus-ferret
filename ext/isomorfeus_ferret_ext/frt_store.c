@@ -439,21 +439,6 @@ void frt_is_skip_vints(FrtInStream *is, register int cnt)
     }
 }
 
-/*
- * FIXME: Not used. Do we need/want this?
-static void is_read_chars(FrtInStream *is, char *buffer,
-                          int off, int len)
-{
-    int end, i;
-
-    end = off + len;
-
-    for (i = off; i < end; i++) {
-        buffer[i] = frt_is_read_byte(is);
-    }
-}
-*/
-
 char *frt_is_read_string(FrtInStream *is)
 {
     register int length = (int) frt_is_read_vint(is);
