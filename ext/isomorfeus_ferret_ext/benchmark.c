@@ -9,10 +9,9 @@
 extern VALUE mFerret;
 static VALUE mBenchmark;
 
-#ifdef __MINGW32__
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
 
 #define RUSAGE_SELF		0
-#define RUSAGE_CHILDREN (-1)
 
 struct rusage
 {
@@ -54,6 +53,9 @@ int getrusage(int who, struct rusage *rusage)
 	rusage->ru_utime.tv_usec = li.QuadPart % 1000000L;
     return 0;
 }
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
 #endif
 
 static int bmtcmp(const void *p1, const void *p2)
@@ -137,7 +139,7 @@ static void bm_run(BenchMark *benchmark)
     int i;
     BenchMarkUnit *unit;
     int max_name_len = 0;
-    char fmt[30];
+    char fmt[40];
     int start = 0, end = benchmark->count;
     if (benchmark->discard) {
         start += benchmark->discard;
