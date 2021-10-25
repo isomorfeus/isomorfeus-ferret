@@ -2,7 +2,7 @@
 #include "test.h"
 #define _ISOC99_SOURCE
 #include <math.h>
-
+#include "fio_tmpfile.h"
 
 /**
  * Test min/max functions
@@ -153,8 +153,8 @@ static void test_stacktrace(TestCase *tc, void *data)
 {
     FILE *old_stream = frt_x_exception_stream;
     (void)data; /* suppress warning */
-
-    frt_x_exception_stream = tmpfile();
+    int tfd = fio_tmpfile();
+    frt_x_exception_stream = fdopen(tfd, "w+");
     Atrue(frt_x_exception_stream != NULL);
     if (frt_x_exception_stream) {
         frt_print_stacktrace();

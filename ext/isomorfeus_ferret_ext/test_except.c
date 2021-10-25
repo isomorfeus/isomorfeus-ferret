@@ -1,5 +1,6 @@
 #include "frt_except.h"
 #include "test.h"
+#include "fio_tmpfile.h"
 
 static const char *msg1 = "Message One";
 static const char *msg2 = "Message Two";
@@ -206,7 +207,8 @@ static void test_uncaught_except(TestCase *tc, void *data)
 {
     bool old_abort_setting = frt_x_abort_on_exception;
     FILE *old_stream_setting = frt_x_exception_stream;
-    FILE *exception_output = tmpfile();
+    int tfd = fio_tmpfile();
+    FILE *exception_output = fdopen(tfd, "w+");
     (void)data, (void)tc; /* suppress warning */
 
 
