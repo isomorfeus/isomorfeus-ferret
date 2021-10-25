@@ -270,11 +270,11 @@ void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
     frt_p_pause();
     if (!tc->failed && !Aiequal(total_hits, top_docs->total_hits)) {
         int i;
-        Tmsg_nf("\texpected;\n\t    ");
+        Tmsg_nf("\texpected docs:\n\t    ");
         for (i = 0; i < total_hits; i++) {
             Tmsg_nf("%d ", num_array[i]);
         }
-        Tmsg_nf("\n\tsaw;\n\t    ");
+        Tmsg_nf("\n\tseen docs:\n\t    ");
         for (i = 0; i < top_docs->size; i++) {
             Tmsg_nf("%d ", top_docs->hits[i]->doc);
         }
