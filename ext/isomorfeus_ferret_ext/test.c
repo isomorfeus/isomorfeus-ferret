@@ -29,14 +29,9 @@ static int curr_char;
  */
 static bool verbose = false;
 static bool show_stack = false;
-static bool exclude = false;
 static bool quiet = false;
 static bool force = false;
 static bool list_tests = false;
-
-/* holds the list of tests specified on the command line. This will either be
- * included or excluded if '-x' is set */
-static char **testlist = NULL;
 
 /* statistics */
 static int t_cnt = 0;/* number of tests run */
@@ -50,36 +45,14 @@ static int f_cnt = 0;/* number of failures */
 static char msg_buf[MAX_MSG_SIZE] = "";
 static char *msg_bufp = msg_buf;
 
-/* Check to see if +testname+ was specified on the command line */
-static bool find_test_name(const char *testname)
-{
-    int i;
-    for (i = 0; testlist[i] != NULL; i++) {
-        if (!strcmp(testlist[i], testname)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 /* Determine if the test should be run at all */
 static bool should_test_run(const char *testname)
 {
-    int found = 0;
     if (list_tests == true) {
         /* when listing tests, don't run any of them */
         return false;
     }
-    if (testlist == NULL) {
-        /* If no tests where specified, run them all. Same goes even if
-         * exclude is true */
-        return true;
-    }
-    found = find_test_name(testname);
-    if ((found && !exclude) || (!found && exclude)) {
-        return true;
-    }
-    return false;
+    return true;
 }
 
 static void reset_stats(void) {
@@ -832,7 +805,6 @@ static VALUE frb_ts_run_all(void) {
     }
     reset_stats();
     free(suite);
-    free(testlist);
     return INT2FIX(rv);
 }
 
