@@ -151,10 +151,10 @@ FrtAnalyzer *dbl_analyzer_new()
 }
 
 struct Data {
-    char *date;
-    char *field;
-    char *cat;
-    char *number;
+    const char *date;
+    const char *field;
+    const char *cat;
+    const char *number;
 };
 
 #define SEARCH_DOCS_SIZE 18
@@ -252,7 +252,7 @@ static void test_get_doc(TestCase *tc, void *data)
    frt_doc_destroy(doc);
 }
 
-void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, char *q_str)
+void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, const char *q_str)
 {
     char *q_res = query->to_s(query, field);
     Asequal(q_str, q_res);
@@ -260,7 +260,7 @@ void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, char *q_str)
 }
 
 void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                char *expected_hits, int top)
+                const char *expected_hits, int top)
 {
     static int num_array[ARRAY_SIZE];
     static int num_array2[ARRAY_SIZE];
@@ -319,7 +319,7 @@ void check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
 }
 
 void check_match_vector(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                        int doc, FrtSymbol field, char *ranges)
+                        int doc, FrtSymbol field, const char *ranges)
 {
     static int range_array[ARRAY_SIZE];
     FrtMatchVector *mv = frt_searcher_get_match_vector(searcher, query, doc, field);
