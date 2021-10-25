@@ -2,13 +2,10 @@
 #define BENCHMARK_H
 
 #include "frt_global.h"
-#include "frt_internal.h"
 #include <time.h>
-#include <sys/times.h>
-#include <sys/time.h>
 
 #define BM_RUN_COUNT 6
-#define BENCH(name) FRT_EXTERNC void bm_##name(BenchMark *bm)
+#define BENCH(name) extern void bm_##name(BenchMark *bm)
 
 extern const char *WORD_LIST[];
 

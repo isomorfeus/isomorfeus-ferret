@@ -13,11 +13,10 @@ void bm_bitvector_implementations(BenchMark *bm);
 const struct BenchMarkList
 {
     void (*initialize)(BenchMark *benchmark);
-    char *name;
+    const char *name;
 } all_benchmarks[] = {
     {bm_vint_io, "vint_io"},
     {bm_strcmp_when_length_is_known, "strcmp_when_length_is_known"},
-    {bm_snprintf_vs_strncat, "snprintf_vs_strncat"},
     {bm_hash_implementations, "hash_implementations"},
     {bm_specialized_string_hash, "specialized_string_hash"},
     {bm_bitvector_implementations, "bitvector_implementations"}

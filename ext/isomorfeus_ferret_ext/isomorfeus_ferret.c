@@ -380,7 +380,7 @@ void Init_isomorfeus_ferret_ext(void)
     Init_Search();
     Init_QueryParser();
     Init_Test();
-    // Init_Benchmark();
+    Init_Benchmark();
 
     /* Error Classes */
     cParseError = rb_define_class_under(mFerret, "ParseError", rb_eStandardError);

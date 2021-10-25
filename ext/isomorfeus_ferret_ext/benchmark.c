@@ -1,14 +1,60 @@
-#include <sys/time.h>
-#include <sys/resource.h>
 #include <unistd.h>
 #include <string.h>
 #include "ruby.h"
 #include "frt_global.h"
 #include "benchmark.h"
-#include "all_benchmarks.h"
+#include "benchmarks_all.h"
 #include "word_list.h"
 
+extern VALUE mFerret;
 static VALUE mBenchmark;
+
+#ifdef __MINGW32__
+
+#define RUSAGE_SELF		0
+#define RUSAGE_CHILDREN (-1)
+
+struct rusage
+{
+	struct timeval ru_utime;	/* user time used */
+	struct timeval ru_stime;	/* system time used */
+};
+
+int getrusage(int who, struct rusage *rusage)
+{
+	FILETIME	starttime;
+	FILETIME	exittime;
+	FILETIME	kerneltime;
+	FILETIME	usertime;
+	ULARGE_INTEGER li;
+
+	if (who != RUSAGE_SELF) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (rusage == (struct rusage *) NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+	memset(rusage, 0, sizeof(struct rusage));
+	if (GetProcessTimes(GetCurrentProcess(), &starttime, &exittime, &kerneltime, &usertime) == 0) {
+		fprintf(stderr, "getrusage: error in GetProcessTimes %lu\n", GetLastError());
+		return -1;
+	}
+
+	memcpy(&li, &kerneltime, sizeof(FILETIME));
+	li.QuadPart /= 10L;
+	rusage->ru_stime.tv_sec = li.QuadPart / 1000000L;
+	rusage->ru_stime.tv_usec = li.QuadPart % 1000000L;
+
+	memcpy(&li, &usertime, sizeof(FILETIME));
+	li.QuadPart /= 10L;
+	rusage->ru_utime.tv_sec = li.QuadPart / 1000000L;
+	rusage->ru_utime.tv_usec = li.QuadPart % 1000000L;
+    return 0;
+}
+#endif
 
 static int bmtcmp(const void *p1, const void *p2)
 {
@@ -23,10 +69,10 @@ static int bmtcmp(const void *p1, const void *p2)
 void bm_add(BenchMark *benchmark, bm_run_ft run, const char *name)
 {
     BenchMarkUnit *unit =
-        (BenchMarkUnit *)emalloc(sizeof(BenchMarkUnit) +
+        (BenchMarkUnit *)frt_emalloc(sizeof(BenchMarkUnit) +
                                  benchmark->count * sizeof(BenchMarkTimes *));
     int i;
-    unit->name = estrdup(name);
+    unit->name = frt_estrdup(name);
     unit->run = run;
     unit->next = NULL;
     if (benchmark->count > 1) {
@@ -69,13 +115,13 @@ static void bm_single_run(BenchMarkUnit *unit, BenchMarkTimes *bm_times)
     struct rusage ru_before, ru_after;
 
     if (gettimeofday(&tv_before, NULL) == -1)
-        RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
+        FRT_RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
     getrusage(RUSAGE_SELF, &ru_before);
 
     unit->run();
 
     if (gettimeofday(&tv_after, NULL) == -1)
-        RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
+        FRT_RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
     getrusage(RUSAGE_SELF, &ru_after);
 
     bm_times->rtime = TVAL_TO_SEC(tv_before, tv_after);
@@ -152,19 +198,12 @@ static void bm_run(BenchMark *benchmark)
     }
 }
 
-int not_main_either(int argc, const char *const argv[])
-{
+static VALUE frb_bm_run_all(VALUE v) {
     int i;
     BenchMark benchmark;
-    (void)argc; (void)argv;
     benchmark.head = benchmark.tail = NULL;
 
-    for (i = 0; i < NELEMS(all_benchmarks); i++) {
-        if (argc == 2) {
-            if (!strstr(all_benchmarks[i].name, argv[1])) {
-                continue;
-            }
-        }
+    for (i = 0; i < FRT_NELEMS(all_benchmarks); i++) {
         printf("\nBenching [%s]...\n", all_benchmarks[i].name);
         benchmark.count = 1;
         benchmark.discard = 0;
@@ -173,9 +212,10 @@ int not_main_either(int argc, const char *const argv[])
         bm_run(&benchmark);
         bm_clear(&benchmark);
     }
-    return 0;
+    return INT2FIX(0);
 }
 
 void Init_Benchmark(void) {
-    mBenchmark = rb_define_module_under(mFerret, "Bnchmark");
+    mBenchmark = rb_define_module_under(mFerret, "Benchmark");
+    rb_define_singleton_method(mBenchmark, "run_all",                     frb_bm_run_all, 0);
 }
