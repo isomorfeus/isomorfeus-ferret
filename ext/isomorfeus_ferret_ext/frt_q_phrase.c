@@ -295,9 +295,8 @@ static FrtScorer *phsc_new(FrtWeight *weight,
                         int slop)
 {
     int i;
-    FrtScorer *self                = frt_scorer_new(PhraseScorer, similarity);
-    FrtHashSet *term_set           = NULL;
-
+    FrtScorer *self             = frt_scorer_new(PhraseScorer, similarity);
+    FrtHashSet *term_set        = NULL;
 
     PhSc(self)->weight          = weight;
     PhSc(self)->norms           = norms;
@@ -455,8 +454,8 @@ static float sphsc_phrase_freq(FrtScorer *self)
          * shouldn't have been called. */
         res = pp_first_position(pp);
         assert(res);(void)res;
-        if (check_repeats && i > 0) {
-            if (!sphsc_check_repeats(pp, phsc->phrase_pos, i - 1)) {
+        if (check_repeats && (i > 0)) {
+            if (!sphsc_check_repeats(pp, phsc->phrase_pos, i)) {
                 goto return_freq;
             }
         }
@@ -530,7 +529,7 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
     int i;
     FrtScorer *phsc = NULL;
     FrtPhraseQuery *phq = PhQ(self->query);
-    FrtTermDocEnum **tps, *tpe;
+    FrtTermDocEnum **tps;
     FrtPhrasePosition *positions = phq->positions;
     const int pos_cnt = phq->pos_cnt;
     const int field_num = frt_fis_get_field_num(ir->fis, phq->field);
@@ -545,10 +544,9 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
         char **terms = positions[i].terms;
         const int t_cnt = frt_ary_size(terms);
         if (t_cnt == 1) {
-            tpe = tps[i] = ir->term_positions(ir);
-            tpe->seek(tpe, field_num, terms[0]);
-        }
-        else {
+            tps[i] = ir->term_positions(ir);
+            tps[i]->seek(tps[i], field_num, terms[0]);
+        } else {
             tps[i] = frt_mtdpe_new(ir, field_num, terms, t_cnt);
         }
         /* neither frt_mtdpe_new nor ir->term_positions should return NULL */
@@ -559,8 +557,7 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
         phsc = exact_phrase_scorer_new(self, tps, positions, pos_cnt,
                                        self->similarity,
                                        frt_ir_get_norms_i(ir, field_num));
-    }
-    else {
+    } else {
         phsc = sloppy_phrase_scorer_new(self, tps, positions, pos_cnt,
                                         self->similarity, phq->slop,
                                         frt_ir_get_norms_i(ir, field_num));
