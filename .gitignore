@@ -8,3 +8,4 @@ test/testdir/*
 test/threading/index
 tmp
 *.o
+*.gem
