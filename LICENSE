@@ -85,3 +85,16 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
+
+
+For the Reuter-21578 files in the misc/ferret_vs_lucene directory (corpus, etc.),
+used for research for developing search engine technology:
+
+   The copyright for the text of newswire articles and Reuters
+annotations in the Reuters-21578 collection resides with Reuters Ltd.
+Reuters Ltd. and Carnegie Group, Inc. have agreed to allow the free
+distribution of this data *for research purposes only*.
+   If you publish results based on this data set, please acknowledge
+its use, refer to the data set by the name "Reuters-21578,
+Distribution 1.0", and inform your readers of the current location of
+the data set (see "Availability & Questions").
