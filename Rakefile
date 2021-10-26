@@ -20,11 +20,11 @@ task :push_packages do
 end
 
 task :push_packages_to_rubygems do
-  system("gem push isomorfeus-prospect-#{Isomorfeus::Ferret::VERSION}.gem")
+  system("gem push isomorfeus-ferret-#{Isomorfeus::Ferret::VERSION}.gem")
 end
 
 task :push_packages_to_github do
-  system("gem push --key github --host https://rubygems.pkg.github.com/isomorfeus isomorfeus-prospect-#{Isomorfeus::Ferret::VERSION}.gem")
+  system("gem push --key github --host https://rubygems.pkg.github.com/isomorfeus isomorfeus-ferret-#{Isomorfeus::Ferret::VERSION}.gem")
 end
 
 task :push do
