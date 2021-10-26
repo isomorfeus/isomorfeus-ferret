@@ -1,6 +1,7 @@
 Gemfile.lock
 lib/isomorfeus_ferret_ext.so
 misc/ferret/.deps
+misc/ferret_vs_lucene/*_index
 test/temp
 test/testdir/*
 test/threading/index
