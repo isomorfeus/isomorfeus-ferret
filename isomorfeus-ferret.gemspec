@@ -12,8 +12,10 @@ Gem::Specification.new do |s|
   s.license       = 'MIT'
   s.description   = 'Search for Isomorfeus.'
   s.metadata      = { "github_repo" => "ssh://github.com/isomorfeus/gems" }
-  s.files         = `git ls-files -- lib LICENSE README.md`.split("\n")
+  s.files         = `git ls-files -- lib ext LICENSE README.md`.split("\n")
   s.require_paths = ['lib']
+  s.extensions = %w(ext/isomorfeus_ferret_ext/extconf.rb)
+  s.required_ruby_version = '>= 3.0.0'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rake-compiler'
