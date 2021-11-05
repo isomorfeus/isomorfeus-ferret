@@ -395,7 +395,7 @@ module Isomorfeus
         # starting at +:start_doc+ and stopping when +:limit+ matches have been
         # found. It returns an array of the matching document numbers.
         #
-        # There is a big performance advange when using this search method on a
+        # There is a big performance advantage when using this search method on a
         # very large index when there are potentially thousands of matching
         # documents and you only want say 50 of them. The other search methods need
         # to look at every single match to decide which one has the highest score.
