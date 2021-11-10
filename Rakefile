@@ -11,7 +11,7 @@ require 'rake/testtask'
 Rake::ExtensionTask.new :isomorfeus_ferret_ext
 
 task :specs do
-  system('bundle exec rspec')
+  raise unless system('bundle exec rspec')
 end
 
 task :push_packages do
