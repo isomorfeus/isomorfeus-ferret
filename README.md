@@ -1,7 +1,7 @@
 <h1 align="center">
   <img src="https://github.com/isomorfeus/isomorfeus-ferret/blob/master/Logo.png?raw=true" align="center" width="216" height="234" />
   <br/>
-  Isomorfeus Ferret<br/>
+&nbsp;&nbsp;&nbsp;Isomorfeus Ferret<br/>
 </h1>
 
 Convenient and well performing indexing and search.
