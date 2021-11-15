@@ -4,7 +4,7 @@
 &nbsp;&nbsp;&nbsp;Isomorfeus Ferret<br/>
 </h1>
 
-Convenient and well performing indexing and search.
+Convenient and well performing document store, indexing and search.
 
 ### Community and Support
 At the [Isomorfeus Framework Project](http://isomorfeus.com)
