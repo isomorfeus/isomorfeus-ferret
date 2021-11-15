@@ -350,7 +350,7 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
     return is;
 }
 
-#define LOCK_OBTAIN_TIMEOUT 10
+#define LOCK_OBTAIN_TIMEOUT 50
 
 static int fs_lock_obtain(FrtLock *lock)
 {
