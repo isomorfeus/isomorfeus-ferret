@@ -2651,6 +2651,9 @@ frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
     FrtPostFilter post_filter_holder;
     FrtPostFilter *post_filter = NULL;
 
+    int ex_code = 0;
+    const char *msg = NULL;
+
     if (Qnil != roptions) {
         if (Qnil != (rval = rb_hash_aref(roptions, sym_offset))) {
             offset = FIX2INT(rval);
@@ -2701,8 +2704,17 @@ frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
         }
     }
 
-    td = sea->search(sea, query, offset, limit, filter, sort, post_filter, 0);
-    if (filter) frt_filt_deref(filter);
+    FRT_TRY
+        td = sea->search(sea, query, offset, limit, filter, sort, post_filter, 0);
+        if (filter) frt_filt_deref(filter);
+    default:
+        ex_code = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+
+    if (ex_code && msg) { frb_raise(ex_code, msg); }
+
     return td;
 }
 
