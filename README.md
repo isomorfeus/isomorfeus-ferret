@@ -13,7 +13,7 @@ At the [Isomorfeus Framework Project](http://isomorfeus.com)
 
 Isomorfeus-Ferret is a revived version of the original ferret gem created by Dave Balmain.
 During revival many things havbe been fixed, now all tests pass, no crashes and it
-successfully compiles and runs with rubys >3. Its no loger a goal to have
+successfully compiles and runs with rubys >3. Its no longer a goal to have
 a c library available, but instead the usage is meant as ruby gem with a c extension only.
 
 It should work on *nixes and *nuxes and also works on Windows.
