@@ -7,34 +7,17 @@ on:
     branches: [ '*' ]
 
 jobs:
-  specs_ux:
+  specs:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        ruby: ['3.0', '3.1.0-preview1']
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Ruby 3.0
+    - name: Set up Ruby 3.1
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-    - name: Build and test with Rake
-      run: |
-        bundle exec rake
-  specs_win:
-    strategy:
-      matrix:
-        os: [windows-latest]
-        ruby: ['3.0']
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Ruby 3.0
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
+        ruby-version: 3.1
         bundler-cache: true
     - name: Build and test with Rake
       run: |
