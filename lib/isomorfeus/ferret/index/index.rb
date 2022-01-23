@@ -39,7 +39,7 @@ module Isomorfeus
         #                         object.  Using a multiple field key will slow
         #                         down indexing so it should not be done if
         #                         performance is a concern. A single field key (or
-        #                         id) should be find however. Also, you must make
+        #                         id) should be fine however. Also, you must make
         #                         sure that your key/keys are either untokenized
         #                         or that they are not broken up by the analyzer.
         # auto_flush::            Default: false. Set this option to true if you
