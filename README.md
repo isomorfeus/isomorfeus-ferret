@@ -7,7 +7,7 @@
 Convenient and well performing document store, indexing and search.
 
 ### Community and Support
-At the [Isomorfeus Framework Project](http://isomorfeus.com)
+At the [Isomorfeus Framework Project](https://isomorfeus.com)
 
 ## About this project
 

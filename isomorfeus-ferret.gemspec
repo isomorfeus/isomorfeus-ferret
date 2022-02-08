@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
 
   s.authors       = ['Jan Biedermann']
   s.email         = ['jan@kursator.com']
-  s.homepage      = 'http://isomorfeus.com'
+  s.homepage      = 'https://isomorfeus.com'
   s.summary       = 'Indexed document store for Isomorfeus.'
   s.license       = 'MIT'
   s.description   = 'Indexed document store and search for Isomorfeus based on ferret.'
