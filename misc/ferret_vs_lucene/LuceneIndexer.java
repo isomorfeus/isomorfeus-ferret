@@ -57,7 +57,6 @@ public class LuceneIndexer {
         numReps = Integer.parseInt(args[i++]);
       else if (arg.equals("-increment"))
         increment = Integer.parseInt(args[i++]);
-      }
       else
         throw new Exception("Unknown argument: " + arg);
     }
