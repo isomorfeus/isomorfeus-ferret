@@ -6,12 +6,12 @@ class FilterTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
   include Isomorfeus::Ferret::Index
 
-  def setup()
-    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new()
+  def setup
+    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
-    [ 
+    [
       {:int => "0", :date => "20040601", :switch => "on"},
       {:int => "1", :date => "20041001", :switch => "off"},
       {:int => "2", :date => "20051101", :switch => "on"},
@@ -26,8 +26,8 @@ class FilterTest < Test::Unit::TestCase
     iw.close
   end
 
-  def teardown()
-    @dir.close()
+  def teardown
+    @dir.close
   end
 
   def do_test_top_docs(searcher, query, expected, filter)
@@ -41,7 +41,7 @@ class FilterTest < Test::Unit::TestCase
 
   def test_range_filter
     searcher = Searcher.new(@dir)
-    q = MatchAllQuery.new()
+    q = MatchAllQuery.new
     rf = RangeFilter.new(:int, :>= => "2", :<= => "6")
     do_test_top_docs(searcher, q, [2,3,4,5,6], rf)
     rf = RangeFilter.new(:int, :>= => "2", :< => "6")
@@ -73,9 +73,9 @@ class FilterTest < Test::Unit::TestCase
     assert_raise(ArgumentError) {RangeFilter.new(:f, :include_upper => true)}
   end
 
-  def test_query_filter()
+  def test_query_filter
     searcher = Searcher.new(@dir)
-    q = MatchAllQuery.new()
+    q = MatchAllQuery.new
     qf = QueryFilter.new(TermQuery.new(:switch, "on"))
     do_test_top_docs(searcher, q, [0,2,4,6,8], qf)
     # test again to test caching doesn't break it
@@ -98,7 +98,7 @@ class FilterTest < Test::Unit::TestCase
 
   def test_filtered_query
     searcher = Searcher.new(@dir)
-    q = MatchAllQuery.new()
+    q = MatchAllQuery.new
     rf = RangeFilter.new(:int, :>= => "2", :<= => "6")
     rq = FilteredQuery.new(q, rf)
     qf = QueryFilter.new(TermQuery.new(:switch, "on"))
@@ -125,7 +125,7 @@ class FilterTest < Test::Unit::TestCase
 
   def test_filter_proc
     searcher = Searcher.new(@dir)
-    q = MatchAllQuery.new()
+    q = MatchAllQuery.new
     filter_proc = lambda {|doc, score, s| (s[doc][:int].to_i % 2) == 0}
     top_docs = searcher.search(q, :filter_proc => filter_proc)
     top_docs.hits.each do |hit|
@@ -135,7 +135,7 @@ class FilterTest < Test::Unit::TestCase
 
   def test_score_modifying_filter_proc
     searcher = Searcher.new(@dir)
-    q = MatchAllQuery.new()
+    q = MatchAllQuery.new
     start_date = Date.parse('2008-02-08')
     date_half_life_50 = lambda do |doc, score, s|
       days = (start_date - Date.parse(s[doc][:date], '%Y%m%d')).to_i

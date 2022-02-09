@@ -10,12 +10,12 @@ class FuzzyQueryTest < Test::Unit::TestCase
     writer << {:field => text}
   end
 
-  def setup()
-    @dir = RAMDirectory.new()
+  def setup
+    @dir = RAMDirectory.new
   end
 
-  def teardown()
-    @dir.close()
+  def teardown
+    @dir.close
   end
 
   def do_test_top_docs(is, query, expected)
@@ -35,9 +35,9 @@ class FuzzyQueryTest < Test::Unit::TestCase
     do_test_top_docs(is, fq, expected)
   end
 
-  def test_fuzziness()
+  def test_fuzziness
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     add_doc("aaaaa", iw)
     add_doc("aaaab", iw)
@@ -48,8 +48,8 @@ class FuzzyQueryTest < Test::Unit::TestCase
     add_doc("ddddd", iw)
     add_doc("ddddddddddddddddddddd", iw) # test max_distances problem
     add_doc("aaaaaaaaaaaaaaaaaaaaaaa", iw) # test max_distances problem
-    #iw.optimize()
-    iw.close()
+    #iw.optimize
+    iw.close
 
 
     is = Searcher.new(@dir)
@@ -82,22 +82,22 @@ class FuzzyQueryTest < Test::Unit::TestCase
     do_prefix_test(is, "ddddX", 3, [6])
     do_prefix_test(is, "ddddX", 4, [6])
     do_prefix_test(is, "ddddX", 5, [])
-    
+
     fq = FuzzyQuery.new(:anotherfield, "ddddX", :prefix_length => 0)
     top_docs = is.search(fq)
     assert_equal(0, top_docs.total_hits)
 
-    is.close()
+    is.close
   end
 
-  def test_fuzziness_long()
+  def test_fuzziness_long
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     add_doc("aaaaaaa", iw)
     add_doc("segment", iw)
-    iw.optimize()
-    iw.close()
+    iw.optimize
+    iw.close
     is = Searcher.new(@dir)
 
     # not similar enough:
@@ -106,7 +106,7 @@ class FuzzyQueryTest < Test::Unit::TestCase
     # edit distance to "aaaaaaa" = 3, this matches because the string is longer than
     # in testDefaultFuzziness so a bigger difference is allowed:
     do_prefix_test(is, "aaaaccc", 0, [0])
-    
+
     # now with prefix
     do_prefix_test(is, "aaaaccc", 1, [0])
     do_prefix_test(is, "aaaaccc", 4, [0])
@@ -114,7 +114,7 @@ class FuzzyQueryTest < Test::Unit::TestCase
 
     # no match, more than half of the characters is wrong:
     do_prefix_test(is, "aaacccc", 0, [])
-    
+
     # now with prefix
     do_prefix_test(is, "aaacccc", 1, [])
 
@@ -141,7 +141,7 @@ class FuzzyQueryTest < Test::Unit::TestCase
       fq = FuzzyQuery.new(:f, "s", :min_similarity => -0.1)
     end
 
-    is.close()
+    is.close
   end
-  
+
 end

@@ -10,7 +10,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
   ITERATIONS = 100
   NUM_THREADS = 3
-  ANALYZER = Isomorfeus::Ferret::Analysis::StandardAnalyzer.new()
+  ANALYZER = Isomorfeus::Ferret::Analysis::StandardAnalyzer.new
 
   def setup
     index = Index.new(:path => INDEX_DIR,
@@ -20,14 +20,14 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
     index.close
   end
 
-  def indexing_thread()
+  def indexing_thread
     index = Index.new(:path => INDEX_DIR,
                       :analyzer => ANALYZER,
                       :auto_flush => true,
                       :default_field => :content)
 
     ITERATIONS.times do
-      choice = rand()
+      choice = rand
 
       if choice > 0.98
         do_optimize(index)
@@ -44,7 +44,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
     puts e
     puts e.backtrace
     raise 'hell'
-  end 
+  end
 
   def do_optimize(index)
     puts "Optimizing the index"
@@ -65,7 +65,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
     puts("Adding #{n}")
     index << d
   end
-  
+
   def do_search(index)
     n = rand(0xFFFFFFFF)
     puts("Searching for #{n}")
@@ -81,7 +81,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
       threads << Thread.new { indexing_thread }
     end
 
-    threads.each {|t| 
+    threads.each {|t|
       t.join
     }
   end

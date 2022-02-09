@@ -9,20 +9,20 @@ class SearcherTest < Test::Unit::TestCase
 
   include SearcherTests
 
-  def setup()
-    @dir = RAMDirectory.new()
+  def setup
+    @dir = RAMDirectory.new
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     @documents = IndexTestHelper::SEARCH_TEST_DOCS
     @documents.each { |doc| iw << doc }
-    iw.close()
+    iw.close
     @searcher = Searcher.new(@dir)
   end
 
-  def teardown()
+  def teardown
     @searcher.close
-    @dir.close()
+    @dir.close
   end
 
   def get_docs(hits)
@@ -35,7 +35,7 @@ class SearcherTest < Test::Unit::TestCase
 
   def check_hits(query, expected, top=nil, total_hits=nil)
     options = {}
-    options[:limit] = expected.size + 1 if (expected.size > 10) 
+    options[:limit] = expected.size + 1 if (expected.size > 10)
     top_docs = @searcher.search(query, options)
     assert_equal(expected.length, top_docs.hits.size)
     assert_equal(top, top_docs.hits[0].doc) if top
@@ -47,7 +47,7 @@ class SearcherTest < Test::Unit::TestCase
     top_docs.hits.each do |score_doc|
       assert(expected.include?(score_doc.doc),
              "#{score_doc.doc} was found unexpectedly")
-      assert(score_doc.score.approx_eql?(@searcher.explain(query, score_doc.doc).score), 
+      assert(score_doc.score.approx_eql?(@searcher.explain(query, score_doc.doc).score),
         "Scores(#{score_doc.score} != #{@searcher.explain(query, score_doc.doc).score})")
     end
     assert_equal(expected.sort, @searcher.scan(query))
@@ -57,7 +57,7 @@ class SearcherTest < Test::Unit::TestCase
     end
   end
 
-  def test_get_doc()
+  def test_get_doc
     assert_equal(18, @searcher.max_doc)
     assert_equal("20050930", @searcher.get_document(0)[:date])
     assert_equal("cat1/sub2/subsub2", @searcher.get_document(4)[:category])

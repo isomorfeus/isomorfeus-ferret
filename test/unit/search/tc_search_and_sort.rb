@@ -6,10 +6,10 @@ class SearchAndSortTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
   include Isomorfeus::Ferret::Index
 
-  def setup()
-    @dir = RAMDirectory.new()
+  def setup
+    @dir = RAMDirectory.new
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true, :min_merge_docs => 3)
     [                                                                      # len mod
       {:x => "findall", :string => "a", :int => "6", :float => "0.01"},    #  4   0
@@ -30,8 +30,8 @@ class SearchAndSortTest < Test::Unit::TestCase
     iw.close
   end
 
-  def teardown()
-    @dir.close()
+  def teardown
+    @dir.close
   end
 
   def do_test_top_docs(is, query, expected, sort = nil)
@@ -51,7 +51,7 @@ class SearchAndSortTest < Test::Unit::TestCase
     end
   end
 
-  def test_sort_field_to_s()
+  def test_sort_field_to_s
     assert_equal("<SCORE>", SortField::SCORE.to_s);
     sf = SortField.new("MyScore",
                        {:type => :score,
@@ -91,8 +91,8 @@ class SearchAndSortTest < Test::Unit::TestCase
                         :reverse => true})
     assert_equal("auto_field:<auto>!", sf.to_s)
   end
-  
-  def test_sort_to_s()
+
+  def test_sort_to_s
     sort = Sort.new
     assert_equal("Sort[<SCORE>, <DOC>]", sort.to_s)
     sf = SortField.new(:auto_field,
@@ -106,7 +106,7 @@ class SearchAndSortTest < Test::Unit::TestCase
     assert_equal("Sort[one:<auto>, two:<auto>, <DOC>]", sort.to_s)
   end
 
-  def test_sorts()
+  def test_sorts
     is = Searcher.new(@dir)
     q = TermQuery.new(:x, "findall")
     do_test_top_docs(is, q, [8,7,5,3,1,0,2,4,6,9])
@@ -130,7 +130,7 @@ class SearchAndSortTest < Test::Unit::TestCase
                      SortField.new(:int, :type => :byte))
     do_test_top_docs(is, q, [0,1,6,5,9,4,8,2,7,3],
                      [SortField.new(:int, :type => :byte, :reverse => true)])
-    
+
 
     ## float
     sf_float = SortField.new(:float, {:type => :float, :reverse => true})

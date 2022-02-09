@@ -4,7 +4,7 @@ require 'isomorfeus/ferret/stdlib_patches'
 class NumberToolsTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Utils
 
-  def test_to_i_lex_near_zero()
+  def test_to_i_lex_near_zero
     (-10..10).each do |num|
       assert(num.to_s_lex > (num-1).to_s_lex,
              "Strings should sort correctly but " +
@@ -13,7 +13,7 @@ class NumberToolsTest < Test::Unit::TestCase
     end
   end
 
-  def test_to_i_pad_near_zero()
+  def test_to_i_pad_near_zero
     (1..10).each do |num|
       assert(num.to_s_pad(3) > (num-1).to_s_pad(3),
              "Strings should sort correctly but " +
@@ -31,7 +31,7 @@ class NumberToolsTest < Test::Unit::TestCase
 
       assert_equal(num1, num1.to_s_lex.to_i_lex)
       assert_equal(num2, num2.to_s_lex.to_i_lex)
-      assert_equal(num1 < num2, num1.to_s_lex < num2.to_s_lex, 
+      assert_equal(num1 < num2, num1.to_s_lex < num2.to_s_lex,
                    "Strings should sort correctly but " +
                    "#{num1} < #{num2} == #{num1 < num2} but " +
                    "#{num1.to_s_lex} < #{num2.to_s_lex} == " +
@@ -45,14 +45,14 @@ class NumberToolsTest < Test::Unit::TestCase
       num2 = rand(10000000000000000000000000000000000)
       assert_equal(num1, num1.to_s_pad(35).to_i)
       assert_equal(num2, num2.to_s_pad(35).to_i)
-      assert_equal(num1 < num2, num1.to_s_pad(35) < num2.to_s_pad(35), 
+      assert_equal(num1 < num2, num1.to_s_pad(35) < num2.to_s_pad(35),
                    "Strings should sort correctly but " +
                    "#{num1} < #{num2} == #{num1 < num2} but " +
                    "#{num1.to_s_pad(35)} < #{num2.to_s_pad(35)} == " +
                    "#{num1.to_s_pad(35) < num2.to_s_pad(35)}")
     end
   end
-  
+
   def test_time_to_s_lex
     t_num = Time.now.to_i - 365*24*60*60 # prevent range error
 
@@ -64,7 +64,7 @@ class NumberToolsTest < Test::Unit::TestCase
       [:year, :month, :day, :hour, :minute, :second, :millisecond].each do |prec|
         t1_x = t1.to_s_lex(prec).to_time_lex
         t2_x = t2.to_s_lex(prec).to_time_lex
-        assert_equal(t1_x < t2_x, t1.to_s_lex(prec) < t2.to_s_lex(prec), 
+        assert_equal(t1_x < t2_x, t1.to_s_lex(prec) < t2.to_s_lex(prec),
                      "Strings should sort correctly but " +
                      "#{t1_x} < #{t2_x} == #{t1_x < t2_x} but " +
                      "#{t1.to_s_lex(prec)} < #{t2.to_s_lex(prec)} == " +
@@ -82,7 +82,7 @@ class NumberToolsTest < Test::Unit::TestCase
       [:year, :month, :day].each do |prec|
         d1_x = d1.to_s_lex(prec).to_date_lex
         d2_x = d2.to_s_lex(prec).to_date_lex
-        assert_equal(d1_x < d2_x, d1.to_s_lex(prec) < d2.to_s_lex(prec), 
+        assert_equal(d1_x < d2_x, d1.to_s_lex(prec) < d2.to_s_lex(prec),
                      "Strings should sort correctly but " +
                      "#{d1_x} < #{d2_x} == #{d1_x < d2_x} but " +
                      "#{d1.to_s_lex(prec)} < #{d2.to_s_lex(prec)} == " +
@@ -105,7 +105,7 @@ class NumberToolsTest < Test::Unit::TestCase
       [:year, :month, :day, :hour, :minute, :second].each do |prec|
         d1_x = d1.to_s_lex(prec).to_date_lex
         d2_x = d2.to_s_lex(prec).to_date_lex
-        assert_equal(d1_x < d2_x, d1.to_s_lex(prec) < d2.to_s_lex(prec), 
+        assert_equal(d1_x < d2_x, d1.to_s_lex(prec) < d2.to_s_lex(prec),
                      "Strings should sort correctly but " +
                      "#{d1_x} < #{d2_x} == #{d1_x < d2_x} but " +
                      "#{d1.to_s_lex(prec)} < #{d2.to_s_lex(prec)} == " +

@@ -15,7 +15,7 @@ class FSStoreTest < Test::Unit::TestCase
   end
 
   def teardown
-    @dir.close()
+    @dir.close
     Dir[File.join(@dpath, "*")].each {|path| begin File.delete(path) rescue nil end}
   end
 
@@ -104,8 +104,8 @@ class FSStoreTest < Test::Unit::TestCase
     end
 
     if dir
-      dir.refresh()
-      dir.close()
+      dir.refresh
+      dir.close
     end
   end
 

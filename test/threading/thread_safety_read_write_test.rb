@@ -7,7 +7,7 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
 
   INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
   ITERATIONS = 10000
-  ANALYZER = Isomorfeus::Ferret::Analysis::Analyzer.new()
+  ANALYZER = Isomorfeus::Ferret::Analysis::Analyzer.new
 
   def setup
     @index = Index.new(:path => INDEX_DIR,
@@ -16,9 +16,9 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
                        :default_field => :content)
   end
 
-  def search_thread()
+  def search_thread
     ITERATIONS.times do
-      do_search()
+      do_search
       sleep(rand(1))
     end
   rescue => e
@@ -26,11 +26,11 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
     puts e.backtrace
     @index = nil
     raise e
-  end 
+  end
 
-  def index_thread()
+  def index_thread
     ITERATIONS.times do
-      do_add_doc()
+      do_add_doc
       sleep(rand(1))
     end
   rescue => e
@@ -38,7 +38,7 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
     puts e.backtrace
     @index = nil
     raise e
-  end 
+  end
 
   def do_add_doc
     n = rand(0xFFFFFFFF)
@@ -53,7 +53,7 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
       raise e
     end
   end
-  
+
   def do_search
     n = rand(0xFFFFFFFF)
     puts("Searching for #{n}")

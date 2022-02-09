@@ -270,8 +270,8 @@ module IndexTestHelper
     return docs
   end
 
-  INDEX_TEST_DOCS = self.prepare_ir_test_docs()
-  INDEX_TEST_FIS = self.prepare_ir_test_fis()
+  INDEX_TEST_DOCS = self.prepare_ir_test_docs
+  INDEX_TEST_FIS = self.prepare_ir_test_fis
 
   def self.prepare_search_docs
     i = 1
@@ -312,7 +312,7 @@ module IndexTestHelper
         "word1 the quick fox is brown and hairy and a little red"           ],
       ["20051017", "cat1/",             "-1.0",
         "word1 the brown fox is quick and red"                              ]
-    ].map do |date, category, number, field| 
+    ].map do |date, category, number, field|
       doc = Isomorfeus::Ferret::Document.new(i)
       i += 1
       doc[:date] = date
@@ -323,5 +323,5 @@ module IndexTestHelper
     end
   end
 
-  SEARCH_TEST_DOCS = self.prepare_search_docs()
+  SEARCH_TEST_DOCS = self.prepare_search_docs
 end

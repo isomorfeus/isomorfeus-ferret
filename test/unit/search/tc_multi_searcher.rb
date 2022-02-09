@@ -4,8 +4,8 @@ require File.expand_path(File.join(File.dirname(__FILE__), "tc_index_searcher.rb
 # make sure a MultiSearcher searching only one index
 # passes all the Searcher tests
 class SimpleMultiSearcherTest < SearcherTest
-  alias :old_setup :setup 
-  def setup()
+  alias :old_setup :setup
+  def setup
     old_setup
     @searcher = MultiSearcher.new([Searcher.new(@dir)])
   end
@@ -65,38 +65,38 @@ class MultiSearcherTest < Test::Unit::TestCase
       "cat" => "cat1/"}
   ]
 
-  def setup()
+  def setup
     # create MultiSearcher from two seperate searchers
-    dir1 = RAMDirectory.new()
+    dir1 = RAMDirectory.new
     iw1 = IndexWriter.new(:dir => dir1,
-                          :analyzer => WhiteSpaceAnalyzer.new(),
+                          :analyzer => WhiteSpaceAnalyzer.new,
                           :create => true)
     DOCUMENTS1.each { |doc| iw1 << doc }
-    iw1.close()
-    
-    dir2 = RAMDirectory.new()
+    iw1.close
+
+    dir2 = RAMDirectory.new
     iw2 = IndexWriter.new(:dir => dir2,
-                          :analyzer => WhiteSpaceAnalyzer.new(),
+                          :analyzer => WhiteSpaceAnalyzer.new,
                           :create => true)
     DOCUMENTS2.each { |doc| iw2 << doc }
-    iw2.close()
+    iw2.close
     @searcher = Isomorfeus::Ferret::Search::MultiSearcher.new([Searcher.new(dir1),
                                                    Searcher.new(dir2)])
 
     # create single searcher
     dir = RAMDirectory.new
     iw = IndexWriter.new(:dir => dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     DOCUMENTS1.each { |doc| iw << doc }
     DOCUMENTS2.each { |doc| iw << doc }
     iw.close
     @single = Searcher.new(dir)
 
-    #@query_parser = Isomorfeus::Ferret::QueryParser.new([:date, :field, :cat], :analyzer => WhiteSpaceAnalyzer.new())
+    #@query_parser = Isomorfeus::Ferret::QueryParser.new([:date, :field, :cat], :analyzer => WhiteSpaceAnalyzer.new)
   end
 
-  def teardown()
+  def teardown
     @searcher.close
     @single.close
   end
@@ -104,18 +104,18 @@ class MultiSearcherTest < Test::Unit::TestCase
   def check_hits(query, ignore1, ignore2 = nil, ignore3 = nil)
     multi_docs = @searcher.search(query)
     single_docs = @single.search(query)
-    
+
     assert_equal(single_docs.hits.size, multi_docs.hits.size, 'hit count')
     assert_equal(single_docs.total_hits, multi_docs.total_hits, 'hit count')
-    
+
     multi_docs.hits.each_with_index { |sd, id|
       assert_equal(single_docs.hits[id].doc, sd.doc)
-      assert(single_docs.hits[id].score.approx_eql?(sd.score), 
+      assert(single_docs.hits[id].score.approx_eql?(sd.score),
              "#{single_docs.hits[id]} != #{sd}")
     }
   end
 
-  def test_get_doc()
+  def test_get_doc
     assert_equal(18, @searcher.max_doc)
     assert_equal("20050930", @searcher.get_document(0)[:date])
     assert_equal("cat1/sub2/subsub2", @searcher[4][:cat])

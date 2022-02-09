@@ -33,7 +33,7 @@ module ContentGenerator
         return generate_text(options)
       else
         return cache[text] = true
-      end      
+      end
     end
     return text
   end
@@ -60,7 +60,7 @@ module ContentGenerator
         return generate_word(options)
       else
         cache[word] = true
-      end      
+      end
     end
     return word
   end
@@ -142,12 +142,12 @@ module ContentGenerator
         end
         length -= l
         text << t
-      else 
+      else
         text << '---'
       end
       text << "\n\n"
     end
-    text.join()
+    text.join
   end
 
   def self.random_word
@@ -167,7 +167,7 @@ module ContentGenerator
   end
 
   private
-  
+
   def self.gen_md_para(length, options = {})
     link_words = rand(1 + length/10)
     length -= link_words

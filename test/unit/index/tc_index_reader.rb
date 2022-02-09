@@ -81,8 +81,8 @@ module IndexReaderCommon
 
   def do_test_term_doc_enum
 
-    assert_equal(IndexTestHelper::INDEX_TEST_DOCS.size, @ir.num_docs())
-    assert_equal(IndexTestHelper::INDEX_TEST_DOCS.size, @ir.max_doc())
+    assert_equal(IndexTestHelper::INDEX_TEST_DOCS.size, @ir.num_docs)
+    assert_equal(IndexTestHelper::INDEX_TEST_DOCS.size, @ir.max_doc)
 
     assert_equal(4, @ir.doc_freq(:body, "Wally"))
 
@@ -95,8 +95,8 @@ module IndexReaderCommon
       [20, 6]
     ].each do |doc, freq|
       assert(tde.next?)
-      assert_equal(doc, tde.doc())
-      assert_equal(freq, tde.freq())
+      assert_equal(doc, tde.doc)
+      assert_equal(freq, tde.freq)
     end
     assert(! tde.next?)
 
@@ -119,15 +119,15 @@ module IndexReaderCommon
     ].each do |skip, doc, freq, positions|
       if skip
         assert(tde.skip_to(doc))
-      else 
+      else
         assert(tde.next?)
       end
-      assert_equal(doc, tde.doc())
-      assert_equal(freq, tde.freq())
-      positions.each {|pos| assert_equal(pos, tde.next_position())}
+      assert_equal(doc, tde.doc)
+      assert_equal(freq, tde.freq)
+      positions.each {|pos| assert_equal(pos, tde.next_position)}
     end
 
-    assert_nil(tde.next_position())
+    assert_nil(tde.next_position)
     assert(! tde.next?)
 
     tde = @ir.term_positions_for(:body, "read")
@@ -141,7 +141,7 @@ module IndexReaderCommon
        '{"document":17,"frequency":1,"positions":[2]},' +
        '{"document":20,"frequency":1,"positions":[21]},' +
        '{"document":21,"frequency":6,"positions":[3,4,5,8,9,10]}]',
-       tde.to_json())
+       tde.to_json)
     tde = @ir.term_positions_for(:body, "read")
     assert_equal('[' +
        '[1,1,[3]],' +
@@ -171,8 +171,8 @@ module IndexReaderCommon
       [63, 63],
     ].each do |skip_doc, doc_and_freq|
       assert(tde.skip_to(skip_doc))
-      assert_equal(doc_and_freq, tde.doc())
-      assert_equal(doc_and_freq, tde.freq())
+      assert_equal(doc_and_freq, tde.doc)
+      assert_equal(doc_and_freq, tde.freq)
     end
 
 
@@ -202,7 +202,7 @@ module IndexReaderCommon
     assert_equal(3, tvs.size)
 
     assert_equal(expected_tv, tvs[:body])
-    
+
     tv = tvs[:author]
     assert_equal(:author, tv.field)
     assert_equal([TVTerm.new("Leo", 1, [0]), TVTerm.new("Tolstoy", 1, [1])], tv.terms)
@@ -214,7 +214,7 @@ module IndexReaderCommon
     assert_equal([TVTerm.new("War And Peace", 1, nil)], tv.terms)
     assert_equal([TVOffsets.new(0, 13)], tv.offsets)
   end
-   
+
   def do_test_get_doc
     doc = @ir.get_document(3)
     [:author, :body, :title, :year].each {|fn| assert(doc.fields.include?(fn))}
@@ -265,11 +265,11 @@ module IndexReaderCommon
     assert_equal(145, norms.bytes.to_a[3])
 
     norms = @ir.norms(:year)
-    # TODO: this returns two possible results depending on whether it is 
+    # TODO: this returns two possible results depending on whether it is
     # a multi reader or a segment reader. If it is a multi reader it will
-    # always return an empty set of norms, otherwise it will return nil. 
+    # always return an empty set of norms, otherwise it will return nil.
     # I'm not sure what to do here just yet or if this is even an issue.
-    #assert(norms.nil?) 
+    #assert(norms.nil?)
 
     norms = " " * 164
     @ir.get_norms_into(:text, norms, 100)
@@ -278,11 +278,11 @@ module IndexReaderCommon
     assert_equal(200, norms.bytes.to_a[150])
     assert_equal(155, norms.bytes.to_a[163])
 
-    @ir.commit()
+    @ir.commit
 
-    iw_optimize()
+    iw_optimize
 
-    ir2 = ir_new()
+    ir2 = ir_new
 
     norms = " " * 164
     ir2.get_norms_into(:text, norms, 100)
@@ -290,15 +290,15 @@ module IndexReaderCommon
     assert_equal( 20, norms.bytes.to_a[125])
     assert_equal(200, norms.bytes.to_a[150])
     assert_equal(155, norms.bytes.to_a[163])
-    ir2.close()
+    ir2.close
   end
 
   def test_ir_delete
     doc_count = IndexTestHelper::INDEX_TEST_DOCS.size
     @ir.delete(1000) # non existant doc_num
-    assert(! @ir.has_deletions?())
-    assert_equal(doc_count, @ir.max_doc())
-    assert_equal(doc_count, @ir.num_docs())
+    assert(! @ir.has_deletions?)
+    assert_equal(doc_count, @ir.max_doc)
+    assert_equal(doc_count, @ir.num_docs)
     assert(! @ir.deleted?(10))
 
     [
@@ -306,18 +306,18 @@ module IndexReaderCommon
       [10,            doc_count - 1],
       [doc_count - 1, doc_count - 2],
       [doc_count - 2, doc_count - 3],
-    ].each do |del_num, num_docs| 
+    ].each do |del_num, num_docs|
       @ir.delete(del_num)
-      assert(@ir.has_deletions?())
-      assert_equal(doc_count, @ir.max_doc())
-      assert_equal(num_docs, @ir.num_docs())
+      assert(@ir.has_deletions?)
+      assert_equal(doc_count, @ir.max_doc)
+      assert_equal(num_docs, @ir.num_docs)
       assert(@ir.deleted?(del_num))
     end
 
-    @ir.undelete_all()
-    assert(! @ir.has_deletions?())
-    assert_equal(doc_count, @ir.max_doc())
-    assert_equal(doc_count, @ir.num_docs())
+    @ir.undelete_all
+    assert(! @ir.has_deletions?)
+    assert_equal(doc_count, @ir.max_doc)
+    assert_equal(doc_count, @ir.num_docs)
     assert(! @ir.deleted?(10))
     assert(! @ir.deleted?(doc_count - 2))
     assert(! @ir.deleted?(doc_count - 1))
@@ -325,67 +325,67 @@ module IndexReaderCommon
     del_list = [10, 20, 30, 40, 50, doc_count - 1]
 
     del_list.each {|doc_num| @ir.delete(doc_num)}
-    assert(@ir.has_deletions?())
-    assert_equal(doc_count, @ir.max_doc())
-    assert_equal(doc_count - del_list.size, @ir.num_docs())
+    assert(@ir.has_deletions?)
+    assert_equal(doc_count, @ir.max_doc)
+    assert_equal(doc_count - del_list.size, @ir.num_docs)
     del_list.each {|doc_num| assert(@ir.deleted?(doc_num))}
 
-    ir2 = ir_new()
-    assert(! ir2.has_deletions?())
-    assert_equal(doc_count, ir2.max_doc())
-    assert_equal(doc_count, ir2.num_docs())
+    ir2 = ir_new
+    assert(! ir2.has_deletions?)
+    assert_equal(doc_count, ir2.max_doc)
+    assert_equal(doc_count, ir2.num_docs)
 
-    @ir.commit()
+    @ir.commit
 
-    assert(! ir2.has_deletions?())
-    assert_equal(doc_count, ir2.max_doc())
-    assert_equal(doc_count, ir2.num_docs())
+    assert(! ir2.has_deletions?)
+    assert_equal(doc_count, ir2.max_doc)
+    assert_equal(doc_count, ir2.num_docs)
 
     ir2.close
-    ir2 = ir_new()
-    assert(ir2.has_deletions?())
-    assert_equal(doc_count, ir2.max_doc())
-    assert_equal(doc_count - 6, ir2.num_docs())
+    ir2 = ir_new
+    assert(ir2.has_deletions?)
+    assert_equal(doc_count, ir2.max_doc)
+    assert_equal(doc_count - 6, ir2.num_docs)
     del_list.each {|doc_num| assert(ir2.deleted?(doc_num))}
 
-    ir2.undelete_all()
-    assert(! ir2.has_deletions?())
-    assert_equal(doc_count, ir2.max_doc())
-    assert_equal(doc_count, ir2.num_docs())
+    ir2.undelete_all
+    assert(! ir2.has_deletions?)
+    assert_equal(doc_count, ir2.max_doc)
+    assert_equal(doc_count, ir2.num_docs)
     del_list.each {|doc_num| assert(! ir2.deleted?(doc_num))}
 
     del_list.each {|doc_num| assert(@ir.deleted?(doc_num))}
 
-    ir2.commit()
+    ir2.commit
 
     del_list.each {|doc_num| assert(@ir.deleted?(doc_num))}
 
     del_list.each {|doc_num| ir2.delete(doc_num)}
-    ir2.commit()
+    ir2.commit
 
-    iw_optimize()
+    iw_optimize
 
-    ir3 = ir_new()
+    ir3 = ir_new
 
-    assert(!ir3.has_deletions?())
-    assert_equal(doc_count - 6, ir3.max_doc())
-    assert_equal(doc_count - 6, ir3.num_docs())
+    assert(!ir3.has_deletions?)
+    assert_equal(doc_count - 6, ir3.max_doc)
+    assert_equal(doc_count - 6, ir3.num_docs)
 
-    ir2.close()
-    ir3.close()
+    ir2.close
+    ir3.close
   end
 
   def test_latest
     assert(@ir.latest?)
-    ir2 = ir_new()
+    ir2 = ir_new
     assert(ir2.latest?)
 
     ir2.delete(0)
-    ir2.commit()
+    ir2.commit
     assert(ir2.latest?)
     assert(!@ir.latest?)
 
-    ir2.close()
+    ir2.close
   end
 end
 
@@ -397,30 +397,30 @@ class MultiReaderTest < Test::Unit::TestCase
   end
 
   def iw_optimize
-    iw = IndexWriter.new(:dir => @dir, :analyzer => WhiteSpaceAnalyzer.new())
-    iw.optimize()
-    iw.close()
+    iw = IndexWriter.new(:dir => @dir, :analyzer => WhiteSpaceAnalyzer.new)
+    iw.optimize
+    iw.close
   end
 
   def setup
-    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new()
+    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new
 
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true,
                          :field_infos => IndexTestHelper::INDEX_TEST_FIS,
                          :max_buffered_docs => 15)
     IndexTestHelper::INDEX_TEST_DOCS.each {|doc| iw << doc}
 
     # we mustn't optimize here so that MultiReader is used.
-    #iw.optimize() unless self.class == MultiReaderTest
-    iw.close()
-    @ir = ir_new()
+    #iw.optimize unless self.class == MultiReaderTest
+    iw.close
+    @ir = ir_new
   end
 
-  def teardown()
-    @ir.close()
-    @dir.close()
+  def teardown
+    @ir.close
+    @dir.close
   end
 end
 
@@ -437,37 +437,37 @@ class MultiExternalReaderTest < Test::Unit::TestCase
 
   def iw_optimize
     @dirs.each do |dir|
-      iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new())
-      iw.optimize()
-      iw.close()
+      iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new)
+      iw.optimize
+      iw.close
     end
   end
 
-  def setup()
+  def setup
     @dirs = []
-    
+
     [
       [0, 10],
       [10, 30],
       [30, IndexTestHelper::INDEX_TEST_DOCS.size]
     ].each do |start, finish|
-      dir = Isomorfeus::Ferret::Store::RAMDirectory.new()
+      dir = Isomorfeus::Ferret::Store::RAMDirectory.new
       @dirs << dir
 
       iw = IndexWriter.new(:dir => dir,
-                           :analyzer => WhiteSpaceAnalyzer.new(),
+                           :analyzer => WhiteSpaceAnalyzer.new,
                            :create => true,
                            :field_infos => IndexTestHelper::INDEX_TEST_FIS)
       (start...finish).each do |doc_id|
         iw << IndexTestHelper::INDEX_TEST_DOCS[doc_id]
       end
-      iw.close()
+      iw.close
     end
     @ir = ir_new
   end
 
-  def teardown()
-    @ir.close()
+  def teardown
+    @ir.close
     @dirs.each {|dir| dir.close}
   end
 end
@@ -481,37 +481,37 @@ class MultiExternalReaderDirTest < Test::Unit::TestCase
 
   def iw_optimize
     @dirs.each do |dir|
-      iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new())
-      iw.optimize()
-      iw.close()
+      iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new)
+      iw.optimize
+      iw.close
     end
   end
 
-  def setup()
+  def setup
     @dirs = []
-    
+
     [
       [0, 10],
       [10, 30],
       [30, IndexTestHelper::INDEX_TEST_DOCS.size]
     ].each do |start, finish|
-      dir = Isomorfeus::Ferret::Store::RAMDirectory.new()
+      dir = Isomorfeus::Ferret::Store::RAMDirectory.new
       @dirs << dir
 
       iw = IndexWriter.new(:dir => dir,
-                           :analyzer => WhiteSpaceAnalyzer.new(),
+                           :analyzer => WhiteSpaceAnalyzer.new,
                            :create => true,
                            :field_infos => IndexTestHelper::INDEX_TEST_FIS)
       (start...finish).each do |doc_id|
         iw << IndexTestHelper::INDEX_TEST_DOCS[doc_id]
       end
-      iw.close()
+      iw.close
     end
     @ir = ir_new
   end
 
-  def teardown()
-    @ir.close()
+  def teardown
+    @ir.close
     @dirs.each {|dir| dir.close}
   end
 end
@@ -525,13 +525,13 @@ class MultiExternalReaderPathTest < Test::Unit::TestCase
 
   def iw_optimize
     @paths.each do |path|
-      iw = IndexWriter.new(:path => path, :analyzer => WhiteSpaceAnalyzer.new())
-      iw.optimize()
-      iw.close()
+      iw = IndexWriter.new(:path => path, :analyzer => WhiteSpaceAnalyzer.new)
+      iw.optimize
+      iw.close
     end
   end
 
-  def setup()
+  def setup
     base_dir = File.expand_path(File.join(File.dirname(__FILE__),
                        '../../temp/multidir'))
     FileUtils.mkdir_p(base_dir)
@@ -540,7 +540,7 @@ class MultiExternalReaderPathTest < Test::Unit::TestCase
       File.join(base_dir, "i2"),
       File.join(base_dir, "i3")
     ]
-    
+
     [
       [0, 10],
       [10, 30],
@@ -549,19 +549,19 @@ class MultiExternalReaderPathTest < Test::Unit::TestCase
       path = @paths[i]
 
       iw = IndexWriter.new(:path => path,
-                           :analyzer => WhiteSpaceAnalyzer.new(),
+                           :analyzer => WhiteSpaceAnalyzer.new,
                            :create => true,
                            :field_infos => IndexTestHelper::INDEX_TEST_FIS)
       (start...finish).each do |doc_id|
         iw << IndexTestHelper::INDEX_TEST_DOCS[doc_id]
       end
-      iw.close()
+      iw.close
     end
     @ir = ir_new
   end
 
-  def teardown()
-    @ir.close()
+  def teardown
+    @ir.close
   end
 end
 
@@ -569,21 +569,21 @@ class IndexReaderTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Index
   include Isomorfeus::Ferret::Analysis
 
-  def setup()
-    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new()
+  def setup
+    @dir = Isomorfeus::Ferret::Store::RAMDirectory.new
   end
 
-  def teardown()
-    @dir.close()
+  def teardown
+    @dir.close
   end
 
-  def test_ir_multivalue_fields()
+  def test_ir_multivalue_fields
     @fs_dpath = File.expand_path(File.join(File.dirname(__FILE__),
                                            '../../temp/fsdir'))
     @fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(@fs_dpath, true)
 
     iw = IndexWriter.new(:dir => @fs_dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     doc = {
       :tag => ["Ruby", "C", "Lucene", "Ferret"],
@@ -593,7 +593,7 @@ class IndexReaderTest < Test::Unit::TestCase
     }
     iw << doc
 
-    iw.close()
+    iw.close
 
     @dir = Isomorfeus::Ferret::Store::RAMDirectory.new(@fs_dir)
     ir = IndexReader.new(@dir)
@@ -619,7 +619,7 @@ class IndexReaderTest < Test::Unit::TestCase
     assert_equal(3, tvs.size)
 
     assert_equal(expected_tv, tvs[:body])
-    
+
     tv = tvs[:author]
     assert_equal(:author, tv.field)
     assert_equal([TVTerm.new("Leo", 1, [0]), TVTerm.new("Tolstoy", 1, [1])], tv.terms)
@@ -634,62 +634,62 @@ class IndexReaderTest < Test::Unit::TestCase
 
   def do_test_ir_read_while_optimizing(dir)
     iw = IndexWriter.new(:dir => dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true,
                          :field_infos => IndexTestHelper::INDEX_TEST_FIS)
 
     IndexTestHelper::INDEX_TEST_DOCS.each {|doc| iw << doc}
 
-    iw.close()
+    iw.close
 
     ir = IndexReader.new(dir)
     do_test_term_vectors(ir)
-    
-    iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new())
-    iw.optimize()
-    iw.close()
+
+    iw = IndexWriter.new(:dir => dir, :analyzer => WhiteSpaceAnalyzer.new)
+    iw.optimize
+    iw.close
 
     do_test_term_vectors(ir)
 
-    ir.close()
+    ir.close
   end
 
-  def test_ir_read_while_optimizing()
+  def test_ir_read_while_optimizing
     do_test_ir_read_while_optimizing(@dir)
   end
 
-  def test_ir_read_while_optimizing_on_disk()
+  def test_ir_read_while_optimizing_on_disk
     dpath = File.expand_path(File.join(File.dirname(__FILE__),
                        '../../temp/fsdir'))
     fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(dpath, true)
     do_test_ir_read_while_optimizing(fs_dir)
-    fs_dir.close()
+    fs_dir.close
   end
 
-  def test_latest()
+  def test_latest
     dpath = File.expand_path(File.join(File.dirname(__FILE__),
                        '../../temp/fsdir'))
     fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(dpath, true)
 
     iw = IndexWriter.new(:dir => fs_dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     iw << {:field => "content"}
-    iw.close()
+    iw.close
 
     ir = IndexReader.new(fs_dir)
     assert(ir.latest?)
 
-    iw = IndexWriter.new(:dir => fs_dir, :analyzer => WhiteSpaceAnalyzer.new())
+    iw = IndexWriter.new(:dir => fs_dir, :analyzer => WhiteSpaceAnalyzer.new)
     iw << {:field => "content2"}
-    iw.close()
+    iw.close
 
     assert(!ir.latest?)
 
-    ir.close()
+    ir.close
     ir = IndexReader.new(fs_dir)
     assert(ir.latest?)
-    ir.close()
+    ir.close
   end
 end
 

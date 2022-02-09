@@ -3,7 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_hel
 class QueryParserTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
 
-  def test_strings()
+  def test_strings
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["xxx", "field", "f1", "f2"],
                                      :tokenized_fields => ["xxx", "f1", "f2"])
@@ -103,14 +103,14 @@ class QueryParserTest < Test::Unit::TestCase
       ['"onewordphrase"', 'onewordphrase'],
       ["who'd", "who'd"]
     ]
-      
+
     pairs.each do |query_str, expected|
       pq = parser.parse(query_str)
       assert_equal(expected, pq.to_s("xxx"))
     end
   end
 
-  def test_qp_with_standard_analyzer()
+  def test_qp_with_standard_analyzer
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["xxx", "key"],
                                      :analyzer => StandardAnalyzer.new)
@@ -120,14 +120,14 @@ class QueryParserTest < Test::Unit::TestCase
       ['key:(1234)', 'key:1234'],
       ['and the but they with', '']
     ]
-      
+
     pairs.each do |query_str, expected|
       assert_equal(expected, parser.parse(query_str).to_s("xxx"))
     end
 
   end
 
-  def test_qp_changing_fields()
+  def test_qp_changing_fields
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["xxx", "key"],
                                      :analyzer => WhiteSpaceAnalyzer.new)
@@ -138,7 +138,7 @@ class QueryParserTest < Test::Unit::TestCase
     assert_equal('three:word four:word', parser.parse("three:word four:word").to_s("xxx"))
   end
 
-  def test_qp_allow_any_field()
+  def test_qp_allow_any_field
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["xxx", "key"],
                                      :analyzer => WhiteSpaceAnalyzer.new,
@@ -152,7 +152,7 @@ class QueryParserTest < Test::Unit::TestCase
     assert_equal('key:word song:word', parser.parse("key:word song:word").to_s("xxx"))
     assert_equal('word key:word', parser.parse("*:word").to_s("xxx"))
   end
-  
+
   def do_test_query_parse_exception_raised(str)
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["f1", "f2", "f3"],
@@ -172,7 +172,7 @@ class QueryParserTest < Test::Unit::TestCase
       ['word', 'x:word y:word'],
       ['word1 word2', '+(x:word1 y:word1) +(x:word2 y:word2)']
     ]
-      
+
     pairs.each do |query_str, expected|
       assert_equal(expected, parser.parse(query_str).to_s(""))
     end
@@ -187,7 +187,7 @@ class QueryParserTest < Test::Unit::TestCase
     assert_equal(Isomorfeus::Ferret::Search::WildcardQuery, parser.parse("a*dg*").class)
     assert_equal(Isomorfeus::Ferret::Search::WildcardQuery, parser.parse("adg*c").class)
   end
-  
+
   def test_bad_queries
     parser = Isomorfeus::Ferret::QueryParser.new(:default_field => "xxx",
                                      :fields => ["f1", "f2"])
@@ -209,7 +209,7 @@ class QueryParserTest < Test::Unit::TestCase
       ['=', ''],
       ['<script>', 'script']
     ]
-      
+
     pairs.each do |query_str, expected|
       do_test_query_parse_exception_raised(query_str)
       pq = parser.parse(query_str)

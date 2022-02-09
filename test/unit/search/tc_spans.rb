@@ -8,10 +8,10 @@ class SpansBasicTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Search::Spans
   include Isomorfeus::Ferret::Analysis
 
-  def setup()
+  def setup
     @dir = RAMDirectory.new
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new(),
+                         :analyzer => WhiteSpaceAnalyzer.new,
                          :create => true)
     [
       "start finish one two three four five six seven",
@@ -47,12 +47,12 @@ class SpansBasicTest < Test::Unit::TestCase
       "finish start one two three four five six seven"
     ].each { |line| iw << {:field => line} }
 
-    iw.close()
+    iw.close
 
     @searcher = Searcher.new(@dir)
   end
 
-  def teardown()
+  def teardown
     @searcher.close
     @dir.close
   end
@@ -75,38 +75,38 @@ class SpansBasicTest < Test::Unit::TestCase
     top_docs.hits.each do |hit|
       assert(expected.include?(hit.doc), "#{hit.doc} was found unexpectedly")
       if test_explain
-        assert(hit.score.approx_eql?(@searcher.explain(query, hit.doc).score), 
+        assert(hit.score.approx_eql?(@searcher.explain(query, hit.doc).score),
           "Scores(#{hit.score} != " +
           "#{@searcher.explain(query, hit.doc).score})")
       end
     end
   end
 
-  def test_span_term_query()
+  def test_span_term_query
     tq = SpanTermQuery.new(:field, "nine")
     check_hits(tq, [7,23], true)
     tq = SpanTermQuery.new(:field, "eight")
     check_hits(tq, [6,7,8,22,23,24])
   end
- 
-  def test_span_multi_term_query()
+
+  def test_span_multi_term_query
     tq = SpanMultiTermQuery.new(:field, ["eight", "nine"])
     check_hits(tq, [6,7,8,22,23,24], true)
     tq = SpanMultiTermQuery.new(:field, ["flip", "flop", "toot", "nine"])
     check_hits(tq, [2,7,12,17,23])
   end
 
-  def test_span_prefix_query()
+  def test_span_prefix_query
     tq = SpanPrefixQuery.new(:field, "fl")
     check_hits(tq, [2, 12], true)
   end
 
-  def test_span_near_query()
+  def test_span_near_query
     tq1 = SpanTermQuery.new(:field, "start")
     tq2 = SpanTermQuery.new(:field, "finish")
     q = SpanNearQuery.new(:clauses => [tq1, tq2], :in_order => true)
     check_hits(q, [0,14], true)
-    q = SpanNearQuery.new()
+    q = SpanNearQuery.new
     q << tq1 << tq2
     check_hits(q, [0,14,16,30], true)
     q = SpanNearQuery.new(:clauses => [tq1, tq2],
@@ -125,7 +125,7 @@ class SpansBasicTest < Test::Unit::TestCase
     check_hits(q, [2, 12], true)
   end
 
-  def test_span_not_query()
+  def test_span_not_query
     tq1 = SpanTermQuery.new(:field, "start")
     tq2 = SpanTermQuery.new(:field, "finish")
     tq3 = SpanTermQuery.new(:field, "two")
@@ -146,7 +146,7 @@ class SpansBasicTest < Test::Unit::TestCase
     check_hits(q, [2,3,4,5,6,7,8,9,10,11,12,15])
   end
 
-  def test_span_first_query()
+  def test_span_first_query
     finish_first = [16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
     tq = SpanTermQuery.new(:field, "finish")
     q = SpanFirstQuery.new(tq, 1)
@@ -155,7 +155,7 @@ class SpansBasicTest < Test::Unit::TestCase
     check_hits(q, [0,1,2,3,11,12,13,14]+finish_first, false)
   end
 
-  def test_span_or_query_query()
+  def test_span_or_query_query
     tq1 = SpanTermQuery.new(:field, "start")
     tq2 = SpanTermQuery.new(:field, "finish")
     tq3 = SpanTermQuery.new(:field, "five")
@@ -173,9 +173,9 @@ class SpansBasicTest < Test::Unit::TestCase
   def test_span_prefix_query_max_terms
     @dir = RAMDirectory.new
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => WhiteSpaceAnalyzer.new())
+                         :analyzer => WhiteSpaceAnalyzer.new)
     2000.times { |i| iw << {:field => "prefix#{i} term#{i}"} }
-    iw.close()
+    iw.close
     @searcher = Searcher.new(@dir)
 
     pq = SpanPrefixQuery.new(:field, "prefix")

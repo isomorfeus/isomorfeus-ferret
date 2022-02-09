@@ -6,10 +6,10 @@ class IndexTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
   include Isomorfeus::Ferret::Store
 
-  def setup()
+  def setup
   end
 
-  def teardown()
+  def teardown
   end
 
   def check_results(index, query, expected)
@@ -311,7 +311,6 @@ class IndexTest < Test::Unit::TestCase
     assert_equal("zero", index[0][:f])
     index.close
 
-
     data = [
       {:f => "romeo"},
       {:f => "sierra"},
@@ -335,7 +334,7 @@ class IndexTest < Test::Unit::TestCase
     index.close
   end
 
-  def test_auto_update_when_externally_modified()
+  def test_auto_update_when_externally_modified
     fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
     index = Index.new(:path => fs_path, :default_field => :f, :create => true)
     index << "document 1"
@@ -352,7 +351,7 @@ class IndexTest < Test::Unit::TestCase
 
     iw = IndexWriter.new(:path => fs_path, :analyzer => WhiteSpaceAnalyzer.new)
     iw << {:f => "content3"}
-    iw.close()
+    iw.close
 
     top_docs = index.search("content3")
     assert_equal(1, top_docs.hits.size)

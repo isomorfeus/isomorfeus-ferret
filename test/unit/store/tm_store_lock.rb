@@ -1,10 +1,15 @@
 module StoreLockTest
   class Switch
-    def Switch.counter() return @@counter end
-    def Switch.counter=(counter) @@counter = counter end
+    def self.counter
+      return @@counter
+    end
+
+    def self.counter=(counter)
+      @@counter = counter
+    end
   end
 
-  def test_locking()
+  def test_locking
     lock_time_out = 1 # we want this test to run quickly, but for Windows not that quick
     lock1 = @dir.make_lock("l.lck")
     lock2 = @dir.make_lock("l.lck")
@@ -26,13 +31,13 @@ module StoreLockTest
       assert(exception_thrown)
     end
 
-    lock1.release()
+    lock1.release
     assert(lock2.obtain(lock_time_out))
-    lock2.release()
+    lock2.release
 
     Switch.counter = 0
 
-    t = Thread.new() do
+    t = Thread.new do
       lock1.while_locked(lock_time_out) do
         Switch.counter = 1
         # make sure lock2 obtain test was run
@@ -41,7 +46,7 @@ module StoreLockTest
         Switch.counter = 3
       end
     end
-    t.run()
+    t.run
 
     #make sure thread has started and lock been obtained
     while Switch.counter < 1
@@ -55,7 +60,7 @@ module StoreLockTest
     end
 
     assert(lock2.obtain(lock_time_out))
-    lock2.release()
+    lock2.release
   end
 
   def can_obtain_lock?(lock, lock_time_out)

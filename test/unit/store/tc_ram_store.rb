@@ -10,7 +10,7 @@ class RAMStoreTest < Test::Unit::TestCase
   end
 
   def teardown
-    @dir.close()
+    @dir.close
   end
 
   def test_ramlock

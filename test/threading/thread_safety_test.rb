@@ -13,35 +13,35 @@ class ThreadSafetyTest
   end
 
   INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
-  ANALYZER = Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new()
+  ANALYZER = Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new
   ITERATIONS = 1000
   QUERY_PARSER = Isomorfeus::Ferret::QueryParser.new(:analyzer => ANALYZER,
                                          :default_field => 'contents')
   @@searcher = nil
-  
+
   def run_index_thread(writer)
     reopen_interval = 30 + rand(60)
 
     use_compound_file = false
-    
+
     (400*ITERATIONS).times do |i|
       n = rand(0xFFFFFFFF)
       d = {:id => n.to_s, :contents => n.to_spoken}
       puts("Adding #{n}")
-      
+
       # Switch between single and multiple file segments
       use_compound_file = (rand < 0.5)
       writer.use_compound_file = use_compound_file
-      
+
       writer << d
 
-      if (i % reopen_interval == 0) 
-        writer.close()
+      if (i % reopen_interval == 0)
+        writer.close
         writer = IndexWriter.new(:path => INDEX_DIR, :analyzer => ANALYZER)
       end
     end
-    
-    writer.close()
+
+    writer.close
   rescue => e
     puts e
     puts e.backtrace
@@ -57,11 +57,11 @@ class ThreadSafetyTest
 
     (50*ITERATIONS).times do |i|
       search_for(rand(0xFFFFFFFF), (searcher.nil? ? @@searcher : searcher))
-      if (i%reopen_interval == 0) 
-        if (searcher == nil) 
+      if (i%reopen_interval == 0)
+        if (searcher == nil)
           @@searcher = Searcher.new(INDEX_DIR)
-        else 
-          searcher.close()
+        else
+          searcher.close
           searcher = Searcher.new(INDEX_DIR)
         end
       end
@@ -86,14 +86,14 @@ class ThreadSafetyTest
     unless @options[:read_only]
       writer = IndexWriter.new(:path => INDEX_DIR, :analyzer => ANALYZER,
                                :create => !@options[:add])
-      
+
       threads << Thread.new { run_index_thread(writer) }
       sleep(1)
     end
-      
+
     threads << Thread.new { run_search_thread(false)}
 
-    @@searcher = Searcher.new(INDEX_DIR) 
+    @@searcher = Searcher.new(INDEX_DIR)
     threads << Thread.new { run_search_thread(true)}
 
     threads << Thread.new { run_search_thread(true)}
@@ -101,7 +101,6 @@ class ThreadSafetyTest
     threads.each {|t| t.join}
   end
 end
-
 
 if $0 == __FILE__
   require 'optparse'
@@ -122,8 +121,7 @@ if $0 == __FILE__
 
     opts.separator ""
 
-    opts.on("-h", "--help",
-            "Show this help message.") { puts opts; exit }
+    opts.on("-h", "--help", "Show this help message.") { puts opts; exit }
 
     opts.parse!
   end

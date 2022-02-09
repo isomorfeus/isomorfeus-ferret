@@ -5,14 +5,14 @@ class IndexWriterTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Index
   include Isomorfeus::Ferret::Analysis
 
-  def setup()
+  def setup
     @dir = Isomorfeus::Ferret::Store::RAMDirectory.new
-    fis = FieldInfos.new()
+    fis = FieldInfos.new
     fis.create_index(@dir)
   end
 
-  def teardown()
-    @dir.close()
+  def teardown
+    @dir.close
   end
 
   def test_initialize
@@ -23,7 +23,7 @@ class IndexWriterTest < Test::Unit::TestCase
     iw = IndexWriter.new(:dir => @dir, :create => true)
     assert(@dir.exists?("segments"))
     assert(wlock.locked?)
-    iw.close()
+    iw.close
     assert(@dir.exists?("segments"))
     assert(! wlock.locked?)
     assert(! clock.locked?)
@@ -31,7 +31,7 @@ class IndexWriterTest < Test::Unit::TestCase
 
   def test_add_document
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => StandardAnalyzer.new(),
+                         :analyzer => StandardAnalyzer.new,
                          :create => true)
     iw << {:title => "first doc", :content => ["contents of", "first doc"]}
     assert_equal(1, iw.doc_count)
@@ -39,22 +39,22 @@ class IndexWriterTest < Test::Unit::TestCase
     assert_equal(2, iw.doc_count)
     iw << "contents of third doc"
     assert_equal(3, iw.doc_count)
-    iw.close()
+    iw.close
   end
 
   def test_add_documents_fuzzy
     iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => StandardAnalyzer.new())
+                         :analyzer => StandardAnalyzer.new)
     iw.merge_factor = 3
     iw.max_buffered_docs = 3
 
     # add 100 documents
     100.times do
-      doc = random_doc()
+      doc = random_doc
       iw.add_document(doc)
     end
     assert_equal(100, iw.doc_count)
-    iw.close()
+    iw.close
   end
 
   def test_adding_long_url

@@ -3,64 +3,64 @@ require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_hel
 class BitVectorTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Utils
 
-  def test_bv_get_set()
+  def test_bv_get_set
     bv = BitVector.new
-    assert_equal 0, bv.count 
+    assert_equal 0, bv.count
 
-    bv.set 10 
-    assert bv.get(10) 
-    assert bv[10] 
-    assert_equal 1, bv.count 
+    bv.set 10
+    assert bv.get(10)
+    assert bv[10]
+    assert_equal 1, bv.count
 
     bv[10] = false
-    assert ! bv[10] 
+    assert ! bv[10]
 
     bv[10] = true
-    assert bv[10] 
+    assert bv[10]
 
     bv[10] = nil
-    assert ! bv[10] 
+    assert ! bv[10]
 
     bv[10] = true
-    assert bv[10] 
+    assert bv[10]
 
-    bv.unset 10 
-    assert ! bv[10] 
+    bv.unset 10
+    assert ! bv[10]
 
     bv[10] = true
-    assert bv[10] 
+    assert bv[10]
   end
 
-  def test_bv_count()
+  def test_bv_count
     bv = BitVector.new
-    bv.set 10 
-    assert_equal 1, bv.count 
+    bv.set 10
+    assert_equal 1, bv.count
 
-    bv.set 20 
-    assert bv.get(20) 
-    assert_equal 2, bv.count 
+    bv.set 20
+    assert bv.get(20)
+    assert_equal 2, bv.count
 
-    bv.set 21 
-    assert bv.get(21) 
-    assert_equal 3, bv.count 
+    bv.set 21
+    assert bv.get(21)
+    assert_equal 3, bv.count
 
-    bv.unset 21 
-    assert ! bv.get(21) 
-    assert_equal 2, bv.count 
+    bv.unset 21
+    assert ! bv.get(21)
+    assert_equal 2, bv.count
 
     bv[20] = nil
-    assert ! bv.get(20) 
-    assert_equal 1, bv.count 
+    assert ! bv.get(20)
+    assert_equal 1, bv.count
 
     (50..100).each {|i| bv.set i }
     (50..100).each {|i| assert bv[i] }
-    assert bv.get(10) 
-    assert_equal 52, bv.count 
+    assert bv.get(10)
+    assert_equal 52, bv.count
 
     bv.clear
     assert_equal 0, bv.count
     (50..100).each {|i| assert ! bv[i] }
-    assert ! bv.get(10) 
+    assert ! bv.get(10)
   end
 
   def test_bv_eql_hash
@@ -140,7 +140,7 @@ class BitVectorTest < Test::Unit::TestCase
     bv1.set(20)
     assert_equal(bv1, bv1 & bv2, "bv anded with empty not bv should be same")
   end
-  
+
   def test_bv_or
     bv1 = BitVector.new
     bv2 = BitVector.new
@@ -180,7 +180,7 @@ class BitVectorTest < Test::Unit::TestCase
 
     assert_equal(bv1, or_bv)
   end
-  
+
   def test_bv_xor
     bv1 = BitVector.new
     bv2 = BitVector.new

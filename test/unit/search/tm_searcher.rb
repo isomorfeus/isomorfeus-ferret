@@ -75,18 +75,18 @@ module SearcherTests
     ].each do |term, boost, str|
       mtq.add_term(term, boost)
       assert_equal(str, mtq.to_s(:field))
-      assert_equal("field:#{str}", mtq.to_s())
+      assert_equal("field:#{str}", mtq.to_s)
     end
 
     mtq.boost = 80.1
-    assert_equal('field:"fox^0.6|brown|fast^50.0"^80.1', mtq.to_s())
+    assert_equal('field:"fox^0.6|brown|fast^50.0"^80.1', mtq.to_s)
     mtq << "word1"
-    assert_equal('field:"fox^0.6|brown|word1|fast^50.0"^80.1', mtq.to_s())
+    assert_equal('field:"fox^0.6|brown|word1|fast^50.0"^80.1', mtq.to_s)
     mtq << "word2"
-    assert_equal('field:"brown|word1|word2|fast^50.0"^80.1', mtq.to_s())
+    assert_equal('field:"brown|word1|word2|fast^50.0"^80.1', mtq.to_s)
     mtq << "word3"
-    assert_equal('field:"brown|word1|word2|fast^50.0"^80.1', mtq.to_s())
-    
+    assert_equal('field:"brown|word1|word2|fast^50.0"^80.1', mtq.to_s)
+
     terms = mtq.terms(@searcher)
     assert(terms.index(Isomorfeus::Ferret::Term.new(:field, "brown")))
     assert(terms.index(Isomorfeus::Ferret::Term.new(:field, "word1")))
@@ -95,7 +95,7 @@ module SearcherTests
   end
 
   def test_boolean_query
-    bq = BooleanQuery.new()
+    bq = BooleanQuery.new
     tq1 = TermQuery.new(:field, "word1")
     tq2 = TermQuery.new(:field, "word3")
     bq.add_query(tq1, :must)
@@ -104,18 +104,18 @@ module SearcherTests
     tq3 = TermQuery.new(:field, "word2")
     bq.add_query(tq3, :should)
     check_hits(bq, [2,3,6,8,11,14], 8)
-    bq = BooleanQuery.new()
+    bq = BooleanQuery.new
     bq.add_query(tq2, :must)
     bq.add_query(tq3, :must_not)
     check_hits(bq, [2,3,6,11,14])
-    bq = BooleanQuery.new()
+    bq = BooleanQuery.new
     bq.add_query(tq2, :must_not)
     check_hits(bq, [0,1,4,5,7,9,10,12,13,15,16,17])
-    bq = BooleanQuery.new()
+    bq = BooleanQuery.new
     bq.add_query(tq2, :should)
     bq.add_query(tq3, :should)
     check_hits(bq, [1,2,3,4,6,8,11,14])
-    bq = BooleanQuery.new()
+    bq = BooleanQuery.new
     bc1 = BooleanQuery::BooleanClause.new(tq2, :should)
     bc2 = BooleanQuery::BooleanClause.new(tq3, :should)
     bq << bc1
@@ -123,7 +123,7 @@ module SearcherTests
     check_hits(bq, [1,2,3,4,6,8,11,14])
   end
 
-  def test_phrase_query()
+  def test_phrase_query
     pq = PhraseQuery.new(:field)
     assert_equal("\"\"", pq.to_s(:field))
     assert_equal("field:\"\"", pq.to_s)
@@ -146,7 +146,7 @@ module SearcherTests
     check_hits(pq, [1,11,14,16,17])
   end
 
-  def test_range_query()
+  def test_range_query
     rq = RangeQuery.new(:date, :lower => "20051006", :upper => "20051010")
     check_hits(rq, [6,7,8,9,10])
 
@@ -199,7 +199,7 @@ module SearcherTests
     check_hits(rq, [15,16,17])
   end
 
-  def test_typed_range_query()
+  def test_typed_range_query
     rq = TypedRangeQuery.new(:number, :>= => "-1.0", :<= => 1.0)
     check_hits(rq, [0,1,4,10,15,17])
 
@@ -229,7 +229,7 @@ module SearcherTests
     check_hits(rq, [])
   end
 
-  def test_prefix_query()
+  def test_prefix_query
     pq = PrefixQuery.new(:category, "cat1")
     check_hits(pq, [0, 1, 2, 3, 4, 13, 14, 15, 16, 17])
 
@@ -237,7 +237,7 @@ module SearcherTests
     check_hits(pq, [3, 4, 13, 15])
   end
 
-  def test_wildcard_query()
+  def test_wildcard_query
     wq = WildcardQuery.new(:category, "cat1*")
     check_hits(wq, [0, 1, 2, 3, 4, 13, 14, 15, 16, 17])
 
@@ -248,7 +248,7 @@ module SearcherTests
     check_hits(wq, [3, 4, 13, 15])
   end
 
-  def test_multi_phrase_query()
+  def test_multi_phrase_query
     mpq = PhraseQuery.new(:field)
     mpq << ["quick", "fast"]
     mpq << ["brown", "red", "hairy"]
@@ -259,10 +259,10 @@ module SearcherTests
     check_hits(mpq, [1, 8, 11, 14, 16, 17])
   end
 
-  def test_highlighter()
+  def test_highlighter
     dir = Isomorfeus::Ferret::Store::RAMDirectory.new
     iw = Isomorfeus::Ferret::Index::IndexWriter.new(:dir => dir,
-                  :analyzer => Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new())
+                  :analyzer => Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new)
     long_text = "big " + "between " * 2000 + 'house'
     [
       {:field => "the words we are searching for are one and two also " +
@@ -272,7 +272,7 @@ module SearcherTests
       {:dates => '20070505 20071230 20060920 20081111'},
     ].each {|doc| iw << doc }
     iw.close
-    
+
     searcher = Searcher.new(dir)
 
     q = TermQuery.new(:field, "one");
@@ -409,15 +409,15 @@ module SearcherTests
     #assert_equal("...<b>one</b> <b>two</b>...", highlights[1])
   end
 
-  def test_highlighter_with_standard_analyzer()
+  def test_highlighter_with_standard_analyzer
     dir = Isomorfeus::Ferret::Store::RAMDirectory.new
     iw = Isomorfeus::Ferret::Index::IndexWriter.new(:dir => dir,
-                  :analyzer => Isomorfeus::Ferret::Analysis::StandardAnalyzer.new())
+                  :analyzer => Isomorfeus::Ferret::Analysis::StandardAnalyzer.new)
     [
         {:field => "field has a url http://ferret.davebalmain.com/trac/ end"},
     ].each {|doc| iw << doc }
     iw.close
-    
+
     searcher = Searcher.new(dir)
 
     q = TermQuery.new(:field, "ferret.davebalmain.com/trac");

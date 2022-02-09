@@ -3,7 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_hel
 class SortTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Search
 
-  def test_basic()
+  def test_basic
     s = Sort::RELEVANCE
     assert_equal(2, s.fields.size)
     assert_equal(SortField::SCORE, s.fields[0])
@@ -14,7 +14,7 @@ class SortTest < Test::Unit::TestCase
     assert_equal(SortField::DOC_ID, s.fields[0])
   end
 
-  def test_string_init()
+  def test_string_init
     s = Sort.new(:field)
     assert_equal(2, s.fields.size)
     assert_equal(:auto, s.fields[0].type)
@@ -32,7 +32,7 @@ class SortTest < Test::Unit::TestCase
     assert_equal(SortField::DOC_ID, s.fields[3])
   end
 
-  def test_multi_fields()
+  def test_multi_fields
     sf1 = SortField.new(:field, {:type => :integer,
                                  :reverse => true})
     sf2 = SortField::SCORE
