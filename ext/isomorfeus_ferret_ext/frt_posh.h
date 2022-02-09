@@ -965,9 +965,3 @@ extern posh_i64_t  POSH_ReadI64FromBig( const void *src );
 #  endif /* POSH_64BIT_INTEGER */
 
 #endif
-
-#ifdef __cplusplus
-}
-#endif
-
-
