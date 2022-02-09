@@ -7,20 +7,21 @@
 static void ferret_hash()
 {
     int i;
+    void *res = NULL;
     for (i = 0; i < N; i++) {
         FrtHash *h = frt_h_new_str(NULL, NULL);
         const char **word;
         char buf[100];
-        long res;
         for (word = WORD_LIST; *word; word++) {
             frt_h_set(h, *word, (void *)1);
         }
         for (word = WORD_LIST; *word; word++) {
             strcpy(buf, *word);
-            res = (long)frt_h_get(h, buf);
+            res = frt_h_get(h, buf);
         }
         frt_h_destroy(h);
     }
+    (void)res;
 }
 
 BENCH(hash_implementations)
@@ -31,18 +32,19 @@ BENCH(hash_implementations)
 static void standard_hash()
 {
     int i;
+    void *res = NULL;
     for (i = 0; i < N; i++) {
         FrtHash *h = frt_h_new_str(NULL, NULL);
         const char **word;
         char buf[100];
-        long res;
         for (word = WORD_LIST; *word; word++) {
             frt_h_set(h, *word, (void *)1);
             strcpy(buf, *word);
-            res = (long)frt_h_get(h, buf);
+            res = frt_h_get(h, buf);
         }
         frt_h_destroy(h);
     }
+    (void)res;
 }
 
 #define PERTURB_SHIFT 5
@@ -96,19 +98,20 @@ static FrtHashEntry *h_lookup_str(FrtHash *ht, register const void *key)
 static void string_hash()
 {
     int i;
+    void *res = NULL;
     for (i = 0; i < N; i++) {
         FrtHash *h = frt_h_new_str(NULL, NULL);
         const char **word;
         char buf[100];
-        long res;
         h->lookup_i = &h_lookup_str;
         for (word = WORD_LIST; *word; word++) {
             frt_h_set(h, *word, (void *)1);
             strcpy(buf, *word);
-            res = (long)frt_h_get(h, buf);
+            res = frt_h_get(h, buf);
         }
         frt_h_destroy(h);
     }
+    (void)res;
 }
 
 BENCH(specialized_string_hash)
