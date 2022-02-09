@@ -474,7 +474,7 @@ Metrowerks:
 #  define POSH_CPU_SPARC 1
 #endif
 
-#if defined ARM || defined __arm__ || defined _ARM || __aarch64__
+#if defined ARM || defined __arm__ || defined _ARM || defined __aarch64__
 #  define POSH_CPU_STRONGARM 1
 #  define POSH_CPU_STRING "ARM"
 #endif
