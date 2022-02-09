@@ -5,7 +5,7 @@
 
 static void do_strcmp()
 {
-    char **word;
+    const char **word;
     char buf[100];
     int res, i;
 
@@ -15,11 +15,12 @@ static void do_strcmp()
             memcpy(buf, *word, len+1);
             res = strcmp(buf, *word);
         }
+    (void)res;
 }
 
 static void do_strncmp()
 {
-    char **word;
+    const char **word;
     char buf[100];
     int res, i;
 
@@ -29,6 +30,7 @@ static void do_strncmp()
             memcpy(buf, *word, len+1);
             res = strncmp(buf, *word, len + 1);
         }
+    (void)res;
 }
 
 BENCH(strcmp_when_length_is_known)
