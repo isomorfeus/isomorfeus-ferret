@@ -1,5 +1,6 @@
 #include "frt_store.h"
 #include "isomorfeus_ferret.h"
+#include <time.h>
 
 static ID id_ref_cnt;
 VALUE cLock;
@@ -70,13 +71,26 @@ frb_lock_obtain(int argc, VALUE *argv, VALUE self)
     int timeout = 1;
     FrtLock *lock;
     GET_LOCK(lock, self);
+    bool got_lock = false;
+    bool got_timeout = false;
+    time_t end_t;
 
     if (rb_scan_args(argc, argv, "01", &rtimeout) > 0) {
         timeout = FIX2INT(rtimeout);
     }
-    /* TODO: use the lock timeout */
-    (void)timeout;
-    if (!lock->obtain(lock)) {
+    end_t = time(NULL) + timeout;
+    if (lock->obtain(lock)) {
+        got_lock = true;
+    }
+    while (!got_lock && !got_timeout) {
+        frt_micro_sleep(10000);
+        if (lock->obtain(lock)) {
+            got_lock = true;
+        } else if (time(NULL) >= end_t) {
+            got_timeout = true;
+        }
+    }
+    if (!got_lock) {
         rb_raise(cLockError, "could not obtain lock: #%s", lock->name);
     }
     return Qtrue;
@@ -103,11 +117,26 @@ frb_lock_while_locked(int argc, VALUE *argv, VALUE self)
     int timeout = 1;
     FrtLock *lock;
     GET_LOCK(lock, self);
+    bool got_lock = false;
+    bool got_timeout = false;
+    time_t end_t;
+
     if (rb_scan_args(argc, argv, "01", &rtimeout) > 0) {
         timeout = FIX2INT(rtimeout);
     }
-    (void)timeout;
-    if (!lock->obtain(lock)) {
+    end_t = time(NULL) + timeout;
+    if (lock->obtain(lock)) {
+        got_lock = true;
+    }
+    while (!got_lock && !got_timeout) {
+        frt_micro_sleep(10000);
+        if (lock->obtain(lock)) {
+            got_lock = true;
+        } else if (time(NULL) >= end_t) {
+            got_timeout = true;
+        }
+    }
+    if (!got_lock) {
         rb_raise(cLockError, "could not obtain lock: #%s", lock->name);
     }
     rb_yield(Qnil);
