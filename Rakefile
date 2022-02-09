@@ -42,7 +42,8 @@ task :run_ferret_bench => :compile do
 end
 
 task :specs do
-  raise unless system('bundle exec rspec')
+  Rake::Task['units'].invoke
+  Rake::Task['thread_safety'].invoke
 end
 
 task :push_packages do
@@ -72,6 +73,13 @@ task :valgrind do
       "-v ruby test/unit/index/tc_index_reader.rb"
 end
 
+desc "run thread safety tests"
+task :thread_safety do
+  system('bundle exec ruby test/threading/thread_safety_index_test.rb')
+  system('bundle exec ruby test/threading/thread_safety_read_write_test.rb')
+  system('bundle exec ruby test/threading/thread_safety_test.rb')
+end
+
 desc "run unit tests in test/unit"
 Rake::TestTask.new("units" => :compile) do |t|
   t.libs << "test/unit"
@@ -80,4 +88,4 @@ Rake::TestTask.new("units" => :compile) do |t|
 end
 task :unit => :units
 
-task :default => [:compile, :unit]
+task :default => [:compile, :units]

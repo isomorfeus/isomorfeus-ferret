@@ -1,7 +1,7 @@
 $:.unshift('.')
 require 'monitor'
-require File.dirname(__FILE__) + "/../test_helper"
-require File.dirname(__FILE__) + "/number_to_spoken.rb"
+require File.expand_path(File.join(File.dirname(__FILE__), "..", "test_helper.rb"))
+require File.expand_path(File.join(File.dirname(__FILE__), "number_to_spoken.rb"))
 require 'thread'
 
 class IndexThreadSafetyTest < Test::Unit::TestCase
@@ -18,6 +18,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
                       :analyzer => ANALYZER,
                       :default_field => :content)
     index.close
+    @verbose = false
   end
 
   def indexing_thread
@@ -54,25 +55,25 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   def do_delete_doc(index)
     return if index.size == 0
     doc_num = rand(index.size)
-    puts "Deleting #{doc_num} from index which has#{index.has_deletions? ? "" : " no"} deletions"
-    puts "document was already deleted" if (index.deleted?(doc_num))
+    puts "Deleting #{doc_num} from index which has#{index.has_deletions? ? "" : " no"} deletions" if @verbose
+    puts "document was already deleted" if (index.deleted?(doc_num)) if @verbose
     index.delete(doc_num)
   end
 
   def do_add_doc(index)
     n = rand(0xFFFFFFFF)
     d = {:id => n, :content => n.to_spoken}
-    puts("Adding #{n}")
+    puts("Adding #{n}") if @verbose
     index << d
   end
 
   def do_search(index)
     n = rand(0xFFFFFFFF)
-    puts("Searching for #{n}")
+    puts("Searching for #{n}") if @verbose
     hits = index.search_each(n.to_spoken, :num_docs => 3) do |d, s|
-      puts "Hit for #{n}: #{index[d][:id]} - #{s}"
+      puts "Hit for #{n}: #{index[d][:id]} - #{s}" if @verbose
     end
-    puts("Searched for #{n}: total = #{hits}")
+    puts("Searched for #{n}: total = #{hits}") if @verbose
   end
 
   def test_threading

@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + "/../test_helper"
-require File.dirname(__FILE__) + "/number_to_spoken.rb"
+require File.expand_path(File.join(File.dirname(__FILE__), "..", "test_helper.rb"))
+require File.expand_path(File.join(File.dirname(__FILE__), "number_to_spoken.rb"))
 require 'thread'
 
 class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
@@ -14,6 +14,7 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
                        :create => true,
                        :analyzer => ANALYZER,
                        :default_field => :content)
+    @verbose = false
   end
 
   def search_thread
@@ -43,7 +44,7 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
   def do_add_doc
     n = rand(0xFFFFFFFF)
     d = {:id => n.to_s, :content => n.to_spoken}
-    puts("Adding #{n}")
+    puts("Adding #{n}") if @verbose
     begin
       @index << d
     rescue => e
@@ -56,11 +57,11 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
 
   def do_search
     n = rand(0xFFFFFFFF)
-    puts("Searching for #{n}")
+    puts("Searching for #{n}") if @verbose
     hits = @index.search_each(n.to_spoken, :num_docs => 3) do |d, s|
-      puts "Hit for #{n}: #{@index[d]["id"]} - #{s}"
+      puts "Hit for #{n}: #{@index[d]["id"]} - #{s}" if @verbose
     end
-    puts("Searched for #{n}: total = #{hits}")
+    puts("Searched for #{n}: total = #{hits}") if @verbose
   end
 
   def test_threading

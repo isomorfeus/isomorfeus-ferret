@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + "/../test_helper"
-require File.join(File.dirname(__FILE__), "number_to_spoken.rb")
+require File.expand_path(File.join(File.dirname(__FILE__), "..", "test_helper.rb"))
+require File.expand_path(File.join(File.dirname(__FILE__), "number_to_spoken.rb"))
 require 'thread'
 
 class ThreadSafetyTest
@@ -27,7 +27,7 @@ class ThreadSafetyTest
     (400*ITERATIONS).times do |i|
       n = rand(0xFFFFFFFF)
       d = {:id => n.to_s, :contents => n.to_spoken}
-      puts("Adding #{n}")
+      puts("Adding #{n}") if @options[:verbose]
 
       # Switch between single and multiple file segments
       use_compound_file = (rand < 0.5)
@@ -73,11 +73,11 @@ class ThreadSafetyTest
   end
 
   def search_for(n, searcher)
-    puts("Searching for #{n}")
+    puts("Searching for #{n}") if @options[:verbose]
     topdocs = searcher.search(QUERY_PARSER.parse(n.to_spoken), :limit => 3)
-    puts("Search for #{n}: total = #{topdocs.total_hits}")
+    puts("Search for #{n}: total = #{topdocs.total_hits}") if @options[:verbose]
     topdocs.hits.each do |hit|
-      puts "Hit for #{n}: #{searcher.reader[hit.doc]["id"]} - #{hit.score}"
+      puts "Hit for #{n}: #{searcher.reader[hit.doc]["id"]} - #{hit.score}" if @options[:verbose]
     end
   end
 
@@ -108,6 +108,7 @@ if $0 == __FILE__
   OPTIONS = {
     :all        => false,
     :read_only  => false,
+    :verbose    => false
   }
 
   ARGV.options do |opts|
@@ -116,8 +117,9 @@ if $0 == __FILE__
 
     opts.separator ""
 
-    opts.on("-r", "--read-only", "Read Only.") { OPTIONS[:all] = true }
-    opts.on("-a", "--all", "All.") { OPTIONS[:read_only] = true }
+    opts.on("-r", "--read-only", "Read Only.") { OPTIONS[:read_only] = true }
+    opts.on("-a", "--all", "All.") { OPTIONS[:all] = true }
+    opts.on("-v", "--verbose", "Print activity.") { OPTIONS[:verbose] = true }
 
     opts.separator ""
 
