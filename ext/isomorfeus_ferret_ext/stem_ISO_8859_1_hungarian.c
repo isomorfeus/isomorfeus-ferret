@@ -1211,7 +1211,7 @@ extern int hungarian_ISO_8859_1_stem(struct SN_env * z) {
     return 1;
 }
 
-extern struct SN_env * hungarian_ISO_8859_1_create_env(void) { return SN_create_env(0, 1, 0); }
+extern struct SN_env * hungarian_ISO_8859_1_create_env(void) { return SN_create_env(0, 1); }
 
 extern void hungarian_ISO_8859_1_close_env(struct SN_env * z) { SN_close_env(z, 0); }
 
