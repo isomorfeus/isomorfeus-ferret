@@ -26,7 +26,7 @@ class LuceneSearch {
         q++;
         Query query = parser.parse(st);
         hits = searcher.search(query, 10);
-        for (int c = 0 ; c < hits.totalHits.value && c < 20; c++) {
+        for (int c = 0 ; c < hits.scoreDocs.length; c++) {
           res++;
         }
       }
