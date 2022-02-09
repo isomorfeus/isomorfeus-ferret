@@ -1,6 +1,6 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_helper.rb"))
-require File.dirname(__FILE__) + "/tm_store"
-require File.dirname(__FILE__) + "/tm_store_lock"
+require File.expand_path(File.join(File.dirname(__FILE__), "tm_store"))
+require File.expand_path(File.join(File.dirname(__FILE__), "tm_store_lock"))
 
 require 'fileutils'
 
