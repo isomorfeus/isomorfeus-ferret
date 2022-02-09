@@ -16,6 +16,7 @@ task :ferret_vs_lucene do
 end
 
 task :run_lucene_bench do
+  puts "\n\n\tLucene:\n\n"
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
   FileUtils.rm_rf('lucene_index')
@@ -31,6 +32,7 @@ task :run_lucene_bench do
 end
 
 task :run_ferret_bench => :compile do
+  puts "\n\n\tFerret:\n\n"
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
   FileUtils.rm_rf('ferret_index')
