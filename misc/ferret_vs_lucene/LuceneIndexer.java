@@ -100,7 +100,6 @@ public class LuceneIndexer {
 
   // Initialize an IndexWriter
   static IndexWriter initWriter (int count) throws java.io.IOException {
-    boolean create = count > 0 ? false : true;
     NIOFSDirectory indexDir = new NIOFSDirectory(indexPath);
     IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
