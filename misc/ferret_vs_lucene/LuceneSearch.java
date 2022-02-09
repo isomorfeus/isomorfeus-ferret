@@ -1,6 +1,4 @@
 import org.apache.lucene.store.*;
-import org.apache.lucene.document.*;
-import org.apache.lucene.analysis.*;
 import org.apache.lucene.analysis.standard.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
