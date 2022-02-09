@@ -19,14 +19,15 @@ def init_writer(create)
   if create
     options[:create] = true
     field_infos = FieldInfos.new()
-    field_infos.add_field(:body, :store => :no, :term_vector => :no) unless @store
+    field_infos.add_field(:title, :store => :yes, :term_vector => :no)
+    field_infos.add_field(:body, :store => :no, :term_vector => :with_positions_offsets)
     options[:field_infos] = field_infos
   end
 
   IndexWriter.new(options)
 end
 
-def build_index(file_list, max_to_index, increment, store)
+def build_index(file_list, max_to_index, increment)
   writer = init_writer(true)
   docs_so_far = 0
 
@@ -57,9 +58,9 @@ end
 @docs = FL.size
 @reps = 1
 @inc = 0
-@store = false
+
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: f.rb [options]"
+  opts.banner = "Usage: ferret_indexer.rb [options]"
 
   opts.separator ""
   opts.separator "Specific options:"
@@ -68,8 +69,6 @@ opts = OptionParser.new do |opts|
   opts.on("-d", "--docs VAL", Integer) {|v| @docs = v}
   opts.on("-r", "--reps VAL", Integer) {|v| @reps = v}
   opts.on("-i", "--inc VAL", Integer) {|v| @reps = v}
-  opts.on("-s", "--store") {|v| @store = true}
-
 end
 
 opts.parse(ARGV)
@@ -79,10 +78,10 @@ puts "-" * 60
 times = []
 @reps.times do |i|
   t = Time.now
-  num_indexed = build_index(FL, @docs, @inc, @store)
+  num_indexed = build_index(FL, @docs, @inc)
   t = Time.new - t
   times << t
-  puts "#{i}  Secs: %.2f  Docs: #{num_indexed}" % t
+  puts "#{i+1}  Secs: %.2f  Docs: #{num_indexed}, #{(num_indexed/t).to_i} docs/s" % t
 end
 times.sort!
 num_to_chop = @reps >> 2

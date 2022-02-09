@@ -24,15 +24,13 @@ import java.util.Arrays;
  *
  * LuceneIndexer - benchmarking app
  * usage: java LuceneIndexer [-docs MAX_TO_INDEX] [-reps NUM_REPETITIONS]
- *                           [-increment NUM_REPETITIONS] [-store]
- *                           [-term-vector]
+ *                           [-increment NUM_REPETITIONS]
  *
  * -docs        specifies maximum number of documents to index. There are a
  *              little under 20,000 in the Reuters corpus.
  * -reps        the number of time to run the test
  * -increment   The number of documents to add before closing and reopening
  *              the IndexWriter
- * -store       store the documents in the index with their term-vectors
  *
  * Recommended options: -server -Xmx500M -XX:CompileThreshold=100
  */
@@ -49,7 +47,6 @@ public class LuceneIndexer {
     int maxToIndex = fileList.length; // default: index all docs
     int numReps    = 1;               // default: run once
     int increment  = 0;
-    boolean store  = false;
     String arg;
     int i = 0;
     while (i < (args.length - 1) && args[i].startsWith("-")) {
@@ -60,9 +57,6 @@ public class LuceneIndexer {
         numReps = Integer.parseInt(args[i++]);
       else if (arg.equals("-increment"))
         increment = Integer.parseInt(args[i++]);
-      else if (arg.equals("-store")) {
-        if (Integer.parseInt(args[i++]) != 0)
-          store = true;
       }
       else
         throw new Exception("Unknown argument: " + arg);
@@ -77,7 +71,7 @@ public class LuceneIndexer {
     for (int rep = 1; rep <= numReps; rep++) {
       // start the clock and build the index
       long start = new Date().getTime();
-      int numIndexed = buildIndex(fileList, maxToIndex, increment, store);
+      int numIndexed = buildIndex(fileList, maxToIndex, increment);
 
       // stop the clock and print a report
       long end = new Date().getTime();
@@ -109,14 +103,15 @@ public class LuceneIndexer {
   static IndexWriter initWriter (int count) throws java.io.IOException {
     boolean create = count > 0 ? false : true;
     NIOFSDirectory indexDir = new NIOFSDirectory(indexPath);
-    IndexWriter writer = new IndexWriter(indexDir, new IndexWriterConfig(new WhitespaceAnalyzer()));
+    IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
+    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+    IndexWriter writer = new IndexWriter(indexDir, iwc);
 
     return writer;
   }
 
   // Build an index, stopping at maxToIndex docs if maxToIndex > 0.
-  static int buildIndex (String[] fileList, int maxToIndex, int increment,
-                         boolean store) throws Exception {
+  static int buildIndex (String[] fileList, int maxToIndex, int increment) throws Exception {
     IndexWriter writer = initWriter(0);
     int docsSoFar = 0;
 
@@ -184,7 +179,8 @@ public class LuceneIndexer {
     DecimalFormat secsFormat = new DecimalFormat("#,##0.00");
     String secString = secsFormat.format(secs);
     System.out.println(rep + "   Secs: " + secString +
-                       "  Docs: " + numIndexed);
+                       "  Docs: " + numIndexed + ", " +
+                       String.valueOf((int)(numIndexed/secs)) + " docs/s");
   }
 
   // Print out aggregate stats
@@ -211,8 +207,7 @@ public class LuceneIndexer {
     String truncatedMeanString = format.format(truncatedMeanTime);
 
     // get the Lucene version
-    Package lucenePackage = org.apache.lucene.LucenePackage.get();
-    String luceneVersion = lucenePackage.getSpecificationVersion();
+    String luceneVersion = org.apache.lucene.util.Version.getPackageImplementationVersion();
 
     System.out.println("---------------------------------------------------");
     System.out.println("Lucene " +  luceneVersion);
