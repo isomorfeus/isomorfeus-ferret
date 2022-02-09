@@ -43,6 +43,30 @@ Examples can be found in the 'test' directory or in 'misc/ferret_vs_lucene'.
 - rake units
 - rake thread_safety
 
+## Benchmarks
+
+- clone repo
+- bundle install
+- rake ferret_vs_lucene
+
+A recent Java JDK must be installed to compile and run lucene benchmarks.
+
+Results on Linux:
+```
+Ferret:
+Indexing Secs: 7.36  Docs: 19043, 2587 docs/s
+Searching took: 0.3366296s for 8000 queries
+thats 23765 q/s
+
+Lucene:
+Indexing Secs: 4.22  Docs: 19043, 4516 docs/s
+Searching took: 1.48s for 8000 queries
+thats 5420 q/s
+---------------------------------------------------
+Lucene 9.0.0 0b18b3b965cedaf5eb129aa41243a44c83ca826d - jpountz - 2021-12-01 14:23:49
+JVM 17.0.1 (Private Build)
+```
+
 ## Future
 
 Lots of things to do:
