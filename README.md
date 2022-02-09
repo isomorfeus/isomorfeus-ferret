@@ -20,7 +20,6 @@ It should work on *nixes and *nuxes and also works on Windows.
 
 However, the revival is still fresh and although it appears to be working, issues have to be expected.
 
-
 ## Documentation
 
 The documentations is currently scattered throughout the repo.
@@ -36,13 +35,20 @@ The query language and parser are documented here:
 https://github.com/isomorfeus/isomorfeus-ferret/blob/master/ext/isomorfeus_ferret_ext/frb_qparser.c
 
 Examples can be found in the 'test' directory or in 'misc/ferret_vs_lucene'.
+
+## Running Specs
+
+- clone repo
+- bundle install
+- rake units
+- rake thread_safety
+
 ## Future
 
 Lots of things to do:
 - Bring documentation in order in a docs directory
 - Review code (especially for memory/stack issues, typical c issues)
 - Take care of ruby GVL and threading
-- Check locking (thread and filesystem)
 - See todo directory: https://github.com/isomorfeus/isomorfeus-ferret/tree/master/misc/todo
 
 Any help, support much appreciated!
