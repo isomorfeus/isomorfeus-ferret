@@ -6702,4 +6702,5 @@ _again:
         wc_to_mb(out_mb, out_mb_size, token_size, out_wc, sizeof(out_wc));
         out_mb[*token_size] = 0;
     }
+	(void)stack;
 }

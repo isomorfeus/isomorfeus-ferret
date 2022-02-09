@@ -896,4 +896,5 @@ _again:
 
         out[*token_size] = 0;
     }
+	(void)stack;
 }
