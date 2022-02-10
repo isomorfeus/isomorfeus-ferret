@@ -41,6 +41,13 @@ task :run_ferret_bench => :compile do
   Dir.chdir(pwd)
 end
 
+task :parser do
+  pwd = Dir.pwd
+  Dir.chdir('parser')
+  system("bison -o frt_q_parser.c frt_q_parser.y")
+  Dir.chdir(pwd)
+end
+
 task :specs do
   Rake::Task['units'].invoke
   Rake::Task['thread_safety'].invoke
@@ -66,21 +73,12 @@ task :push do
   system("git push gitprep")
 end
 
-desc "Run tests with Valgrind"
-task :valgrind do
-  sh "valgrind --suppressions=ferret_valgrind.supp " +
-      "--leak-check=yes --show-reachable=yes " +
-      "-v ruby test/unit/index/tc_index_reader.rb"
-end
-
-desc "run thread safety tests"
 task :thread_safety do
   system('bundle exec ruby test/threading/thread_safety_index_test.rb')
   system('bundle exec ruby test/threading/thread_safety_read_write_test.rb')
   system('bundle exec ruby test/threading/thread_safety_test.rb')
 end
 
-desc "run unit tests in test/unit"
 Rake::TestTask.new("units" => :compile) do |t|
   t.libs << "test/unit"
   t.pattern = 'test/unit/t[csz]_*.rb'
