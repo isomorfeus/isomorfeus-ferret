@@ -11,3 +11,4 @@ tmp
 *.o
 *.gem
 .vscode
+ferret.pdf
