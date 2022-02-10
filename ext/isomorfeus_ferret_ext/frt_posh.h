@@ -236,7 +236,11 @@ Metrowerks:
 #endif
 
 #if defined __GNUC__
-#  define POSH_COMPILER_STRING "Gnu GCC"
+#  if defined __MINGW32__
+#     define POSH_COMPILER_STRING "MingW Gnu GCC"
+#  else
+#     define POSH_COMPILER_STRING "Gnu GCC"
+#  endif
 #  define POSH_COMPILER_GCC 1
 #endif
 
@@ -307,9 +311,13 @@ Metrowerks:
 
 #if defined __MINGW32__
 #  define POSH_OS_MINGW 1
-#  define POSH_OS_STRING "MinGW"
 #  if defined _WIN64
 #    define POSH_OS_WIN64 1
+#    define POSH_OS_STRING "Win64"
+#  elif defined _WIN32
+#    define POSH_OS_STRING "Win32"
+#  else
+#    define POSH_OS_STRING "MinGW"
 #  endif
 #endif
 
@@ -688,16 +696,6 @@ typedef unsigned long long posh_u64_t;
 #  define POSH_U64( x ) ((posh_u64_t)(x##LL))
 #  define POSH_I64( x ) ((posh_i64_t)(x##LL))
 #  define POSH_I64_PRINTF_PREFIX "ll"
-#endif
-
-/* hack */
-#ifdef __MINGW32__
-#undef POSH_I64
-#undef POSH_U64
-#undef POSH_I64_PRINTF_PREFIX
-#define POSH_I64( x ) ((posh_i64_t)x)
-#define POSH_U64( x ) ((posh_u64_t)x)
-#define POSH_I64_PRINTF_PREFIX "ll"
 #endif
 
 /** Minimum value for a 64-bit signed integer */
