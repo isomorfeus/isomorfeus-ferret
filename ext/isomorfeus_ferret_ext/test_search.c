@@ -556,7 +556,6 @@ static void test_phrase_query(TestCase *tc, void *data)
     check_to_s(tc, phq, field, "\"\"");
     check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"\"");
 
-
     frt_phq_add_term(phq, "quick", 1);
     frt_phq_add_term(phq, "brown", 1);
     frt_phq_add_term(phq, "fox", 1);
