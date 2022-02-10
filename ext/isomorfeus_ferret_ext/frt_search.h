@@ -909,7 +909,7 @@ typedef struct FrtQueryParser
     bool use_keywords : 1;
     bool use_typed_range_query : 1;
 } FrtQueryParser;
-typedef FrtQueryParser FrtQParser; /* QParser is an alias for QueryParser */
+typedef FrtQueryParser FrtQParser; /* FrtQParser is an alias for FrtQueryParser */
 
 extern FrtQParser *frt_qp_new(FrtAnalyzer *analyzer);
 extern void frt_qp_add_field(FrtQParser *self, FrtSymbol field,
