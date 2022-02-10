@@ -697,7 +697,7 @@ typedef unsigned long long posh_u64_t;
 #undef POSH_I64_PRINTF_PREFIX
 #define POSH_I64( x ) ((posh_i64_t)x)
 #define POSH_U64( x ) ((posh_u64_t)x)
-#define POSH_I64_PRINTF_PREFIX "I64"
+#define POSH_I64_PRINTF_PREFIX "ll"
 #endif
 
 /** Minimum value for a 64-bit signed integer */
