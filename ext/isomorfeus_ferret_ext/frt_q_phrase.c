@@ -104,11 +104,12 @@ static int pp_cmp(const void *const p1, const void *const p2)
 {
     int cmp = PP_pp(p1)->doc - PP_pp(p2)->doc;
     if (cmp == 0) {
-        return PP_pp(p1)->position - PP_pp(p2)->position;
+        cmp = PP_pp(p1)->position - PP_pp(p2)->position;
+        if (cmp == 0) {
+            cmp = PP_pp(p1)->offset - PP_pp(p2)->offset;
+        }
     }
-    else {
-        return cmp;
-    }
+    return cmp;
 }
 
 static int pp_pos_cmp(const void *const p1, const void *const p2)
@@ -490,7 +491,6 @@ static float sphsc_phrase_freq(FrtScorer *self)
         if (pqsize == 0) { done = true; }
     } while (!done);
 return_freq:
-
     frt_pq_destroy(pq);
     return freq;
 }
@@ -545,12 +545,12 @@ static FrtScorer *phw_scorer(FrtWeight *self, FrtIndexReader *ir)
         const int t_cnt = frt_ary_size(terms);
         if (t_cnt == 1) {
             tps[i] = ir->term_positions(ir);
+            assert(NULL != tps[i]); /* neither frt_mtdpe_new nor ir->term_positions should return NULL */
             tps[i]->seek(tps[i], field_num, terms[0]);
         } else {
             tps[i] = frt_mtdpe_new(ir, field_num, terms, t_cnt);
+            assert(NULL != tps[i]); /* neither frt_mtdpe_new nor ir->term_positions should return NULL */
         }
-        /* neither frt_mtdpe_new nor ir->term_positions should return NULL */
-        assert(NULL != tps[i]);
     }
 
     if (phq->slop == 0) {       /* optimize exact (common) case */
