@@ -45,6 +45,7 @@ task :parser do
   pwd = Dir.pwd
   Dir.chdir('parser')
   system("bison -o frt_q_parser.c frt_q_parser.y")
+  FileUtils.cp('frt_q_parser.c', '../ext/isomorfeus_ferret_ext/frt_q_parser.c', preserve: false, verbose: true)
   Dir.chdir(pwd)
 end
 
