@@ -43,6 +43,8 @@ Examples can be found in the 'test' directory or in 'misc/ferret_vs_lucene'.
 - rake units
 - rake thread_safety
 
+Ensure your locale is set to C.UTF-8, because the internal c tests dont know how to handle localized output.
+
 ## Benchmarks
 
 - clone repo
