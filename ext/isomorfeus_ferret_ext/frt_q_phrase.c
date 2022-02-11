@@ -456,7 +456,7 @@ static float sphsc_phrase_freq(FrtScorer *self)
         res = pp_first_position(pp);
         assert(res);(void)res;
         if (check_repeats && (i > 0)) {
-            if (!sphsc_check_repeats(pp, phsc->phrase_pos, i)) {
+            if (!sphsc_check_repeats(pp, phsc->phrase_pos, i - 1)) {
                 goto return_freq;
             }
         }
@@ -465,9 +465,8 @@ static float sphsc_phrase_freq(FrtScorer *self)
         }
         frt_pq_push(pq, pp);
     }
-    int pqsize = pq->size;
+
     do {
-        pqsize--;
         pp = (PhPos *)frt_pq_pop(pq);
         pos = start = pp->position;
         next_pos = PP(frt_pq_top(pq))->position;
@@ -488,8 +487,8 @@ static float sphsc_phrase_freq(FrtScorer *self)
             last_pos = pp->position;
         }
         frt_pq_push(pq, pp);        /* restore pq */
-        if (pqsize == 0) { done = true; }
     } while (!done);
+
 return_freq:
     frt_pq_destroy(pq);
     return freq;
