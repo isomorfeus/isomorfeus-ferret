@@ -86,8 +86,7 @@ static bool pp_next_position(PhPos *self)
     if (self->count >= 0) {         /* read subsequent pos's */
         self->position = tpe->next_position(tpe) - self->offset;
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -106,7 +105,7 @@ static int pp_cmp(const void *const p1, const void *const p2)
     if (cmp == 0) {
         cmp = PP_pp(p1)->position - PP_pp(p2)->position;
         if (cmp == 0) {
-            cmp = PP_pp(p1)->offset - PP_pp(p2)->offset;
+            return PP_pp(p1)->offset - PP_pp(p2)->offset;
         }
     }
     return cmp;
@@ -121,8 +120,7 @@ static bool pp_less_than(const PhPos *pp1, const PhPos *pp2)
 {
     if (pp1->position == pp2->position) {
         return pp1->offset < pp2->offset;
-    }
-    else {
+    } else {
         return pp1->position < pp2->position;
     }
 }
