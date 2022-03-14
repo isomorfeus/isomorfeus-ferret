@@ -17,10 +17,17 @@ def init_writer(create)
     :max_buffered_docs => 20_000
   }
   if create
+    s = if @store && @comp
+          :compressed
+        elsif @store
+          :yes
+        else
+          :no
+        end
     options[:create] = true
     field_infos = FieldInfos.new()
-    field_infos.add_field(:title, :store => :yes, :term_vector => :no)
-    field_infos.add_field(:body, :store => :no, :term_vector => :with_positions_offsets)
+    field_infos.add_field(:title, :store => @comp ? :compressed : :yes, :term_vector => :no)
+    field_infos.add_field(:body, :store => s, :term_vector => :with_positions_offsets)
     options[:field_infos] = field_infos
   end
 
@@ -34,7 +41,7 @@ def build_index(file_list, max_to_index, increment)
   file_list.each do |fn|
     File.open(fn) do |f|
       raise("Failed to read title") if (title = f.readline).nil?
-      writer << {:title => title, :body => f.readlines}
+      writer << {:title => title, :body => f.read}
     end
 
     docs_so_far += 1
@@ -58,6 +65,8 @@ end
 @docs = FL.size
 @reps = 1
 @inc = 0
+@comp = false
+@store = false
 
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: ferret_indexer.rb [options]"
@@ -69,6 +78,8 @@ opts = OptionParser.new do |opts|
   opts.on("-d", "--docs VAL", Integer) {|v| @docs = v}
   opts.on("-r", "--reps VAL", Integer) {|v| @reps = v}
   opts.on("-i", "--inc VAL", Integer) {|v| @reps = v}
+  opts.on("-c", "--comp") { @comp = true }
+  opts.on("-s", "--store") { @store = true }
 end
 
 opts.parse(ARGV)
