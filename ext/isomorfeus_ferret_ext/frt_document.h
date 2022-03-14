@@ -20,6 +20,7 @@ typedef struct FrtDocField
     char **data;
     float boost;
     bool destroy_data : 1;
+    bool is_compressed : 1;
 } FrtDocField;
 
 extern FrtDocField *frt_df_new(FrtSymbol name);

@@ -66,7 +66,8 @@ extern FrtHash *frt_co_hash_create();
 typedef enum
 {
     FRT_STORE_NO = 0,
-    FRT_STORE_YES = 1
+    FRT_STORE_YES = 1,
+    FRT_STORE_COMPRESS = 2
 } FrtStoreValue;
 
 typedef enum
@@ -88,6 +89,7 @@ typedef enum
 } FrtTermVectorValue;
 
 #define FRT_FI_IS_STORED_BM         0x001
+#define FRT_FI_IS_COMPRESSED_BM     0x002
 #define FRT_FI_IS_INDEXED_BM        0x004
 #define FRT_FI_IS_TOKENIZED_BM      0x008
 #define FRT_FI_OMIT_NORMS_BM        0x010
@@ -112,6 +114,7 @@ extern char *frt_fi_to_s(FrtFieldInfo *fi);
 extern void frt_fi_deref(FrtFieldInfo *fi);
 
 #define fi_is_stored(fi)         (((fi)->bits & FRT_FI_IS_STORED_BM) != 0)
+#define fi_is_compressed(fi)     (((fi)->bits & FRT_FI_IS_COMPRESSED_BM) != 0)
 #define fi_is_indexed(fi)        (((fi)->bits & FRT_FI_IS_INDEXED_BM) != 0)
 #define fi_is_tokenized(fi)      (((fi)->bits & FRT_FI_IS_TOKENIZED_BM) != 0)
 #define fi_omit_norms(fi)        (((fi)->bits & FRT_FI_OMIT_NORMS_BM) != 0)
@@ -575,11 +578,11 @@ typedef struct FrtLazyDocField
     FrtLazyDoc          *doc;
     int                 size; /* number of data elements */
     int                 len;  /* length of data elements concatenated */
+    int                 is_compressed : 2; /* set to 2 after all data is loaded */
 } FrtLazyDocField;
 
 extern char *frt_lazy_df_get_data(FrtLazyDocField *self, int i);
-extern void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf,
-                              int start, int len);
+extern void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len);
 
 /* * * FrtLazyDoc * * */
 struct FrtLazyDoc

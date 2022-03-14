@@ -6,6 +6,8 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#include "brotli_decode.h"
+#include "brotli_encode.h"
 
 extern void frt_micro_sleep(const int micro_seconds);
 
@@ -39,8 +41,8 @@ static char *ste_next(FrtTermEnum *te);
 #define FORMAT 0
 #define SEGMENTS_GEN_FILE_NAME "segments"
 #define MAX_EXT_LEN 10
-#define ZIP_BUFFER_SIZE 16348
-#define ZIP_LEVEL 9
+#define COMPRESSION_BUFFER_SIZE 16348
+#define COMPRESSION_LEVEL 9
 
 /* *** Must be three characters *** */
 static const char *INDEX_EXTENSIONS[] = {
@@ -220,6 +222,9 @@ static void fi_set_store(FrtFieldInfo *fi, int store)
         case FRT_STORE_YES:
             fi->bits |= FRT_FI_IS_STORED_BM;
             break;
+        case FRT_STORE_COMPRESS:
+            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_IS_STORED_BM;
+            break;
     }
 }
 
@@ -304,8 +309,9 @@ char *frt_fi_to_s(FrtFieldInfo *fi)
     const char *fi_name = rb_id2name(fi->name);
     char *str = FRT_ALLOC_N(char, strlen(fi_name) + 200);
     char *s = str;
-    s += sprintf(str, "[\"%s\":(%s%s%s%s%s%s%s", fi_name,
+    s += sprintf(str, "[\"%s\":(%s%s%s%s%s%s%s%s", fi_name,
                  fi_is_stored(fi) ? "is_stored, " : "",
+                 fi_is_compressed(fi) ? "is_compressed, " : "",
                  fi_is_indexed(fi) ? "is_indexed, " : "",
                  fi_is_tokenized(fi) ? "is_tokenized, " : "",
                  fi_omit_norms(fi) ? "omit_norms, " : "",
@@ -443,7 +449,8 @@ void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os)
 static const char *store_str[] = {
     ":no",
     ":yes",
-    ""
+    "",
+    ":compressed"
 };
 
 static const char *fi_store_str(FrtFieldInfo *fi)
@@ -1145,12 +1152,13 @@ frt_u64 frt_sis_read_current_version(FrtStore *store)
  *
  ****************************************************************************/
 
-static FrtLazyDocField *lazy_df_new(FrtSymbol name, const int size)
+static FrtLazyDocField *lazy_df_new(FrtSymbol name, const int size, bool is_compressed)
 {
     FrtLazyDocField *self = FRT_ALLOC(FrtLazyDocField);
     self->name = name;
     self->size = size;
     self->data = FRT_ALLOC_AND_ZERO_N(FrtLazyDocFieldData, size);
+    self->is_compressed = is_compressed;
     return self;
 }
 
@@ -1166,6 +1174,52 @@ static void lazy_df_destroy(FrtLazyDocField *self)
     free(self);
 }
 
+static void comp_raise()
+{
+    FRT_RAISE(EXCEPTION, "Compression error");
+}
+
+static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *len)
+{
+    int buf_out_idx = 0;
+    int read_len;
+    frt_uchar buf_in[COMPRESSION_BUFFER_SIZE];
+    const frt_uchar *next_in;
+    size_t available_in;
+    frt_uchar *buf_out = NULL;
+    frt_uchar *next_out;
+    size_t available_out;
+
+    BrotliDecoderState *b_state = BrotliDecoderCreateInstance(NULL, NULL, NULL);
+    BrotliDecoderResult b_result = BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT;
+    if (!b_state) { comp_raise(); return NULL; }
+
+    do {
+        read_len = compressed_len > COMPRESSION_BUFFER_SIZE ? COMPRESSION_BUFFER_SIZE : compressed_len;
+        frt_is_read_bytes(is, buf_in, read_len);
+        compressed_len -= read_len;
+        available_in = read_len;
+        next_in = buf_in;
+        available_out = COMPRESSION_BUFFER_SIZE;
+        do {
+            FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + COMPRESSION_BUFFER_SIZE);
+            next_out = buf_out + buf_out_idx;
+            b_result = BrotliDecoderDecompressStream(b_state,
+                &available_in, &next_in,
+                &available_out, &next_out, NULL);
+            if (b_result == BROTLI_DECODER_RESULT_ERROR) { comp_raise(); return NULL; }
+            buf_out_idx += COMPRESSION_BUFFER_SIZE - available_out;
+        } while (b_result == BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT);
+    } while (b_result != BROTLI_DECODER_RESULT_SUCCESS && compressed_len > 0);
+
+    BrotliDecoderDestroyInstance(b_state);
+
+    FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + 1);
+    buf_out[buf_out_idx] = '\0';
+    *len = buf_out_idx;
+    return (char *)buf_out;
+}
+
 char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
 {
     char *text = NULL;
@@ -1174,9 +1228,13 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
         if (NULL == text) {
             const int read_len = self->data[i].length + 1;
             frt_is_seek(self->doc->fields_in, self->data[i].start);
-            self->data[i].text = text = FRT_ALLOC_N(char, read_len);
-            frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
-            text[read_len - 1] = '\0';
+            if (self->is_compressed) {
+                self->data[i].text = text = is_read_compressed_bytes(self->doc->fields_in, read_len, &(self->data[i].length));
+            } else {
+                self->data[i].text = text = FRT_ALLOC_N(char, read_len);
+                frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
+                text[read_len - 1] = '\0';
+            }
         }
     }
 
@@ -1185,6 +1243,16 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
 
 void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
 {
+    if (self->is_compressed == 1) {
+        int i;
+        self->len = 0;
+        for (i = self->size-1; i >= 0; i--) {
+            (void)frt_lazy_df_get_data(self, i);
+            self->len += self->data[i].length + 1;
+        }
+        self->len--; /* each field separated by ' ' but no need to add to end */
+        self->is_compressed = 2;
+    }
     if (start < 0 || start >= self->len) {
         FRT_RAISE(FRT_IO_ERROR, "start out of range in LazyDocField#get_bytes. %d "
               "is not between 0 and %d", start, self->len);
@@ -1196,7 +1264,33 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
         FRT_RAISE(FRT_IO_ERROR, "Tried to read past end of field. Field is only %d "
               "bytes long but tried to read to %d", self->len, start + len);
     }
-    else {
+    if (self->is_compressed) {
+        int cur_start = 0, buf_start = 0, cur_end, i, copy_start, copy_len;
+        for (i = 0; i < self->size; i++) {
+            cur_end = cur_start + self->data[i].length;
+            if (start < cur_end) {
+                copy_start = start > cur_start ? start - cur_start : 0;
+                copy_len = cur_end - cur_start - copy_start;
+                if (copy_len >= len) {
+                    copy_len = len;
+                    len = 0;
+                }
+                else {
+                    len -= copy_len;
+                }
+                memcpy(buf + buf_start,
+                       self->data[i].text + copy_start,
+                       copy_len);
+                buf_start += copy_len;
+                if (len > 0) {
+                    buf[buf_start++] = ' ';
+                    len--;
+                }
+                if (len == 0) break;
+            }
+            cur_start = cur_end + 1;
+        }
+    } else {
         frt_is_seek(self->doc->fields_in, self->data[0].start + start);
         frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)buf, len);
     }
@@ -1286,7 +1380,7 @@ void frt_fr_close(FrtFieldsReader *fr)
     free(fr);
 }
 
-static FrtDocField *frt_fr_df_new(FrtSymbol name, int size)
+static FrtDocField *frt_fr_df_new(FrtSymbol name, int size, bool is_compressed)
 {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
@@ -1295,7 +1389,20 @@ static FrtDocField *frt_fr_df_new(FrtSymbol name, int size)
     df->lengths = FRT_ALLOC_N(int, df->capa);
     df->destroy_data = true;
     df->boost = 1.0f;
+    df->is_compressed = is_compressed;
     return df;
+}
+
+static void frt_fr_read_compressed_fields(FrtFieldsReader *fr, FrtDocField *df)
+{
+    int i;
+    const int df_size = df->size;
+    FrtInStream *fdt_in = fr->fdt_in;
+
+    for (i = 0; i < df_size; i++) {
+        const int compressed_len = df->lengths[i] + 1;
+        df->data[i] = is_read_compressed_bytes(fdt_in, compressed_len, &(df->lengths[i]));
+    }
 }
 
 FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
@@ -1316,7 +1423,7 @@ FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
         const int field_num = frt_is_read_vint(fdt_in);
         FrtFieldInfo *fi = fr->fis->fields[field_num];
         const int df_size = frt_is_read_vint(fdt_in);
-        FrtDocField *df = frt_fr_df_new(fi->name, df_size);
+        FrtDocField *df = frt_fr_df_new(fi->name, df_size, fi_is_compressed(fi));
 
         for (j = 0; j < df_size; j++) {
             df->lengths[j] = frt_is_read_vint(fdt_in);
@@ -1326,12 +1433,16 @@ FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
     }
     for (i = 0; i < stored_cnt; i++) {
         FrtDocField *df = doc->fields[i];
-        const int df_size = df->size;
-        for (j = 0; j < df_size; j++) {
-            const int read_len = df->lengths[j] + 1;
-            df->data[j] = FRT_ALLOC_N(char, read_len);
-            frt_is_read_bytes(fdt_in, (frt_uchar *)df->data[j], read_len);
-            df->data[j][read_len - 1] = '\0';
+        if (df->is_compressed) {
+            frt_fr_read_compressed_fields(fr, df);
+        } else {
+            const int df_size = df->size;
+            for (j = 0; j < df_size; j++) {
+                const int read_len = df->lengths[j] + 1;
+                df->data[j] = FRT_ALLOC_N(char, read_len);
+                frt_is_read_bytes(fdt_in, (frt_uchar *)df->data[j], read_len);
+                df->data[j][read_len - 1] = '\0';
+            }
         }
     }
 
@@ -1355,7 +1466,7 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     for (i = 0; i < stored_cnt; i++) {
         FrtFieldInfo *fi = fr->fis->fields[frt_is_read_vint(fdt_in)];
         const int data_cnt = frt_is_read_vint(fdt_in);
-        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, data_cnt);
+        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, data_cnt, fi_is_compressed(fi));
         const int field_start = start;
         /* get the starts relative positions this time around */
         for (j = 0; j < data_cnt; j++) {
@@ -1549,6 +1660,37 @@ void frt_fw_close(FrtFieldsWriter *fw)
     free(fw);
 }
 
+static int frt_os_write_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length)
+{
+    size_t compressed_len = 0;
+    const frt_uchar *next_in = data;
+    size_t available_in = length;
+    size_t available_out;
+    frt_uchar compression_buffer[COMPRESSION_BUFFER_SIZE];
+    frt_uchar *next_out;
+    BrotliEncoderState *b_state = BrotliEncoderCreateInstance(NULL, NULL, NULL);
+    if (!b_state) { comp_raise(); return -1; }
+
+    BrotliEncoderSetParameter(b_state, BROTLI_PARAM_QUALITY, COMPRESSION_LEVEL);
+
+    do {
+        available_out = COMPRESSION_BUFFER_SIZE;
+        next_out = compression_buffer;
+        if (!BrotliEncoderCompressStream(b_state, BROTLI_OPERATION_FINISH,
+            &available_in, &next_in,
+            &available_out, &next_out, &compressed_len)) {
+            BrotliEncoderDestroyInstance(b_state);
+            comp_raise();
+            return -1;
+        }
+        frt_os_write_bytes(out_stream, compression_buffer, COMPRESSION_BUFFER_SIZE - available_out);
+    } while (!BrotliEncoderIsFinished(b_state));
+
+    BrotliEncoderDestroyInstance(b_state);
+    // fprintf(stderr, "Compressed: %i -> %i\n", length, (int)compressed_len);
+    return (int)compressed_len;
+}
+
 void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
 {
     int i, j, stored_cnt = 0;
@@ -1577,13 +1719,20 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
             const int df_size = df->size;
             frt_os_write_vint(fdt_out, fi->number);
             frt_os_write_vint(fdt_out, df_size);
-            for (j = 0; j < df_size; j++) {
-                const int length = df->lengths[j];
-                frt_os_write_vint(fdt_out, length);
-                frt_os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
-                /* leave a space between fields as that is how they are
-                    * analyzed */
-                frt_os_write_byte(fw->buffer, ' ');
+            if (fi_is_compressed(fi)) {
+                for (j = 0; j < df_size; j++) {
+                    const int length = df->lengths[j];
+                    int compressed_len = frt_os_write_compressed_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
+                    frt_os_write_vint(fdt_out, compressed_len - 1);
+                }
+            } else {
+                for (j = 0; j < df_size; j++) {
+                    const int length = df->lengths[j];
+                    frt_os_write_vint(fdt_out, length);
+                    frt_os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
+                    /* leave a space between fields as that is how they are analyzed */
+                    frt_os_write_byte(fw->buffer, ' ');
+                }
             }
         }
     }

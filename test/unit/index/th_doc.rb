@@ -10,6 +10,7 @@ module IndexTestHelper
   end
 
   BINARY_DATA = IndexTestHelper.make_binary(256)
+  COMPRESSED_BINARY_DATA = IndexTestHelper.make_binary(56)
 
   def IndexTestHelper.prepare_document(dir)
     fis = Isomorfeus::Ferret::Index::FieldInfos.new
@@ -19,7 +20,9 @@ module IndexTestHelper
     fis.add_field(:unindexed_field, :index => :no)
     fis.add_field(:unstored_field1, :store => :no, :term_vector => :no)
     fis.add_field(:unstored_field2, :store => :no, :term_vector => :yes)
+    fis.add_field(:compressed_field, :store => :compressed, :term_vector => :yes)
     fis.add_field(:binary_field, :index => :no, :term_vector => :no)
+    fis.add_field(:compressed_binary_field, :store => :compressed, :index => :no, :term_vector => :no)
 
     doc = {
       :text_field1             => "field one text",
@@ -28,7 +31,9 @@ module IndexTestHelper
       :unindexed_field         => "unindexed field text",
       :unstored_field1         => "unstored field text one",
       :unstored_field2         => "unstored field text two",
+      :compressed_field        => "compressed text",
       :binary_field            => BINARY_DATA,
+      :compressed_binary_field => COMPRESSED_BINARY_DATA
     }
     return doc, fis
   end

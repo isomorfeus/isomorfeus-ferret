@@ -41,6 +41,9 @@ static VALUE sym_store;
 static VALUE sym_index;
 static VALUE sym_term_vector;
 
+static VALUE sym_compress;
+static VALUE sym_compressed;
+
 static VALUE sym_untokenized;
 static VALUE sym_omit_norms;
 static VALUE sym_untokenized_omit_norms;
@@ -95,11 +98,13 @@ frb_fi_get_params(VALUE roptions,
         *store = FRT_STORE_NO;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
         *store = FRT_STORE_YES;
+    } else if (v == sym_compress || v == sym_compressed) {
+        *store = FRT_STORE_COMPRESS;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
         rb_raise(rb_eArgError, ":%s isn't a valid argument for :store."
-                 " Please choose from [:yes, :no]",
+                 " Please choose from [:yes, :no, :compressed]",
                  rb_id2name(SYM2ID(v)));
     }
 
@@ -217,6 +222,19 @@ frb_fi_is_stored(VALUE self)
 {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_stored(fi) ? Qtrue : Qfalse;
+}
+
+/*
+ *  call-seq:
+ *     fi.compressed? -> bool
+ *
+ *  Return true if the field is stored in the index in compressed format.
+ */
+static VALUE
+frb_fi_is_compressed(VALUE self)
+{
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
+    return fi_is_compressed(fi) ? Qtrue : Qfalse;
 }
 
 /*
@@ -2698,7 +2716,7 @@ frb_ir_version(VALUE self)
  *  == Summary
  *
  *  The FieldInfo class is the field descriptor for the index. It specifies
- *  whether a field should be indexed and
+ *  whether a field is compressed or not or whether it should be indexed and
  *  tokenized. Every field has a name which must be a symbol. There are three
  *  properties that you can set, +:store+, +:index+ and +:term_vector+. You
  *  can also set the default +:boost+ for a field as well.
@@ -2708,8 +2726,8 @@ frb_ir_version(VALUE self)
  *  === :store
  *
  *  The +:store+ property allows you to specify how a field is stored. You can
- *  leave a field unstored (+:no+), store it in it's original format (+:yes+).
- *  By default the document
+ *  leave a field unstored (+:no+), store it in it's original format (+:yes+)
+ *  or store it in compressed format (+:compressed+). By default the document
  *  is stored in its original format. If the field is large and it is stored
  *  elsewhere where it is easily accessible you might want to leave it
  *  unstored. This will keep the index size a lot smaller and make the
@@ -2751,6 +2769,9 @@ frb_ir_version(VALUE self)
  *                  |                         | want to highlight matches.
  *                  |                         | or print match excerpts a la
  *                  |                         | Google search.
+ *                  |                         |
+ *                  | :compressed             | Store field in compressed
+ *                  |                         | format.
  *     -------------|-------------------------|------------------------------
  *     :index       | :no                     | Do not make this field
  *                  |                         | searchable.
@@ -2809,6 +2830,9 @@ frb_ir_version(VALUE self)
  *
  *    fi = FieldInfo.new(:created_on, :index => :untokenized_omit_norms,
  *                       :term_vector => :no)
+ *
+ *    fi = FieldInfo.new(:image, :store => :compressed, :index => :no,
+ *                       :term_vector => :no)
  */
 static void
 Init_FieldInfo(void)
@@ -2816,6 +2840,9 @@ Init_FieldInfo(void)
     sym_store = ID2SYM(rb_intern("store"));
     sym_index = ID2SYM(rb_intern("index"));
     sym_term_vector = ID2SYM(rb_intern("term_vector"));
+
+    sym_compress = ID2SYM(rb_intern("compress"));
+    sym_compressed = ID2SYM(rb_intern("compressed"));
 
     sym_untokenized = ID2SYM(rb_intern("untokenized"));
     sym_omit_norms = ID2SYM(rb_intern("omit_norms"));
@@ -2831,6 +2858,7 @@ Init_FieldInfo(void)
     rb_define_method(cFieldInfo, "initialize",  frb_fi_init, -1);
     rb_define_method(cFieldInfo, "name",        frb_fi_name, 0);
     rb_define_method(cFieldInfo, "stored?",     frb_fi_is_stored, 0);
+    rb_define_method(cFieldInfo, "compressed?", frb_fi_is_compressed, 0);
     rb_define_method(cFieldInfo, "indexed?",    frb_fi_is_indexed, 0);
     rb_define_method(cFieldInfo, "tokenized?",  frb_fi_is_tokenized, 0);
     rb_define_method(cFieldInfo, "omit_norms?", frb_fi_omit_norms, 0);
@@ -2867,6 +2895,9 @@ Init_FieldInfo(void)
  *    field_infos.add_field(:content)
  *
  *    field_infos.add_field(:created_on, :index => :untokenized_omit_norms,
+ *                          :term_vector => :no)
+ *
+ *    field_infos.add_field(:image, :store => :compressed, :index => :no,
  *                          :term_vector => :no)
  *
  *    field_infos.create_index("/path/to/index")

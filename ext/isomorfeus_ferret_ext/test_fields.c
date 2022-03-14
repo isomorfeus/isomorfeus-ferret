@@ -2,10 +2,10 @@
 #include "test.h"
 
 #define do_field_prop_test(tc, fi, name, boost, is_stored,\
-                           is_indexed, is_tokenized, omit_norms,\
+                           is_compressed, is_indexed, is_tokenized, omit_norms,\
                            store_term_vector, store_positions, store_offsets)\
         field_prop_test(tc, __LINE__, fi, name, boost, is_stored,\
-                        is_indexed, is_tokenized, omit_norms,\
+                        is_compressed, is_indexed, is_tokenized, omit_norms,\
                         store_term_vector, store_positions, store_offsets)
 #define T 1
 #define F 0
@@ -16,6 +16,7 @@ void field_prop_test(TestCase *tc,
                      FrtSymbol name,
                      float boost,
                      bool is_stored,
+                     bool is_compressed,
                      bool is_indexed,
                      bool is_tokenized,
                      bool omit_norms,
@@ -26,6 +27,7 @@ void field_prop_test(TestCase *tc,
     tst_ptr_equal(line_num, tc, (void *)name, (void *)fi->name);
     tst_flt_equal(line_num, tc, boost, fi->boost);
     tst_int_equal(line_num, tc, is_stored,          fi_is_stored(fi));
+    tst_int_equal(line_num, tc, is_compressed,      fi_is_compressed(fi));
     tst_int_equal(line_num, tc, is_indexed,         fi_is_indexed(fi));
     tst_int_equal(line_num, tc, is_tokenized,       fi_is_tokenized(fi));
     tst_int_equal(line_num, tc, omit_norms,         fi_omit_norms(fi));
@@ -45,17 +47,20 @@ static void test_fi_new(TestCase *tc, void *data)
     FrtFieldInfo *fi;
     (void)data; /* suppress unused argument warning */
     fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
     frt_fi_deref(fi);
     fi = frt_fi_new(rb_intern("name"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, T, T, F, T, F, F);
+    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
+    frt_fi_deref(fi);
+    fi = frt_fi_new(rb_intern("name"), FRT_STORE_COMPRESS, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
+    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
     frt_fi_deref(fi);
     fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, T, T, T, T, F, T);
+    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
     frt_fi_deref(fi);
     fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     fi->boost = 1000.0;
-    do_field_prop_test(tc, fi, rb_intern("name"), 1000.0, F, T, F, T, T, T, T);
+    do_field_prop_test(tc, fi, rb_intern("name"), 1000.0, F, F, T, F, T, T, T, T);
     frt_fi_deref(fi);
 }
 
@@ -75,7 +80,7 @@ static void test_fis_basic(TestCase *tc, void *data)
     fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_YES, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_COMPRESS, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
 
@@ -113,11 +118,11 @@ static void test_fis_basic(TestCase *tc, void *data)
     fis->fields[3]->boost = 4.0;
     fis->fields[4]->boost = 5.0;
 
-    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, T, T, F, T, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("TTTFFTTF"), 3.0, T, T, F, F, T, T, F);
-    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTTTTFT"), 4.0, F, T, T, T, T, F, T);
-    do_field_prop_test(tc, fis->fields[4], rb_intern("FFTFTTTT"), 5.0, F, T, F, T, T, T, T);
+    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, F, T, T, F, T, F, F);
+    do_field_prop_test(tc, fis->fields[2], rb_intern("TTTFFTTF"), 3.0, T, T, T, F, F, T, T, F);
+    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTTTTFT"), 4.0, F, F, T, T, T, T, F, T);
+    do_field_prop_test(tc, fis->fields[4], rb_intern("FFTFTTTT"), 5.0, F, F, T, F, T, T, T, T);
 
     frt_fis_deref(fis);
 }
@@ -128,26 +133,26 @@ static void test_fis_with_default(TestCase *tc, void *data)
     (void)data; /* suppress unused argument warning */
 
     fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("dave")), rb_intern("dave"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("wert")), rb_intern("wert"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[0], rb_intern("name"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("dave"), 1.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("wert"), 1.0, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("dave")), rb_intern("dave"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("wert")), rb_intern("wert"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fis->fields[0], rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fis->fields[1], rb_intern("dave"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fis->fields[2], rb_intern("wert"), 1.0, F, F, F, F, F, F, F, F);
     Apnull(frt_fis_get_field(fis, rb_intern("random")));
     frt_fis_deref(fis);
 
     fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, T, T, F, T, F, F);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
     frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, T, F, F, T, T, F);
+    fis = frt_fis_new(FRT_STORE_COMPRESS, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
     frt_fis_deref(fis);
     fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, T, T, T, T, F, T);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
     frt_fis_deref(fis);
     fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, T, F, T, T, T, T);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, F, T, T, T, T);
     frt_fis_deref(fis);
 }
 
@@ -164,22 +169,23 @@ static void test_fis_rw(TestCase *tc, void *data)
                   FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_COMPRESS, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
-    fis->fields[0]->boost = 2.0;
-    fis->fields[1]->boost = 3.0;
-    fis->fields[2]->boost = 4.0;
-    fis->fields[3]->boost = 5.0;
+    fis->fields[1]->boost = 2.0;
+    fis->fields[2]->boost = 3.0;
+    fis->fields[3]->boost = 4.0;
+    fis->fields[4]->boost = 5.0;
     os = store->new_output(store, "fields");
     frt_fis_write(fis, os);
     frt_os_close(os);
 
     /* these fields won't be saved be will added again later */
-    Aiequal(4, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, T, F, T, T, T, T);
     Aiequal(5, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, T, F, T, T, T, T);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, F, T, F, T, T, T, T);
     Aiequal(6, fis->size);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, F, T, F, T, T, T, T);
+    Aiequal(7, fis->size);
 
     frt_fis_deref(fis);
 
@@ -190,15 +196,16 @@ static void test_fis_rw(TestCase *tc, void *data)
     Aiequal(FRT_INDEX_UNTOKENIZED_OMIT_NORMS, fis->index);
     Aiequal(FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS, fis->term_vector);
 
-    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 2.0, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 3.0, T, T, T, F, T, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("FFTTTTFT"), 4.0, F, T, T, T, T, F, T);
-    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTFTTTT"), 5.0, F, T, F, T, T, T, T);
-    Aiequal(4, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, T, F, T, T, T, T);
+    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F, F);
+    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, F, T, T, F, T, F, F);
+    do_field_prop_test(tc, fis->fields[2], rb_intern("TTTFFTTF"), 3.0, T, T, T, F, F, T, T, F);
+    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTTTTFT"), 4.0, F, F, T, T, T, T, F, T);
+    do_field_prop_test(tc, fis->fields[4], rb_intern("FFTFTTTT"), 5.0, F, F, T, F, T, T, T, T);
     Aiequal(5, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, T, F, T, T, T, T);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, F, T, F, T, T, T, T);
     Aiequal(6, fis->size);
+    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, F, T, F, T, T, T, T);
+    Aiequal(7, fis->size);
     str = frt_fis_to_s(fis);
     Asequal("default:\n"
             "  store: :yes\n"
@@ -206,15 +213,20 @@ static void test_fis_rw(TestCase *tc, void *data)
             "  term_vector: :with_positions_offsets\n"
             "fields:\n"
             "  FFFFFFFF:\n"
-            "    boost: 2.000000\n"
+            "    boost: 1.000000\n"
             "    store: :no\n"
             "    index: :no\n"
             "    term_vector: :no\n"
             "  TFTTFTFF:\n"
-            "    boost: 3.000000\n"
+            "    boost: 2.000000\n"
             "    store: :yes\n"
             "    index: :yes\n"
             "    term_vector: :yes\n"
+            "  TTTFFTTF:\n"
+            "    boost: 3.000000\n"
+            "    store: :compressed\n"
+            "    index: :untokenized\n"
+            "    term_vector: :with_positions\n"
             "  FFTTTTFT:\n"
             "    boost: 4.000000\n"
             "    store: :no\n"
@@ -302,7 +314,7 @@ static FrtFieldInfos *prepare_fis()
     frt_fis_add_field(fis, frt_fi_new(rb_intern("ignored"), FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("unstored"), FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
     frt_fis_add_field(fis, frt_fi_new(rb_intern("stored"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored_array"), FRT_STORE_YES, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored_array"), FRT_STORE_COMPRESS, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
     return fis;
 }
 
@@ -327,8 +339,8 @@ static void test_fields_rw_single(TestCase *tc, void *data)
    frt_doc_destroy(doc);
 
     Aiequal(6, fis->size);
-    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("binary")), rb_intern("binary"), 1.0, T, T, T, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("array")), rb_intern("array"), 1.0, T, T, T, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("binary")), rb_intern("binary"), 1.0, T, F, T, T, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("array")), rb_intern("array"), 1.0, T, F, T, T, F, F, F, F);
 
     fr = frt_fr_open(store, "_0", fis);
     doc = frt_fr_get_doc(fr, 0);
@@ -401,12 +413,12 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
     frt_fw_close(fw);
 
     Aiequal(106, fis->size);
-    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("binary")), rb_intern("binary"), 1.0, T, T, T, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("array")), rb_intern("array"), 1.0, T, T, T, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("binary")), rb_intern("binary"), 1.0, T, F, T, T, F, F, F, F);
+    do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("array")), rb_intern("array"), 1.0, T, F, T, T, F, F, F, F);
     for (i = 0; i < 100; i++) {
         char buf[100];
         sprintf(buf, "<<%d>>", i);
-        do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern(buf)), rb_intern(buf), 1.0, T, T, T, F, F, F, F);
+        do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern(buf)), rb_intern(buf), 1.0, T, F, T, T, F, F, F, F);
     }
 
     fr = frt_fr_open(store, "_as3", fis);

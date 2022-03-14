@@ -19,6 +19,7 @@ task :run_lucene_bench do
   puts "\n\n\tLucene:\n\n"
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
+  puts "title stored:"
   FileUtils.rm_rf('lucene_index')
   FileUtils.rm_f('LuceneIndexer.class')
   FileUtils.rm_f('LuceneSearch.class')
@@ -26,8 +27,9 @@ task :run_lucene_bench do
   lucene_version = '9.0.0'
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer.java")
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch.java")
-  system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer -reps 3")
+  system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer -reps 6")
   system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch")
+  puts "index size: #{Dir['lucene_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
   Dir.chdir(pwd)
 end
 
@@ -35,9 +37,28 @@ task :run_ferret_bench => :compile do
   puts "\n\n\tFerret:\n\n"
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
+  puts "title stored:"
   FileUtils.rm_rf('ferret_index')
-  system('bundle exec ruby ferret_indexer.rb -r 3')
+  system('bundle exec ruby ferret_indexer.rb -r 6')
   system('bundle exec ruby ferret_search.rb')
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "\ntitle stored and compressed:"
+  FileUtils.rm_rf('ferret_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 --comp')
+  system('bundle exec ruby ferret_search.rb')
+  puts "Compressed title index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "\ntitle and content stored:"
+  FileUtils.rm_rf('ferret_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 --store')
+  system('bundle exec ruby ferret_search.rb')
+  puts "Stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+
+  puts "\ntitle and content stored and compressed:"
+  FileUtils.rm_rf('ferret_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 --comp --store')
+  system('bundle exec ruby ferret_search.rb')
+  puts "Compressed stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+
   Dir.chdir(pwd)
 end
 

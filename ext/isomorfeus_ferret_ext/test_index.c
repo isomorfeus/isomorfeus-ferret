@@ -1365,7 +1365,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                                                   FRT_TERM_VECTOR_NO));
                     } else if (compressed_field == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(compressed_field,
-                                                  FRT_STORE_YES,
+                                                  FRT_STORE_COMPRESS,
                                                   FRT_INDEX_YES,
                                                   FRT_TERM_VECTOR_NO));
                     }
@@ -1427,6 +1427,8 @@ static void write_ir_test_docs(FrtStore *store)
     frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
                               FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_INDEX_YES,
+                              FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_COMPRESS, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
@@ -2123,6 +2125,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
 
     fi = frt_fis_get_field(iw->fis, tag);
     Aiequal(true, fi_is_stored(fi));
+    Aiequal(false, fi_is_compressed(fi));
     Aiequal(true, fi_is_indexed(fi));
     Aiequal(true, fi_is_tokenized(fi));
     Aiequal(true, fi_has_norms(fi));
