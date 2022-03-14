@@ -18,8 +18,6 @@ a c library available, but instead the usage is meant as ruby gem with a c exten
 
 It should work on *nixes and *nuxes and also works on Windows.
 
-However, the revival is still fresh and although it appears to be working, issues have to be expected.
-
 ## Documentation
 
 The documentations is currently scattered throughout the repo.
@@ -40,8 +38,7 @@ Examples can be found in the 'test' directory or in 'misc/ferret_vs_lucene'.
 
 - clone repo
 - bundle install
-- rake units
-- rake thread_safety
+- rake
 
 Ensure your locale is set to C.UTF-8, because the internal c tests don't know how to handle localized output.
 
