@@ -241,6 +241,7 @@ static off_t fs_length(FrtStore *store, const char *filename)
 
 static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
+    if (len == 0) { return; }
     if (len != write(os->file.fd, src, len)) {
         FRT_RAISE(FRT_IO_ERROR, "flushing src of length %d, <%s>", len,
               strerror(errno));

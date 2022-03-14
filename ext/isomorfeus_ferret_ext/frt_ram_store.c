@@ -179,6 +179,7 @@ static off_t ram_length(FrtStore *store, const char *filename)
 
 static void ramo_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
+    if (len == 0) { return; }
     frt_uchar *buffer;
     FrtRAMFile *rf = os->file.rf;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
