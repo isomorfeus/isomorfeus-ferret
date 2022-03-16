@@ -1477,12 +1477,12 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
         lazy_doc_add_field(lazy_doc, lazy_df, i);
     }
     /* correct the starts to their correct absolute positions */
+    const off_t abs_start = frt_is_pos(fdt_in);
     for (i = 0; i < stored_cnt; i++) {
         FrtLazyDocField *lazy_df = lazy_doc->fields[i];
         const int data_cnt = lazy_df->size;
-        const off_t start = frt_is_pos(fdt_in);
         for (j = 0; j < data_cnt; j++) {
-            lazy_df->data[j].start += start;
+            lazy_df->data[j].start += abs_start;
         }
     }
 
