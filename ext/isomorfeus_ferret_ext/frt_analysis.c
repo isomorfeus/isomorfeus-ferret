@@ -312,27 +312,27 @@ FrtTokenStream *frt_whitespace_tokenizer_new()
  */
 static FrtToken *mb_wst_next(FrtTokenStream *ts)
 {
-    int i;
+    int cp_len = 0;
+    OnigCodePoint cp;
+    rb_encoding *enc = ts->encoding;
+    char *end = ts->text + ts->length;
     char *start;
     char *t = ts->t;
-    wchar_t wchr;
-    mbstate_t *state = &(MBTS(ts)->state);
 
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && iswspace(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
-    }
-    if (wchr == 0) {
-        return NULL;
+    if (t == end) { return NULL; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_len > 0 && rb_enc_isspace(cp, enc)) {
+        t += cp_len;
+        if (t == end) { return NULL; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
-    t += i;
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && !iswspace(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
+
+    while (cp_len > 0 && !rb_enc_isspace(cp, enc)) {
+        t += cp_len;
+        if (t == end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
@@ -449,30 +449,26 @@ FrtTokenStream *frt_letter_tokenizer_new()
  */
 static FrtToken *mb_lt_next(FrtTokenStream *ts)
 {
-    int cp_len;
+    int cp_len = 0;
     OnigCodePoint cp;
     rb_encoding *enc = ts->encoding;
-    char *end = ts->text + ts->length - 1;
+    char *end = ts->text + ts->length;
     char *start;
     char *t = ts->t;
-    char *tt = t;
 
+    if (t == end) { return NULL; }
     cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    while (cp_len > 0 && t < end && !rb_enc_isalpha(cp, enc)) {
+    while (cp_len > 0 && !rb_enc_isalpha(cp, enc)) {
         t += cp_len;
+        if (t == end) { return NULL; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
-
-    if (t == 0) {
-        return NULL;
     }
 
     start = t;
-    if (tt != t) {
-        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
-    while (t != 0 && rb_enc_isalpha(cp, enc)) {
+
+    while (cp_len > 0 && rb_enc_isalpha(cp, enc)) {
         t += cp_len;
+        if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     ts->t = t;
@@ -484,40 +480,37 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
  */
 static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 {
-    int i;
+
+    int cp_len = 0;
+    OnigCodePoint cp, cpl;
+    rb_encoding *enc = ts->encoding;
+    char buf[FRT_MAX_WORD_SIZE + 1];
+    char *b = buf;
+    char *buf_end = buf + FRT_MAX_WORD_SIZE - rb_enc_mbmaxlen(enc); // space for longest possible mulibyte at the end
+    char *end = ts->text + ts->length;
     char *start;
     char *t = ts->t;
-    wchar_t wchr;
-    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *w, *w_end;
-    mbstate_t *state = &(MBTS(ts)->state);
 
-    w = wbuf;
-    w_end = &wbuf[FRT_MAX_WORD_SIZE];
-
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && !iswalpha(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
-    }
-    if (wchr == 0) {
-        return NULL;
+    if (t == end) { return NULL; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_len > 0 && !rb_enc_isalpha(cp, enc)) {
+        t += cp_len;
+        if (t == end) { return NULL; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
-    t += i;
-    *w++ = towlower(wchr);
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && iswalpha(wchr)) {
-        if (w < w_end) {
-            *w++ = towlower(wchr);
-        }
-        t += i;
-        i = mb_next_char(&wchr, t, state);
+
+    while (cp_len > 0 && rb_enc_isalpha(cp, enc)) {
+        cpl = rb_enc_tolower(cp, enc);
+        b += rb_enc_mbcput(cpl, b, enc);
+        t += cp_len;
+        if (t == end || b >= buf_end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
-    *w = 0;
+    *b = 0;
     ts->t = t;
-    return w_tk_set(&(CTS(ts)->token), wbuf, (off_t)(start - ts->text),
-                    (off_t)(t - ts->text), 1);
+    return frt_tk_set(&(CTS(ts)->token), buf, b - buf,(off_t)(start - ts->text), (off_t)(t - ts->text), 1);
 }
 
 FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
