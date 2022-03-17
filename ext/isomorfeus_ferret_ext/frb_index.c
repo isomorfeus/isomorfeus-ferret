@@ -1,6 +1,7 @@
 #include "frt_index.h"
 #include "isomorfeus_ferret.h"
 #include <ruby/st.h>
+#include <ruby/encoding.h>
 
 VALUE mIndex;
 
@@ -1455,17 +1456,17 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
                     df->destroy_data = true;
                     for (i = 0; i < RARRAY_LEN(value); i++) {
                         val = rb_obj_as_string(RARRAY_PTR(value)[i]);
-                        frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                        frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val), rb_enc_get(val));
                     }
                 }
                 break;
             case T_STRING:
-                frt_df_add_data_len(df, rs2s(value), RSTRING_LEN(value));
+                frt_df_add_data_len(df, rs2s(value), RSTRING_LEN(value), rb_enc_get(value));
                 break;
             default:
                 val = rb_obj_as_string(value);
                 df->destroy_data = true;
-                frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val), rb_enc_get(val));
                 break;
         }
         frt_doc_add_field(doc, df);
@@ -1495,25 +1496,23 @@ frb_get_doc(VALUE rdoc)
                 df->destroy_data = true;
                 for (i = 0; i < RARRAY_LEN(rdoc); i++) {
                     val = rb_obj_as_string(RARRAY_PTR(rdoc)[i]);
-                    frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val));
+                    frt_df_add_data_len(df, rstrdup(val), RSTRING_LEN(val), rb_enc_get(val));
                 }
                 frt_doc_add_field(doc, df);
             }
             break;
         case T_SYMBOL:
             /* TODO: clean up this ugly cast */
-            df = frt_df_add_data(frt_df_new(fsym_content), (char *)rb_id2name(SYM2ID(rdoc)));
+            df = frt_df_add_data(frt_df_new(fsym_content), (char *)rb_id2name(SYM2ID(rdoc)), rb_enc_get(rdoc));
             frt_doc_add_field(doc, df);
             break;
         case T_STRING:
-            df = frt_df_add_data_len(frt_df_new(fsym_content), rs2s(rdoc),
-                                 RSTRING_LEN(rdoc));
+            df = frt_df_add_data_len(frt_df_new(fsym_content), rs2s(rdoc), RSTRING_LEN(rdoc), rb_enc_get(rdoc));
             frt_doc_add_field(doc, df);
             break;
         default:
             val = rb_obj_as_string(rdoc);
-            df = frt_df_add_data_len(frt_df_new(fsym_content), rstrdup(val),
-                                 RSTRING_LEN(val));
+            df = frt_df_add_data_len(frt_df_new(fsym_content), rstrdup(val), RSTRING_LEN(val), rb_enc_get(val));
             df->destroy_data = true;
             frt_doc_add_field(doc, df);
             break;
@@ -1957,12 +1956,16 @@ frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df)
         if (lazy_df->size == 1) {
             char *data = frt_lazy_df_get_data(lazy_df, 0);
             rdata = rb_str_new(data, lazy_df->len);
+            rb_enc_associate(rdata, lazy_df->data[0].encoding);
         } else {
             int i;
+            VALUE rstr;
             rdata = rb_ary_new2(lazy_df->size);
             for (i = 0; i < lazy_df->size; i++) {
                 char *data = frt_lazy_df_get_data(lazy_df, i);
-                rb_ary_store(rdata, i, rb_str_new(data, lazy_df->data[i].length));
+                rstr = rb_str_new(data, lazy_df->data[i].length);
+                rb_enc_associate(rstr, lazy_df->data[i].encoding);
+                rb_ary_store(rdata, i, rstr);
             }
         }
         rb_hash_aset(self, rkey, rdata);

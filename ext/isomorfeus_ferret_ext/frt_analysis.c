@@ -105,9 +105,11 @@ void frt_ts_deref(FrtTokenStream *ts)
     }
 }
 
-static FrtTokenStream *ts_reset(FrtTokenStream *ts, char *text)
+static FrtTokenStream *ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
     ts->t = ts->text = text;
+    ts->length = strlen(text);
+    ts->encoding = encoding;
     return ts;
 }
 
@@ -168,10 +170,10 @@ static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
     return num_bytes;
 }
 
-static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text)
+static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
     FRT_ZEROSET(&(MBTS(ts)->state), mbstate_t);
-    ts_reset(ts, text);
+    ts_reset(ts, text, encoding);
     return ts;
 }
 
@@ -210,21 +212,17 @@ static void frt_a_standard_destroy_i(FrtAnalyzer *a)
     free(a);
 }
 
-static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a,
-                                      FrtSymbol field,
-                                      char *text)
+static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding)
 {
     FrtTokenStream *ts;
     (void)field;
     ts = frt_ts_clone(a->current_ts);
-    return ts->reset(ts, text);
+    return ts->reset(ts, text, encoding);
 }
 
 FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
                        void (*destroy_i)(FrtAnalyzer *a),
-                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a,
-                                              FrtSymbol field,
-                                              char *text))
+                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding))
 {
     FrtAnalyzer *a = FRT_ALLOC(FrtAnalyzer);
     a->current_ts = ts;
@@ -451,28 +449,31 @@ FrtTokenStream *frt_letter_tokenizer_new()
  */
 static FrtToken *mb_lt_next(FrtTokenStream *ts)
 {
-    int i;
+    int cp_len;
+    OnigCodePoint cp;
+    rb_encoding *enc = ts->encoding;
+    char *end = ts->text + ts->length - 1;
     char *start;
     char *t = ts->t;
-    wchar_t wchr;
-    mbstate_t *state = &(MBTS(ts)->state);
+    char *tt = t;
 
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && !iswalpha(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_len > 0 && t < end && !rb_enc_isalpha(cp, enc)) {
+        t += cp_len;
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    if (wchr == 0) {
+    if (t == 0) {
         return NULL;
     }
 
     start = t;
-    t += i;
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && iswalpha(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
+    if (tt != t) {
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    }
+    while (t != 0 && rb_enc_isalpha(cp, enc)) {
+        t += cp_len;
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
@@ -599,9 +600,8 @@ static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
 static FrtTokenStream *std_ts_new()
 {
     FrtTokenStream *ts = frt_ts_new(FrtStandardTokenizer);
-
-    ts->clone_i     = &std_ts_clone_i;
-    ts->next        = &std_next;
+    ts->clone_i        = &std_ts_clone_i;
+    ts->next           = &std_next;
 
     return ts;
 }
@@ -1035,9 +1035,8 @@ static FrtTokenStream *legacy_std_ts_clone_i(FrtTokenStream *orig_ts)
 static FrtTokenStream *legacy_std_ts_new()
 {
     FrtTokenStream *ts = frt_ts_new(FrtLegacyStandardTokenizer);
-
-    ts->clone_i     = &legacy_std_ts_clone_i;
-    ts->next        = &legacy_std_next;
+    ts->clone_i        = &legacy_std_ts_clone_i;
+    ts->next           = &legacy_std_next;
 
     return ts;
 }
@@ -1086,9 +1085,9 @@ static FrtTokenStream *filter_clone_i(FrtTokenStream *ts)
     return frt_filter_clone_size(ts, sizeof(FrtTokenFilter));
 }
 
-static FrtTokenStream *filter_reset(FrtTokenStream *ts, char *text)
+static FrtTokenStream *filter_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
-    TkFilt(ts)->sub_ts->reset(TkFilt(ts)->sub_ts, text);
+    TkFilt(ts)->sub_ts->reset(TkFilt(ts)->sub_ts, text, encoding);
     return ts;
 }
 
@@ -1226,24 +1225,24 @@ static FrtToken *mf_next(FrtTokenStream *ts)
     return tk;
 }
 
-static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text)
+static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
     FrtMultiMapper *mm = MFilt(ts)->mapper;
     if (mm->d_size == 0) {
         frt_mulmap_compile(MFilt(ts)->mapper);
     }
-    filter_reset(ts, text);
+    filter_reset(ts, text, encoding);
     return ts;
 }
 
 FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts   = tf_new(FrtMappingFilter, sub_ts);
-    MFilt(ts)->mapper = frt_mulmap_new();
-    ts->next          = &mf_next;
-    ts->destroy_i     = &mf_destroy_i;
-    ts->clone_i       = &mf_clone_i;
-    ts->reset         = &mf_reset;
+    FrtTokenStream *ts = tf_new(FrtMappingFilter, sub_ts);
+    MFilt(ts)->mapper  = frt_mulmap_new();
+    ts->next           = &mf_next;
+    ts->destroy_i      = &mf_destroy_i;
+    ts->clone_i        = &mf_clone_i;
+    ts->reset          = &mf_reset;
     return ts;
 }
 
@@ -1328,8 +1327,8 @@ static FrtToken *hf_next(FrtTokenStream *ts)
 FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts)
 {
     FrtTokenStream *ts = tf_new(FrtHyphenFilter, sub_ts);
-    ts->next        = &hf_next;
-    ts->clone_i     = &hf_clone_i;
+    ts->next           = &hf_next;
+    ts->clone_i        = &hf_clone_i;
     return ts;
 }
 
@@ -1606,14 +1605,13 @@ static void pfa_destroy_i(FrtAnalyzer *self)
     free(self);
 }
 
-static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self,
-                               FrtSymbol field, char *text)
+static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self, FrtSymbol field, char *text, rb_encoding *encoding)
 {
     FrtAnalyzer *a = (FrtAnalyzer *)frt_h_get(PFA(self)->dict, (void *)field);
     if (a == NULL) {
         a = PFA(self)->default_a;
     }
-    return frt_a_get_ts(a, field, text);
+    return frt_a_get_ts(a, field, text, encoding);
 }
 
 static void pfa_sub_a_destroy_i(void *p)

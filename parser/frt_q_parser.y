@@ -91,6 +91,7 @@
 #include "frt_except.h"
 #include "frt_search.h"
 #include "frt_array.h"
+#include <ruby/encoding.h>
 
 typedef struct Phrase {
     int             size;
@@ -120,7 +121,7 @@ int frt_qp_default_fuzzy_pre_len = 0;
 }
 %{
 static int yylex(YYSTYPE *lvalp, FrtQParser *qp);
-static int yyerror(FrtQParser *qp, char const *msg);
+static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg);
 
 #define PHRASE_INIT_CAPA 4
 static FrtQuery *get_bool_q(FrtBCArray *bca);
@@ -128,29 +129,26 @@ static FrtQuery *get_bool_q(FrtBCArray *bca);
 static FrtBCArray *first_cls(FrtBooleanClause *boolean_clause);
 static FrtBCArray *add_and_cls(FrtBCArray *bca, FrtBooleanClause *clause);
 static FrtBCArray *add_or_cls(FrtBCArray *bca, FrtBooleanClause *clause);
-static FrtBCArray *add_default_cls(FrtQParser *qp, FrtBCArray *bca,
-                                FrtBooleanClause *clause);
+static FrtBCArray *add_default_cls(FrtQParser *qp, FrtBCArray *bca, FrtBooleanClause *clause);
 static void bca_destroy(FrtBCArray *bca);
 
 static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word);
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
-                          char *slop);
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding);
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop, rb_encoding *encoding);
 static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
 
 static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
 
-static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop);
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop, rb_encoding *encoding);
 
 static Phrase *ph_first_word(char *word);
 static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
-                      bool inc_lower, bool inc_upper);
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper);
 
 static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
@@ -205,7 +203,7 @@ static void qp_pop_fields(FrtQParser *self);
 %}
 %expect 1
 %define api.pure full
-%parse-param { FrtQParser *qp }
+%parse-param { FrtQParser *qp } { rb_encoding *encoding }
 %lex-param   { FrtQParser *qp }
 %token <str>    QWRD WILD_STR
 %type <query>   q bool_q boosted_q term_q wild_q field_q phrase_q range_q
@@ -246,9 +244,9 @@ q         : term_q
           | range_q
           | wild_q
           ;
-term_q    : QWRD                      { FLDS($$, get_term_q(qp, field, $1)); Y}
-          | QWRD '~' QWRD %prec HIGH  { FLDS($$, get_fuzzy_q(qp, field, $1, $3)); Y}
-          | QWRD '~' %prec LOW        { FLDS($$, get_fuzzy_q(qp, field, $1, NULL)); Y}
+term_q    : QWRD                      { FLDS($$, get_term_q(qp, field, $1, encoding)); Y}
+          | QWRD '~' QWRD %prec HIGH  { FLDS($$, get_fuzzy_q(qp, field, $1, $3, encoding)); Y}
+          | QWRD '~' %prec LOW        { FLDS($$, get_fuzzy_q(qp, field, $1, NULL, encoding)); Y}
           ;
 wild_q    : WILD_STR                  { FLDS($$, get_wild_q(qp, field, $1)); Y}
           ;
@@ -260,8 +258,8 @@ field_q   : field ':' q { qp_pop_fields(qp); }
 field     : QWRD                      { $$ = first_field(qp, $1); }
           | field '|' QWRD            { $$ = add_field(qp, $3);}
           ;
-phrase_q  : '"' ph_words '"'          { $$ = get_phrase_q(qp, $2, NULL); }
-          | '"' ph_words '"' '~' QWRD { $$ = get_phrase_q(qp, $2, $5); }
+phrase_q  : '"' ph_words '"'          { $$ = get_phrase_q(qp, $2, NULL, encoding); }
+          | '"' ph_words '"' '~' QWRD { $$ = get_phrase_q(qp, $2, $5, encoding); }
           | '"' '"'                   { $$ = NULL; }
           | '"' '"' '~' QWRD          { $$ = NULL; (void)$4;}
           ;
@@ -446,8 +444,9 @@ static int yylex(YYSTYPE *lvalp, FrtQParser *qp)
  * It is responsible for clearing any memory that was allocated during the
  * parsing process.
  */
-static int yyerror(FrtQParser *qp, char const *msg)
+static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg)
 {
+    (void)encoding;
     qp->destruct = true;
     if (!qp->handle_parse_errors) {
         char buf[1024];
@@ -477,22 +476,22 @@ static int yyerror(FrtQParser *qp, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text)
+static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text, rb_encoding *encoding)
 {
     FrtTokenStream *ts;
     if (frt_hs_exists(qp->tokenized_fields, (void *)field)) {
         ts = (FrtTokenStream *)frt_h_get(qp->ts_cache, (void *)field);
         if (!ts) {
-            ts = frt_a_get_ts(qp->analyzer, field, text);
+            ts = frt_a_get_ts(qp->analyzer, field, text, encoding);
             frt_h_set(qp->ts_cache, (void *)field, ts);
         }
         else {
-            ts->reset(ts, text);
+            ts->reset(ts, text, encoding);
         }
     }
     else {
         ts = qp->non_tokenizer;
-        ts->reset(ts, text);
+        ts->reset(ts, text, encoding);
     }
     return ts;
 }
@@ -649,11 +648,11 @@ static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur)
  * what we want as it will match any documents containing the same email
  * address and tokenized with the same tokenizer.
  */
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding)
 {
     FrtQuery *q;
     FrtToken *token;
-    FrtTokenStream *stream = get_cached_ts(qp, field, word);
+    FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
 
     if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
@@ -687,11 +686,11 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str)
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str, rb_encoding *encoding)
 {
     FrtQuery *q;
     FrtToken *token;
-    FrtTokenStream *stream = get_cached_ts(qp, field, word);
+    FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
 
     if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
@@ -918,7 +917,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str, rb_encoding *encoding)
 {
     const int pos_cnt = phrase->size;
     FrtQuery *q = NULL;
@@ -927,7 +926,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
         char **words = phrase->positions[0].terms;
         const int word_count = frt_ary_size(words);
         if (word_count == 1) {
-            q = get_term_q(qp, field, words[0]);
+            q = get_term_q(qp, field, words[0], encoding);
         }
         else {
             int i;
@@ -936,7 +935,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
             char *last_word = NULL;
 
             for (i = 0; i < word_count; i++) {
-                token = frt_ts_next(get_cached_ts(qp, field, words[i]));
+                token = frt_ts_next(get_cached_ts(qp, field, words[i], encoding));
                 if (token) {
                     free(words[i]);
                     last_word = words[i] = frt_estrdup(token->text);
@@ -988,7 +987,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
             pos_inc += phrase->positions[i].pos + 1; /* Actually holds pos_inc*/
 
             if (word_count == 1) {
-                stream = get_cached_ts(qp, field, words[0]);
+                stream = get_cached_ts(qp, field, words[0], encoding);
                 while ((token = frt_ts_next(stream))) {
                     if (token->pos_inc) {
                         frt_phq_add_term(q, token->text,
@@ -1005,7 +1004,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
                 bool added_position = false;
 
                 for (j = 0; j < word_count; j++) {
-                    stream = get_cached_ts(qp, field, words[j]);
+                    stream = get_cached_ts(qp, field, words[j], encoding);
                     if ((token = frt_ts_next(stream))) {
                         if (!added_position) {
                             frt_phq_add_term(q, token->text,
@@ -1029,10 +1028,10 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
  * the query parser as the all PhraseQuery didn't work well for this. Once the
  * PhraseQuery has been built the Phrase object needs to be destroyed.
  */
-static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str, rb_encoding *encoding)
 {
     FrtQuery *volatile q = NULL;
-    FLDS(q, get_phrase_query(qp, field, phrase, slop_str));
+    FLDS(q, get_phrase_query(qp, field, phrase, slop_str, encoding));
     ph_destroy(phrase);
     return q;
 }
@@ -1060,12 +1059,12 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, 
  * range queries.
 
     if (from) {
-        FrtTokenStream *stream = get_cached_ts(qp, field, from);
+        FrtTokenStream *stream = get_cached_ts(qp, field, from, encoding);
         FrtToken *token = frt_ts_next(stream);
         from = token ? frt_estrdup(token->text) : NULL;
     }
     if (to) {
-        FrtTokenStream *stream = get_cached_ts(qp, field, to);
+        FrtTokenStream *stream = get_cached_ts(qp, field, to, encoding);
         FrtToken *token = frt_ts_next(stream);
         to = token ? frt_estrdup(token->text) : NULL;
     }
@@ -1305,12 +1304,12 @@ char *frt_qp_clean_str(char *str)
  * analyzer. It then turns these tokens (if any) into a boolean query. If it
  * fails to find any tokens, this method will return NULL.
  */
-static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
+static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str, rb_encoding *encoding)
 {
     FrtQuery *volatile q = NULL;
     qp->recovering = true;
     assert(qp->fields_top->next == NULL);
-    FLDS(q, get_term_q(qp, field, str));
+    FLDS(q, get_term_q(qp, field, str, encoding));
     return q;
 }
 
@@ -1322,7 +1321,7 @@ static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
  * and turns them into a boolean query on the default fields.
  */
 
-FrtQuery *qp_parse(FrtQParser *self, char *qstr)
+FrtQuery *qp_parse(FrtQParser *self, char *qstr, rb_encoding *encoding)
 {
     FrtQuery *result = NULL;
     frt_mutex_lock(&self->mutex);
@@ -1340,12 +1339,12 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
     self->fields = self->def_fields;
     self->result = NULL;
 
-    if (0 == yyparse(self)) {
+    if (0 == yyparse(self, encoding)) {
       result = self->result;
     }
     if (!result && self->handle_parse_errors) {
         self->destruct = false;
-        result = qp_get_bad_query(self, self->qstr);
+        result = qp_get_bad_query(self, self->qstr, encoding);
     }
     if (self->destruct && !self->handle_parse_errors) {
         FRT_RAISE(FRT_PARSE_ERROR, frt_xmsg_buffer);

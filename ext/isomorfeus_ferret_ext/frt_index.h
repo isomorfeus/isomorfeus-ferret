@@ -22,8 +22,7 @@ typedef struct FrtDeleter FrtDeleter;
  *
  ****************************************************************************/
 
-typedef struct FrtConfig
-{
+typedef struct FrtConfig {
     int chunk_size;
     int max_buffer_memory;
     int index_interval;
@@ -541,8 +540,7 @@ typedef struct FrtTVTerm
  ****************************************************************************/
 
 #define FRT_TV_FIELD_INIT_CAPA 8
-typedef struct FrtTermVector
-{
+typedef struct FrtTermVector {
     int       field_num;
     FrtSymbol field;
     int       term_cnt;
@@ -563,16 +561,15 @@ extern FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term);
  ****************************************************************************/
 
 /* * * FrtLazyDocField * * */
-typedef struct FrtLazyDocFieldData
-{
+typedef struct FrtLazyDocFieldData {
     off_t start;
-    int   length;
+    int length;
+    rb_encoding  * encoding;
     char *text;
 } FrtLazyDocFieldData;
 
 typedef struct FrtLazyDoc FrtLazyDoc;
-typedef struct FrtLazyDocField
-{
+typedef struct FrtLazyDocField {
     FrtSymbol           name;
     FrtLazyDocFieldData *data;
     FrtLazyDoc          *doc;
@@ -585,8 +582,7 @@ extern char *frt_lazy_df_get_data(FrtLazyDocField *self, int i);
 extern void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len);
 
 /* * * FrtLazyDoc * * */
-struct FrtLazyDoc
-{
+struct FrtLazyDoc {
     FrtHash *field_dictionary;
     int size;
     FrtLazyDocField **fields;
@@ -685,26 +681,21 @@ struct FrtIndexReader
 {
     int                 (*num_docs)(FrtIndexReader *ir);
     int                 (*max_doc)(FrtIndexReader *ir);
-    FrtDocument           *(*get_doc)(FrtIndexReader *ir, int doc_num);
-    FrtLazyDoc            *(*get_lazy_doc)(FrtIndexReader *ir, int doc_num);
-    frt_uchar              *(*get_norms)(FrtIndexReader *ir, int field_num);
-    frt_uchar              *(*get_norms_into)(FrtIndexReader *ir, int field_num,
-                                          frt_uchar *buf);
-    FrtTermEnum           *(*terms)(FrtIndexReader *ir, int field_num);
-    FrtTermEnum           *(*terms_from)(FrtIndexReader *ir, int field_num,
-                                      const char *term);
-    int                 (*doc_freq)(FrtIndexReader *ir, int field_num,
-                                    const char *term);
-    FrtTermDocEnum        *(*term_docs)(FrtIndexReader *ir);
-    FrtTermDocEnum        *(*term_positions)(FrtIndexReader *ir);
-    FrtTermVector         *(*term_vector)(FrtIndexReader *ir, int doc_num,
-                                          FrtSymbol field);
-    FrtHash    *(*term_vectors)(FrtIndexReader *ir, int doc_num);
+    FrtDocument         *(*get_doc)(FrtIndexReader *ir, int doc_num);
+    FrtLazyDoc          *(*get_lazy_doc)(FrtIndexReader *ir, int doc_num);
+    frt_uchar           *(*get_norms)(FrtIndexReader *ir, int field_num);
+    frt_uchar           *(*get_norms_into)(FrtIndexReader *ir, int field_num, frt_uchar *buf);
+    FrtTermEnum         *(*terms)(FrtIndexReader *ir, int field_num);
+    FrtTermEnum         *(*terms_from)(FrtIndexReader *ir, int field_num, const char *term);
+    int                 (*doc_freq)(FrtIndexReader *ir, int field_num, const char *term);
+    FrtTermDocEnum      *(*term_docs)(FrtIndexReader *ir);
+    FrtTermDocEnum      *(*term_positions)(FrtIndexReader *ir);
+    FrtTermVector       *(*term_vector)(FrtIndexReader *ir, int doc_num, FrtSymbol field);
+    FrtHash             *(*term_vectors)(FrtIndexReader *ir, int doc_num);
     bool                (*is_deleted)(FrtIndexReader *ir, int doc_num);
     bool                (*has_deletions)(FrtIndexReader *ir);
     void                (*acquire_write_lock)(FrtIndexReader *ir);
-    void                (*set_norm_i)(FrtIndexReader *ir, int doc_num,
-                                      int field_num, frt_uchar val);
+    void                (*set_norm_i)(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val);
     void                (*delete_doc_i)(FrtIndexReader *ir, int doc_num);
     void                (*undelete_all_i)(FrtIndexReader *ir);
     void                (*set_deleter_i)(FrtIndexReader *ir, FrtDeleter *dlr);
@@ -712,16 +703,16 @@ struct FrtIndexReader
     void                (*commit_i)(FrtIndexReader *ir);
     void                (*close_i)(FrtIndexReader *ir);
     int                 ref_cnt;
-    FrtDeleter            *deleter;
-    FrtStore              *store;
-    FrtLock               *write_lock;
-    FrtSegmentInfos       *sis;
-    FrtFieldInfos         *fis;
-    FrtHash    *cache;
-    FrtHash    *field_index_cache;
-    frt_mutex_t             field_index_mutex;
-    frt_uchar              *fake_norms;
-    frt_mutex_t             mutex;
+    FrtDeleter          *deleter;
+    FrtStore            *store;
+    FrtLock             *write_lock;
+    FrtSegmentInfos     *sis;
+    FrtFieldInfos       *fis;
+    FrtHash             *cache;
+    FrtHash             *field_index_cache;
+    frt_mutex_t         field_index_mutex;
+    frt_uchar           *fake_norms;
+    frt_mutex_t         mutex;
     bool                has_changes : 1;
     bool                is_stale    : 1;
     bool                is_owner    : 1;

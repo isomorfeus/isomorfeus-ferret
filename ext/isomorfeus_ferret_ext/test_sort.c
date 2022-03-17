@@ -17,10 +17,11 @@ typedef struct SortTestData {
 static void add_sort_test_data(SortTestData *std, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(search), (char *)std->search));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(string), (char *)std->string));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(integer), (char *)std->integer));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flt), (char *)std->flt));
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(search), (char *)std->search, enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(string), (char *)std->string, enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(integer), (char *)std->integer, enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flt), (char *)std->flt, enc));
 
     sscanf(std->flt, "%f", &doc->boost);
 

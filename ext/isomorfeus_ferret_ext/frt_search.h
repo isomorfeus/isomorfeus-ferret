@@ -5,6 +5,7 @@
 #include "frt_field_index.h"
 #include "frt_bitvector.h"
 #include "frt_similarity.h"
+#include <ruby/encoding.h>
 
 typedef struct FrtQuery FrtQuery;
 typedef struct FrtWeight FrtWeight;
@@ -915,7 +916,7 @@ extern FrtQParser *frt_qp_new(FrtAnalyzer *analyzer);
 extern void frt_qp_add_field(FrtQParser *self, FrtSymbol field,
                              bool is_default, bool is_tokenized);
 extern void frt_qp_destroy(FrtQParser *self);
-extern FrtQuery *qp_parse(FrtQParser *self, char *qstr);
+extern FrtQuery *qp_parse(FrtQParser *self, char *qstr, rb_encoding *encoding);
 extern char *frt_qp_clean_str(char *str);
 
 extern float frt_qp_default_fuzzy_min_sim;

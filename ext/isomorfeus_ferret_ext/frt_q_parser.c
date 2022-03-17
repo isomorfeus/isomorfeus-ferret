@@ -161,6 +161,7 @@
 #include "frt_except.h"
 #include "frt_search.h"
 #include "frt_array.h"
+#include <ruby/encoding.h>
 
 typedef struct Phrase {
     int             size;
@@ -180,7 +181,7 @@ float frt_qp_default_fuzzy_min_sim = 0.5;
 int frt_qp_default_fuzzy_pre_len = 0;
 
 
-#line 184 "frt_q_parser.c"
+#line 185 "frt_q_parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -237,7 +238,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 113 "frt_q_parser.y"
+#line 114 "frt_q_parser.y"
 
     FrtQuery *query;
     FrtBooleanClause *bcls;
@@ -246,7 +247,7 @@ union YYSTYPE
     Phrase *phrase;
     char *str;
 
-#line 250 "frt_q_parser.c"
+#line 251 "frt_q_parser.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -257,7 +258,7 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yyparse (FrtQParser *qp);
+int yyparse (FrtQParser *qp, rb_encoding *encoding);
 
 
 
@@ -312,10 +313,10 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 121 "frt_q_parser.y"
+#line 122 "frt_q_parser.y"
 
 static int yylex(YYSTYPE *lvalp, FrtQParser *qp);
-static int yyerror(FrtQParser *qp, char const *msg);
+static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg);
 
 #define PHRASE_INIT_CAPA 4
 static FrtQuery *get_bool_q(FrtBCArray *bca);
@@ -323,29 +324,26 @@ static FrtQuery *get_bool_q(FrtBCArray *bca);
 static FrtBCArray *first_cls(FrtBooleanClause *boolean_clause);
 static FrtBCArray *add_and_cls(FrtBCArray *bca, FrtBooleanClause *clause);
 static FrtBCArray *add_or_cls(FrtBCArray *bca, FrtBooleanClause *clause);
-static FrtBCArray *add_default_cls(FrtQParser *qp, FrtBCArray *bca,
-                                FrtBooleanClause *clause);
+static FrtBCArray *add_default_cls(FrtQParser *qp, FrtBCArray *bca, FrtBooleanClause *clause);
 static void bca_destroy(FrtBCArray *bca);
 
 static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word);
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word,
-                          char *slop);
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding);
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop, rb_encoding *encoding);
 static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
 
 static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
 
-static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop);
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop, rb_encoding *encoding);
 
 static Phrase *ph_first_word(char *word);
 static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to,
-                      bool inc_lower, bool inc_upper);
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper);
 
 static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
@@ -398,7 +396,7 @@ static void qp_pop_fields(FrtQParser *self);
   FRT_XENDTRY\
   if (qp->destruct) Y;
 
-#line 402 "frt_q_parser.c"
+#line 400 "frt_q_parser.c"
 
 
 #ifdef short
@@ -781,12 +779,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   226,   226,   227,   229,   230,   231,   232,   234,   235,
-     236,   238,   239,   241,   242,   243,   244,   245,   246,   247,
-     249,   250,   251,   253,   255,   255,   257,   257,   257,   260,
-     261,   263,   264,   265,   266,   268,   269,   270,   271,   272,
-     274,   275,   276,   277,   278,   279,   280,   281,   282,   283,
-     284,   285
+       0,   224,   224,   225,   227,   228,   229,   230,   232,   233,
+     234,   236,   237,   239,   240,   241,   242,   243,   244,   245,
+     247,   248,   249,   251,   253,   253,   255,   255,   255,   258,
+     259,   261,   262,   263,   264,   266,   267,   268,   269,   270,
+     272,   273,   274,   275,   276,   277,   278,   279,   280,   281,
+     282,   283
 };
 #endif
 
@@ -969,7 +967,7 @@ enum { YYENOMEM = -2 };
       }                                                           \
     else                                                          \
       {                                                           \
-        yyerror (qp, YY_("syntax error: cannot back up")); \
+        yyerror (qp, encoding, YY_("syntax error: cannot back up")); \
         YYERROR;                                                  \
       }                                                           \
   while (0)
@@ -1002,7 +1000,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Kind, Value, qp); \
+                  Kind, Value, qp, encoding); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -1014,11 +1012,12 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, FrtQParser *qp)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, FrtQParser *qp, rb_encoding *encoding)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
   YY_USE (qp);
+  YY_USE (encoding);
   if (!yyvaluep)
     return;
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
@@ -1033,12 +1032,12 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, FrtQParser *qp)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, FrtQParser *qp, rb_encoding *encoding)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yykind, yyvaluep, qp);
+  yy_symbol_value_print (yyo, yykind, yyvaluep, qp, encoding);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1072,7 +1071,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, FrtQParser *qp)
+                 int yyrule, FrtQParser *qp, rb_encoding *encoding)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1085,7 +1084,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
-                       &yyvsp[(yyi + 1) - (yynrhs)], qp);
+                       &yyvsp[(yyi + 1) - (yynrhs)], qp, encoding);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1093,7 +1092,7 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, qp); \
+    yy_reduce_print (yyssp, yyvsp, Rule, qp, encoding); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1134,10 +1133,11 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, FrtQParser *qp)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, FrtQParser *qp, rb_encoding *encoding)
 {
   YY_USE (yyvaluep);
   YY_USE (qp);
+  YY_USE (encoding);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
@@ -1146,67 +1146,67 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL_bool_q: /* bool_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1152 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_bool_clss: /* bool_clss  */
-#line 223 "frt_q_parser.y"
+#line 221 "frt_q_parser.y"
             { if (((*yyvaluep).bclss) && qp->destruct) bca_destroy(((*yyvaluep).bclss)); }
 #line 1158 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_bool_cls: /* bool_cls  */
-#line 222 "frt_q_parser.y"
+#line 220 "frt_q_parser.y"
             { if (((*yyvaluep).bcls) && qp->destruct) frt_bc_deref(((*yyvaluep).bcls)); }
 #line 1164 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_boosted_q: /* boosted_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1170 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_q: /* q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1176 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_term_q: /* term_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1182 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_wild_q: /* wild_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1188 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_field_q: /* field_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1194 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_phrase_q: /* phrase_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1200 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_ph_words: /* ph_words  */
-#line 224 "frt_q_parser.y"
+#line 222 "frt_q_parser.y"
             { if (((*yyvaluep).phrase) && qp->destruct) ph_destroy(((*yyvaluep).phrase)); }
 #line 1206 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_range_q: /* range_q  */
-#line 221 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
 #line 1212 "frt_q_parser.c"
         break;
@@ -1227,7 +1227,7 @@ yydestruct (const char *yymsg,
 `----------*/
 
 int
-yyparse (FrtQParser *qp)
+yyparse (FrtQParser *qp, rb_encoding *encoding)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -1482,265 +1482,265 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* bool_q: %empty  */
-#line 226 "frt_q_parser.y"
+#line 224 "frt_q_parser.y"
                                       {   qp->result = (yyval.query) = NULL; }
 #line 1488 "frt_q_parser.c"
     break;
 
   case 3: /* bool_q: bool_clss  */
-#line 227 "frt_q_parser.y"
+#line 225 "frt_q_parser.y"
                                       { T qp->result = (yyval.query) = get_bool_q((yyvsp[0].bclss)); E }
 #line 1494 "frt_q_parser.c"
     break;
 
   case 4: /* bool_clss: bool_cls  */
-#line 229 "frt_q_parser.y"
+#line 227 "frt_q_parser.y"
                                       { T (yyval.bclss) = first_cls((yyvsp[0].bcls)); E }
 #line 1500 "frt_q_parser.c"
     break;
 
   case 5: /* bool_clss: bool_clss AND bool_cls  */
-#line 230 "frt_q_parser.y"
+#line 228 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_and_cls((yyvsp[-2].bclss), (yyvsp[0].bcls)); E }
 #line 1506 "frt_q_parser.c"
     break;
 
   case 6: /* bool_clss: bool_clss OR bool_cls  */
-#line 231 "frt_q_parser.y"
+#line 229 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_or_cls((yyvsp[-2].bclss), (yyvsp[0].bcls)); E }
 #line 1512 "frt_q_parser.c"
     break;
 
   case 7: /* bool_clss: bool_clss bool_cls  */
-#line 232 "frt_q_parser.y"
+#line 230 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_default_cls(qp, (yyvsp[-1].bclss), (yyvsp[0].bcls)); E }
 #line 1518 "frt_q_parser.c"
     break;
 
   case 8: /* bool_cls: REQ boosted_q  */
-#line 234 "frt_q_parser.y"
+#line 232 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_MUST); E }
 #line 1524 "frt_q_parser.c"
     break;
 
   case 9: /* bool_cls: NOT boosted_q  */
-#line 235 "frt_q_parser.y"
+#line 233 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_MUST_NOT); E }
 #line 1530 "frt_q_parser.c"
     break;
 
   case 10: /* bool_cls: boosted_q  */
-#line 236 "frt_q_parser.y"
+#line 234 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_SHOULD); E }
 #line 1536 "frt_q_parser.c"
     break;
 
   case 12: /* boosted_q: q '^' QWRD  */
-#line 239 "frt_q_parser.y"
+#line 237 "frt_q_parser.y"
                                       { T if ((yyvsp[-2].query)) sscanf((yyvsp[0].str),"%f",&((yyvsp[-2].query)->boost));  (yyval.query)=(yyvsp[-2].query); E }
 #line 1542 "frt_q_parser.c"
     break;
 
   case 14: /* q: '(' ')'  */
-#line 242 "frt_q_parser.y"
+#line 240 "frt_q_parser.y"
                                       { T (yyval.query) = frt_bq_new_max(true, qp->max_clauses); E }
 #line 1548 "frt_q_parser.c"
     break;
 
   case 15: /* q: '(' bool_clss ')'  */
-#line 243 "frt_q_parser.y"
+#line 241 "frt_q_parser.y"
                                       { T (yyval.query) = get_bool_q((yyvsp[-1].bclss)); E }
 #line 1554 "frt_q_parser.c"
     break;
 
   case 20: /* term_q: QWRD  */
-#line 249 "frt_q_parser.y"
-                                      { FLDS((yyval.query), get_term_q(qp, field, (yyvsp[0].str))); Y}
+#line 247 "frt_q_parser.y"
+                                      { FLDS((yyval.query), get_term_q(qp, field, (yyvsp[0].str), encoding)); Y}
 #line 1560 "frt_q_parser.c"
     break;
 
   case 21: /* term_q: QWRD '~' QWRD  */
-#line 250 "frt_q_parser.y"
-                                      { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-2].str), (yyvsp[0].str))); Y}
+#line 248 "frt_q_parser.y"
+                                      { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-2].str), (yyvsp[0].str), encoding)); Y}
 #line 1566 "frt_q_parser.c"
     break;
 
   case 22: /* term_q: QWRD '~'  */
-#line 251 "frt_q_parser.y"
-                                      { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-1].str), NULL)); Y}
+#line 249 "frt_q_parser.y"
+                                      { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-1].str), NULL, encoding)); Y}
 #line 1572 "frt_q_parser.c"
     break;
 
   case 23: /* wild_q: WILD_STR  */
-#line 253 "frt_q_parser.y"
+#line 251 "frt_q_parser.y"
                                       { FLDS((yyval.query), get_wild_q(qp, field, (yyvsp[0].str))); Y}
 #line 1578 "frt_q_parser.c"
     break;
 
   case 24: /* $@1: %empty  */
-#line 255 "frt_q_parser.y"
+#line 253 "frt_q_parser.y"
                         { qp_pop_fields(qp); }
 #line 1584 "frt_q_parser.c"
     break;
 
   case 25: /* field_q: field ':' q $@1  */
-#line 256 "frt_q_parser.y"
+#line 254 "frt_q_parser.y"
                                       { (yyval.query) = (yyvsp[-1].query); }
 #line 1590 "frt_q_parser.c"
     break;
 
   case 26: /* $@2: %empty  */
-#line 257 "frt_q_parser.y"
+#line 255 "frt_q_parser.y"
                 { qp_push_fields(qp, qp->all_fields, false); }
 #line 1596 "frt_q_parser.c"
     break;
 
   case 27: /* $@3: %empty  */
-#line 257 "frt_q_parser.y"
+#line 255 "frt_q_parser.y"
                                                                      { qp_pop_fields(qp); }
 #line 1602 "frt_q_parser.c"
     break;
 
   case 28: /* field_q: '*' $@2 ':' q $@3  */
-#line 258 "frt_q_parser.y"
+#line 256 "frt_q_parser.y"
                                       { (yyval.query) = (yyvsp[-1].query); }
 #line 1608 "frt_q_parser.c"
     break;
 
   case 29: /* field: QWRD  */
-#line 260 "frt_q_parser.y"
+#line 258 "frt_q_parser.y"
                                       { (yyval.hashset) = first_field(qp, (yyvsp[0].str)); }
 #line 1614 "frt_q_parser.c"
     break;
 
   case 30: /* field: field '|' QWRD  */
-#line 261 "frt_q_parser.y"
+#line 259 "frt_q_parser.y"
                                       { (yyval.hashset) = add_field(qp, (yyvsp[0].str));}
 #line 1620 "frt_q_parser.c"
     break;
 
   case 31: /* phrase_q: '"' ph_words '"'  */
-#line 263 "frt_q_parser.y"
-                                      { (yyval.query) = get_phrase_q(qp, (yyvsp[-1].phrase), NULL); }
+#line 261 "frt_q_parser.y"
+                                      { (yyval.query) = get_phrase_q(qp, (yyvsp[-1].phrase), NULL, encoding); }
 #line 1626 "frt_q_parser.c"
     break;
 
   case 32: /* phrase_q: '"' ph_words '"' '~' QWRD  */
-#line 264 "frt_q_parser.y"
-                                      { (yyval.query) = get_phrase_q(qp, (yyvsp[-3].phrase), (yyvsp[0].str)); }
+#line 262 "frt_q_parser.y"
+                                      { (yyval.query) = get_phrase_q(qp, (yyvsp[-3].phrase), (yyvsp[0].str), encoding); }
 #line 1632 "frt_q_parser.c"
     break;
 
   case 33: /* phrase_q: '"' '"'  */
-#line 265 "frt_q_parser.y"
+#line 263 "frt_q_parser.y"
                                       { (yyval.query) = NULL; }
 #line 1638 "frt_q_parser.c"
     break;
 
   case 34: /* phrase_q: '"' '"' '~' QWRD  */
-#line 266 "frt_q_parser.y"
+#line 264 "frt_q_parser.y"
                                       { (yyval.query) = NULL; (void)(yyvsp[0].str);}
 #line 1644 "frt_q_parser.c"
     break;
 
   case 35: /* ph_words: QWRD  */
-#line 268 "frt_q_parser.y"
+#line 266 "frt_q_parser.y"
                               { (yyval.phrase) = ph_first_word((yyvsp[0].str)); }
 #line 1650 "frt_q_parser.c"
     break;
 
   case 36: /* ph_words: '<' '>'  */
-#line 269 "frt_q_parser.y"
+#line 267 "frt_q_parser.y"
                               { (yyval.phrase) = ph_first_word(NULL); }
 #line 1656 "frt_q_parser.c"
     break;
 
   case 37: /* ph_words: ph_words QWRD  */
-#line 270 "frt_q_parser.y"
+#line 268 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_word((yyvsp[-1].phrase), (yyvsp[0].str)); }
 #line 1662 "frt_q_parser.c"
     break;
 
   case 38: /* ph_words: ph_words '<' '>'  */
-#line 271 "frt_q_parser.y"
+#line 269 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_word((yyvsp[-2].phrase), NULL); }
 #line 1668 "frt_q_parser.c"
     break;
 
   case 39: /* ph_words: ph_words '|' QWRD  */
-#line 272 "frt_q_parser.y"
+#line 270 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_multi_word((yyvsp[-2].phrase), (yyvsp[0].str));  }
 #line 1674 "frt_q_parser.c"
     break;
 
   case 40: /* range_q: '[' QWRD QWRD ']'  */
-#line 274 "frt_q_parser.y"
+#line 272 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  true)); Y}
 #line 1680 "frt_q_parser.c"
     break;
 
   case 41: /* range_q: '[' QWRD QWRD '}'  */
-#line 275 "frt_q_parser.y"
+#line 273 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  false)); Y}
 #line 1686 "frt_q_parser.c"
     break;
 
   case 42: /* range_q: '{' QWRD QWRD ']'  */
-#line 276 "frt_q_parser.y"
+#line 274 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, true)); Y}
 #line 1692 "frt_q_parser.c"
     break;
 
   case 43: /* range_q: '{' QWRD QWRD '}'  */
-#line 277 "frt_q_parser.y"
+#line 275 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, false)); Y}
 #line 1698 "frt_q_parser.c"
     break;
 
   case 44: /* range_q: '<' QWRD '}'  */
-#line 278 "frt_q_parser.y"
+#line 276 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, false)); Y}
 #line 1704 "frt_q_parser.c"
     break;
 
   case 45: /* range_q: '<' QWRD ']'  */
-#line 279 "frt_q_parser.y"
+#line 277 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, true)); Y}
 #line 1710 "frt_q_parser.c"
     break;
 
   case 46: /* range_q: '[' QWRD '>'  */
-#line 280 "frt_q_parser.y"
+#line 278 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,true,  false)); Y}
 #line 1716 "frt_q_parser.c"
     break;
 
   case 47: /* range_q: '{' QWRD '>'  */
-#line 281 "frt_q_parser.y"
+#line 279 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,false, false)); Y}
 #line 1722 "frt_q_parser.c"
     break;
 
   case 48: /* range_q: '<' QWRD  */
-#line 282 "frt_q_parser.y"
+#line 280 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, false)); Y}
 #line 1728 "frt_q_parser.c"
     break;
 
   case 49: /* range_q: '<' '=' QWRD  */
-#line 283 "frt_q_parser.y"
+#line 281 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, true)); Y}
 #line 1734 "frt_q_parser.c"
     break;
 
   case 50: /* range_q: '>' '=' QWRD  */
-#line 284 "frt_q_parser.y"
+#line 282 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,true,  false)); Y}
 #line 1740 "frt_q_parser.c"
     break;
 
   case 51: /* range_q: '>' QWRD  */
-#line 285 "frt_q_parser.y"
+#line 283 "frt_q_parser.y"
                               { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,false, false)); Y}
 #line 1746 "frt_q_parser.c"
     break;
@@ -1793,7 +1793,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-      yyerror (qp, YY_("syntax error"));
+      yyerror (qp, encoding, YY_("syntax error"));
     }
 
   if (yyerrstatus == 3)
@@ -1810,7 +1810,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, qp);
+                      yytoken, &yylval, qp, encoding);
           yychar = YYEMPTY;
         }
     }
@@ -1866,7 +1866,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  YY_ACCESSING_SYMBOL (yystate), yyvsp, qp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, qp, encoding);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1904,7 +1904,7 @@ yyabortlab:
 | yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
 `-----------------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (qp, YY_("memory exhausted"));
+  yyerror (qp, encoding, YY_("memory exhausted"));
   yyresult = 2;
   goto yyreturnlab;
 
@@ -1919,7 +1919,7 @@ yyreturnlab:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, qp);
+                  yytoken, &yylval, qp, encoding);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1928,7 +1928,7 @@ yyreturnlab:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, qp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, qp, encoding);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1939,7 +1939,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 287 "frt_q_parser.y"
+#line 285 "frt_q_parser.y"
 
 
 static const char *special_char = "&:()[]{}!\"~^|<>=*?+-";
@@ -2102,8 +2102,9 @@ static int yylex(YYSTYPE *lvalp, FrtQParser *qp)
  * It is responsible for clearing any memory that was allocated during the
  * parsing process.
  */
-static int yyerror(FrtQParser *qp, char const *msg)
+static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg)
 {
+    (void)encoding;
     qp->destruct = true;
     if (!qp->handle_parse_errors) {
         char buf[1024];
@@ -2133,22 +2134,22 @@ static int yyerror(FrtQParser *qp, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text)
+static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text, rb_encoding *encoding)
 {
     FrtTokenStream *ts;
     if (frt_hs_exists(qp->tokenized_fields, (void *)field)) {
         ts = (FrtTokenStream *)frt_h_get(qp->ts_cache, (void *)field);
         if (!ts) {
-            ts = frt_a_get_ts(qp->analyzer, field, text);
+            ts = frt_a_get_ts(qp->analyzer, field, text, encoding);
             frt_h_set(qp->ts_cache, (void *)field, ts);
         }
         else {
-            ts->reset(ts, text);
+            ts->reset(ts, text, encoding);
         }
     }
     else {
         ts = qp->non_tokenizer;
-        ts->reset(ts, text);
+        ts->reset(ts, text, encoding);
     }
     return ts;
 }
@@ -2305,11 +2306,11 @@ static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur)
  * what we want as it will match any documents containing the same email
  * address and tokenized with the same tokenizer.
  */
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
+static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding)
 {
     FrtQuery *q;
     FrtToken *token;
-    FrtTokenStream *stream = get_cached_ts(qp, field, word);
+    FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
 
     if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
@@ -2343,11 +2344,11 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word)
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str)
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str, rb_encoding *encoding)
 {
     FrtQuery *q;
     FrtToken *token;
-    FrtTokenStream *stream = get_cached_ts(qp, field, word);
+    FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
 
     if ((token = frt_ts_next(stream)) == NULL) {
         q = NULL;
@@ -2574,7 +2575,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str, rb_encoding *encoding)
 {
     const int pos_cnt = phrase->size;
     FrtQuery *q = NULL;
@@ -2583,7 +2584,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
         char **words = phrase->positions[0].terms;
         const int word_count = frt_ary_size(words);
         if (word_count == 1) {
-            q = get_term_q(qp, field, words[0]);
+            q = get_term_q(qp, field, words[0], encoding);
         }
         else {
             int i;
@@ -2592,7 +2593,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
             char *last_word = NULL;
 
             for (i = 0; i < word_count; i++) {
-                token = frt_ts_next(get_cached_ts(qp, field, words[i]));
+                token = frt_ts_next(get_cached_ts(qp, field, words[i], encoding));
                 if (token) {
                     free(words[i]);
                     last_word = words[i] = frt_estrdup(token->text);
@@ -2644,7 +2645,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
             pos_inc += phrase->positions[i].pos + 1; /* Actually holds pos_inc*/
 
             if (word_count == 1) {
-                stream = get_cached_ts(qp, field, words[0]);
+                stream = get_cached_ts(qp, field, words[0], encoding);
                 while ((token = frt_ts_next(stream))) {
                     if (token->pos_inc) {
                         frt_phq_add_term(q, token->text,
@@ -2661,7 +2662,7 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
                 bool added_position = false;
 
                 for (j = 0; j < word_count; j++) {
-                    stream = get_cached_ts(qp, field, words[j]);
+                    stream = get_cached_ts(qp, field, words[j], encoding);
                     if ((token = frt_ts_next(stream))) {
                         if (!added_position) {
                             frt_phq_add_term(q, token->text,
@@ -2685,10 +2686,10 @@ static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phras
  * the query parser as the all PhraseQuery didn't work well for this. Once the
  * PhraseQuery has been built the Phrase object needs to be destroyed.
  */
-static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str)
+static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str, rb_encoding *encoding)
 {
     FrtQuery *volatile q = NULL;
-    FLDS(q, get_phrase_query(qp, field, phrase, slop_str));
+    FLDS(q, get_phrase_query(qp, field, phrase, slop_str, encoding));
     ph_destroy(phrase);
     return q;
 }
@@ -2716,12 +2717,12 @@ static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, 
  * range queries.
 
     if (from) {
-        FrtTokenStream *stream = get_cached_ts(qp, field, from);
+        FrtTokenStream *stream = get_cached_ts(qp, field, from, encoding);
         FrtToken *token = frt_ts_next(stream);
         from = token ? frt_estrdup(token->text) : NULL;
     }
     if (to) {
-        FrtTokenStream *stream = get_cached_ts(qp, field, to);
+        FrtTokenStream *stream = get_cached_ts(qp, field, to, encoding);
         FrtToken *token = frt_ts_next(stream);
         to = token ? frt_estrdup(token->text) : NULL;
     }
@@ -2961,12 +2962,12 @@ char *frt_qp_clean_str(char *str)
  * analyzer. It then turns these tokens (if any) into a boolean query. If it
  * fails to find any tokens, this method will return NULL.
  */
-static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
+static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str, rb_encoding *encoding)
 {
     FrtQuery *volatile q = NULL;
     qp->recovering = true;
     assert(qp->fields_top->next == NULL);
-    FLDS(q, get_term_q(qp, field, str));
+    FLDS(q, get_term_q(qp, field, str, encoding));
     return q;
 }
 
@@ -2978,7 +2979,7 @@ static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str)
  * and turns them into a boolean query on the default fields.
  */
 
-FrtQuery *qp_parse(FrtQParser *self, char *qstr)
+FrtQuery *qp_parse(FrtQParser *self, char *qstr, rb_encoding *encoding)
 {
     FrtQuery *result = NULL;
     frt_mutex_lock(&self->mutex);
@@ -2996,12 +2997,12 @@ FrtQuery *qp_parse(FrtQParser *self, char *qstr)
     self->fields = self->def_fields;
     self->result = NULL;
 
-    if (0 == yyparse(self)) {
+    if (0 == yyparse(self, encoding)) {
       result = self->result;
     }
     if (!result && self->handle_parse_errors) {
         self->destruct = false;
-        result = qp_get_bad_query(self, self->qstr);
+        result = qp_get_bad_query(self, self->qstr, encoding);
     }
     if (self->destruct && !self->handle_parse_errors) {
         FRT_RAISE(FRT_PARSE_ERROR, frt_xmsg_buffer);

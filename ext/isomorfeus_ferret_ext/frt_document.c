@@ -15,27 +15,30 @@ FrtDocField *frt_df_new(FrtSymbol name)
     df->capa = FRT_DF_INIT_CAPA;
     df->data = FRT_ALLOC_N(char *, df->capa);
     df->lengths = FRT_ALLOC_N(int, df->capa);
+    df->encodings = FRT_ALLOC_N(rb_encoding *, df->capa);
     df->destroy_data = false;
     df->boost = 1.0f;
     return df;
 }
 
-FrtDocField *frt_df_add_data_len(FrtDocField *df, char *data, int len)
+FrtDocField *frt_df_add_data_len(FrtDocField *df, char *data, int len, rb_encoding *encoding)
 {
     if (df->size >= df->capa) {
         df->capa <<= 2;
         FRT_REALLOC_N(df->data, char *, df->capa);
         FRT_REALLOC_N(df->lengths, int, df->capa);
+        FRT_REALLOC_N(df->encodings, rb_encoding *, df->capa);
     }
     df->data[df->size] = data;
     df->lengths[df->size] = len;
+    df->encodings[df->size] = encoding;
     df->size++;
     return df;
 }
 
-FrtDocField *frt_df_add_data(FrtDocField *df, char *data)
+FrtDocField *frt_df_add_data(FrtDocField *df, char *data, rb_encoding *encoding)
 {
-    return frt_df_add_data_len(df, data, strlen(data));
+    return frt_df_add_data_len(df, data, strlen(data), encoding);
 }
 
 void frt_df_destroy(FrtDocField *df)
@@ -48,12 +51,14 @@ void frt_df_destroy(FrtDocField *df)
     }
     free(df->data);
     free(df->lengths);
+    free(df->encodings);
     free(df);
 }
 
 /*
  * Format for one item is: name: "data"
  *        for more items : name: ["data", "data", "data"]
+ * internally used for testing, thus encoding can be ignored
  */
 char *frt_df_to_s(FrtDocField *df)
 {

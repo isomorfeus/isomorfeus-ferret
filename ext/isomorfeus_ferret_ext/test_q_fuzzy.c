@@ -8,7 +8,8 @@ static FrtSymbol field;
 static void add_doc(const char *text, FrtIndexWriter *iw)
 {
     FrtDocument *doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)text));
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)text, enc));
     frt_iw_add_doc(iw, doc);
     frt_doc_destroy(doc);
 }

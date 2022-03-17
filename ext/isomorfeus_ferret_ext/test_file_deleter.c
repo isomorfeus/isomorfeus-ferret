@@ -57,10 +57,12 @@ static FrtIndexWriter *create_iw_lucene(FrtStore *store)
 static void add_doc(FrtIndexWriter *iw, int id)
 {
     FrtDocument *doc = frt_doc_new();
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(content_f)),
-                                   frt_estrdup("aaa")))->destroy_data = true;
+                                   frt_estrdup("aaa"), enc))->destroy_data = true;
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(id_f)),
-                                   frt_strfmt("%d", id)))->destroy_data = true;
+                                   frt_strfmt("%d", id), enc))->destroy_data = true;
     frt_iw_add_doc(iw, doc);
    frt_doc_destroy(doc);
 }

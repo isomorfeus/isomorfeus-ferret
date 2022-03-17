@@ -220,7 +220,7 @@ void frt_index_add_doc(FrtIndex *self, FrtDocument *doc)
     frt_mutex_unlock(&self->mutex);
 }
 
-FrtQuery *frt_index_get_query(FrtIndex *self, char *qstr)
+FrtQuery *frt_index_get_query(FrtIndex *self, char *qstr, rb_encoding *encoding)
 {
     int i;
     FrtFieldInfos *fis;
@@ -229,16 +229,16 @@ FrtQuery *frt_index_get_query(FrtIndex *self, char *qstr)
     for (i = fis->size - 1; i >= 0; i--) {
         frt_hs_add(self->qp->all_fields, (void *)fis->fields[i]->name);
     }
-    return qp_parse(self->qp, qstr);
+    return qp_parse(self->qp, qstr, encoding);
 }
 
 FrtTopDocs *frt_index_search_str(FrtIndex *self, char *qstr, int first_doc,
                           int num_docs, FrtFilter *filter, FrtSort *sort,
-                          FrtPostFilter *post_filter)
+                          FrtPostFilter *post_filter, rb_encoding *encoding)
 {
     FrtQuery *query;
     FrtTopDocs *td;
-    query = frt_index_get_query(self, qstr); /* will ensure_searcher is open */
+    query = frt_index_get_query(self, qstr, encoding); /* will ensure_searcher is open */
     td = frt_searcher_search(self->sea, query, first_doc, num_docs,
                          filter, sort, post_filter);
     frt_q_deref(query);
@@ -345,9 +345,9 @@ void frt_index_delete_query(FrtIndex *self, FrtQuery *q, FrtFilter *f,
 }
 
 void frt_index_delete_query_str(FrtIndex *self, char *qstr, FrtFilter *f,
-                            FrtPostFilter *post_filter)
+                            FrtPostFilter *post_filter, rb_encoding *encoding)
 {
-    FrtQuery *q = frt_index_get_query(self, qstr);
+    FrtQuery *q = frt_index_get_query(self, qstr, encoding);
     frt_index_delete_query(self, q, f, post_filter);
     frt_q_deref(q);
 }

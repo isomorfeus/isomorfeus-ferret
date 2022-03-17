@@ -287,23 +287,24 @@ static FrtDocument *prepare_doc()
     FrtDocument *doc = frt_doc_new();
     FrtDocField *df;
     char *bin_data = prepare_bin_data(BIN_DATA_LEN);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("ignored")), (char *)"this fld's ignored"));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("unstored")), (char *)"unstored ignored"));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored")), (char *)"Yay, a stored field"));
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored_array")), (char *)"one"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("ignored")), (char *)"this fld's ignored", enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("unstored")), (char *)"unstored ignored", enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored")), (char *)"Yay, a stored field", enc));
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("stored_array")), (char *)"one", enc));
     df->destroy_data = false;
-    frt_df_add_data(df, (char *)"two");
-    frt_df_add_data(df, (char *)"three");
-    frt_df_add_data(df, (char *)"four");
-    frt_df_add_data_len(df, bin_data, BIN_DATA_LEN);
+    frt_df_add_data(df, (char *)"two", enc);
+    frt_df_add_data(df, (char *)"three", enc);
+    frt_df_add_data(df, (char *)"four", enc);
+    frt_df_add_data_len(df, bin_data, BIN_DATA_LEN, enc);
     frt_doc_add_field(doc, frt_df_add_data_len(frt_df_new(rb_intern("binary")), bin_data,
-                                       BIN_DATA_LEN))->destroy_data = true;
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("array")), (char *)"ichi"));
-    frt_df_add_data(df, (char *)"ni");
-    frt_df_add_data(df, (char *)"san");
-    frt_df_add_data(df, (char *)"yon");
-    frt_df_add_data(df, (char *)"go");
+                                       BIN_DATA_LEN, enc))->destroy_data = true;
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("array")), (char *)"ichi", enc));
+    frt_df_add_data(df, (char *)"ni", enc);
+    frt_df_add_data(df, (char *)"san", enc);
+    frt_df_add_data(df, (char *)"yon", enc);
+    frt_df_add_data(df, (char *)"go", enc);
 
     return doc;
 }
@@ -392,6 +393,7 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
     FrtFieldsReader *fr;
     FrtDocField *df;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     fw = frt_fw_open(store, "_as3", fis);
     for (i = 0; i < 100; i++) {
@@ -400,7 +402,7 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
         sprintf(buf, "<<%d>>", i);
         bufc = frt_estrdup(buf);
         doc = frt_doc_new();
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(bufc)), bufc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern(bufc)), bufc, enc));
         frt_fw_add_doc(fw, doc);
         frt_fw_write_tv_index(fw);
        frt_doc_destroy(doc);
@@ -472,15 +474,16 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
     FrtLazyDocField *lazy_df;
     char *text, buf[1000];
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     fw = frt_fw_open(store, "_as3", fis);
     doc = frt_doc_new();
     df = frt_df_new(rb_intern("stored"));
-    frt_df_add_data(df, (char *)"this is a stored field");
-    frt_df_add_data(df, (char *)"to be or not to be");
-    frt_df_add_data(df, (char *)"a stitch in time, saves nine");
-    frt_df_add_data(df, (char *)"the quick brown fox jumped over the lazy dog");
-    frt_df_add_data(df, (char *)"that's it folks");
+    frt_df_add_data(df, (char *)"this is a stored field", enc);
+    frt_df_add_data(df, (char *)"to be or not to be", enc);
+    frt_df_add_data(df, (char *)"a stitch in time, saves nine", enc);
+    frt_df_add_data(df, (char *)"the quick brown fox jumped over the lazy dog", enc);
+    frt_df_add_data(df, (char *)"that's it folks", enc);
     frt_doc_add_field(doc, df);
     frt_fw_add_doc(fw, doc);
     frt_fw_write_tv_index(fw);

@@ -138,8 +138,8 @@ static FrtTokenStream *dbl_tf_clone_i(FrtTokenStream *ts)
 static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 {
     FrtTokenStream *ts = tf_new(DoubleFilter, sub_ts);
-    ts->next        = &dbl_tf_next;
-    ts->clone_i     = &dbl_tf_clone_i;
+    ts->next           = &dbl_tf_next;
+    ts->clone_i        = &dbl_tf_clone_i;
     return ts;
 }
 
@@ -211,15 +211,16 @@ static void prepare_search_index(FrtStore *store)
     frt_fis_add_field(fis, fi);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     iw = frt_iw_open(store, dbl_analyzer_new(), NULL);
     for (i = 0; i < SEARCH_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)test_data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)test_data[i].field));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)test_data[i].cat));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)test_data[i].number));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)test_data[i].date, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)test_data[i].field, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)test_data[i].cat, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)test_data[i].number, enc));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }
@@ -1709,15 +1710,16 @@ static void prepare_multi_search_index(FrtStore *store, struct Data data[],
     frt_fis_add_field(fis, fi);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     iw = frt_iw_open(store, dbl_analyzer_new(), NULL);
     for (i = 0; i < d_cnt; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+w);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)data[i].field));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)data[i].cat));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)data[i].number));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(field), (char *)data[i].field, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(cat), (char *)data[i].cat, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(number), (char *)data[i].number, enc));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }

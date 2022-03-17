@@ -1387,6 +1387,7 @@ static FrtDocField *frt_fr_df_new(FrtSymbol name, int size, bool is_compressed)
     df->capa = df->size = size;
     df->data = FRT_ALLOC_N(char *, df->capa);
     df->lengths = FRT_ALLOC_N(int, df->capa);
+    df->encodings = FRT_ALLOC_N(rb_encoding *, df->capa);
     df->destroy_data = true;
     df->boost = 1.0f;
     df->is_compressed = is_compressed;
@@ -1427,6 +1428,7 @@ FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
 
         for (j = 0; j < df_size; j++) {
             df->lengths[j] = frt_is_read_vint(fdt_in);
+            df->encodings[j] = rb_enc_from_index(frt_is_read_vint(fdt_in));
         }
 
         frt_doc_add_field(doc, df);
@@ -1458,31 +1460,36 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     FrtLazyDoc *lazy_doc;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
+
     frt_is_seek(fdx_in, doc_num * FIELDS_IDX_PTR_SIZE);
     pos = (off_t)frt_is_read_u64(fdx_in);
     frt_is_seek(fdt_in, pos);
     stored_cnt = frt_is_read_vint(fdt_in);
+
     lazy_doc = lazy_doc_new(stored_cnt, fdt_in);
     for (i = 0; i < stored_cnt; i++) {
         FrtFieldInfo *fi = fr->fis->fields[frt_is_read_vint(fdt_in)];
-        const int data_cnt = frt_is_read_vint(fdt_in);
-        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, data_cnt, fi_is_compressed(fi));
+        const int df_size = frt_is_read_vint(fdt_in);
+        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, df_size, fi_is_compressed(fi));
         const int field_start = start;
         /* get the starts relative positions this time around */
-        for (j = 0; j < data_cnt; j++) {
+
+        for (j = 0; j < df_size; j++) {
             lazy_df->data[j].start = start;
             start += 1 + (lazy_df->data[j].length = frt_is_read_vint(fdt_in));
+            lazy_df->data[j].encoding = rb_enc_from_index(frt_is_read_vint(fdt_in));
         }
+
         lazy_df->len = start - field_start - 1;
         lazy_doc_add_field(lazy_doc, lazy_df, i);
     }
     /* correct the starts to their correct absolute positions */
+    const off_t abs_start = frt_is_pos(fdt_in);
     for (i = 0; i < stored_cnt; i++) {
         FrtLazyDocField *lazy_df = lazy_doc->fields[i];
-        const int data_cnt = lazy_df->size;
-        const off_t start = frt_is_pos(fdt_in);
-        for (j = 0; j < data_cnt; j++) {
-            lazy_df->data[j].start += start;
+        const int df_size = lazy_df->size;
+        for (j = 0; j < df_size; j++) {
+            lazy_df->data[j].start += abs_start;
         }
     }
 
@@ -1719,16 +1726,19 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
             const int df_size = df->size;
             frt_os_write_vint(fdt_out, fi->number);
             frt_os_write_vint(fdt_out, df_size);
+
             if (fi_is_compressed(fi)) {
                 for (j = 0; j < df_size; j++) {
                     const int length = df->lengths[j];
                     int compressed_len = frt_os_write_compressed_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
                     frt_os_write_vint(fdt_out, compressed_len - 1);
+                    frt_os_write_vint(fdt_out, rb_enc_to_index(df->encodings[j]));
                 }
             } else {
                 for (j = 0; j < df_size; j++) {
                     const int length = df->lengths[j];
                     frt_os_write_vint(fdt_out, length);
+                    frt_os_write_vint(fdt_out, rb_enc_to_index(df->encodings[j]));
                     frt_os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
                     /* leave a space between fields as that is how they are analyzed */
                     frt_os_write_byte(fw->buffer, ' ');
@@ -5311,7 +5321,7 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
         int pos = -1, num_terms = 0;
 
         for (i = 0; i < df_size; i++) {
-            FrtTokenStream *ts = frt_a_get_ts(a, df->name, df->data[i]);
+            FrtTokenStream *ts = frt_a_get_ts(a, df->name, df->data[i], df->encodings[i]);
             /* ts->reset(ts, df->data[i]); no longer being called */
             if (store_offsets) {
                 while (NULL != (tk = ts->next(ts))) {

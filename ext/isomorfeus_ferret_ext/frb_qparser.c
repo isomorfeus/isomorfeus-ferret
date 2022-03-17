@@ -22,7 +22,6 @@ static VALUE sym_use_typed_range_query;
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern VALUE frb_get_q(FrtQuery *q);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
-extern FrtQuery *qp_parse(FrtQParser *self, char *qstr);
 
 /****************************************************************************
  *
@@ -253,7 +252,7 @@ frb_qp_parse(VALUE self, VALUE rstr)
     FrtQuery *q;
     rstr = rb_obj_as_string(rstr);
     FRT_TRY
-        q = qp_parse(qp, rs2s(rstr));
+        q = qp_parse(qp, rs2s(rstr), rb_enc_get(rstr));
         rq = frb_get_q(q);
         break;
     default:

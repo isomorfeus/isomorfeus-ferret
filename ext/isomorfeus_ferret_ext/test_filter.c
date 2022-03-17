@@ -18,6 +18,7 @@ void prepare_filter_index(FrtStore *store)
     int i;
     FrtIndexWriter *iw;
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     num      = rb_intern("num");
     date     = rb_intern("date");
@@ -43,9 +44,9 @@ void prepare_filter_index(FrtStore *store)
     for (i = 0; i < FILTER_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(num), (char *)data[i].num));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date));
-        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flipflop), (char *)data[i].flipflop));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(num), (char *)data[i].num, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date, enc));
+        frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flipflop), (char *)data[i].flipflop, enc));
         frt_iw_add_doc(iw, doc);
        frt_doc_destroy(doc);
     }

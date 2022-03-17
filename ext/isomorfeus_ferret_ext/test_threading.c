@@ -71,12 +71,12 @@ static void do_add_doc(FrtIndex *index)
 {
     FrtDocument *doc = frt_doc_new();
     int n = rand();
-
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(id), frt_strfmt("%d", n)))->destroy_data = true;
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(contents), num_to_str(n)))->destroy_data = true;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(id), frt_strfmt("%d", n), enc))->destroy_data = true;
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(contents), num_to_str(n), enc))->destroy_data = true;
     tlog("Adding %d\n", n);
     frt_index_add_doc(index, doc);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 }
 
 static void do_search(FrtIndex *index)
@@ -84,17 +84,18 @@ static void do_search(FrtIndex *index)
     int n = rand(), i;
     char *query = num_to_str(n);
     FrtTopDocs *td;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     tlog("Searching for %d\n", n);
 
     frt_mutex_lock(&index->mutex);
-    td = frt_index_search_str(index, query, 0, 3, NULL, NULL, NULL);
+    td = frt_index_search_str(index, query, 0, 3, NULL, NULL, NULL, enc);
     free(query);
     for (i = 0; i < td->size; i++) {
         FrtHit *hit = td->hits[i];
         FrtDocument *doc = frt_index_get_doc(index, hit->doc);
         tlog("Hit for %d: %s - %f\n", hit->doc, frt_doc_get_field(doc, id)->data[0], hit->score);
-       frt_doc_destroy(doc);
+        frt_doc_destroy(doc);
     }
     tlog("Searched for %d: total = %d\n", n, td->total_hits);
     frt_mutex_unlock(&index->mutex);

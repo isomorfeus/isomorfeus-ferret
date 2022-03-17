@@ -5,6 +5,7 @@
 #include "frt_global.h"
 #include "frt_hash.h"
 #include "frt_multimapper.h"
+#include <ruby/encoding.h>
 
 /****************************************************************************
  *
@@ -40,8 +41,10 @@ struct FrtTokenStream
 {
     char            *t;             /* ptr used to scan text */
     char            *text;
+    int             length;
+    rb_encoding     *encoding;
     FrtToken        *(*next)(FrtTokenStream *ts);
-    FrtTokenStream  *(*reset)(FrtTokenStream *ts, char *text);
+    FrtTokenStream  *(*reset)(FrtTokenStream *ts, char *text, rb_encoding *encoding);
     FrtTokenStream  *(*clone_i)(FrtTokenStream *ts);
     void            (*destroy_i)(FrtTokenStream *ts);
     int             ref_cnt;
@@ -183,23 +186,20 @@ extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pa
  *
  ****************************************************************************/
 
-typedef struct FrtAnalyzer
-{
+typedef struct FrtAnalyzer {
     FrtTokenStream *current_ts;
-    FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, FrtSymbol field, char *text);
+    FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding);
     void (*destroy_i)(struct FrtAnalyzer *a);
     int ref_cnt;
 } FrtAnalyzer;
 
 extern void frt_a_deref(FrtAnalyzer *a);
 
-#define frt_a_get_ts(ma, field, text) ma->get_ts(ma, field, text)
+#define frt_a_get_ts(ma, field, text, encoding) ma->get_ts(ma, field, text, encoding)
 
 extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
                               void (*destroy)(FrtAnalyzer *a),
-                              FrtTokenStream *(*get_ts)(FrtAnalyzer *a,
-                                                     FrtSymbol field,
-                                                     char *text));
+                              FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding));
 extern FrtAnalyzer *frt_non_analyzer_new();
 
 extern void frt_a_standard_destroy(FrtAnalyzer *a);

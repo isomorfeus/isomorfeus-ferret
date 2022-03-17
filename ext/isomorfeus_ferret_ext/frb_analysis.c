@@ -432,7 +432,7 @@ static VALUE
 get_wrapped_ts(VALUE self, VALUE rstr, FrtTokenStream *ts)
 {
     StringValue(rstr);
-    ts->reset(ts, rs2s(rstr));
+    ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     Frt_Wrap_Struct(self, &frb_ts_mark, &frb_ts_free, ts);
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -454,7 +454,7 @@ frb_ts_set_text(VALUE self, VALUE rtext)
     FrtTokenStream *ts;
     Data_Get_Struct(self, FrtTokenStream, ts);
     StringValue(rtext);
-    ts->reset(ts, rs2s(rtext));
+    ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
 
     /* prevent garbage collection */
     rb_ivar_set(self, id_text, rtext);
@@ -560,9 +560,11 @@ cwrts_next(FrtTokenStream *ts)
 }
 
 static FrtTokenStream *
-cwrts_reset(FrtTokenStream *ts, char *text)
+cwrts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
     ts->t = ts->text = text;
+    ts->length = strlen(text);
+    ts->encoding = encoding;
     rb_funcall(CWTS(ts)->rts, id_reset, 1, rb_str_new2(text));
     return ts;
 }
@@ -696,8 +698,7 @@ frb_rets_get_text(VALUE self)
 #define BEG(no) regs->beg[no]
 #define END(no) regs->end[no]
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
-static VALUE
-  scan_once(VALUE str, VALUE pat, long *start)
+static VALUE scan_once(VALUE str, VALUE pat, long *start)
 {
   VALUE match;
   struct re_registers *regs;
@@ -752,8 +753,9 @@ static FrtToken *
 }
 
 static FrtTokenStream *
-rets_reset(FrtTokenStream *ts, char *text)
+rets_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
+    // TODO encoding
     RETS(ts)->rtext = rb_str_new2(text);
     RETS(ts)->curr_ind = 0;
     return ts;
@@ -1182,10 +1184,12 @@ cwa_destroy_i(FrtAnalyzer *a)
 }
 
 static FrtTokenStream *
-cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text)
+cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding)
 {
+    VALUE rstr = rb_str_new_cstr(text);
+    rb_enc_associate(rstr, encoding);
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
-                           rb_str_new_cstr(rb_id2name(field)), rb_str_new_cstr(text));
+                           rb_str_new_cstr(rb_id2name(field)), rstr);
     return frb_get_cwrapped_rts(rts);
 }
 
@@ -1234,7 +1238,7 @@ frb_get_analyzer(FrtAnalyzer *a)
 VALUE
 get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring)
 {
-    FrtTokenStream *ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rstring));
+    FrtTokenStream *ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rstring), rb_enc_get(rstring));
 
     /* Make sure that there is no entry already */
     object_set(&ts->text, rstring);
@@ -1523,8 +1527,10 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
         a = PFA(pfa)->default_a;
     }
     if (a->get_ts == cwa_get_ts) {
+        VALUE rstr = rb_str_new_cstr(rs2s(rstring));
+        rb_enc_associate(rstr, rb_enc_get(rstring));
         return rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
-                          rb_str_new_cstr(rb_id2name(field)), rb_str_new_cstr(rs2s(rstring)));
+                          rb_str_new_cstr(rb_id2name(field)), rstr);
     }
     else {
         return get_rb_ts_from_a(a, rfield, rstring);
@@ -1600,7 +1606,7 @@ frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
 
     StringValue(rtext);
 
-    ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rtext));
+    ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rtext), rb_enc_get(rtext));
 
     /* Make sure that there is no entry already */
     object_set(&ts->text, rtext);
@@ -2292,12 +2298,10 @@ static void Init_AsciiWhiteSpaceAnalyzer(void)
  */
 static void Init_WhiteSpaceAnalyzer(void)
 {
-    cWhiteSpaceAnalyzer =
-        rb_define_class_under(mAnalysis, "WhiteSpaceAnalyzer", cAnalyzer);
+    cWhiteSpaceAnalyzer = rb_define_class_under(mAnalysis, "WhiteSpaceAnalyzer", cAnalyzer);
     frb_mark_cclass(cWhiteSpaceAnalyzer);
     rb_define_alloc_func(cWhiteSpaceAnalyzer, frb_data_alloc);
-    rb_define_method(cWhiteSpaceAnalyzer, "initialize",
-                     frb_white_space_analyzer_init, -1);
+    rb_define_method(cWhiteSpaceAnalyzer, "initialize", frb_white_space_analyzer_init, -1);
 }
 
 /*

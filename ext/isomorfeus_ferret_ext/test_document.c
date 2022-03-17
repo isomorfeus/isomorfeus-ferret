@@ -6,8 +6,9 @@ void test_df_standard(TestCase *tc, void *data)
     char *s;
     FrtDocField *df;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Life of Pi"));
+    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Life of Pi"), enc);
     df->destroy_data = true;
     Aiequal(1, df->size);
     Asequal("title", rb_id2name(df->name));
@@ -18,7 +19,7 @@ void test_df_standard(TestCase *tc, void *data)
     free(s);
     frt_df_destroy(df);
 
-    df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"new title", 9);
+    df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"new title", 9, enc);
     Aiequal(1, df->size);
     Asequal("title", rb_id2name(df->name));
     Asequal("new title", df->data[0]);
@@ -32,20 +33,21 @@ void test_df_multi_fields(TestCase *tc, void *data)
     char *s;
     FrtDocField *df;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Vernon God Little"));
+    df = frt_df_add_data(frt_df_new(rb_intern("title")), frt_estrdup("Vernon God Little"), enc);
     df->destroy_data = true;
     Aiequal(1, df->size);
     Asequal("title", rb_id2name(df->name));
     Asequal("Vernon God Little", df->data[0]);
     Aiequal(strlen("Vernon God Little"), df->lengths[0]);
 
-    frt_df_add_data(df, frt_estrdup("some more data"));
+    frt_df_add_data(df, frt_estrdup("some more data"), enc);
     Aiequal(2, df->size);
     Asequal("title: [\"Vernon God Little\", \"some more data\"]",
             s = frt_df_to_s(df));
     free(s);
-    frt_df_add_data_len(df, frt_estrdup("and more data"), 14);
+    frt_df_add_data_len(df, frt_estrdup("and more data"), 14, enc);
     Aiequal(3, df->size);
     Asequal("title", rb_id2name(df->name));
     Asequal("Vernon God Little", df->data[0]);
@@ -54,13 +56,13 @@ void test_df_multi_fields(TestCase *tc, void *data)
 
     frt_df_destroy(df);
 
-    df = frt_df_add_data(frt_df_new(rb_intern("data")), frt_estrdup("start"));
+    df = frt_df_add_data(frt_df_new(rb_intern("data")), frt_estrdup("start"), enc);
     df->destroy_data = true;
     Aiequal(1, df->size);
     for (i = 0; i < 1000; i++) {
         char buf[100];
         sprintf(buf, "<<%d>>", i);
-        frt_df_add_data(df, frt_estrdup(buf));
+        frt_df_add_data(df, frt_estrdup(buf), enc);
         Aiequal(i + 2, df->size);
     }
     frt_df_destroy(df);
@@ -72,14 +74,15 @@ void test_doc(TestCase *tc, void *data)
     FrtDocument *doc;
     FrtDocField *df;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title", enc));
     Aiequal(1, doc->size);
-    df = frt_df_add_data(frt_df_new(rb_intern("data")), (char *)"data1");
-    frt_df_add_data(df, (char *)"data2");
-    frt_df_add_data(df, (char *)"data3");
-    frt_df_add_data(df, (char *)"data4");
+    df = frt_df_add_data(frt_df_new(rb_intern("data")), (char *)"data1", enc);
+    frt_df_add_data(df, (char *)"data2", enc);
+    frt_df_add_data(df, (char *)"data3", enc);
+    frt_df_add_data(df, (char *)"data4", enc);
     frt_doc_add_field(doc, df);
     Aiequal(2, doc->size);
     Asequal("title", rb_id2name(frt_doc_get_field(doc, rb_intern("title"))->name));
@@ -100,7 +103,7 @@ void test_doc(TestCase *tc, void *data)
         char *bufc;
         sprintf(buf, "<<%d>>", i);
         bufc = frt_estrdup(buf);
-        df = frt_df_add_data(frt_df_new(rb_intern(bufc)), bufc);
+        df = frt_df_add_data(frt_df_new(rb_intern(bufc)), bufc, enc);
         df->destroy_data = true;
         frt_doc_add_field(doc, df);
         Aiequal(i + 1, doc->size);
@@ -122,12 +125,13 @@ void test_double_field_exception(TestCase *tc, void *data)
     FrtDocument *doc;
     FrtDocField *volatile df = NULL;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("title")), (char *)"title", enc));
 
     FRT_TRY
-        df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"title", 5);
+        df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"title", 5, enc);
         frt_doc_add_field(doc, df);
     case FRT_EXCEPTION:
         exception_thrown = true;

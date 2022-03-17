@@ -101,8 +101,8 @@ static void test_non_tokenizer(TestCase *tc, void *data)
     FrtTokenStream *ts = frt_non_tokenizer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), text, 0, strlen(text));
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_tk_destroy(tk);
@@ -118,7 +118,8 @@ static void test_non_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_non_analyzer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token(frt_ts_next(ts), text, 0, strlen(text));
@@ -140,8 +141,8 @@ static void test_whitespace_tokenizer(TestCase *tc, void *data)
     FrtTokenStream *ts = frt_whitespace_tokenizer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "My", 22, 24);
@@ -166,8 +167,8 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
     char text[100] =
         "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmän@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "My", 22, 24);
@@ -179,7 +180,7 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
     test_token(t = frt_ts_next(ts), "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ", 55, 86);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     ts = frt_mb_lowercase_filter_new(ts);
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "my", 22, 24);
@@ -192,7 +193,7 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
     ts = frt_mb_whitespace_tokenizer_new(true);
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "my", 22, 24);
@@ -216,7 +217,8 @@ static void test_whitespace_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_whitespace_analyzer_new(false);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18);
@@ -237,9 +239,9 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_mb_whitespace_analyzer_new(false);
-    char text[100] =
-        "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmän@gmail.com", 0, 18);
@@ -255,8 +257,8 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_whitespace_analyzer_new(true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
-    ts->reset(ts, text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "my", 22, 24);
@@ -284,8 +286,8 @@ static void test_letter_tokenizer(TestCase *tc, void *data)
     FrtTokenStream *ts = frt_letter_tokenizer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmain", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -307,11 +309,10 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtTokenStream *ts = frt_mb_letter_tokenizer_new(false);
-    char text[100] =
-        "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
+    char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmän", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -326,7 +327,7 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "ÖÎÍ", 80, 86);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     ts = frt_mb_lowercase_filter_new(ts);
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -342,7 +343,7 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
     ts = frt_mb_letter_tokenizer_new(true);
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -369,7 +370,8 @@ static void test_letter_analyzer(TestCase *tc, void *data)
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a = frt_letter_analyzer_new(true);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token(frt_ts_next(ts), "dbalmain", 0, 8);
@@ -393,7 +395,8 @@ static void test_mb_letter_analyzer(TestCase *tc, void *data)
     char text[100] =
         "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token(frt_ts_next(ts), "DBalmän", 0, 8);
@@ -412,7 +415,7 @@ static void test_mb_letter_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_letter_analyzer_new(true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -445,8 +448,8 @@ static void do_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
         "DBalmain@gmail.com is My e-mail -52  #$ Address. 23#!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 "
         "underscored_word, won't we're";
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "My", 22, 24);
@@ -470,7 +473,7 @@ static void do_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+              "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", enc);
     test_token(frt_ts_next(ts), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -505,8 +508,8 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
         "\200 badchar it's groups' Barnes&Noble file:///home/user/ "
         "svn://www.davebalmain.com/ www,.google.com www.google.com "
         "dave@balmain@gmail.com \"quoted string\" continue *star";
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "My", 22, 24);
@@ -550,7 +553,7 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", enc);
     test_token(frt_ts_next(ts), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -562,7 +565,7 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", enc);
     test_token(frt_ts_next(ts), "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -593,7 +596,8 @@ static void test_standard_analyzer(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
@@ -622,7 +626,8 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text), *ts2;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc), *ts2;
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
@@ -644,7 +649,7 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new(true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);
@@ -663,8 +668,8 @@ static void test_mb_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new_with_words(words, true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
-    ts2 = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
+    ts2 = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 2);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 1);
@@ -718,7 +723,8 @@ static void test_legacy_standard_analyzer(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
@@ -747,7 +753,8 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 23#!$ "
         "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text), *ts2;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc), *ts2;
     (void)data;
 
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
@@ -769,7 +776,7 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_legacy_standard_analyzer_new(true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);
@@ -788,8 +795,8 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_legacy_standard_analyzer_new_with_words(words, true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
-    ts2 = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
+    ts2 = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 2);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 1);
@@ -845,7 +852,8 @@ static void test_long_word(TestCase *tc, void *data)
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" " two";
-    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     (void)data;
 
     test_token_pi(frt_ts_next(ts), text, 0, 290, 1);        /* text gets truncated anyway */
@@ -854,7 +862,7 @@ static void test_long_word(TestCase *tc, void *data)
     frt_ts_deref(ts);
     frt_a_deref(a);
     a = frt_mb_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
-    ts = frt_a_get_ts(a, rb_intern("random"), text);
+    ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
     test_token_pi(frt_ts_next(ts), text, 0, 290, 1);        /* text gets truncated anyway */
     test_token_pi(frt_ts_next(ts), "two", 291, 294, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
@@ -876,8 +884,8 @@ static void test_lowercase_filter(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18);
     test_token(frt_ts_next(ts), "is", 19, 21);
     test_token(frt_ts_next(ts), "my", 22, 24);
@@ -904,8 +912,8 @@ static void test_hyphen_filter(TestCase *tc, void *data)
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 long-hyph-en-at-ed-word";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 1);
@@ -943,8 +951,9 @@ static void test_stop_filter(TestCase *tc, void *data)
     char text[200] =
         "one, two, three, four, five, six, seven, eight, nine, ten.";
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token_pi(frt_ts_next(ts), "two", 5, 8, 2);
     test_token_pi(frt_ts_next(ts), "three", 10, 15, 1);
     test_token_pi(frt_ts_next(ts), "six", 29, 32, 3);
@@ -974,11 +983,12 @@ static void test_mapping_filter(TestCase *tc, void *data)
        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     frt_mapping_filter_add(ts, "ne", "hello");
     frt_mapping_filter_add(ts, "four", long_word);
 
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "ohello", 0, 3);
     test_token(frt_ts_next(ts), "two", 5, 8);
     test_token(frt_ts_next(ts), "three", 10, 15);
@@ -993,7 +1003,7 @@ static void test_mapping_filter(TestCase *tc, void *data)
 
     frt_mapping_filter_add(ts, "thr", "start");
     frt_mapping_filter_add(ts, "en", "goodbye");
-    ts->reset(ts, text);
+    ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "ohello", 0, 3);
     test_token(frt_ts_next(ts), "two", 5, 8);
     test_token(frt_ts_next(ts), "startee", 10, 15);
@@ -1042,8 +1052,8 @@ static void test_stem_filter(TestCase *tc, void *data)
     char text[200] = "debate debates debated debating debater";
     char text2[200] = "dêbate dêbates dêbated dêbating dêbater";
     (void)data;
-
-    ts->reset(ts, text);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    ts->reset(ts, text, enc);
     ts2 = frt_ts_clone(ts);
     test_token(frt_ts_next(ts), "debat", 0, 6);
     test_token(frt_ts_next(ts), "debat", 7, 14);
@@ -1051,7 +1061,7 @@ static void test_stem_filter(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "debat", 23, 31);
     test_token(frt_ts_next(ts), "debat", 32, 39);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
-    ts->reset(ts, text2);
+    ts->reset(ts, text2, enc);
     test_token(frt_ts_next(ts), "dêbate", 0, 7);
     test_token(frt_ts_next(ts), "dêbate", 8, 16);
     test_token(frt_ts_next(ts), "dêbate", 17, 25);
@@ -1080,13 +1090,14 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     char text[100] = "DBalmain@gmail.com is My E-mail 52   #$ address. 23#!$";
     FrtAnalyzer *pfa = frt_per_field_analyzer_new(frt_standard_analyzer_new(true));
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     frt_pfa_add_field(pfa, rb_intern("white"), frt_whitespace_analyzer_new(false));
     frt_pfa_add_field(pfa, rb_intern("white_l"), frt_whitespace_analyzer_new(true));
     frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(false));
     frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(true));
     frt_pfa_add_field(pfa, rb_intern("letter_u"), frt_letter_analyzer_new(false));
-    ts = frt_a_get_ts(pfa, rb_intern("white"), text);
+    ts = frt_a_get_ts(pfa, rb_intern("white"), text, enc);
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);
     test_token_pi(frt_ts_next(ts), "My", 22, 24, 1);
@@ -1097,7 +1108,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token_pi(frt_ts_next(ts), "23#!$", 49, 54, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, rb_intern("white_l"), text);
+    ts = frt_a_get_ts(pfa, rb_intern("white_l"), text, enc);
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);
     test_token_pi(frt_ts_next(ts), "my", 22, 24, 1);
@@ -1108,7 +1119,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token_pi(frt_ts_next(ts), "23#!$", 49, 54, 1);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, rb_intern("letter_u"), text);
+    ts = frt_a_get_ts(pfa, rb_intern("letter_u"), text, enc);
     test_token(frt_ts_next(ts), "DBalmain", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -1119,7 +1130,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "address", 40, 47);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, rb_intern("letter"), text);
+    ts = frt_a_get_ts(pfa, rb_intern("letter"), text, enc);
     test_token(frt_ts_next(ts), "dbalmain", 0, 8);
     test_token(frt_ts_next(ts), "gmail", 9, 14);
     test_token(frt_ts_next(ts), "com", 15, 18);
@@ -1130,7 +1141,7 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "address", 40, 47);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_a_get_ts(pfa, rb_intern("XXX"), text);        /* should use default analyzer */
+    ts = frt_a_get_ts(pfa, rb_intern("XXX"), text, enc);        /* should use default analyzer */
     test_token_pi(frt_ts_next(ts), "dbalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "email", 25, 31, 3);
     test_token_pi(frt_ts_next(ts), "e", 25, 26, 0);

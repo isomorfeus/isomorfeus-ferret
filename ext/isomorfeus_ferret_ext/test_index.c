@@ -39,278 +39,281 @@ static FrtFieldInfos *prep_book_fis()
 FrtDocument *prep_book()
 {
     FrtDocument *doc = frt_doc_new();
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(author),
-            frt_estrdup("P.H. Newby")))->destroy_data = true;
+            frt_estrdup("P.H. Newby"), enc))->destroy_data = true;
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Something To Answer For")))->destroy_data = true;
+            frt_estrdup("Something To Answer For"), enc))->destroy_data = true;
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1969")))->destroy_data = true;
+            frt_estrdup("1969"), enc))->destroy_data = true;
     return doc;
 }
 
 #define BOOK_LIST_LENGTH 37
 FrtDocument **prep_book_list()
 {
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
     FrtDocument **docs = FRT_ALLOC_N(FrtDocument *, BOOK_LIST_LENGTH);
     docs[0] = frt_doc_new();
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("P.H. Newby")))->destroy_data = true;
+            frt_estrdup("P.H. Newby"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Something To Answer For")))->destroy_data = true;
+            frt_estrdup("Something To Answer For"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1969")))->destroy_data = true;
+            frt_estrdup("1969"), enc))->destroy_data = true;
     docs[1] = frt_doc_new();
     frt_doc_add_field(docs[1], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Bernice Rubens")))->destroy_data = true;
+            frt_estrdup("Bernice Rubens"), enc))->destroy_data = true;
     frt_doc_add_field(docs[1], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Elected Member")))->destroy_data = true;
+            frt_estrdup("The Elected Member"), enc))->destroy_data = true;
     frt_doc_add_field(docs[1], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1970")))->destroy_data = true;
+            frt_estrdup("1970"), enc))->destroy_data = true;
     docs[2] = frt_doc_new();
     frt_doc_add_field(docs[2], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("V. S. Naipaul")))->destroy_data = true;
+            frt_estrdup("V. S. Naipaul"), enc))->destroy_data = true;
     frt_doc_add_field(docs[2], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("In a Free State")))->destroy_data = true;
+            frt_estrdup("In a Free State"), enc))->destroy_data = true;
     frt_doc_add_field(docs[2], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1971")))->destroy_data = true;
+            frt_estrdup("1971"), enc))->destroy_data = true;
     docs[3] = frt_doc_new();
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("John Berger")))->destroy_data = true;
+            frt_estrdup("John Berger"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("G")))->destroy_data = true;
+            frt_estrdup("G"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1972")))->destroy_data = true;
+            frt_estrdup("1972"), enc))->destroy_data = true;
     docs[4] = frt_doc_new();
     frt_doc_add_field(docs[4], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("J. G. Farrell")))->destroy_data = true;
+            frt_estrdup("J. G. Farrell"), enc))->destroy_data = true;
     frt_doc_add_field(docs[4], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Siege of Krishnapur")))->destroy_data = true;
+            frt_estrdup("The Siege of Krishnapur"), enc))->destroy_data = true;
     frt_doc_add_field(docs[4], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1973")))->destroy_data = true;
+            frt_estrdup("1973"), enc))->destroy_data = true;
     docs[5] = frt_doc_new();
     frt_doc_add_field(docs[5], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Stanley Middleton")))->destroy_data = true;
+            frt_estrdup("Stanley Middleton"), enc))->destroy_data = true;
     frt_doc_add_field(docs[5], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Holiday")))->destroy_data = true;
+            frt_estrdup("Holiday"), enc))->destroy_data = true;
     frt_doc_add_field(docs[5], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1974")))->destroy_data = true;
+            frt_estrdup("1974"), enc))->destroy_data = true;
     docs[6] = frt_doc_new();
     frt_doc_add_field(docs[6], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Nadine Gordimer")))->destroy_data = true;
+            frt_estrdup("Nadine Gordimer"), enc))->destroy_data = true;
     frt_doc_add_field(docs[6], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Conservationist")))->destroy_data = true;
+            frt_estrdup("The Conservationist"), enc))->destroy_data = true;
     frt_doc_add_field(docs[6], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1974")))->destroy_data = true;
+            frt_estrdup("1974"), enc))->destroy_data = true;
     docs[7] = frt_doc_new();
     frt_doc_add_field(docs[7], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Ruth Prawer Jhabvala")))->destroy_data = true;
+            frt_estrdup("Ruth Prawer Jhabvala"), enc))->destroy_data = true;
     frt_doc_add_field(docs[7], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Heat and Dust")))->destroy_data = true;
+            frt_estrdup("Heat and Dust"), enc))->destroy_data = true;
     frt_doc_add_field(docs[7], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1975")))->destroy_data = true;
+            frt_estrdup("1975"), enc))->destroy_data = true;
     docs[8] = frt_doc_new();
     frt_doc_add_field(docs[8], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("David Storey")))->destroy_data = true;
+            frt_estrdup("David Storey"), enc))->destroy_data = true;
     frt_doc_add_field(docs[8], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Saville")))->destroy_data = true;
+            frt_estrdup("Saville"), enc))->destroy_data = true;
     frt_doc_add_field(docs[8], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1976")))->destroy_data = true;
+            frt_estrdup("1976"), enc))->destroy_data = true;
     docs[9] = frt_doc_new();
     frt_doc_add_field(docs[9], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Paul Scott")))->destroy_data = true;
+            frt_estrdup("Paul Scott"), enc))->destroy_data = true;
     frt_doc_add_field(docs[9], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Staying On")))->destroy_data = true;
+            frt_estrdup("Staying On"), enc))->destroy_data = true;
     frt_doc_add_field(docs[9], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1977")))->destroy_data = true;
+            frt_estrdup("1977"), enc))->destroy_data = true;
     docs[10] = frt_doc_new();
     frt_doc_add_field(docs[10], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Iris Murdoch")))->destroy_data = true;
+            frt_estrdup("Iris Murdoch"), enc))->destroy_data = true;
     frt_doc_add_field(docs[10], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Sea")))->destroy_data = true;
+            frt_estrdup("The Sea"), enc))->destroy_data = true;
     frt_doc_add_field(docs[10], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1978")))->destroy_data = true;
+            frt_estrdup("1978"), enc))->destroy_data = true;
     docs[11] = frt_doc_new();
     frt_doc_add_field(docs[11], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Penelope Fitzgerald")))->destroy_data = true;
+            frt_estrdup("Penelope Fitzgerald"), enc))->destroy_data = true;
     frt_doc_add_field(docs[11], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Offshore")))->destroy_data = true;
+            frt_estrdup("Offshore"), enc))->destroy_data = true;
     frt_doc_add_field(docs[11], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1979")))->destroy_data = true;
+            frt_estrdup("1979"), enc))->destroy_data = true;
     docs[12] = frt_doc_new();
     frt_doc_add_field(docs[12], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("William Golding")))->destroy_data = true;
+            frt_estrdup("William Golding"), enc))->destroy_data = true;
     frt_doc_add_field(docs[12], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Rites of Passage")))->destroy_data = true;
+            frt_estrdup("Rites of Passage"), enc))->destroy_data = true;
     frt_doc_add_field(docs[12], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1980")))->destroy_data = true;
+            frt_estrdup("1980"), enc))->destroy_data = true;
     docs[13] = frt_doc_new();
     frt_doc_add_field(docs[13], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Salman Rushdie")))->destroy_data = true;
+            frt_estrdup("Salman Rushdie"), enc))->destroy_data = true;
     frt_doc_add_field(docs[13], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Midnight's Children")))->destroy_data = true;
+            frt_estrdup("Midnight's Children"), enc))->destroy_data = true;
     frt_doc_add_field(docs[13], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1981")))->destroy_data = true;
+            frt_estrdup("1981"), enc))->destroy_data = true;
     docs[14] = frt_doc_new();
     frt_doc_add_field(docs[14], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Thomas Keneally")))->destroy_data = true;
+            frt_estrdup("Thomas Keneally"), enc))->destroy_data = true;
     frt_doc_add_field(docs[14], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Schindler's Ark")))->destroy_data = true;
+            frt_estrdup("Schindler's Ark"), enc))->destroy_data = true;
     frt_doc_add_field(docs[14], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1982")))->destroy_data = true;
+            frt_estrdup("1982"), enc))->destroy_data = true;
     docs[15] = frt_doc_new();
     frt_doc_add_field(docs[15], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("J. M. Coetzee")))->destroy_data = true;
+            frt_estrdup("J. M. Coetzee"), enc))->destroy_data = true;
     frt_doc_add_field(docs[15], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Life and Times of Michael K")))->destroy_data = true;
+            frt_estrdup("Life and Times of Michael K"), enc))->destroy_data = true;
     frt_doc_add_field(docs[15], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1983")))->destroy_data = true;
+            frt_estrdup("1983"), enc))->destroy_data = true;
     docs[16] = frt_doc_new();
     frt_doc_add_field(docs[16], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Anita Brookner")))->destroy_data = true;
+            frt_estrdup("Anita Brookner"), enc))->destroy_data = true;
     frt_doc_add_field(docs[16], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Hotel du Lac")))->destroy_data = true;
+            frt_estrdup("Hotel du Lac"), enc))->destroy_data = true;
     frt_doc_add_field(docs[16], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1984")))->destroy_data = true;
+            frt_estrdup("1984"), enc))->destroy_data = true;
     docs[17] = frt_doc_new();
     frt_doc_add_field(docs[17], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Keri Hulme")))->destroy_data = true;
+            frt_estrdup("Keri Hulme"), enc))->destroy_data = true;
     frt_doc_add_field(docs[17], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Bone People")))->destroy_data = true;
+            frt_estrdup("The Bone People"), enc))->destroy_data = true;
     frt_doc_add_field(docs[17], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1985")))->destroy_data = true;
+            frt_estrdup("1985"), enc))->destroy_data = true;
     docs[18] = frt_doc_new();
     frt_doc_add_field(docs[18], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Kingsley Amis")))->destroy_data = true;
+            frt_estrdup("Kingsley Amis"), enc))->destroy_data = true;
     frt_doc_add_field(docs[18], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Old Devils")))->destroy_data = true;
+            frt_estrdup("The Old Devils"), enc))->destroy_data = true;
     frt_doc_add_field(docs[18], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1986")))->destroy_data = true;
+            frt_estrdup("1986"), enc))->destroy_data = true;
     docs[19] = frt_doc_new();
     frt_doc_add_field(docs[19], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Penelope Lively")))->destroy_data = true;
+            frt_estrdup("Penelope Lively"), enc))->destroy_data = true;
     frt_doc_add_field(docs[19], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Moon Tiger")))->destroy_data = true;
+            frt_estrdup("Moon Tiger"), enc))->destroy_data = true;
     frt_doc_add_field(docs[19], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1987")))->destroy_data = true;
+            frt_estrdup("1987"), enc))->destroy_data = true;
     docs[20] = frt_doc_new();
     frt_doc_add_field(docs[20], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Peter Carey")))->destroy_data = true;
+            frt_estrdup("Peter Carey"), enc))->destroy_data = true;
     frt_doc_add_field(docs[20], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Oscar and Lucinda")))->destroy_data = true;
+            frt_estrdup("Oscar and Lucinda"), enc))->destroy_data = true;
     frt_doc_add_field(docs[20], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1988")))->destroy_data = true;
+            frt_estrdup("1988"), enc))->destroy_data = true;
     docs[21] = frt_doc_new();
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Kazuo Ishiguro")))->destroy_data = true;
+            frt_estrdup("Kazuo Ishiguro"), enc))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Remains of the Day")))->destroy_data = true;
+            frt_estrdup("The Remains of the Day"), enc))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1989")))->destroy_data = true;
+            frt_estrdup("1989"), enc))->destroy_data = true;
     docs[22] = frt_doc_new();
     frt_doc_add_field(docs[22], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("A. S. Byatt")))->destroy_data = true;
+            frt_estrdup("A. S. Byatt"), enc))->destroy_data = true;
     frt_doc_add_field(docs[22], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Possession")))->destroy_data = true;
+            frt_estrdup("Possession"), enc))->destroy_data = true;
     frt_doc_add_field(docs[22], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1990")))->destroy_data = true;
+            frt_estrdup("1990"), enc))->destroy_data = true;
     docs[23] = frt_doc_new();
     frt_doc_add_field(docs[23], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Ben Okri")))->destroy_data = true;
+            frt_estrdup("Ben Okri"), enc))->destroy_data = true;
     frt_doc_add_field(docs[23], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Famished Road")))->destroy_data = true;
+            frt_estrdup("The Famished Road"), enc))->destroy_data = true;
     frt_doc_add_field(docs[23], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1991")))->destroy_data = true;
+            frt_estrdup("1991"), enc))->destroy_data = true;
     docs[24] = frt_doc_new();
     frt_doc_add_field(docs[24], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Michael Ondaatje")))->destroy_data = true;
+            frt_estrdup("Michael Ondaatje"), enc))->destroy_data = true;
     frt_doc_add_field(docs[24], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The English Patient")))->destroy_data = true;
+            frt_estrdup("The English Patient"), enc))->destroy_data = true;
     frt_doc_add_field(docs[24], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1992")))->destroy_data = true;
+            frt_estrdup("1992"), enc))->destroy_data = true;
     docs[25] = frt_doc_new();
     frt_doc_add_field(docs[25], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Barry Unsworth")))->destroy_data = true;
+            frt_estrdup("Barry Unsworth"), enc))->destroy_data = true;
     frt_doc_add_field(docs[25], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Sacred Hunger")))->destroy_data = true;
+            frt_estrdup("Sacred Hunger"), enc))->destroy_data = true;
     frt_doc_add_field(docs[25], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1992")))->destroy_data = true;
+            frt_estrdup("1992"), enc))->destroy_data = true;
     docs[26] = frt_doc_new();
     frt_doc_add_field(docs[26], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Roddy Doyle")))->destroy_data = true;
+            frt_estrdup("Roddy Doyle"), enc))->destroy_data = true;
     frt_doc_add_field(docs[26], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Paddy Clarke Ha Ha Ha")))->destroy_data = true;
+            frt_estrdup("Paddy Clarke Ha Ha Ha"), enc))->destroy_data = true;
     frt_doc_add_field(docs[26], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1993")))->destroy_data = true;
+            frt_estrdup("1993"), enc))->destroy_data = true;
     docs[27] = frt_doc_new();
     frt_doc_add_field(docs[27], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("James Kelman")))->destroy_data = true;
+            frt_estrdup("James Kelman"), enc))->destroy_data = true;
     frt_doc_add_field(docs[27], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("How Late It Was, How Late")))->destroy_data = true;
+            frt_estrdup("How Late It Was, How Late"), enc))->destroy_data = true;
     frt_doc_add_field(docs[27], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1994")))->destroy_data = true;
+            frt_estrdup("1994"), enc))->destroy_data = true;
     docs[28] = frt_doc_new();
     frt_doc_add_field(docs[28], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Pat Barker")))->destroy_data = true;
+            frt_estrdup("Pat Barker"), enc))->destroy_data = true;
     frt_doc_add_field(docs[28], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Ghost Road")))->destroy_data = true;
+            frt_estrdup("The Ghost Road"), enc))->destroy_data = true;
     frt_doc_add_field(docs[28], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1995")))->destroy_data = true;
+            frt_estrdup("1995"), enc))->destroy_data = true;
     docs[29] = frt_doc_new();
     frt_doc_add_field(docs[29], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Graham Swift")))->destroy_data = true;
+            frt_estrdup("Graham Swift"), enc))->destroy_data = true;
     frt_doc_add_field(docs[29], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Last Orders")))->destroy_data = true;
+            frt_estrdup("Last Orders"), enc))->destroy_data = true;
     frt_doc_add_field(docs[29], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1996")))->destroy_data = true;
+            frt_estrdup("1996"), enc))->destroy_data = true;
     docs[30] = frt_doc_new();
     frt_doc_add_field(docs[30], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Arundati Roy")))->destroy_data = true;
+            frt_estrdup("Arundati Roy"), enc))->destroy_data = true;
     frt_doc_add_field(docs[30], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The God of Small Things")))->destroy_data = true;
+            frt_estrdup("The God of Small Things"), enc))->destroy_data = true;
     frt_doc_add_field(docs[30], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1997")))->destroy_data = true;
+            frt_estrdup("1997"), enc))->destroy_data = true;
     docs[31] = frt_doc_new();
     frt_doc_add_field(docs[31], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Ian McEwan")))->destroy_data = true;
+            frt_estrdup("Ian McEwan"), enc))->destroy_data = true;
     frt_doc_add_field(docs[31], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Amsterdam")))->destroy_data = true;
+            frt_estrdup("Amsterdam"), enc))->destroy_data = true;
     frt_doc_add_field(docs[31], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1998")))->destroy_data = true;
+            frt_estrdup("1998"), enc))->destroy_data = true;
     docs[32] = frt_doc_new();
     frt_doc_add_field(docs[32], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("J. M. Coetzee")))->destroy_data = true;
+            frt_estrdup("J. M. Coetzee"), enc))->destroy_data = true;
     frt_doc_add_field(docs[32], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Disgrace")))->destroy_data = true;
+            frt_estrdup("Disgrace"), enc))->destroy_data = true;
     frt_doc_add_field(docs[32], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1999")))->destroy_data = true;
+            frt_estrdup("1999"), enc))->destroy_data = true;
     docs[33] = frt_doc_new();
     frt_doc_add_field(docs[33], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Margaret Atwood")))->destroy_data = true;
+            frt_estrdup("Margaret Atwood"), enc))->destroy_data = true;
     frt_doc_add_field(docs[33], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Blind Assassin")))->destroy_data = true;
+            frt_estrdup("The Blind Assassin"), enc))->destroy_data = true;
     frt_doc_add_field(docs[33], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("2000")))->destroy_data = true;
+            frt_estrdup("2000"), enc))->destroy_data = true;
     docs[34] = frt_doc_new();
     frt_doc_add_field(docs[34], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Peter Carey")))->destroy_data = true;
+            frt_estrdup("Peter Carey"), enc))->destroy_data = true;
     frt_doc_add_field(docs[34], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("True History of the Kelly Gang")))->destroy_data = true;
+            frt_estrdup("True History of the Kelly Gang"), enc))->destroy_data = true;
     frt_doc_add_field(docs[34], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("2001")))->destroy_data = true;
+            frt_estrdup("2001"), enc))->destroy_data = true;
     docs[35] = frt_doc_new();
     frt_doc_add_field(docs[35], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Yann Martel")))->destroy_data = true;
+            frt_estrdup("Yann Martel"), enc))->destroy_data = true;
     frt_doc_add_field(docs[35], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("The Life of Pi")))->destroy_data = true;
+            frt_estrdup("The Life of Pi"), enc))->destroy_data = true;
     frt_doc_add_field(docs[35], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("2002")))->destroy_data = true;
+            frt_estrdup("2002"), enc))->destroy_data = true;
     docs[36] = frt_doc_new();
     frt_doc_add_field(docs[36], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("DBC Pierre")))->destroy_data = true;
+            frt_estrdup("DBC Pierre"), enc))->destroy_data = true;
     frt_doc_add_field(docs[36], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Vernon God Little")))->destroy_data = true;
+            frt_estrdup("Vernon God Little"), enc))->destroy_data = true;
     frt_doc_add_field(docs[36], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("2003")))->destroy_data = true;
+            frt_estrdup("2003"), enc))->destroy_data = true;
 
     return docs;
 }
@@ -343,130 +346,131 @@ FrtDocument **prep_ir_test_docs()
     char buf[2000] = "";
     FrtDocument **docs = FRT_ALLOC_N(FrtDocument *, IR_TEST_DOC_CNT);
     FrtDocField *df;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     docs[0] = frt_doc_new();
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
-                    "word3 word3")))->destroy_data = true;
+                    "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
-                    "word3 word3")))->destroy_data = true;
+                    "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Where is Wally")))->destroy_data = true;
+            frt_estrdup("Where is Wally"), enc))->destroy_data = true;
     docs[1] = frt_doc_new();
     frt_doc_add_field(docs[1], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence read")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence read"), enc))->destroy_data = true;
     frt_doc_add_field(docs[1], frt_df_add_data(frt_df_new(tag),
-            frt_estrdup("id_test")))->destroy_data = true;
+            frt_estrdup("id_test"), enc))->destroy_data = true;
     docs[2] = frt_doc_new();
     frt_doc_add_field(docs[2], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some read Random Sentence read")))->destroy_data = true;
+            frt_estrdup("Some read Random Sentence read"), enc))->destroy_data = true;
     df = frt_df_new(tag);
-    frt_df_add_data(df, frt_estrdup("one"));
-    frt_df_add_data(df, frt_estrdup("two"));
-    frt_df_add_data(df, frt_estrdup("three"));
-    frt_df_add_data(df, frt_estrdup("four"));
+    frt_df_add_data(df, frt_estrdup("one"), enc);
+    frt_df_add_data(df, frt_estrdup("two"), enc);
+    frt_df_add_data(df, frt_estrdup("three"), enc);
+    frt_df_add_data(df, frt_estrdup("four"), enc);
     frt_doc_add_field(docs[2], df)->destroy_data = true;
     df = frt_df_new(compressed_field);
-    frt_df_add_data(df, frt_estrdup("one"));
-    frt_df_add_data(df, frt_estrdup("two"));
-    frt_df_add_data(df, frt_estrdup("three"));
-    frt_df_add_data(df, frt_estrdup("four"));
+    frt_df_add_data(df, frt_estrdup("one"), enc);
+    frt_df_add_data(df, frt_estrdup("two"), enc);
+    frt_df_add_data(df, frt_estrdup("three"), enc);
+    frt_df_add_data(df, frt_estrdup("four"), enc);
     frt_doc_add_field(docs[2], df)->destroy_data = true;
     docs[3] = frt_doc_new();
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("War And Peace")))->destroy_data = true;
+            frt_estrdup("War And Peace"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(body),
             frt_estrdup("word3 word4 word1 word2 word1 "
-                    "word3 word4 word1 word3 word3")))->destroy_data = true;
+                    "word3 word4 word1 word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(author),
-            frt_estrdup("Leo Tolstoy")))->destroy_data = true;
+            frt_estrdup("Leo Tolstoy"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(year),
-            frt_estrdup("1865")))->destroy_data = true;
+            frt_estrdup("1865"), enc))->destroy_data = true;
     frt_doc_add_field(docs[3], frt_df_add_data(frt_df_new(text),
-            frt_estrdup("more text which is not stored")))->destroy_data = true;
+            frt_estrdup("more text which is not stored"), enc))->destroy_data = true;
     docs[4] = frt_doc_new();
     frt_doc_add_field(docs[4], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[5] = frt_doc_new();
     frt_doc_add_field(docs[5], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Here's Wally")))->destroy_data = true;
+            frt_estrdup("Here's Wally"), enc))->destroy_data = true;
     frt_doc_add_field(docs[5], frt_df_add_data(frt_df_new(text),
-            frt_estrdup("so_that_norm_can_be_set")))->destroy_data = true;
+            frt_estrdup("so_that_norm_can_be_set"), enc))->destroy_data = true;
     docs[6] = frt_doc_new();
     frt_doc_add_field(docs[6], frt_df_add_data(frt_df_new(body),
             frt_estrdup("Some Random Sentence read read read read"
-                    )))->destroy_data = true;
+                    ), enc))->destroy_data = true;
     docs[7] = frt_doc_new();
     frt_doc_add_field(docs[7], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[8] = frt_doc_new();
     frt_doc_add_field(docs[8], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[9] = frt_doc_new();
     frt_doc_add_field(docs[9], frt_df_add_data(frt_df_new(body),
             frt_estrdup("read Some Random Sentence read this will be used after "
-                    "unfinished next position read")))->destroy_data = true;
+                    "unfinished next position read"), enc))->destroy_data = true;
     docs[10] = frt_doc_new();
     frt_doc_add_field(docs[10], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some read Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some read Random Sentence"), enc))->destroy_data = true;
     frt_doc_add_field(docs[10], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
-                    "word3")))->destroy_data = true;
+                    "word3"), enc))->destroy_data = true;
     docs[11] = frt_doc_new();
     frt_doc_add_field(docs[11], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("And here too. Well, maybe Not")))->destroy_data = true;
+            frt_estrdup("And here too. Well, maybe Not"), enc))->destroy_data = true;
     docs[12] = frt_doc_new();
     frt_doc_add_field(docs[12], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("Shawshank Redemption")))->destroy_data = true;
+            frt_estrdup("Shawshank Redemption"), enc))->destroy_data = true;
     frt_doc_add_field(docs[12], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[13] = frt_doc_new();
     frt_doc_add_field(docs[13], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[14] = frt_doc_new();
     frt_doc_add_field(docs[14], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     docs[15] = frt_doc_new();
     frt_doc_add_field(docs[15], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some read Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some read Random Sentence"), enc))->destroy_data = true;
     docs[16] = frt_doc_new();
     frt_doc_add_field(docs[16], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random read read Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random read read Sentence"), enc))->destroy_data = true;
     docs[17] = frt_doc_new();
     frt_doc_add_field(docs[17], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random read Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random read Sentence"), enc))->destroy_data = true;
     frt_doc_add_field(docs[17], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
-                    "word3")))->destroy_data = true;
+                    "word3"), enc))->destroy_data = true;
     docs[18] = frt_doc_new();
     frt_doc_add_field(docs[18], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Wally Wally Wally")))->destroy_data = true;
+            frt_estrdup("Wally Wally Wally"), enc))->destroy_data = true;
     docs[19] = frt_doc_new();
     frt_doc_add_field(docs[19], frt_df_add_data(frt_df_new(body),
-            frt_estrdup("Some Random Sentence")))->destroy_data = true;
+            frt_estrdup("Some Random Sentence"), enc))->destroy_data = true;
     frt_doc_add_field(docs[19], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
-                    "word3")))->destroy_data = true;
+                    "word3"), enc))->destroy_data = true;
     docs[20] = frt_doc_new();
     frt_doc_add_field(docs[20], frt_df_add_data(frt_df_new(body),
             frt_estrdup("Wally is where Wally usually likes to go. Wally Mart! "
                     "Wally likes shopping there for Where's Wally books. "
-                    "Wally likes to read")))->destroy_data = true;
+                    "Wally likes to read"), enc))->destroy_data = true;
     frt_doc_add_field(docs[20], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
-                    "word3")))->destroy_data = true;
+                    "word3"), enc))->destroy_data = true;
     docs[21] = frt_doc_new();
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(body),
             frt_estrdup("Some Random Sentence read read read and more read read "
-                    "read")))->destroy_data = true;
+                    "read"), enc))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 word3 "
-                    "word3")))->destroy_data = true;
+                    "word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(rb_intern("new field")),
-            frt_estrdup("zdata znot zto zbe zfound")))->destroy_data = true;
+            frt_estrdup("zdata znot zto zbe zfound"), enc))->destroy_data = true;
     frt_doc_add_field(docs[21], frt_df_add_data(frt_df_new(title),
-            frt_estrdup("title_too_long_for_max_word_lengthxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")))->destroy_data = true;
+            frt_estrdup("title_too_long_for_max_word_lengthxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"), enc))->destroy_data = true;
 
     for (i = 1; i < 22; i++) {
         strcat(buf, "skip ");
@@ -475,7 +479,7 @@ FrtDocument **prep_ir_test_docs()
         strcat(buf, "skip ");
         docs[i] = frt_doc_new();
         frt_doc_add_field(docs[i], frt_df_add_data(frt_df_new(text),
-            frt_estrdup(buf)))->destroy_data = true;
+            frt_estrdup(buf), enc))->destroy_data = true;
     }
     return docs;
 }
@@ -488,12 +492,14 @@ static void prep_stde_test_docs(FrtDocument **docs, int doc_cnt, int num_words,
 {
     int i, j;
     char *buf = FRT_ALLOC_N(char, num_words * (TEST_WORD_LIST_MAX_LEN + 1));
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+
     for (i = 0; i < doc_cnt; i++) {
         docs[i] = frt_doc_new();
         for (j = 0; j < fis->size; j++) {
             if ((rand() % 2) == 0) {
                 FrtDocField *df = frt_df_new(fis->fields[j]->name);
-                frt_df_add_data(df, frt_estrdup(make_random_string(buf, num_words)));
+                frt_df_add_data(df, frt_estrdup(make_random_string(buf, num_words)), enc);
                 df->destroy_data = true;
                 frt_doc_add_field(docs[i], df);
             }
@@ -658,6 +664,7 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
     FrtBitVector *bv = frt_bv_new();
     FrtTermDocEnum *tde;
     FrtSegmentInfo *si = frt_si_new(frt_estrdup("_0"), NUM_STDE_TEST_DOCS, store);
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     dw = frt_dw_open(iw, si);
 
@@ -666,10 +673,10 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
         if ((rand() % 2) == 0) {
             frt_bv_set(bv, i);
             Aiequal(1, frt_bv_get(bv, i));
-            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)double_word));
+            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)double_word, enc));
         }
         else {
-            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)triple_word));
+            frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("f")), (char *)triple_word, enc));
         }
         frt_dw_add_doc(dw, doc);
        frt_doc_destroy(doc);
@@ -794,13 +801,14 @@ static void test_fld_inverter(TestCase *tc, void *data)
     FrtDocWriter *dw;
     FrtIndexWriter *iw = create_book_iw(store);
     FrtDocField *df;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
 
     df = frt_df_new(rb_intern("no tv"));
-    frt_df_add_data(df, (char *)"one two three four five two three four five three four five four five");
-    frt_df_add_data(df, (char *)"ichi ni san yon go ni san yon go san yon go yon go go");
-    frt_df_add_data(df, (char *)"The quick brown fox jumped over five lazy dogs");
+    frt_df_add_data(df, (char *)"one two three four five two three four five three four five four five", enc);
+    frt_df_add_data(df, (char *)"ichi ni san yon go ni san yon go san yon go yon go go", enc);
+    frt_df_add_data(df, (char *)"The quick brown fox jumped over five lazy dogs", enc);
 
     curr_plists = frt_dw_invert_field(
         dw,
@@ -844,8 +852,8 @@ static void test_fld_inverter(TestCase *tc, void *data)
     frt_df_destroy(df);
 
     df = frt_df_new(rb_intern("no tv"));
-    frt_df_add_data(df, (char *)"seven new words and six old ones");
-    frt_df_add_data(df, (char *)"ichi ni one two quick dogs");
+    frt_df_add_data(df, (char *)"seven new words and six old ones", enc);
+    frt_df_add_data(df, (char *)"ichi ni one two quick dogs", enc);
 
     dw->doc_num++;
     frt_dw_reset_postings(dw->curr_plists);
@@ -1171,6 +1179,8 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
     FrtStore *store = (FrtStore *)data;
     FrtIndexWriter *iw;
     FrtDocument *doc;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
@@ -1178,9 +1188,9 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
 
     iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
     doc = frt_doc_new();
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), (char *)""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), (char *)""));
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("no_tv")), (char *)"one two three"));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), (char *)"", enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), (char *)"", enc));
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("no_tv")), (char *)"one two three", enc));
 
     frt_iw_add_doc(iw, doc);
     frt_iw_commit(iw);
@@ -2106,18 +2116,19 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     const char *body_text = "this is the body FrtDocument Field";
     const char *title_text = "this is the title FrtDocument Field";
     const char *author_text = "this is the author FrtDocument Field";
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     frt_index_create(store, fis);
     frt_fis_deref(fis);
     iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
 
-    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(tag), (char *)"Ruby"));
-    frt_df_add_data(df, (char *)"C");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(body), (char *)body_text));
-    frt_df_add_data(df, (char *)"Lucene");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(title), (char *)title_text));
-    frt_df_add_data(df, (char *)"Ferret");
-    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(author), (char *)author_text));
+    df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(tag), (char *)"Ruby", enc));
+    frt_df_add_data(df, (char *)"C", enc);
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(body), (char *)body_text, enc));
+    frt_df_add_data(df, (char *)"Lucene", enc);
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(title), (char *)title_text, enc));
+    frt_df_add_data(df, (char *)"Ferret", enc);
+    frt_doc_add_field(doc, frt_df_add_data(frt_df_new(author), (char *)author_text, enc));
 
     Aiequal(0, iw->fis->size);
 

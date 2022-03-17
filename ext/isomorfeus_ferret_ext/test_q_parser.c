@@ -7,7 +7,7 @@ typedef struct QPTestPair {
 } QPTestPair;
 
 #define PARSER_TEST(str, res) do {\
-    FrtQuery *q = qp_parse(parser, (char *)str);\
+    FrtQuery *q = qp_parse(parser, (char *)str, enc);\
     char *qres = q->to_s(q, rb_intern("xx"));\
     Asequal(res, qres);\
     frt_q_deref(q);\
@@ -141,7 +141,7 @@ static void test_q_parser(TestCase *tc, void *data)
         {"f1:(aaa f2:bbb ccc)", "f1:aaa f2:bbb f1:ccc"}
     };
     (void)data;
-
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
     FRT_REF(analyzer);
     parser = frt_qp_new(analyzer);
     frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
@@ -307,6 +307,7 @@ static void test_q_parser_standard_analyzer(TestCase *tc, void *data)
             */
     };
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     FRT_REF(analyzer);
     parser = frt_qp_new(analyzer);
@@ -390,6 +391,7 @@ static void test_qp_bad_queries(TestCase *tc, void *data)
         {"::|)*&one)(*two(*&\"", "\"one two\"~1"}
     };
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
@@ -414,20 +416,21 @@ static void test_qp_prefix_query(TestCase *tc, void *data)
     FrtQParser *parser;
     FrtQuery *q;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
-    q = qp_parse(parser, (char *)"asdg*");
+    q = qp_parse(parser, (char *)"asdg*", enc);
     Aiequal(PREFIX_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, (char *)"a?dg*");
+    q = qp_parse(parser, (char *)"a?dg*", enc);
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, (char *)"a*dg*");
+    q = qp_parse(parser, (char *)"a*dg*", enc);
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
-    q = qp_parse(parser, (char *)"asdg*a");
+    q = qp_parse(parser, (char *)"asdg*a", enc);
     Aiequal(WILD_CARD_QUERY, q->type);
     frt_q_deref(q);
     frt_qp_destroy(parser);
@@ -437,6 +440,7 @@ static void test_qp_keyword_switch(TestCase *tc, void *data)
 {
     FrtQParser *parser;
     (void)data;
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     parser = frt_qp_new(frt_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"), true,  true);

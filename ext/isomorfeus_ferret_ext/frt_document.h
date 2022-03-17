@@ -3,6 +3,7 @@
 
 #include "frt_global.h"
 #include "frt_hash.h"
+#include <ruby/encoding.h>
 
 /****************************************************************************
  *
@@ -11,12 +12,12 @@
  ****************************************************************************/
 
 #define FRT_DF_INIT_CAPA 1
-typedef struct FrtDocField
-{
+typedef struct FrtDocField {
     FrtSymbol name;
     int size;
     int capa;
     int *lengths;
+    rb_encoding **encodings; /* used for processing */
     char **data;
     float boost;
     bool destroy_data : 1;
@@ -24,8 +25,8 @@ typedef struct FrtDocField
 } FrtDocField;
 
 extern FrtDocField *frt_df_new(FrtSymbol name);
-extern FrtDocField *frt_df_add_data(FrtDocField *df, char *data);
-extern FrtDocField *frt_df_add_data_len(FrtDocField *df, char *data, int len);
+extern FrtDocField *frt_df_add_data(FrtDocField *df, char *data, rb_encoding *encoding);
+extern FrtDocField *frt_df_add_data_len(FrtDocField *df, char *data, int len, rb_encoding *encoding);
 extern void frt_df_destroy(FrtDocField *df);
 extern char *frt_df_to_s(FrtDocField *df);
 
@@ -36,8 +37,7 @@ extern char *frt_df_to_s(FrtDocField *df);
  ****************************************************************************/
 
 #define FRT_DOC_INIT_CAPA 8
-typedef struct FrtDocument
-{
+typedef struct FrtDocument {
     FrtHash *field_dict;
     int size;
     int capa;

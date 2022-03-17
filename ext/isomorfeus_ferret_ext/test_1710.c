@@ -21,11 +21,13 @@ static FrtIndexWriter *create_iw(FrtStore *store)
 static FrtDocument *prep_doc()
 {
     FrtDocument *doc = frt_doc_new();
+    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
     frt_doc_add_field(
         doc,
         frt_df_add_data(
             frt_df_new(rb_intern("content")),
-            frt_estrdup("http://_____________________________________________________")
+            frt_estrdup("http://_____________________________________________________"),
+            enc
             )
         )->destroy_data = true;
     return doc;
