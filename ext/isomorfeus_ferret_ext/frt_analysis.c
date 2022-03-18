@@ -7,6 +7,16 @@
 #include "libstemmer.h"
 #include "frt_scanner.h"
 
+/* initialized in frt_global.c */
+extern rb_encoding *utf8_encoding;
+extern OnigCodePoint cp_apostrophe;
+extern OnigCodePoint cp_dot;
+extern OnigCodePoint cp_comma;
+extern OnigCodePoint cp_backslash;
+extern OnigCodePoint cp_slash;
+extern OnigCodePoint cp_underscore;
+extern OnigCodePoint cp_dash;
+
 /****************************************************************************
  *
  * Token
@@ -141,22 +151,6 @@ static FrtTokenStream *cts_new()
 /* * Multi-byte TokenStream * */
 
 #define MBTS(token_stream) ((FrtMultiByteTokenStream *)(token_stream))
-
-static int mb_next_char(wchar_t *wchr, const char *s, mbstate_t *state)
-{
-    int num_bytes;
-    if ((num_bytes = (int)mbrtowc(wchr, s, MB_CUR_MAX, state)) < 0) {
-        const char *t = s;
-        do {
-            t++;
-            FRT_ZEROSET(state, mbstate_t);
-            num_bytes = (int)mbrtowc(wchr, t, MB_CUR_MAX, state);
-        } while ((num_bytes < 0) && (*t != 0));
-        num_bytes = t - s;
-        if (*t == 0) *wchr = 0;
-    }
-    return num_bytes;
-}
 
 static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
@@ -540,6 +534,11 @@ static int mb_legacy_std_get_alpha(FrtTokenStream *ts, char *token)
     return i;
 }
 
+static int cp_isnumpunc(OnigCodePoint cp) {
+    return (cp == cp_dot || cp == cp_comma || cp == cp_backslash
+            || cp == cp_slash || cp == cp_underscore || cp == cp_dash);
+}
+
 static int isnumpunc(char c)
 {
     return (c == '.' || c == ',' || c == '\\' || c == '/' || c == '_'
@@ -634,18 +633,21 @@ static int legacy_std_get_number(char *input)
     }
 }
 
-static int mb_legacy_std_get_apostrophe(char *input)
+static int mb_legacy_std_get_apostrophe(FrtTokenStream *ts, char *input)
 {
+    int cp_len = 0;
+    OnigCodePoint cp;
+    rb_encoding *enc = ts->encoding;
+    char *end = ts->text + ts->length;
     char *t = input;
-    wchar_t wchr;
-    int i;
-    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
 
-    i = mb_next_char(&wchr, t, &state);
+    if (t == end) { return 0; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
 
-    while (iswalpha(wchr) || wchr == L'\'') {
-        t += i;
-        i = mb_next_char(&wchr, t, &state);
+    while (rb_enc_isalpha(cp, enc) || cp == cp_apostrophe) {
+        t += cp_len;
+        if (t == end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     return (int)(t - input);
 }
@@ -693,19 +695,27 @@ static int legacy_std_get_company_name(char *input)
 
 static bool mb_legacy_std_advance_to_start(FrtTokenStream *ts)
 {
-    int i;
-    wchar_t wchr;
-    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
+    int cp_len = 0;
+    int cp_len_b = 0;
+    OnigCodePoint cp;
+    rb_encoding *enc = ts->encoding;
+    char *end = ts->text + ts->length;
+    char *t = ts->t;
 
-    i = mb_next_char(&wchr, ts->t, &state);
+    if (t == end) { return false; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
 
-    while (wchr != 0 && !iswalnum(wchr)) {
-        if (isnumpunc(*ts->t) && isdigit(ts->t[1])) break;
-        ts->t += i;
-        i = mb_next_char(&wchr, ts->t, &state);
+    while (cp_len > 0 && !rb_enc_isalnum(cp, enc)) {
+        if (cp_isnumpunc(cp)) {
+            cp = rb_enc_codepoint_len(t + cp_len, end, &cp_len_b, enc);
+            if (rb_enc_isdigit(cp, enc)) break;
+        }
+        t += cp_len;
+        if (t == end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
-
-    return (wchr != 0);
+    ts->t = t;
+    return (t < end);
 }
 
 static FrtToken *legacy_std_next(FrtTokenStream *ts)
@@ -737,7 +747,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     }
 
     if (*t == '\'') {       /* apostrophe case. */
-        t += std_tz->get_apostrophe(t);
+        t += std_tz->get_apostrophe(ts, t);
         ts->t = t;
         len = (int)(t - start);
         /* strip possesive */

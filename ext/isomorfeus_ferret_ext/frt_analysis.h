@@ -84,7 +84,7 @@ typedef struct FrtLegacyStandardTokenizer
     bool        (*advance_to_start)(FrtTokenStream *ts);
     bool        (*is_tok_char)(char *c);
     int         (*get_alpha)(FrtTokenStream *ts, char *token);
-    int         (*get_apostrophe)(char *input);
+    int         (*get_apostrophe)(FrtTokenStream *ts, char *input);
 } FrtLegacyStandardTokenizer;
 
 typedef struct FrtTokenFilter

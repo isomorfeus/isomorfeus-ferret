@@ -11,8 +11,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
+#include <ruby/encoding.h>
 
 const char *FRT_EMPTY_STRING = "";
+
+rb_encoding *utf8_encoding;
+OnigCodePoint cp_apostrophe;
+OnigCodePoint cp_dot;
+OnigCodePoint cp_comma;
+OnigCodePoint cp_backslash;
+OnigCodePoint cp_slash;
+OnigCodePoint cp_underscore;
+OnigCodePoint cp_dash;
 
 int frt_scmp(const void *p1, const void *p2)
 {
@@ -381,6 +391,22 @@ void frt_init(int argc, const char *const argv[])
     SETSIG_IF_UNSET(SIGSEGV, sighandler_crash);
 
     atexit(&frt_hash_finalize);
+
+    utf8_encoding = rb_enc_find("UTF-8");
+    char *p = "'";
+    cp_apostrophe = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = ".";
+    cp_dot = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = ",";
+    cp_comma = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = "\\";
+    cp_backslash = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = "/";
+    cp_slash = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = "_";
+    cp_underscore = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = "-";
+    cp_dash = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
 }
 
 /**
