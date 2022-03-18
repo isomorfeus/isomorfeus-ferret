@@ -9,27 +9,6 @@
 
 /****************************************************************************
  *
- * Helpers
- *
- ****************************************************************************/
-
-/* identical to rubys rb_enc_codepoint_len, except for rb_enc_fast_mbclen
- * this can be used here safely, because the string to scan is already complete */
-unsigned int frt_enc_codepoint_len(const char *p, const char *e, int *len_p, rb_encoding *enc)
-{
-    int r;
-    if (e <= p)
-        rb_raise(rb_eArgError, "empty string");
-    r = rb_enc_fast_mbclen(p, e, enc);
-    if (!MBCLEN_CHARFOUND_P(r)) {
-	rb_raise(rb_eArgError, "invalid byte sequence in %s", rb_enc_name(enc));
-    }
-    if (len_p) *len_p = MBCLEN_CHARFOUND_LEN(r);
-    return rb_enc_mbc_to_codepoint(p, e, enc);
-}
-
-/****************************************************************************
- *
  * Token
  *
  ****************************************************************************/
@@ -341,11 +320,11 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
     char *t = ts->t;
 
     if (t == end) { return NULL; }
-    cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     while (cp_len > 0 && rb_enc_isspace(cp, enc)) {
         t += cp_len;
         if (t == end) { return NULL; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
@@ -353,7 +332,7 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
     while (cp_len > 0 && !rb_enc_isspace(cp, enc)) {
         t += cp_len;
         if (t == end) { break; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
@@ -478,11 +457,11 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
     char *t = ts->t;
 
     if (t == end) { return NULL; }
-    cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     while (cp_len > 0 && !rb_enc_isalpha(cp, enc)) {
         t += cp_len;
         if (t == end) { return NULL; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
@@ -490,7 +469,7 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
     while (cp_len > 0 && rb_enc_isalpha(cp, enc)) {
         t += cp_len;
         if (t == end) { break; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
@@ -513,11 +492,11 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
     char *t = ts->t;
 
     if (t == end) { return NULL; }
-    cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     while (cp_len > 0 && !rb_enc_isalpha(cp, enc)) {
         t += cp_len;
         if (t == end) { return NULL; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
@@ -527,7 +506,7 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
         b += rb_enc_mbcput(cpl, b, enc);
         t += cp_len;
         if (t == end || b >= buf_end) { break; }
-        cp = frt_enc_codepoint_len(t, end, &cp_len, enc);
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
     *b = 0;
     ts->t = t;
