@@ -39,9 +39,9 @@ def build_index(file_list, max_to_index, increment)
   docs_so_far = 0
 
   file_list.each do |fn|
-    File.open(fn) do |f|
+    File.open(fn, encoding: "ASCII-8BIT") do |f|
       raise("Failed to read title") if (title = f.readline).nil?
-      writer << {:title => title.force_encoding("ASCII-8BIT"), :body => f.read.force_encoding("ASCII-8BIT")}
+      writer << {:title => title, :body => f.read }
     end
 
     docs_so_far += 1
