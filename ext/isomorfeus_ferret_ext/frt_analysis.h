@@ -134,8 +134,6 @@ typedef struct FrtStemFilter
 extern void frt_ts_deref(FrtTokenStream *ts);
 
 extern FrtTokenStream *frt_non_tokenizer_new();
-
-extern FrtTokenStream *frt_whitespace_tokenizer_new();
 extern FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase);
 
 extern FrtTokenStream *frt_letter_tokenizer_new();
@@ -204,7 +202,6 @@ extern FrtAnalyzer *frt_non_analyzer_new();
 
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
-extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase);
 
 extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);

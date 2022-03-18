@@ -34,7 +34,7 @@ static void create_index(FrtStore *store)
 static FrtIndexWriter *create_iw(FrtStore *store)
 {
     create_index(store);
-    return frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
+    return frt_iw_open(store, frt_mb_whitespace_analyzer_new(false), &frt_default_config);
 }
 
 static FrtIndexWriter *create_iw_conf(FrtStore *store, int max_buffered_docs,
@@ -44,14 +44,14 @@ static FrtIndexWriter *create_iw_conf(FrtStore *store, int max_buffered_docs,
     config.max_buffered_docs = max_buffered_docs;
     config.merge_factor = merge_factor;
     create_index(store);
-    return frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    return frt_iw_open(store, frt_mb_whitespace_analyzer_new(false), &config);
 }
 */
 
 static FrtIndexWriter *create_iw_lucene(FrtStore *store)
 {
     create_index(store);
-    return frt_iw_open(store, frt_whitespace_analyzer_new(false), &lucene_config);
+    return frt_iw_open(store, frt_mb_whitespace_analyzer_new(false), &lucene_config);
 }
 
 static void add_doc(FrtIndexWriter *iw, int id)
@@ -160,7 +160,7 @@ static void test_delete_leftover_files(TestCase *tc, void *data)
 
 
     /* Open & close a writer: should delete the above files and nothing more: */
-    frt_iw_close(frt_iw_open(store, frt_whitespace_analyzer_new(false), &lucene_config));
+    frt_iw_close(frt_iw_open(store, frt_mb_whitespace_analyzer_new(false), &lucene_config));
 
     store_after = frt_store_to_s(store);
 

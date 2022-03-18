@@ -117,7 +117,7 @@ class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
 
   def test_whitespace_tokenizer
     input = 'DBalmain@gmail.com is My e-mail 52   #$ ADDRESS. 23#!$'
-    t = AsciiWhiteSpaceTokenizer.new(input)
+    t = WhiteSpaceTokenizer.new(input)
     assert_equal(Token.new('DBalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('My', 22, 24), t.next)
@@ -131,7 +131,7 @@ class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("one_two", 0, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
-    t = AsciiLowerCaseFilter.new(AsciiWhiteSpaceTokenizer.new(input))
+    t = AsciiLowerCaseFilter.new(WhiteSpaceTokenizer.new(input))
     assert_equal(Token.new('dbalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('my', 22, 24), t.next)

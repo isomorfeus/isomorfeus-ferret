@@ -138,7 +138,7 @@ static void test_non_analyzer(TestCase *tc, void *data)
 static void test_whitespace_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_whitespace_tokenizer_new();
+    FrtTokenStream *ts = frt_mb_whitespace_tokenizer_new(false);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
@@ -215,7 +215,7 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
 static void test_whitespace_analyzer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtAnalyzer *a = frt_whitespace_analyzer_new(false);
+    FrtAnalyzer *a = frt_mb_whitespace_analyzer_new(false);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
     FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
@@ -1092,8 +1092,8 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    frt_pfa_add_field(pfa, rb_intern("white"), frt_whitespace_analyzer_new(false));
-    frt_pfa_add_field(pfa, rb_intern("white_l"), frt_whitespace_analyzer_new(true));
+    frt_pfa_add_field(pfa, rb_intern("white"), frt_mb_whitespace_analyzer_new(false));
+    frt_pfa_add_field(pfa, rb_intern("white_l"), frt_mb_whitespace_analyzer_new(true));
     frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(false));
     frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(true));
     frt_pfa_add_field(pfa, rb_intern("letter_u"), frt_letter_analyzer_new(false));

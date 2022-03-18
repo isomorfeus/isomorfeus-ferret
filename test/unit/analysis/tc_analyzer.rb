@@ -139,7 +139,7 @@ class AsciiWhiteSpaceAnalyzerTest < Test::Unit::TestCase
 
   def test_white_space_analyzer
     input = 'DBalmain@gmail.com is My E-Mail 52   #$ ADDRESS. 23#!$'
-    a = AsciiWhiteSpaceAnalyzer.new
+    a = WhiteSpaceAnalyzer.new
     t = a.token_stream("fieldname", input)
     t2 = a.token_stream("fieldname", input)
     assert_equal(Token.new('DBalmain@gmail.com', 0, 18), t.next)
@@ -160,7 +160,7 @@ class AsciiWhiteSpaceAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new('ADDRESS.', 40, 48), t2.next)
     assert_equal(Token.new('23#!$', 49, 54), t2.next)
     assert(! t2.next)
-    a = AsciiWhiteSpaceAnalyzer.new(true)
+    a = WhiteSpaceAnalyzer.new(true)
     t = a.token_stream("fieldname", input)
     assert_equal(Token.new('dbalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)

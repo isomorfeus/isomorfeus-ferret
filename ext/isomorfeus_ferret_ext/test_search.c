@@ -146,7 +146,7 @@ static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 FrtAnalyzer *dbl_analyzer_new()
 {
     FrtTokenStream *ts;
-    ts = dbl_tf_new(frt_whitespace_tokenizer_new());
+    ts = dbl_tf_new(frt_mb_whitespace_tokenizer_new(false));
     return frt_analyzer_new(ts, NULL, NULL);
 }
 

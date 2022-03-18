@@ -41,18 +41,6 @@ FrtToken *frt_tk_set_no_len(FrtToken *tk,
     return frt_tk_set(tk, text, (int)strlen(text), start, end, pos_inc);
 }
 
-static FrtToken *w_tk_set(FrtToken *tk, wchar_t *text, off_t start,
-                              off_t end, int pos_inc)
-{
-    int len = wcstombs(tk->text, text, FRT_MAX_WORD_SIZE - 1);
-    tk->text[len] = '\0';
-    tk->len = len;
-    tk->start = start;
-    tk->end = end;
-    tk->pos_inc = pos_inc;
-    return tk;
-}
-
 int frt_tk_eq(FrtToken *tk1, FrtToken *tk2)
 {
     return (strcmp((char *)tk1->text, (char *)tk2->text) == 0 &&
@@ -276,38 +264,6 @@ FrtAnalyzer *frt_non_analyzer_new()
  ****************************************************************************/
 
 /*
- * WhitespaceTokenizer
- */
-static FrtToken *wst_next(FrtTokenStream *ts)
-{
-    char *t = ts->t;
-    char *start;
-
-    while (*t != '\0' && isspace(*t)) {
-        t++;
-    }
-
-    if (*t == '\0') {
-        return NULL;
-    }
-
-    start = t;
-    while (*t != '\0' && !isspace(*t)) {
-        t++;
-    }
-
-    ts->t = t;
-    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
-}
-
-FrtTokenStream *frt_whitespace_tokenizer_new()
-{
-    FrtTokenStream *ts = cts_new();
-    ts->next = &wst_next;
-    return ts;
-}
-
-/*
  * Multi-byte WhitespaceTokenizer
  */
 static FrtToken *mb_wst_next(FrtTokenStream *ts)
@@ -343,39 +299,36 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
  */
 static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
 {
-    int i;
+    int cp_len = 0;
+    OnigCodePoint cp, cpl;
+    rb_encoding *enc = ts->encoding;
+    char buf[FRT_MAX_WORD_SIZE + 1];
+    char *b = buf;
+    char *buf_end = buf + FRT_MAX_WORD_SIZE - rb_enc_mbmaxlen(enc); // space for longest possible mulibyte at the end
+    char *end = ts->text + ts->length;
     char *start;
     char *t = ts->t;
-    wchar_t wchr;
-    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *w, *w_end;
-    mbstate_t *state = &(MBTS(ts)->state);
 
-    w = wbuf;
-    w_end = &wbuf[FRT_MAX_WORD_SIZE];
-
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && iswspace(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, state);
-    }
-    if (wchr == 0) {
-        return NULL;
+    if (t == end) { return NULL; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_len > 0 && rb_enc_isspace(cp, enc)) {
+        t += cp_len;
+        if (t == end) { return NULL; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     start = t;
-    t += i;
-    *w++ = towlower(wchr);
-    i = mb_next_char(&wchr, t, state);
-    while (wchr != 0 && !iswspace(wchr)) {
-        if (w < w_end) {
-            *w++ = towlower(wchr);
-        }
-        t += i;
-        i = mb_next_char(&wchr, t, state);
-    }
-    *w = 0;
+
+    do {
+        cpl = rb_enc_tolower(cp, enc);
+        b += rb_enc_mbcput(cpl, b, enc);
+        t += cp_len;
+        if (t == end || b >= buf_end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    } while (cp_len > 0 && !rb_enc_isspace(cp, enc));
+    *b = 0;
     ts->t = t;
-    return w_tk_set(&(CTS(ts)->token), wbuf, (off_t)(start - ts->text),
+    return frt_tk_set(&(CTS(ts)->token), buf, b - buf, (off_t)(start - ts->text),
                     (off_t)(t - ts->text), 1);
 }
 
@@ -387,19 +340,8 @@ FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase)
 }
 
 /*
- * WhitespaceAnalyzers
+ * WhitespaceAnalyzer
  */
-FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase)
-{
-    FrtTokenStream *ts;
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(frt_whitespace_tokenizer_new());
-    }
-    else {
-        ts = frt_whitespace_tokenizer_new();
-    }
-    return frt_analyzer_new(ts, NULL, NULL);
-}
 
 FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase)
 {
@@ -480,7 +422,6 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
  */
 static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 {
-
     int cp_len = 0;
     OnigCodePoint cp, cpl;
     rb_encoding *enc = ts->encoding;
@@ -646,16 +587,19 @@ static int legacy_std_get_alpha(FrtTokenStream *ts, char *token)
 
 static int mb_legacy_std_get_alpha(FrtTokenStream *ts, char *token)
 {
-    char *t = ts->t;
-    wchar_t wchr;
     int i;
-    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
+    int cp_len = 0;
+    OnigCodePoint cp;
+    rb_encoding *enc = ts->encoding;
+    char *end = ts->text + ts->length;
+    char *t = ts->t;
 
-    i = mb_next_char(&wchr, t, &state);
-
-    while (wchr != 0 && iswalnum(wchr)) {
-        t += i;
-        i = mb_next_char(&wchr, t, &state);
+    if (t == end) { return 0; }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_len > 0 && rb_enc_isalnum(cp, enc)) {
+        t += cp_len;
+        if (t == end) { break; }
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
     i = (int)(t - ts->t);

@@ -87,7 +87,7 @@ static void make_index(FrtStore *store)
 
 static void add_string_docs(FrtStore *store, const char *string[])
 {
-    FrtIndexWriter *iw = frt_iw_open(store, frt_whitespace_analyzer_new(true), NULL);
+    FrtIndexWriter *iw = frt_iw_open(store, frt_mb_whitespace_analyzer_new(true), NULL);
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     while (*string) {

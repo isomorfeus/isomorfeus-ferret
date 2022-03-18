@@ -11,7 +11,6 @@ static VALUE mAnalysis;
 static VALUE cToken;
 static VALUE cAsciiLetterTokenizer;
 static VALUE cLetterTokenizer;
-static VALUE cAsciiWhiteSpaceTokenizer;
 static VALUE cWhiteSpaceTokenizer;
 static VALUE cAsciiStandardTokenizer;
 static VALUE cStandardTokenizer;
@@ -27,7 +26,6 @@ static VALUE cStemFilter;
 static VALUE cAnalyzer;
 static VALUE cAsciiLetterAnalyzer;
 static VALUE cLetterAnalyzer;
-static VALUE cAsciiWhiteSpaceAnalyzer;
 static VALUE cWhiteSpaceAnalyzer;
 static VALUE cAsciiStandardAnalyzer;
 static VALUE cStandardAnalyzer;
@@ -863,18 +861,6 @@ frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 
 /*
  *  call-seq:
- *     AsciiWhiteSpaceTokenizer.new() -> tokenizer
- *
- *  Create a new AsciiWhiteSpaceTokenizer
- */
-static VALUE
-frb_a_whitespace_tokenizer_init(VALUE self, VALUE rstr)
-{
-    return get_wrapped_ts(self, rstr, frt_whitespace_tokenizer_new());
-}
-
-/*
- *  call-seq:
  *     WhiteSpaceTokenizer.new(lower = true) -> tokenizer
  *
  *  Create a new WhiteSpaceTokenizer which optionally downcases tokens.
@@ -1277,27 +1263,6 @@ lower = (argc ? RTEST(rlower) : dflt)
 
 /*
  *  call-seq:
- *     AsciiWhiteSpaceAnalyzer.new(lower = false) -> analyzer
- *
- *  Create a new AsciiWhiteSpaceAnalyzer which downcases tokens by default
- *  but can optionally leave case as is. Lowercasing will only be done to
- *  ASCII characters.
- *
- *  lower:: set to false if you don't want the field's tokens to be downcased
- */
-static VALUE
-frb_a_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
-    FrtAnalyzer *a;
-    GET_LOWER(false);
-    a = frt_whitespace_analyzer_new(lower);
-    Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
-    object_add(a, self);
-    return self;
-}
-
-/*
- *  call-seq:
  *     WhiteSpaceAnalyzer.new(lower = false) -> analyzer
  *
  *  Create a new WhiteSpaceAnalyzer which downcases tokens by default but can
@@ -1324,7 +1289,7 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
  *  call-seq:
  *     AsciiLetterAnalyzer.new(lower = true) -> analyzer
  *
- *  Create a new AsciiWhiteSpaceAnalyzer which downcases tokens by default
+ *  Create a new AsciiLetterAnalyzer which downcases tokens by default
  *  but can optionally leave case as is. Lowercasing will only be done to
  *  ASCII characters.
  *
@@ -1776,29 +1741,7 @@ static void Init_LetterTokenizer(void)
                      frb_letter_tokenizer_init, -1);
 }
 
-/*
- *  Document-class: Ferret::Analysis::AsciiWhiteSpaceTokenizer
- *
- *  == Summary
- *
- *  A WhiteSpaceTokenizer is a tokenizer that divides text at white-space.
- *  Adjacent sequences of non-WhiteSpace characters form tokens.
- *
- *  === Example
- *
- *    "Dave's résumé, at http://www.davebalmain.com/ 1234"
- *      => ["Dave's", "résumé,", "at", "http://www.davebalmain.com", "1234"]
- */
-static void Init_AsciiWhiteSpaceTokenizer(void)
-{
-    cAsciiWhiteSpaceTokenizer =
-        rb_define_class_under(mAnalysis, "AsciiWhiteSpaceTokenizer",
-                              cTokenStream);
-    frb_mark_cclass(cAsciiWhiteSpaceTokenizer);
-    rb_define_alloc_func(cAsciiWhiteSpaceTokenizer, frb_data_alloc);
-    rb_define_method(cAsciiWhiteSpaceTokenizer, "initialize",
-                     frb_a_whitespace_tokenizer_init, 1);
-}
+
 
 /*
  *  Document-class: Ferret::Analysis::WhiteSpaceTokenizer
@@ -2238,42 +2181,6 @@ static void Init_LetterAnalyzer(void)
                      frb_letter_analyzer_init, -1);
 }
 
-/*
- *  Document-class: Ferret::Analysis::AsciiWhiteSpaceAnalyzer
- *
- *  == Summary
- *
- *  The AsciiWhiteSpaceAnalyzer recognizes tokens as maximal strings of
- *  non-whitespace characters. If implemented in Ruby the
- *  AsciiWhiteSpaceAnalyzer would look like;
- *
- *    class AsciiWhiteSpaceAnalyzer
- *      def initialize(lower = true)
- *        @lower = lower
- *      end
- *
- *      def token_stream(field, str)
- *        if @lower
- *          return AsciiLowerCaseFilter.new(AsciiWhiteSpaceTokenizer.new(str))
- *        else
- *          return AsciiWhiteSpaceTokenizer.new(str)
- *        end
- *      end
- *    end
- *
- *  As you can see it makes use of the AsciiWhiteSpaceTokenizer. You should
- *  use WhiteSpaceAnalyzer if you want to recognize multibyte encodings such
- *  as "UTF-8".
- */
-static void Init_AsciiWhiteSpaceAnalyzer(void)
-{
-    cAsciiWhiteSpaceAnalyzer =
-        rb_define_class_under(mAnalysis, "AsciiWhiteSpaceAnalyzer", cAnalyzer);
-    frb_mark_cclass(cAsciiWhiteSpaceAnalyzer);
-    rb_define_alloc_func(cAsciiWhiteSpaceAnalyzer, frb_data_alloc);
-    rb_define_method(cAsciiWhiteSpaceAnalyzer, "initialize",
-                     frb_a_white_space_analyzer_init, -1);
-}
 
 /*
  *  Document-class: Ferret::Analysis::WhiteSpaceAnalyzer
@@ -2553,7 +2460,6 @@ Init_Analysis(void)
     Init_AsciiLetterTokenizer();
     Init_LetterTokenizer();
 
-    Init_AsciiWhiteSpaceTokenizer();
     Init_WhiteSpaceTokenizer();
 
     Init_AsciiStandardTokenizer();
@@ -2571,7 +2477,6 @@ Init_Analysis(void)
     Init_Analyzer();
     Init_AsciiLetterAnalyzer();
     Init_LetterAnalyzer();
-    Init_AsciiWhiteSpaceAnalyzer();
     Init_WhiteSpaceAnalyzer();
     Init_AsciiStandardAnalyzer();
     Init_StandardAnalyzer();
