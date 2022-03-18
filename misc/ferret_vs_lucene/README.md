@@ -1,6 +1,7 @@
 Ferret versus Apache Lucene: performance benchmarks
 
-Author: Dave Balmain
+Original author: Dave Balmain
+with updates by others
 
 *Disclaimer*: These benchmarks were written by myself, the developer of Ferret so they may be slightly biased. I have submitted them to the Lucene mailing list so that Lucene developers can check the fairness of these benchmarks. The numbers below are in no way an indication of the quality of either library. Lucene is currently a lot more stable than Ferret. The reason I have run these benchmarks against Lucene is that Ferret was originally ported from Lucene and is still very strongly influence by that library. I also believe Lucene is the gold standard for information retrieval libraries.
 
