@@ -355,31 +355,6 @@ FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase)
  ****************************************************************************/
 
 /*
- * LetterTokenizer
- */
-static FrtToken *lt_next(FrtTokenStream *ts)
-{
-    char *start;
-    char *t = ts->t;
-
-    while (*t != '\0' && !isalpha(*t)) {
-        t++;
-    }
-
-    if (*t == '\0') {
-        return NULL;
-    }
-
-    start = t;
-    while (*t != '\0' && isalpha(*t)) {
-        t++;
-    }
-
-    ts->t = t;
-    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
-}
-
-/*
  * Multi-byte LetterTokenizer
  */
 static FrtToken *mb_lt_next(FrtTokenStream *ts)
