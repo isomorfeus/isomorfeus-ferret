@@ -379,13 +379,6 @@ static FrtToken *lt_next(FrtTokenStream *ts)
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
 
-FrtTokenStream *frt_letter_tokenizer_new()
-{
-    FrtTokenStream *ts = cts_new();
-    ts->next = &lt_next;
-    return ts;
-}
-
 /*
  * Multi-byte LetterTokenizer
  */
@@ -525,13 +518,6 @@ static FrtTokenStream *std_ts_new()
     return ts;
 }
 
-FrtTokenStream *frt_standard_tokenizer_new()
-{
-    FrtTokenStream *ts = std_ts_new();
-    STDTS(ts)->type = FRT_STT_ASCII;
-    return ts;
-}
-
 FrtTokenStream *frt_mb_standard_tokenizer_new()
 {
     FrtTokenStream *ts = std_ts_new();
@@ -557,18 +543,6 @@ FrtTokenStream *frt_utf8_standard_tokenizer_new()
 /*
  * LegacyStandardTokenizer
  */
-static int legacy_std_get_alpha(FrtTokenStream *ts, char *token)
-{
-    int i = 0;
-    char *t = ts->t;
-    while (t[i] != '\0' && isalnum(t[i])) {
-        if (i < FRT_MAX_WORD_SIZE) {
-            token[i] = t[i];
-        }
-        i++;
-    }
-    return i;
-}
 
 static int mb_legacy_std_get_alpha(FrtTokenStream *ts, char *token)
 {
@@ -626,18 +600,6 @@ static int isurlxatc(char c)
 {
     return (c == '.' || c == '/' || c == '-' || c == '_' || c == '@'
             || isalnum(c));
-}
-
-static bool legacy_std_is_tok_char(char *c)
-{
-    if (isspace(*c)) {
-        return false;           /* most common so check first. */
-    }
-    if (isalnum(*c) || isnumpunc(*c) || *c == '&' ||
-        *c == '@' || *c == '\'' || *c == ':') {
-        return true;
-    }
-    return false;
 }
 
 static bool mb_legacy_std_is_tok_char(char *t)
@@ -701,17 +663,6 @@ static int legacy_std_get_number(char *input)
     }
 }
 
-static int legacy_std_get_apostrophe(char *input)
-{
-    char *t = input;
-
-    while (isalpha(*t) || *t == '\'') {
-        t++;
-    }
-
-    return (int)(t - input);
-}
-
 static int mb_legacy_std_get_apostrophe(char *input)
 {
     char *t = input;
@@ -767,19 +718,6 @@ static int legacy_std_get_company_name(char *input)
     }
 
     return i;
-}
-
-static bool legacy_std_advance_to_start(FrtTokenStream *ts)
-{
-    char *t = ts->t;
-    while (*t != '\0' && !isalnum(*t)) {
-        if (isnumpunc(*t) && isdigit(t[1])) break;
-        t++;
-    }
-
-    ts->t = t;
-
-    return (*t != '\0');
 }
 
 static bool mb_legacy_std_advance_to_start(FrtTokenStream *ts)
@@ -959,18 +897,6 @@ static FrtTokenStream *legacy_std_ts_new()
     FrtTokenStream *ts = frt_ts_new(FrtLegacyStandardTokenizer);
     ts->clone_i        = &legacy_std_ts_clone_i;
     ts->next           = &legacy_std_next;
-
-    return ts;
-}
-
-FrtTokenStream *frt_legacy_standard_tokenizer_new()
-{
-    FrtTokenStream *ts = legacy_std_ts_new();
-
-    LSTDTS(ts)->advance_to_start = &legacy_std_advance_to_start;
-    LSTDTS(ts)->get_alpha        = &legacy_std_get_alpha;
-    LSTDTS(ts)->is_tok_char      = &legacy_std_is_tok_char;
-    LSTDTS(ts)->get_apostrophe   = &legacy_std_get_apostrophe;
 
     return ts;
 }

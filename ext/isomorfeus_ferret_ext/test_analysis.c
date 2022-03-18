@@ -283,7 +283,7 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
 static void test_letter_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_letter_tokenizer_new();
+    FrtTokenStream *ts = frt_mb_letter_tokenizer_new(false);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
@@ -484,7 +484,7 @@ static void do_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
 
 static void test_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_standard_tokenizer_new();
+    FrtTokenStream *ts = frt_mb_standard_tokenizer_new();
     (void)data;
     do_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -492,7 +492,7 @@ static void test_standard_tokenizer(TestCase *tc, void *data)
 
 static void test_legacy_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = frt_mb_legacy_standard_tokenizer_new();
     (void)data;
     do_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -880,7 +880,7 @@ static void test_long_word(TestCase *tc, void *data)
 static void test_lowercase_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_mb_lowercase_filter_new(frt_standard_tokenizer_new());
+    FrtTokenStream *ts = frt_mb_lowercase_filter_new(frt_mb_standard_tokenizer_new());
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
     (void)data;
@@ -908,7 +908,7 @@ static void test_lowercase_filter(TestCase *tc, void *data)
 static void test_hyphen_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_hyphen_filter_new(frt_mb_lowercase_filter_new(frt_standard_tokenizer_new()));
+    FrtTokenStream *ts = frt_hyphen_filter_new(frt_mb_lowercase_filter_new(frt_mb_standard_tokenizer_new()));
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 long-hyph-en-at-ed-word";
     (void)data;
@@ -947,7 +947,7 @@ static void test_stop_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtTokenStream *ts =
-        frt_stop_filter_new_with_words(frt_letter_tokenizer_new(), words);
+        frt_stop_filter_new_with_words(frt_mb_letter_tokenizer_new(false), words);
     char text[200] =
         "one, two, three, four, five, six, seven, eight, nine, ten.";
     (void)data;
@@ -972,7 +972,7 @@ static void test_stop_filter(TestCase *tc, void *data)
 static void test_mapping_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_mapping_filter_new(frt_letter_tokenizer_new());
+    FrtTokenStream *ts = frt_mapping_filter_new(frt_mb_letter_tokenizer_new(false));
     char text[200] =
         "one, two, three, four, five, six, seven, eight, nine, ten.";
     char long_word[301] =
