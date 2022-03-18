@@ -9,14 +9,11 @@ static char *frb_locale = NULL;
 static VALUE mAnalysis;
 
 static VALUE cToken;
-static VALUE cAsciiLetterTokenizer;
 static VALUE cLetterTokenizer;
 static VALUE cWhiteSpaceTokenizer;
-static VALUE cAsciiStandardTokenizer;
 static VALUE cStandardTokenizer;
 static VALUE cRegExpTokenizer;
 
-static VALUE cAsciiLowerCaseFilter;
 static VALUE cLowerCaseFilter;
 static VALUE cStopFilter;
 static VALUE cMappingFilter;
@@ -24,10 +21,8 @@ static VALUE cHyphenFilter;
 static VALUE cStemFilter;
 
 static VALUE cAnalyzer;
-static VALUE cAsciiLetterAnalyzer;
 static VALUE cLetterAnalyzer;
 static VALUE cWhiteSpaceAnalyzer;
-static VALUE cAsciiStandardAnalyzer;
 static VALUE cStandardAnalyzer;
 static VALUE cPerFieldAnalyzer;
 static VALUE cRegExpAnalyzer;
@@ -830,18 +825,6 @@ lower = (argc ? RTEST(rlower) : dflt)
 
 /*
  *  call-seq:
- *     AsciiLetterTokenizer.new() -> tokenizer
- *
- *  Create a new AsciiLetterTokenizer
- */
-static VALUE
-frb_a_letter_tokenizer_init(VALUE self, VALUE rstr)
-{
-    return get_wrapped_ts(self, rstr, frt_letter_tokenizer_new());
-}
-
-/*
- *  call-seq:
  *     LetterTokenizer.new(lower = true) -> tokenizer
  *
  *  Create a new LetterTokenizer which optionally downcases tokens. Downcasing
@@ -880,18 +863,6 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 
 /*
  *  call-seq:
- *     AsciiStandardTokenizer.new() -> tokenizer
- *
- *  Create a new AsciiStandardTokenizer
- */
-static VALUE
-frb_a_standard_tokenizer_init(VALUE self, VALUE rstr)
-{
-    return get_wrapped_ts(self, rstr, frt_standard_tokenizer_new());
-}
-
-/*
- *  call-seq:
  *     StandardTokenizer.new(lower = true) -> tokenizer
  *
  *  Create a new StandardTokenizer which optionally downcases tokens.
@@ -911,28 +882,6 @@ frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 /****************************************************************************
  * Filters
  ****************************************************************************/
-
-
-/*
- *  call-seq:
- *     AsciiLowerCaseFilter.new(token_stream) -> token_stream
- *
- *  Create an AsciiLowerCaseFilter which normalizes a token's text to
- *  lowercase but only for ASCII characters. For other characters use
- *  LowerCaseFilter.
- */
-static VALUE
-frb_a_lowercase_filter_init(VALUE self, VALUE rsub_ts)
-{
-    FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = frt_lowercase_filter_new(ts);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
-    object_add(ts, self);
-    return self;
-}
-
 /*
  *  call-seq:
  *     LowerCaseFilter.new(token_stream) -> token_stream
@@ -1287,27 +1236,6 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 
 /*
  *  call-seq:
- *     AsciiLetterAnalyzer.new(lower = true) -> analyzer
- *
- *  Create a new AsciiLetterAnalyzer which downcases tokens by default
- *  but can optionally leave case as is. Lowercasing will only be done to
- *  ASCII characters.
- *
- *  lower:: set to false if you don't want the field's tokens to be downcased
- */
-static VALUE
-frb_a_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
-    FrtAnalyzer *a;
-    GET_LOWER(true);
-    a = frt_letter_analyzer_new(lower);
-    Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
-    object_add(a, self);
-    return self;
-}
-
-/*
- *  call-seq:
  *     LetterAnalyzer.new(lower = true) -> analyzer
  *
  *  Create a new LetterAnalyzer which downcases tokens by default but can
@@ -1341,39 +1269,6 @@ get_rstopwords(const char **stop_words)
         w++;
     }
     return rstopwords;
-}
-
-/*
- *  call-seq:
- *     AsciiStandardAnalyzer.new(lower = true, stop_words = FRT_FULL_ENGLISH_STOP_WORDS)
- *     -> analyzer
- *
- *  Create a new AsciiStandardAnalyzer which downcases tokens by default but
- *  can optionally leave case as is. Lowercasing will be done based on the
- *  current locale. You can also set the list of stop-words to be used by the
- *  StopFilter.
- *
- *  lower::      set to false if you don't want the field's tokens to be downcased
- *  stop_words:: list of stop-words to pass to the StopFilter
- */
-static VALUE
-frb_a_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
-    bool lower;
-    VALUE rlower, rstop_words;
-    FrtAnalyzer *a;
-    rb_scan_args(argc, argv, "02", &rstop_words, &rlower);
-    lower = ((rlower == Qnil) ? true : RTEST(rlower));
-    if (rstop_words != Qnil) {
-        char **stop_words = get_stopwords(rstop_words);
-        a = frt_standard_analyzer_new_with_words((const char **)stop_words, lower);
-        free(stop_words);
-    } else {
-        a = frt_standard_analyzer_new(lower);
-    }
-    Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
-    object_add(a, self);
-    return self;
 }
 
 /*
@@ -1693,30 +1588,6 @@ static void Init_TokenStream(void)
 }
 
 /*
- *  Document-class: Ferret::Analysis::AsciiLetterTokenizer
- *
- *  == Summary
- *
- *  A LetterTokenizer is a tokenizer that divides text at non-ASCII letters.
- *  That is to say, it defines tokens as maximal strings of adjacent letters,
- *  as defined by the regular expression _/[A-Za-z]+/_.
- *
- *  === Example
- *
- *    "Dave's résumé, at http://www.davebalmain.com/ 1234"
- *      => ["Dave", "s", "r", "sum", "at", "http", "www", "davebalmain", "com"]
- */
-static void Init_AsciiLetterTokenizer(void)
-{
-    cAsciiLetterTokenizer =
-        rb_define_class_under(mAnalysis, "AsciiLetterTokenizer", cTokenStream);
-    frb_mark_cclass(cAsciiLetterTokenizer);
-    rb_define_alloc_func(cAsciiLetterTokenizer, frb_data_alloc);
-    rb_define_method(cAsciiLetterTokenizer, "initialize",
-                     frb_a_letter_tokenizer_init, 1);
-}
-
-/*
  *  Document-class: Ferret::Analysis::LetterTokenizer
  *
  *  == Summary
@@ -1764,30 +1635,6 @@ static void Init_WhiteSpaceTokenizer(void)
     rb_define_alloc_func(cWhiteSpaceTokenizer, frb_data_alloc);
     rb_define_method(cWhiteSpaceTokenizer, "initialize",
                      frb_whitespace_tokenizer_init, -1);
-}
-
-/*
- *  Document-class: Ferret::Analysis::AsciiStandardTokenizer
- *
- *  == Summary
- *
- *  The standard tokenizer is an advanced tokenizer which tokenizes most
- *  words correctly as well as tokenizing things like email addresses, web
- *  addresses, phone numbers, etc.
- *
- *  === Example
- *
- *    "Dave's résumé, at http://www.davebalmain.com/ 1234"
- *      => ["Dave's", "r", "sum", "at", "http://www.davebalmain.com", "1234"]
- */
-static void Init_AsciiStandardTokenizer(void)
-{
-    cAsciiStandardTokenizer =
-        rb_define_class_under(mAnalysis, "AsciiStandardTokenizer", cTokenStream);
-    frb_mark_cclass(cAsciiStandardTokenizer);
-    rb_define_alloc_func(cAsciiStandardTokenizer, frb_data_alloc);
-    rb_define_method(cAsciiStandardTokenizer, "initialize",
-                     frb_a_standard_tokenizer_init, 1);
 }
 
 /*
@@ -1851,30 +1698,6 @@ static void Init_RegExpTokenizer(void)
 /***************/
 /*** Filters ***/
 /***************/
-
-/*
- *  Document-class: Ferret::Analysis::AsciiLowerCaseFilter
- *
- *  == Summary
- *
- *  AsciiLowerCaseFilter normalizes a token's text to lowercase but only for
- *  ASCII characters. For other characters use LowerCaseFilter.
- *
- *  === Example
- *
- *    ["One", "TWO", "three", "RÉSUMÉ"] => ["one", "two", "three", "rÉsumÉ"]
- *
- */
-static void Init_AsciiLowerCaseFilter(void)
-{
-    cAsciiLowerCaseFilter =
-        rb_define_class_under(mAnalysis, "AsciiLowerCaseFilter", cTokenStream);
-    frb_mark_cclass(cAsciiLowerCaseFilter);
-    rb_define_alloc_func(cAsciiLowerCaseFilter, frb_data_alloc);
-    rb_define_method(cAsciiLowerCaseFilter, "initialize",
-                     frb_a_lowercase_filter_init, 1);
-}
-
 /*
  *  Document-class: Ferret::Analysis::LowerCaseFilter
  *
@@ -2113,44 +1936,6 @@ static void Init_Analyzer(void)
 }
 
 /*
- *  Document-class: Ferret::Analysis::AsciiLetterAnalyzer
- *
- *  == Summary
- *
- *  An AsciiLetterAnalyzer creates a TokenStream that splits the input up into
- *  maximal strings of ASCII characters. If implemented in Ruby it would look
- *  like;
- *
- *    class AsciiLetterAnalyzer
- *      def initialize(lower = true)
- *        @lower = lower
- *      end
- *
- *      def token_stream(field, str)
- *        if @lower
- *          return AsciiLowerCaseFilter.new(AsciiLetterTokenizer.new(str))
- *        else
- *          return AsciiLetterTokenizer.new(str)
- *        end
- *      end
- *    end
- *
- *  As you can see it makes use of the AsciiLetterTokenizer and
- *  AsciiLowerCaseFilter. Note that this tokenizer won't recognize non-ASCII
- *  characters so you should use the LetterAnalyzer is you want to analyze
- *  multi-byte data like "UTF-8".
- */
-static void Init_AsciiLetterAnalyzer(void)
-{
-    cAsciiLetterAnalyzer =
-        rb_define_class_under(mAnalysis, "AsciiLetterAnalyzer", cAnalyzer);
-    frb_mark_cclass(cAsciiLetterAnalyzer);
-    rb_define_alloc_func(cAsciiLetterAnalyzer, frb_data_alloc);
-    rb_define_method(cAsciiLetterAnalyzer, "initialize",
-                     frb_a_letter_analyzer_init, -1);
-}
-
-/*
  *  Document-class: Ferret::Analysis::LetterAnalyzer
  *
  *  == Summary
@@ -2209,43 +1994,6 @@ static void Init_WhiteSpaceAnalyzer(void)
     frb_mark_cclass(cWhiteSpaceAnalyzer);
     rb_define_alloc_func(cWhiteSpaceAnalyzer, frb_data_alloc);
     rb_define_method(cWhiteSpaceAnalyzer, "initialize", frb_white_space_analyzer_init, -1);
-}
-
-/*
- *  Document-class: Ferret::Analysis::AsciiStandardAnalyzer
- *
- *  == Summary
- *
- *  The AsciiStandardAnalyzer is the most advanced of the available
- *  ASCII-analyzers. If it were implemented in Ruby it would look like this;
- *
- *    class AsciiStandardAnalyzer
- *      def initialize(stop_words = FRT_FULL_ENGLISH_STOP_WORDS, lower = true)
- *        @lower = lower
- *        @stop_words = stop_words
- *      end
- *
- *      def token_stream(field, str)
- *        ts = AsciiStandardTokenizer.new(str)
- *        ts = AsciiLowerCaseFilter.new(ts) if @lower
- *        ts = StopFilter.new(ts, @stop_words)
- *        ts = HyphenFilter.new(ts)
- *      end
- *    end
- *
- *  As you can see it makes use of the AsciiStandardTokenizer and you can also
- *  add your own list of stop-words if you wish. Note that this tokenizer
- *  won't recognize non-ASCII characters so you should use the
- *  StandardAnalyzer is you want to analyze multi-byte data like "UTF-8".
- */
-static void Init_AsciiStandardAnalyzer(void)
-{
-    cAsciiStandardAnalyzer =
-        rb_define_class_under(mAnalysis, "AsciiStandardAnalyzer", cAnalyzer);
-    frb_mark_cclass(cAsciiStandardAnalyzer);
-    rb_define_alloc_func(cAsciiStandardAnalyzer, frb_data_alloc);
-    rb_define_method(cAsciiStandardAnalyzer, "initialize",
-                     frb_a_standard_analyzer_init, -1);
 }
 
 /*
@@ -2457,17 +2205,11 @@ Init_Analysis(void)
     Init_Token();
     Init_TokenStream();
 
-    Init_AsciiLetterTokenizer();
     Init_LetterTokenizer();
-
     Init_WhiteSpaceTokenizer();
-
-    Init_AsciiStandardTokenizer();
     Init_StandardTokenizer();
-
     Init_RegExpTokenizer();
 
-    Init_AsciiLowerCaseFilter();
     Init_LowerCaseFilter();
     Init_HyphenFilter();
     Init_StopFilter();
@@ -2475,12 +2217,9 @@ Init_Analysis(void)
     Init_StemFilter();
 
     Init_Analyzer();
-    Init_AsciiLetterAnalyzer();
     Init_LetterAnalyzer();
     Init_WhiteSpaceAnalyzer();
-    Init_AsciiStandardAnalyzer();
     Init_StandardAnalyzer();
     Init_PerFieldAnalyzer();
     Init_RegExpAnalyzer();
-
 }

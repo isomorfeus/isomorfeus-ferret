@@ -17,7 +17,7 @@ typedef struct QPTestPair {
 static void test_q_parser(TestCase *tc, void *data)
 {
     int i;
-    FrtAnalyzer *analyzer = frt_letter_analyzer_new(true);
+    FrtAnalyzer *analyzer = frt_mb_letter_analyzer_new(true);
     FrtQParser *parser;
     QPTestPair pairs[] = {
         {"", ""},
@@ -393,7 +393,7 @@ static void test_qp_bad_queries(TestCase *tc, void *data)
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    parser = frt_qp_new(frt_letter_analyzer_new(true));
+    parser = frt_qp_new(frt_mb_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
     frt_qp_add_field(parser, rb_intern("f1"),    false, true);
     frt_qp_add_field(parser, rb_intern("f2"),    false, true);
@@ -418,7 +418,7 @@ static void test_qp_prefix_query(TestCase *tc, void *data)
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    parser = frt_qp_new(frt_letter_analyzer_new(true));
+    parser = frt_qp_new(frt_mb_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
     q = qp_parse(parser, (char *)"asdg*", enc);
@@ -442,7 +442,7 @@ static void test_qp_keyword_switch(TestCase *tc, void *data)
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    parser = frt_qp_new(frt_letter_analyzer_new(true));
+    parser = frt_qp_new(frt_mb_letter_analyzer_new(true));
     frt_qp_add_field(parser, rb_intern("xx"), true,  true);
 
     PARSER_TEST("REQ www (xxx AND yyy) OR NOT zzz", "+www (+xxx +yyy) -zzz");

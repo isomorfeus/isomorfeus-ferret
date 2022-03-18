@@ -368,7 +368,7 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
 static void test_letter_analyzer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtAnalyzer *a = frt_letter_analyzer_new(true);
+    FrtAnalyzer *a = frt_mb_letter_analyzer_new(true);
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
     FrtTokenStream *ts = frt_a_get_ts(a, rb_intern("random"), text, enc);
@@ -592,7 +592,7 @@ static void test_mb_legacy_standard_tokenizer(TestCase *tc, void *data)
 static void test_standard_analyzer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtAnalyzer *a = frt_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
+    FrtAnalyzer *a = frt_mb_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
@@ -719,7 +719,7 @@ static void test_legacy_standard_analyzer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtAnalyzer *a =
-        frt_legacy_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
+        frt_mb_legacy_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
     char text[200] =
         "DBalmain@gmail.com is My e-mail and the Address. -23!$ "
         "http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
@@ -845,7 +845,7 @@ static void test_mb_legacy_standard_analyzer(TestCase *tc, void *data)
 static void test_long_word(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtAnalyzer *a = frt_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
+    FrtAnalyzer *a = frt_mb_standard_analyzer_new_with_words(FRT_ENGLISH_STOP_WORDS, true);
     char text[400] =
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -880,7 +880,7 @@ static void test_long_word(TestCase *tc, void *data)
 static void test_lowercase_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_lowercase_filter_new(frt_standard_tokenizer_new());
+    FrtTokenStream *ts = frt_mb_lowercase_filter_new(frt_standard_tokenizer_new());
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
     (void)data;
@@ -908,7 +908,7 @@ static void test_lowercase_filter(TestCase *tc, void *data)
 static void test_hyphen_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_hyphen_filter_new(frt_lowercase_filter_new(frt_standard_tokenizer_new()));
+    FrtTokenStream *ts = frt_hyphen_filter_new(frt_mb_lowercase_filter_new(frt_standard_tokenizer_new()));
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 long-hyph-en-at-ed-word";
     (void)data;
@@ -1088,15 +1088,15 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
     FrtTokenStream *ts;
     FrtToken *tk = frt_tk_new();
     char text[100] = "DBalmain@gmail.com is My E-mail 52   #$ address. 23#!$";
-    FrtAnalyzer *pfa = frt_per_field_analyzer_new(frt_standard_analyzer_new(true));
+    FrtAnalyzer *pfa = frt_per_field_analyzer_new(frt_mb_standard_analyzer_new(true));
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     frt_pfa_add_field(pfa, rb_intern("white"), frt_mb_whitespace_analyzer_new(false));
     frt_pfa_add_field(pfa, rb_intern("white_l"), frt_mb_whitespace_analyzer_new(true));
-    frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(false));
-    frt_pfa_add_field(pfa, rb_intern("letter"), frt_letter_analyzer_new(true));
-    frt_pfa_add_field(pfa, rb_intern("letter_u"), frt_letter_analyzer_new(false));
+    frt_pfa_add_field(pfa, rb_intern("letter"), frt_mb_letter_analyzer_new(false));
+    frt_pfa_add_field(pfa, rb_intern("letter"), frt_mb_letter_analyzer_new(true));
+    frt_pfa_add_field(pfa, rb_intern("letter_u"), frt_mb_letter_analyzer_new(false));
     ts = frt_a_get_ts(pfa, rb_intern("white"), text, enc);
     test_token_pi(frt_ts_next(ts), "DBalmain@gmail.com", 0, 18, 1);
     test_token_pi(frt_ts_next(ts), "is", 19, 21, 1);

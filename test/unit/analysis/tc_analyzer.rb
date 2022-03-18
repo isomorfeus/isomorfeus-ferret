@@ -46,7 +46,7 @@ class AsciiLetterAnalyzerTest < Test::Unit::TestCase
 
   def test_letter_analyzer
     input = 'DBalmain@gmail.com is My E-Mail 523@#$ ADDRESS. 23#!$'
-    a = AsciiLetterAnalyzer.new
+    a = LetterAnalyzer.new
     t = a.token_stream("fieldname", input)
     t2 = a.token_stream("fieldname", input)
     assert_equal(Token.new("dbalmain", 0, 8), t.next)
@@ -67,7 +67,7 @@ class AsciiLetterAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new("mail", 27, 31), t2.next)
     assert_equal(Token.new("address", 39, 46), t2.next)
     assert(! t2.next)
-    a = AsciiLetterAnalyzer.new(false)
+    a = LetterAnalyzer.new(false)
     t = a.token_stream("fieldname", input)
     assert_equal(Token.new("DBalmain", 0, 8), t.next)
     assert_equal(Token.new("gmail", 9, 14), t.next)
@@ -222,7 +222,7 @@ class AsciiStandardAnalyzerTest < Test::Unit::TestCase
 
   def test_standard_analyzer
     input = 'DBalmain@gmail.com is My e-mail 52   #$ Address. 23#!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234'
-    a = AsciiStandardAnalyzer.new
+    a = StandardAnalyzer.new
     t = a.token_stream("fieldname", input)
     t2 = a.token_stream("fieldname", input)
     assert_equal(Token.new('dbalmain@gmail.com', 0, 18), t.next)
@@ -247,7 +247,7 @@ class AsciiStandardAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new('tnt', 86, 91), t2.next)
     assert_equal(Token.new('123-1235-asd-1234', 93, 110), t2.next)
     assert(! t2.next)
-    a = AsciiStandardAnalyzer.new(ENGLISH_STOP_WORDS, false)
+    a = StandardAnalyzer.new(ENGLISH_STOP_WORDS, false)
     t = a.token_stream("fieldname", input)
     t2 = a.token_stream("fieldname", input)
     assert_equal(Token.new('DBalmain@gmail.com', 0, 18), t.next)

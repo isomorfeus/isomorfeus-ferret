@@ -461,21 +461,6 @@ FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
     return ts;
 }
 
-/*
- * LetterAnalyzers
- */
-FrtAnalyzer *frt_letter_analyzer_new(bool lowercase)
-{
-    FrtTokenStream *ts;
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(frt_letter_tokenizer_new());
-    }
-    else {
-        ts = frt_letter_tokenizer_new();
-    }
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
 FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase)
 {
     return frt_analyzer_new(frt_mb_letter_tokenizer_new(lowercase), NULL, NULL);
@@ -1307,27 +1292,6 @@ FrtTokenStream *frt_mb_lowercase_filter_new(FrtTokenStream *sub_ts)
     return ts;
 }
 
-static FrtToken *lcf_next(FrtTokenStream *ts)
-{
-    int i = 0;
-    FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
-    if (tk == NULL) {
-        return tk;
-    }
-    while (tk->text[i] != '\0') {
-        tk->text[i] = tolower(tk->text[i]);
-        i++;
-    }
-    return tk;
-}
-
-FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts)
-{
-    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts);
-    ts->next = &lcf_next;
-    return ts;
-}
-
 /****************************************************************************
  * FrtStemFilter
  ****************************************************************************/
@@ -1428,28 +1392,6 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm,
  * Standard
  ****************************************************************************/
 
-FrtAnalyzer *frt_standard_analyzer_new_with_words_len(const char **words, int len,
-                                               bool lowercase)
-{
-    FrtTokenStream *ts = frt_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(ts);
-    }
-    ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words_len(ts, words, len));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
-FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words,
-                                           bool lowercase)
-{
-    FrtTokenStream *ts = frt_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(ts);
-    }
-    ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
 FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(const char **words,
                                               bool lowercase)
 {
@@ -1472,12 +1414,6 @@ FrtAnalyzer *frt_utf8_standard_analyzer_new_with_words(const char **words,
     return frt_analyzer_new(ts, NULL, NULL);
 }
 
-FrtAnalyzer *frt_standard_analyzer_new(bool lowercase)
-{
-    return frt_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
-                                            lowercase);
-}
-
 FrtAnalyzer *frt_mb_standard_analyzer_new(bool lowercase)
 {
     return frt_mb_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
@@ -1494,17 +1430,6 @@ FrtAnalyzer *frt_utf8_standard_analyzer_new(bool lowercase)
  * Legacy
  ****************************************************************************/
 
-FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words,
-                                                  bool lowercase)
-{
-    FrtTokenStream *ts = frt_legacy_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(ts);
-    }
-    ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
 FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(const char **words,
                                                      bool lowercase)
 {
@@ -1514,12 +1439,6 @@ FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(const char **words,
     }
     ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
     return frt_analyzer_new(ts, NULL, NULL);
-}
-
-FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase)
-{
-    return frt_legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
-                                                   lowercase);
 }
 
 FrtAnalyzer *frt_mb_legacy_standard_analyzer_new(bool lowercase)

@@ -29,7 +29,7 @@ class AsciiLetterTokenizerTest < Test::Unit::TestCase
 
   def test_letter_tokenizer
     input = 'DBalmain@gmail.com is My e-mail 523@#$ ADDRESS. 23#!$'
-    t = AsciiLetterTokenizer.new(input)
+    t = LetterTokenizer.new(input)
     assert_equal(Token.new("DBalmain", 0, 8), t.next)
     assert_equal(Token.new("gmail", 9, 14), t.next)
     assert_equal(Token.new("com", 15, 18), t.next)
@@ -44,7 +44,7 @@ class AsciiLetterTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("two", 4, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
-    t = AsciiLowerCaseFilter.new(AsciiLetterTokenizer.new(input))
+    t = LowerCaseFilter.new(LetterTokenizer.new(input))
     assert_equal(Token.new("dbalmain", 0, 8), t.next)
     assert_equal(Token.new("gmail", 9, 14), t.next)
     assert_equal(Token.new("com", 15, 18), t.next)
@@ -131,7 +131,7 @@ class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("one_two", 0, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
-    t = AsciiLowerCaseFilter.new(WhiteSpaceTokenizer.new(input))
+    t = LowerCaseFilter.new(WhiteSpaceTokenizer.new(input))
     assert_equal(Token.new('dbalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('my', 22, 24), t.next)
@@ -194,7 +194,7 @@ class AsciiStandardTokenizerTest < Test::Unit::TestCase
 
   def test_standard_tokenizer
     input = 'DBalmain@gmail.com is My e-mail 52   #$ Address. 23#!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234'
-    t = AsciiStandardTokenizer.new(input)
+    t = StandardTokenizer.new(input)
     assert_equal(Token.new('DBalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('My', 22, 24), t.next)
@@ -210,7 +210,7 @@ class AsciiStandardTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("one_two", 0, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
-    t = AsciiLowerCaseFilter.new(AsciiStandardTokenizer.new(input))
+    t = LowerCaseFilter.new(StandardTokenizer.new(input))
     assert_equal(Token.new('dbalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('my', 22, 24), t.next)
@@ -437,7 +437,7 @@ class StopFilterTest < Test::Unit::TestCase
   def test_stop_filter
     words = ["one", "four", "five", "seven"]
     input = "one, two, three, four, five, six, seven, eight, nine, ten."
-    t = StopFilter.new(AsciiLetterTokenizer.new(input), words)
+    t = StopFilter.new(LetterTokenizer.new(input), words)
     assert_equal(Token.new('two', 5, 8, 2), t.next)
     assert_equal(Token.new('three', 10, 15, 1), t.next)
     assert_equal(Token.new('six', 29, 32, 3), t.next)
@@ -453,7 +453,7 @@ class StemFilterTest < Test::Unit::TestCase
 
   def test_stop_filter
     input = "Debate Debates DEBATED DEBating Debater";
-    t = StemFilter.new(AsciiLowerCaseFilter.new(AsciiLetterTokenizer.new(input)),
+    t = StemFilter.new(LowerCaseFilter.new(LetterTokenizer.new(input)),
                        "english")
     assert_equal(Token.new("debat", 0, 6), t.next)
     assert_equal(Token.new("debat", 7, 14), t.next)
@@ -461,7 +461,7 @@ class StemFilterTest < Test::Unit::TestCase
     assert_equal(Token.new("debat", 23, 31), t.next)
     assert_equal(Token.new("debat", 32, 39), t.next)
     assert(! t.next)
-    t = StemFilter.new(AsciiLetterTokenizer.new(input), :english)
+    t = StemFilter.new(LetterTokenizer.new(input), :english)
     assert_equal(Token.new("Debat", 0, 6), t.next)
     assert_equal(Token.new("Debat", 7, 14), t.next)
     assert_equal(Token.new("DEBATED", 15, 22), t.next)
@@ -485,7 +485,7 @@ class StemFilterTest < Test::Unit::TestCase
       assert(! t.next)
     end
 
-    tz = AsciiLetterTokenizer.new(input)
+    tz = LetterTokenizer.new(input)
     assert_not_nil(StemFilter.new(tz,'HunGarIaN', 'Utf-8'))
     assert_not_nil(StemFilter.new(tz,'romanIAN', 'iso-8859-2'))
     assert_raises(ArgumentError) {StemFilter.new(tz, 'Jibberish', 'UTF-8')}
@@ -574,13 +574,13 @@ class CustomTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("2ND FIELD", 12, 21), t.next)
     assert_equal(Token.new("  P A D D E D  F I E L D  ", 22, 48), t.next)
     assert(! t.next)
-    t = AsciiLowerCaseFilter.new(MyCSVTokenizer.new(input))
+    t = LowerCaseFilter.new(MyCSVTokenizer.new(input))
     assert_equal(Token.new("first field", 0, 11), t.next)
     assert_equal(Token.new("2nd field", 12, 21), t.next)
     assert_equal(Token.new("  p a d d e d  f i e l d  ", 22, 48), t.next)
     assert(! t.next)
     t = MyReverseTokenFilter.new(
-          AsciiLowerCaseFilter.new(MyCSVTokenizer.new(input)))
+          LowerCaseFilter.new(MyCSVTokenizer.new(input)))
     assert_equal(Token.new("dleif tsrif", 0, 11), t.next)
     assert_equal(Token.new("dleif dn2", 12, 21), t.next)
     assert_equal(Token.new("  d l e i f  d e d d a p  ", 22, 48), t.next)
@@ -588,7 +588,7 @@ class CustomTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("eno", 0, 3), t.next)
     assert_equal(Token.new("owt", 4, 7), t.next)
     assert_equal(Token.new("eerht", 8, 13), t.next)
-    t = AsciiLowerCaseFilter.new(
+    t = LowerCaseFilter.new(
           MyReverseTokenFilter.new(MyCSVTokenizer.new(input)))
     assert_equal(Token.new("dleif tsrif", 0, 11), t.next)
     assert_equal(Token.new("dleif dn2", 12, 21), t.next)
@@ -628,7 +628,7 @@ class CustomFilterTest < Test::Unit::TestCase
 
   def test_custom_filter
     input = "This text SHOULD be capitalized ... I hope. :-S"
-    t = CapitalizeFilter.new(AsciiLetterTokenizer.new(input))
+    t = CapitalizeFilter.new(LetterTokenizer.new(input))
     assert_equal(Token.new("This", 0, 4), t.next)
     assert_equal(Token.new("Text", 5, 9), t.next)
     assert_equal(Token.new("Should", 10, 16), t.next)
@@ -638,7 +638,7 @@ class CustomFilterTest < Test::Unit::TestCase
     assert_equal(Token.new("Hope", 38, 42), t.next)
     assert_equal(Token.new("S", 46, 47), t.next)
     assert(! t.next)
-    t = StemFilter.new(CapitalizeFilter.new(AsciiLetterTokenizer.new(input)))
+    t = StemFilter.new(CapitalizeFilter.new(LetterTokenizer.new(input)))
     assert_equal(Token.new("This", 0, 4), t.next)
     assert_equal(Token.new("Text", 5, 9), t.next)
     assert_equal(Token.new("Should", 10, 16), t.next)

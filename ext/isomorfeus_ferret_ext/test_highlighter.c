@@ -371,10 +371,10 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     make_index(store);
     add_string_docs(store, docs);
 
-    iw = frt_iw_open(store, frt_letter_analyzer_new(true), NULL);
+    iw = frt_iw_open(store, frt_mb_letter_analyzer_new(true), NULL);
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("field")), (char *)"That's how it goes now.", enc));
     frt_iw_add_doc(iw, doc);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
     frt_iw_close(iw);
 
     ir = frt_ir_open(store);

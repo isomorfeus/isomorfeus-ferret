@@ -147,7 +147,6 @@ extern FrtTokenStream *frt_legacy_standard_tokenizer_new();
 extern FrtTokenStream *frt_mb_legacy_standard_tokenizer_new();
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts);
 extern FrtTokenStream *frt_mb_lowercase_filter_new(FrtTokenStream *ts);
 
 extern const char *FRT_ENGLISH_STOP_WORDS[];
@@ -203,28 +202,17 @@ extern FrtAnalyzer *frt_non_analyzer_new();
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
 extern FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase);
-
-extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase);
 
-extern FrtAnalyzer *frt_standard_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_standard_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_utf8_standard_analyzer_new(bool lowercase);
 
-extern FrtAnalyzer *frt_standard_analyzer_new_with_words(
-    const char **words, bool lowercase);
-extern FrtAnalyzer *frt_standard_analyzer_new_with_words_len(
-    const char **words, int len, bool lowercase);
 extern FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
 extern FrtAnalyzer *frt_utf8_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
 
-extern FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new(bool lowercase);
-
-extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(
-    const char **words, bool lowercase);
 extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(
     const char **words, bool lowercase);
 
