@@ -329,11 +329,11 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
 
     start = t;
 
-    while (cp_len > 0 && !rb_enc_isspace(cp, enc)) {
+    do {
         t += cp_len;
         if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
+    } while (cp_len > 0 && !rb_enc_isspace(cp, enc));
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
@@ -466,11 +466,11 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
 
     start = t;
 
-    while (cp_len > 0 && rb_enc_isalpha(cp, enc)) {
+    do {
         t += cp_len;
         if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
+    } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
     ts->t = t;
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
 }
@@ -501,13 +501,13 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 
     start = t;
 
-    while (cp_len > 0 && rb_enc_isalpha(cp, enc)) {
+    do {
         cpl = rb_enc_tolower(cp, enc);
         b += rb_enc_mbcput(cpl, b, enc);
         t += cp_len;
         if (t == end || b >= buf_end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
+    } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
     *b = 0;
     ts->t = t;
     return frt_tk_set(&(CTS(ts)->token), buf, b - buf,(off_t)(start - ts->text), (off_t)(t - ts->text), 1);
