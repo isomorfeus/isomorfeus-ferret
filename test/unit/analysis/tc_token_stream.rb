@@ -110,7 +110,7 @@ class LetterTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('öîí', 80, 86), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -187,7 +187,7 @@ class WhiteSpaceTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('áägç®êëì¯úøã¬öîí', 55, 86), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class AsciiStandardTokenizerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -276,7 +276,7 @@ class StandardTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('www.davebalmain.com/trac-site', 25, 61), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class RegExpTokenizerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -429,7 +429,7 @@ END
     assert_equal(Token.new('szzzt', 256, 264), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class StopFilterTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -468,22 +468,20 @@ class StemFilterTest < Test::Unit::TestCase
     assert_equal(Token.new("DEBate", 23, 31), t.next)
     assert_equal(Token.new("Debat", 32, 39), t.next)
 
-    if Isomorfeus::Ferret.locale and Isomorfeus::Ferret.locale.downcase.index("utf")
-      input = "Dêbate dêbates DÊBATED DÊBATing dêbater";
-      t = StemFilter.new(LowerCaseFilter.new(LetterTokenizer.new(input)), :english)
-      assert_equal(Token.new("dêbate", 0, 7), t.next)
-      assert_equal(Token.new("dêbate", 8, 16), t.next)
-      assert_equal(Token.new("dêbate", 17, 25), t.next)
-      assert_equal(Token.new("dêbate", 26, 35), t.next)
-      assert_equal(Token.new("dêbater", 36, 44), t.next)
-      t = StemFilter.new(LetterTokenizer.new(input), :english)
-      assert_equal(Token.new("Dêbate", 0, 7), t.next)
-      assert_equal(Token.new("dêbate", 8, 16), t.next)
-      assert_equal(Token.new("DÊBATED", 17, 25), t.next)
-      assert_equal(Token.new("DÊBATing", 26, 35), t.next)
-      assert_equal(Token.new("dêbater", 36, 44), t.next)
-      assert(! t.next)
-    end
+    input = "Dêbate dêbates DÊBATED DÊBATing dêbater";
+    t = StemFilter.new(LowerCaseFilter.new(LetterTokenizer.new(input)), :english)
+    assert_equal(Token.new("dêbate", 0, 7), t.next)
+    assert_equal(Token.new("dêbate", 8, 16), t.next)
+    assert_equal(Token.new("dêbate", 17, 25), t.next)
+    assert_equal(Token.new("dêbate", 26, 35), t.next)
+    assert_equal(Token.new("dêbater", 36, 44), t.next)
+    t = StemFilter.new(LetterTokenizer.new(input), :english)
+    assert_equal(Token.new("Dêbate", 0, 7), t.next)
+    assert_equal(Token.new("dêbate", 8, 16), t.next)
+    assert_equal(Token.new("DÊBATED", 17, 25), t.next)
+    assert_equal(Token.new("DÊBATing", 26, 35), t.next)
+    assert_equal(Token.new("dêbater", 36, 44), t.next)
+    assert(! t.next)
 
     tz = LetterTokenizer.new(input)
     assert_not_nil(StemFilter.new(tz,'HunGarIaN', 'Utf-8'))

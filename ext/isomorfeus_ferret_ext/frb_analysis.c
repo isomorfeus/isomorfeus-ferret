@@ -1,10 +1,7 @@
-#include <locale.h>
 #include "frt_analysis.h"
 #include "isomorfeus_ferret.h"
 #include <ruby/re.h>
 #include <ruby/st.h>
-
-static char *frb_locale = NULL;
 
 static VALUE mAnalysis;
 
@@ -836,9 +833,6 @@ static VALUE
 frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     return get_wrapped_ts(self, rstr, frt_mb_letter_tokenizer_new(lower));
 }
 
@@ -855,9 +849,6 @@ static VALUE
 frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     return get_wrapped_ts(self, rstr, frt_mb_whitespace_tokenizer_new(lower));
 }
 
@@ -873,9 +864,6 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     return get_wrapped_ts(self, rstr, frt_mb_standard_tokenizer_new());
 }
 
@@ -893,9 +881,6 @@ static VALUE
 frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
     FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     ts = frt_mb_lowercase_filter_new(ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
@@ -1225,9 +1210,6 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(false);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     a = frt_mb_whitespace_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
@@ -1249,9 +1231,6 @@ frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(true);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     a = frt_mb_letter_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
@@ -1290,9 +1269,6 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     bool lower;
     VALUE rlower, rstop_words;
     FrtAnalyzer *a;
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    if (!frb_locale) frb_locale = setlocale(LC_CTYPE, "");
-#endif
     rb_scan_args(argc, argv, "02", &rstop_words, &rlower);
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
@@ -1479,39 +1455,6 @@ frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
         rb_hash_aset(object_space, ((VALUE)((FrtTokenFilter*)ts)->sub_ts)|1, rtext);
     }
     return get_rb_token_stream(ts);
-}
-
-/****************************************************************************
- *
- * Locale stuff
- *
- ****************************************************************************/
-
-/*
- *  call-seq:
- *     Ferret.locale -> locale_str
- *
- *  Returns a string corresponding to the locale set. For example;
- *
- *     puts Ferret.locale #=> "en_US.UTF-8"
- */
-static VALUE frb_get_locale(VALUE self)
-{
-    return (frb_locale ? rb_str_new2(frb_locale) : Qnil);
-}
-
-/*
- *  call-seq:
- *     Ferret.locale = "en_US.UTF-8"
- *
- *  Set the global locale. You should use this method to set different locales
- *  when indexing documents with different encodings.
- */
-static VALUE frb_set_locale(VALUE self, VALUE locale)
-{
-    char *l = ((locale == Qnil) ? NULL : rs2s(rb_obj_as_string(locale)));
-    frb_locale = setlocale(LC_CTYPE, l);
-    return frb_locale ? rb_str_new2(frb_locale) : Qnil;
 }
 
 /****************************************************************************
@@ -2166,10 +2109,6 @@ Init_Analysis(void)
 
     object_space = rb_hash_new();
     rb_define_const(mFerret, "OBJECT_SPACE", object_space);
-
-    /*** * * Locale stuff * * ***/
-    rb_define_singleton_method(mFerret, "locale=", frb_set_locale, 1);
-    rb_define_singleton_method(mFerret, "locale", frb_get_locale, 0);
 
     rb_define_const(mAnalysis, "ENGLISH_STOP_WORDS",
                     get_rstopwords(FRT_ENGLISH_STOP_WORDS));

@@ -1,6 +1,5 @@
 #include "frt_analysis.h"
 #include <string.h>
-#include <locale.h>
 #include <libstemmer.h>
 #include "test.h"
 
@@ -1157,11 +1156,6 @@ static void test_per_field_analyzer(TestCase *tc, void *data)
 
 TestSuite *ts_analysis(TestSuite *suite)
 {
-    bool u = false;
-    char *original_locale = setlocale(LC_ALL, NULL);
-    char *locale = setlocale(LC_ALL, "");
-    if (locale && (strstr(locale, "utf") || strstr(locale, "UTF"))) u = true;
-
     suite = ADD_SUITE(suite);
 
     tst_run_test(suite, test_tk, NULL);
@@ -1172,45 +1166,31 @@ TestSuite *ts_analysis(TestSuite *suite)
 
     /* Whitespace */
     tst_run_test(suite, test_whitespace_tokenizer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_whitespace_tokenizer, NULL);
-    }
+    tst_run_test(suite, test_mb_whitespace_tokenizer, NULL);
 
     tst_run_test(suite, test_whitespace_analyzer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_whitespace_analyzer, NULL);
-    }
+    tst_run_test(suite, test_mb_whitespace_analyzer, NULL);
 
     /* Letter */
     tst_run_test(suite, test_letter_tokenizer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_letter_tokenizer, NULL);
-    }
+    tst_run_test(suite, test_mb_letter_tokenizer, NULL);
 
     tst_run_test(suite, test_letter_analyzer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_letter_analyzer, NULL);
-    }
+    tst_run_test(suite, test_mb_letter_analyzer, NULL);
 
     /* Standard */
     tst_run_test(suite, test_standard_tokenizer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_standard_tokenizer, NULL);
-    }
+    tst_run_test(suite, test_mb_standard_tokenizer, NULL);
+
     tst_run_test(suite, test_standard_analyzer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_standard_analyzer, NULL);
-    }
+    tst_run_test(suite, test_mb_standard_analyzer, NULL);
 
     /* LegacyStandard */
     tst_run_test(suite, test_legacy_standard_tokenizer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_legacy_standard_tokenizer, NULL);
-    }
+    tst_run_test(suite, test_mb_legacy_standard_tokenizer, NULL);
+
     tst_run_test(suite, test_legacy_standard_analyzer, NULL);
-    if (u) {
-        tst_run_test(suite, test_mb_legacy_standard_analyzer, NULL);
-    }
+    tst_run_test(suite, test_mb_legacy_standard_analyzer, NULL);
 
     tst_run_test(suite, test_long_word, NULL);
 
@@ -1223,10 +1203,7 @@ TestSuite *ts_analysis(TestSuite *suite)
     tst_run_test(suite, test_stop_filter, NULL);
     tst_run_test(suite, test_mapping_filter, NULL);
     tst_run_test(suite, test_stemmer, NULL);
-    if (u) {
-        tst_run_test(suite, test_stem_filter, NULL);
-    }
+    tst_run_test(suite, test_stem_filter, NULL);
 
-    setlocale(LC_ALL, original_locale);
     return suite;
 }

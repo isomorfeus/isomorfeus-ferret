@@ -39,7 +39,7 @@ class AnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new("ADDRESS", 39, 46), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class AsciiLetterAnalyzerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -85,7 +85,6 @@ class LetterAnalyzerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
 
   def test_letter_analyzer
-    Isomorfeus::Ferret.locale = ""
     input = 'DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ'
     a = LetterAnalyzer.new(false)
     t = a.token_stream("fieldname", input)
@@ -132,7 +131,7 @@ class LetterAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new("öîí", 80, 86), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class AsciiWhiteSpaceAnalyzerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -215,7 +214,7 @@ class WhiteSpaceAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new('áägç®êëì¯úøã¬öîí', 55, 86), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class AsciiStandardAnalyzerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -351,7 +350,7 @@ class StandardAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new('öîí', 142, 148), t2.next)
     assert(! t2.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
 
 class PerFieldAnalyzerTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
@@ -546,4 +545,4 @@ class CustomAnalyzerTest < Test::Unit::TestCase
     assert_equal(Token.new("dêbater", 36, 44), t.next)
     assert(! t.next)
   end
-end if (/utf-8/i =~ Isomorfeus::Ferret.locale)
+end
