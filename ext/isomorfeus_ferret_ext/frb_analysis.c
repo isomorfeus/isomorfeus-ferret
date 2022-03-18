@@ -1038,6 +1038,7 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
 }
 
 /*
+ * TODO: encoding here is passed to libstemmer
  *  call-seq:
  *     StemFilter.new(token_stream) -> token_stream
  *     StemFilter.new(token_stream,
