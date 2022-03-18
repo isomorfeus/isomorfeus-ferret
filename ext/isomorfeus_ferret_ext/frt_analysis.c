@@ -454,10 +454,6 @@ static FrtToken *std_next(FrtTokenStream *ts)
     FrtToken *tk = &(CTS(ts)->token);
 
     switch (std_tz->type) {
-        case FRT_STT_ASCII:
-            frt_std_scan(ts->t, tk->text, sizeof(tk->text) - 1,
-                         &start, &end, &len);
-            break;
         case FRT_STT_MB:
             frt_std_scan_mb(ts->t, tk->text, sizeof(tk->text) - 1,
                             &start, &end, &len);

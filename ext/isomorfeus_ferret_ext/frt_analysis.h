@@ -68,7 +68,6 @@ typedef struct FrtMultiByteTokenStream
 
 typedef enum
 {
-    FRT_STT_ASCII,
     FRT_STT_MB,
     FRT_STT_UTF8
 } FrtStandardTokenizerType;
