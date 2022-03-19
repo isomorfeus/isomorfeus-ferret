@@ -23,32 +23,35 @@ extern OnigCodePoint cp_dash;
  *
  ****************************************************************************/
 
-FrtToken *frt_tk_set(FrtToken *tk,
-                     char *text, int tlen, off_t start, off_t end, int pos_inc)
+FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end, int pos_inc, rb_encoding *encoding)
 {
     if (tlen >= FRT_MAX_WORD_SIZE) {
         tlen = FRT_MAX_WORD_SIZE - 1;
     }
-    memcpy(tk->text, text, sizeof(char) * tlen);
+    if (encoding == utf8_encoding) {
+        memcpy(tk->text, text, sizeof(char) * tlen);
+    } else {
+        rb_econv_t *ec = rb_econv_open(encoding, utf8_encoding, 0);
+        rb_econv_convert(ec, &text, text + tlen, &tk->text, tk->text + FRT_MAX_WORD_SIZE - 1, 0);
+        rb_econv_close(ec);
+        tlen = strlen(tk->text);
+    }
     tk->text[tlen] = '\0';
-    tk->len = tlen;
-    tk->start = start;
-    tk->end = end;
+    tk->len = tlen;    // in utf8_encoding
+    tk->start = start; // in original encoding
+    tk->end = end;     // in original encoding
     tk->pos_inc = pos_inc;
     return tk;
 }
 
-static FrtToken *frt_tk_set_ts(FrtToken *tk, char *start, char *end,
-                               char *text, int pos_inc)
+static FrtToken *frt_tk_set_ts(FrtToken *tk, char *start, char *end, char *text, int pos_inc, rb_encoding *encoding)
 {
-    return frt_tk_set(tk, start, (int)(end - start),
-                  (off_t)(start - text), (off_t)(end - text), pos_inc);
+    return frt_tk_set(tk, start, (int)(end - start), (off_t)(start - text), (off_t)(end - text), pos_inc, encoding);
 }
 
-FrtToken *frt_tk_set_no_len(FrtToken *tk,
-                            char *text, off_t start, off_t end, int pos_inc)
+FrtToken *frt_tk_set_no_len(FrtToken *tk, char *text, off_t start, off_t end, int pos_inc, rb_encoding *encoding)
 {
-    return frt_tk_set(tk, text, (int)strlen(text), start, end, pos_inc);
+    return frt_tk_set(tk, text, (int)strlen(text), start, end, pos_inc, encoding);
 }
 
 int frt_tk_eq(FrtToken *tk1, FrtToken *tk2)
@@ -229,7 +232,7 @@ static FrtToken *nt_next(FrtTokenStream *ts)
         size_t len = strlen(ts->t);
         ts->t = NULL;
 
-        return frt_tk_set(&(CTS(ts)->token), ts->text, len, 0, len, 1);
+        return frt_tk_set(&(CTS(ts)->token), ts->text, len, 0, len, 1, ts->encoding);
     }
     else {
         return NULL;
@@ -285,7 +288,7 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     } while (cp_len > 0 && !rb_enc_isspace(cp, enc));
     ts->t = t;
-    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
 }
 
 /*
@@ -323,7 +326,7 @@ static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
     *b = 0;
     ts->t = t;
     return frt_tk_set(&(CTS(ts)->token), buf, b - buf, (off_t)(start - ts->text),
-                    (off_t)(t - ts->text), 1);
+                    (off_t)(t - ts->text), 1, enc);
 }
 
 FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase)
@@ -376,7 +379,7 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
     ts->t = t;
-    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+    return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
 }
 
 /*
@@ -413,7 +416,7 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
     } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
     *b = 0;
     ts->t = t;
-    return frt_tk_set(&(CTS(ts)->token), buf, b - buf,(off_t)(start - ts->text), (off_t)(t - ts->text), 1);
+    return frt_tk_set(&(CTS(ts)->token), buf, b - buf,(off_t)(start - ts->text), (off_t)(t - ts->text), 1, enc);
 }
 
 FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
@@ -730,7 +733,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     int len;
     bool is_acronym;
     bool seen_at_symbol;
-
+    rb_encoding *enc = ts->encoding;
 
     if (!std_tz->advance_to_start(ts)) {
         return NULL;
@@ -743,7 +746,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     if (!std_tz->is_tok_char(t)) {
         /* very common case, ie a plain word, so check and return */
         ts->t = t;
-        return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+        return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
     }
 
     if (*t == '\'') {       /* apostrophe case. */
@@ -753,16 +756,16 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         /* strip possesive */
         if ((t[-1] == 's' || t[-1] == 'S') && t[-2] == '\'') {
             t -= 2;
-            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
             CTS(ts)->token.end += 2;
         }
         else if (t[-1] == '\'') {
             t -= 1;
-            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
             CTS(ts)->token.end += 1;
         }
         else {
-            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
         }
 
         return &(CTS(ts)->token);
@@ -771,7 +774,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     if (*t == '&') {        /* apostrophe case. */
         t += legacy_std_get_company_name(t);
         ts->t = t;
-        return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+        return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
     }
 
     if ((isdigit(*start) || isnumpunc(*start))       /* possibly a number */
@@ -779,7 +782,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         num_end = start + len;
         if (!std_tz->is_tok_char(num_end)) { /* won't find a longer token */
             ts->t = num_end;
-            return frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1);
+            return frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1, enc);
         }
         /* else there may be a longer token so check */
     }
@@ -806,7 +809,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         }
         return frt_tk_set(&(CTS(ts)->token), token, len,
                       (off_t)(start - ts->text),
-                      (off_t)(ts->t - ts->text), 1);
+                      (off_t)(ts->t - ts->text), 1, enc);
     }
 
     /* now see how long a url we can find. */
@@ -854,15 +857,15 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
             }
             frt_tk_set(&(CTS(ts)->token), token, token_i,
                    (off_t)(start - ts->text),
-                   (off_t)(t - ts->text), 1);
+                   (off_t)(t - ts->text), 1, enc);
         }
         else { /* just return the url as is */
-            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1);
+            frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
         }
     }
     else {                  /* return the number */
         ts->t = num_end;
-        frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1);
+        frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1, enc);
     }
 
     return &(CTS(ts)->token);

@@ -37,8 +37,8 @@ static ID id_token_stream;
 
 static VALUE object_space;
 
-extern int ruby_re_search(struct re_pattern_buffer *, const char *, int, int,
-                          int, struct re_registers *);
+extern rb_encoding *utf8_encoding;
+extern int ruby_re_search(struct re_pattern_buffer *, const char *, int, int, int, struct re_registers *);
 
 int
 frb_rb_hash_size(VALUE hash)
@@ -106,28 +106,26 @@ frb_token_alloc(VALUE klass)
                             ALLOC(RToken));
 }
 
-static VALUE
-get_token(FrtToken *tk)
+static VALUE get_token(FrtToken *tk)
 {
     RToken *token = ALLOC(RToken);
 
     token->text = rb_str_new2(tk->text);
+    rb_enc_associate(token->text, utf8_encoding);
     token->start = tk->start;
     token->end = tk->end;
     token->pos_inc = tk->pos_inc;
     return Data_Wrap_Struct(cToken, &frb_token_mark, &frb_token_free, token);
 }
 
-FrtToken *
-frb_set_token(FrtToken *tk, VALUE rt)
+FrtToken * frb_set_token(FrtToken *tk, VALUE rt)
 {
     RToken *rtk;
 
     if (rt == Qnil) return NULL;
 
     Data_Get_Struct(rt, RToken, rtk);
-    frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text),
-           rtk->start, rtk->end, rtk->pos_inc);
+    frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text), rtk->start, rtk->end, rtk->pos_inc, rb_enc_get(rtk->text));
     return tk;
 }
 
@@ -716,8 +714,7 @@ static VALUE scan_once(VALUE str, VALUE pat, long *start)
 }
 //
 
-static FrtToken *
-  rets_next(FrtTokenStream *ts)
+static FrtToken * rets_next(FrtTokenStream *ts)
 {
   VALUE ret;
   long rtok_len;
@@ -733,12 +730,12 @@ static FrtToken *
 
   if (NIL_P(RETS(ts)->proc)) {
     return frt_tk_set(&(CachedTS(ts)->token), rs2s(ret), rtok_len,
-      beg, end, 1);
+      beg, end, 1, rb_enc_get(ret));
   } else {
     VALUE rtok;
     rtok = rb_funcall(RETS(ts)->proc, id_call, 1, ret);
     return frt_tk_set(&(CachedTS(ts)->token), rs2s(rtok),
-      RSTRING_LEN(rtok), beg, end, 1);
+      RSTRING_LEN(rtok), beg, end, 1, rb_enc_get(rtok));
   }
 }
 
