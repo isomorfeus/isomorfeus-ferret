@@ -300,13 +300,14 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
 static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
 {
     int cp_len = 0;
-    OnigCodePoint cp, cpl;
+    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
+    OnigCodePoint cp;
     rb_encoding *enc = ts->encoding;
     char buf[FRT_MAX_WORD_SIZE + 1];
-    char *b = buf;
+    int len = 0;
     char *buf_end = buf + FRT_MAX_WORD_SIZE - rb_enc_mbmaxlen(enc); // space for longest possible mulibyte at the end
     char *end = ts->text + ts->length;
-    char *start;
+    char *start, *begin;
     char *t = ts->t;
 
     if (t == end) { return NULL; }
@@ -317,18 +318,18 @@ static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    start = t;
+    begin = start = t;
 
     do {
-        cpl = rb_enc_tolower(cp, enc);
-        b += rb_enc_mbcput(cpl, b, enc);
         t += cp_len;
-        if (t == end || b >= buf_end) { break; }
+        if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     } while (cp_len > 0 && !rb_enc_isspace(cp, enc));
-    *b = 0;
+
+    len = enc->case_map(&fold_type, &begin, t, buf, buf_end, enc);
+    *(buf + len) = '\0';
     ts->t = t;
-    return frt_tk_set(&(CTS(ts)->token), buf, b - buf, (off_t)(start - ts->text),
+    return frt_tk_set(&(CTS(ts)->token), buf, len, (off_t)(start - ts->text),
                     (off_t)(t - ts->text), 1, enc);
 }
 
@@ -391,13 +392,14 @@ static FrtToken *mb_lt_next(FrtTokenStream *ts)
 static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 {
     int cp_len = 0;
+    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
     OnigCodePoint cp, cpl;
     rb_encoding *enc = ts->encoding;
     char buf[FRT_MAX_WORD_SIZE + 1];
-    char *b = buf;
+    int len = 0;
     char *buf_end = buf + FRT_MAX_WORD_SIZE - rb_enc_mbmaxlen(enc); // space for longest possible mulibyte at the end
     char *end = ts->text + ts->length;
-    char *start;
+    char *start, *begin;
     char *t = ts->t;
 
     if (t == end) { return NULL; }
@@ -408,18 +410,18 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    start = t;
+    begin = start = t;
 
     do {
-        cpl = rb_enc_tolower(cp, enc);
-        b += rb_enc_mbcput(cpl, b, enc);
         t += cp_len;
-        if (t == end || b >= buf_end) { break; }
+        if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
-    *b = 0;
+
+    len = enc->case_map(&fold_type, &begin, t, buf, buf_end, enc);
+    *(buf + len) = '\0';
     ts->t = t;
-    return frt_tk_set(&(CTS(ts)->token), buf, b - buf,(off_t)(start - ts->text), (off_t)(t - ts->text), 1, enc);
+    return frt_tk_set(&(CTS(ts)->token), buf, len, (off_t)(start - ts->text), (off_t)(t - ts->text), 1, enc);
 }
 
 FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
@@ -1174,27 +1176,22 @@ FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts)
 
 static FrtToken *mb_lcf_next(FrtTokenStream *ts)
 {
-    wchar_t wbuf[FRT_MAX_WORD_SIZE + 1], *wchr;
+    int len = 0;
+    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
+    rb_encoding *enc = utf8_encoding; // Token encoding is always UTF-8
+    char buf[FRT_MAX_WORD_SIZE + 1];
+    char *buf_end = buf + FRT_MAX_WORD_SIZE - 1;
+
     FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
-    int x;
-    wbuf[FRT_MAX_WORD_SIZE] = 0;
+    if (tk == NULL) { return tk; }
 
-    if (tk == NULL) {
-        return tk;
-    }
+    char *t = tk->text;
 
-    if ((x=mbstowcs(wbuf, tk->text, FRT_MAX_WORD_SIZE)) <= 0) return tk;
-    wchr = wbuf;
-    while (*wchr != 0) {
-        *wchr = towlower(*wchr);
-        wchr++;
-    }
-    tk->len = wcstombs(tk->text, wbuf, FRT_MAX_WORD_SIZE);
-    if (tk->len <= 0) {
-        strcpy(tk->text, "BAD_DATA");
-        tk->len = 8;
-    }
+    len = enc->case_map(&fold_type, &t, tk->text + tk->len, buf, buf_end, enc);
+    tk->len = len;
+    memcpy(tk->text, buf, tk->len);
     tk->text[tk->len] = '\0';
+
     return tk;
 }
 
