@@ -31,10 +31,13 @@ FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end,
     if (encoding == utf8_encoding) {
         memcpy(tk->text, text, sizeof(char) * tlen);
     } else {
-        rb_econv_t *ec = rb_econv_open(encoding, utf8_encoding, 0);
-        rb_econv_convert(ec, &text, text + tlen, &tk->text, tk->text + FRT_MAX_WORD_SIZE - 1, 0);
+        const unsigned char *sp = (unsigned char *)text;
+        unsigned char *dp = (unsigned char *)tk->text;
+        rb_econv_t *ec = rb_econv_open(rb_enc_name(encoding), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
+        assert(ec != NULL);
+        rb_econv_convert(ec, &sp, (unsigned char *)text + tlen, &dp, (unsigned char *)tk->text + FRT_MAX_WORD_SIZE - 1, 0);
         rb_econv_close(ec);
-        tlen = strlen(tk->text);
+        tlen = dp - (unsigned char *)tk->text;
     }
     tk->text[tlen] = '\0';
     tk->len = tlen;    // in utf8_encoding
