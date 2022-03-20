@@ -293,7 +293,7 @@ puts <<EOF
 # and that your input is in #{@encoding}.
 
 %%{
-    machine WChar;
+    machine UTF8;
 EOF
 generate_machine( :ualpha, "Alphabetic" )
 generate_machine( :ulower, "Lowercase" )
