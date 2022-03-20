@@ -2,9 +2,6 @@ $:.unshift File.dirname(__FILE__)
 $:.unshift File.join(File.dirname(__FILE__), '../lib')
 $:.unshift File.join(File.dirname(__FILE__), '../ext')
 
-ENV['LANG'] = "en_US.UTF-8"
-ENV['LC_CTYPE'] = "en_US.UTF-8"
-
 class Float
   def approx_eql?(o)
     return (1 - self/o).abs < 0.0001
