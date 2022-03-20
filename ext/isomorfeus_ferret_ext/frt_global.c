@@ -23,6 +23,7 @@ OnigCodePoint cp_backslash;
 OnigCodePoint cp_slash;
 OnigCodePoint cp_underscore;
 OnigCodePoint cp_dash;
+OnigCodePoint cp_hyphen;
 
 int frt_scmp(const void *p1, const void *p2)
 {
@@ -407,6 +408,8 @@ void frt_init(int argc, const char *const argv[])
     cp_underscore = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
     p = "-";
     cp_dash = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+    p = "\u2010";
+    cp_hyphen = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
 }
 
 /**

@@ -16,6 +16,7 @@ extern OnigCodePoint cp_backslash;
 extern OnigCodePoint cp_slash;
 extern OnigCodePoint cp_underscore;
 extern OnigCodePoint cp_dash;
+extern OnigCodePoint cp_hyphen;
 
 /****************************************************************************
  *
@@ -417,24 +418,79 @@ static FrtToken *std_next(FrtTokenStream *ts)
     FrtStandardTokenizer *std_tz = STDTS(ts);
     const char *start = NULL;
     const char *end = NULL;
-    int len;
+    int len = 0;
     FrtToken *tk = &(CTS(ts)->token);
+
+    if ((ts->text + ts->length) <= ts->t)
+        return NULL;
 
     if (enc == utf8_encoding) {
         frt_std_scan_utf8(ts->t, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
+
+        if (len == 0)
+            return NULL;
+
+        ts->t       = (char *)end;
+        tk->start   = start - ts->text;
+        tk->end     = end   - ts->text;
     } else {
-        rb_raise(rb_eNotImpError, "TokenStream data must be in utf8 encoding");
+        // convert to UTF-8
+        char *sp = ts->t;
+        size_t slen = ts->length - (sp - ts->text);
+        if (slen == 0)
+            return NULL;
+        size_t dlen = slen * rb_enc_mbmaxlen(enc);
+
+        unsigned char *dp = FRT_ALLOC_N(unsigned char, dlen);
+        unsigned char *dstart = dp;
+        rb_econv_t *ec = rb_econv_open(rb_enc_name(enc), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
+        assert(ec != NULL);
+        rb_econv_convert(ec, &sp, sp + slen, &dp, dp + dlen, 0);
+        rb_econv_close(ec);
+
+        // scan for token
+        frt_std_scan_utf8(dstart, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
+
+        if (len == 0) {
+            free(dstart);
+            return NULL;
+        }
+
+        // compensate difference in byte length between UTF-8 and original encoding
+        int u_point = start - (char *)dstart;
+        int r_point = 0;
+        int cp_len = 0;
+        int i = 0;
+        int cp;
+
+        while (i < u_point) {
+            cp = rb_enc_codepoint_len(tk->text + i, tk->text + u_point, &cp_len, utf8_encoding);
+            i += cp_len;
+            r_point += rb_enc_code_to_mbclen(cp, enc);
+        }
+
+        // set real start in original encoding
+        tk->start = ts->t + r_point - ts->text;
+        u_point = end - (char *)dstart;
+        // continue measuring
+        while (i < u_point) {
+            // fprintf(stderr, "r_point %i\n", r_point);
+            cp = rb_enc_codepoint_len(tk->text + i, tk->text + u_point, &cp_len, utf8_encoding);
+            i += cp_len;
+            r_point += rb_enc_code_to_mbclen(cp, enc);
+        }
+
+        // set real end in original encoding
+        tk->end = ts->t + r_point - ts->text;
+        ts->t   = ts->t + r_point;
+
+        free(dstart);
     }
 
-    if (len == 0)
-        return NULL;
-
-    ts->t       = (char *)end;
     *(tk->text + len) = '\0';
     tk->len     = len;
-    tk->start   = start - ts->text;
-    tk->end     = end   - ts->text;
     tk->pos_inc = 1;
+
     return &(CTS(ts)->token);
 }
 
@@ -1057,6 +1113,9 @@ static FrtTokenStream *hf_clone_i(FrtTokenStream *orig_ts)
 
 static FrtToken *hf_next(FrtTokenStream *ts)
 {
+    int cp_len = 0;
+    OnigCodePoint cp;
+    rb_encoding *enc = utf8_encoding;
     FrtHyphenFilter *hf = HyphenFilt(ts);
     FrtTokenFilter *tf = TkFilt(ts);
     FrtToken *tk = hf->tk;
@@ -1071,38 +1130,52 @@ static FrtToken *hf_next(FrtTokenStream *ts)
         hf->pos += text_len + 1;
         tk->len = text_len;
         return tk;
-    }
-    else {
-        char *p;
+    } else {
+        char *t;
+        char *end;
+
         bool seen_hyphen = false;
         bool seen_other_punc = false;
         hf->tk = tk = tf->sub_ts->next(tf->sub_ts);
         if (NULL == tk) return NULL;
-        p = tk->text + 1;
-        while (*p) {
-            if (*p == '-') {
-                seen_hyphen = true;
+        t = tk->text;
+        end = tk->text + tk->len;
+        if (t == end) return NULL;
+        rb_enc_codepoint_len(t, end, &cp_len, enc);
+        t += cp_len; // skip first
+        if (t != end) {
+            cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+            while (cp > 0) {
+                if (cp == cp_dash || cp == cp_hyphen) {
+                    seen_hyphen = true;
+                } else if (!rb_enc_isalpha(cp, enc)) {
+                    seen_other_punc = true;
+                    break;
+                }
+                t += cp_len;
+                if (t == end) { break; }
+                cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
             }
-            else if (!isalpha(*p)) {
-                seen_other_punc = true;
-                break;
-            }
-            p++;
         }
         if (seen_hyphen && !seen_other_punc) {
             char *q = hf->text;
             char *r = tk->text;
-            p = tk->text;
-            while (*p) {
-                if (*p == '-') {
+            t = tk->text;
+            end = tk->text + tk->len;
+            cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+            while (cp > 0) {
+                if (cp == cp_dash || cp == cp_hyphen) {
                     *q = '\0';
+                    q++;
+                } else {
+                    memcpy(q, t, cp_len);
+                    if (r!=t) memcpy(r, t, cp_len);
+                    r += cp_len;
+                    q += cp_len;
                 }
-                else {
-                    *r = *q = *p;
-                    r++;
-                }
-                q++;
-                p++;
+                t += cp_len;
+                if (t == end) { break; }
+                cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
             }
             *r = *q = '\0';
             hf->start = tk->start;
@@ -1205,12 +1278,10 @@ static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts)
     return new_ts;
 }
 
-FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm,
-                             const char *charenc)
+FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm)
 {
     FrtTokenStream *tf = tf_new(FrtStemFilter, ts);
     char *my_algorithm = NULL;
-    char *my_charenc   = NULL;
     char *s = NULL;
 
     if (algorithm) {
@@ -1225,19 +1296,7 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm,
         StemFilt(tf)->algorithm = my_algorithm;
     }
 
-    if (charenc) {
-        my_charenc   = frt_estrdup(charenc);
-
-        /* encodings are uppercase and use '_' instead of '-' */
-        s = my_charenc;
-        while (*s) {
-            *s = (*s == '-') ? '_' : toupper(*s);
-            s++;
-        }
-        StemFilt(tf)->charenc = my_charenc;
-    }
-
-    StemFilt(tf)->stemmer   = sb_stemmer_new(my_algorithm, my_charenc);
+    StemFilt(tf)->stemmer   = sb_stemmer_new(my_algorithm, "UTF_8");
 
     tf->next = &stemf_next;
     tf->destroy_i = &stemf_destroy_i;
