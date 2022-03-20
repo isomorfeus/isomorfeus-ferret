@@ -1048,29 +1048,24 @@ frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
  *
  *  token_stream:: TokenStream to be filtered
  *  algorithm::    The algorithm (or language) to use
- *  encoding::     The encoding of the data (default: "UTF-8")
  */
 static VALUE
 frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
 {
-    VALUE rsub_ts, ralgorithm, rcharenc;
+    VALUE rsub_ts, ralgorithm;
     const char *algorithm = "english";
-    char *charenc = NULL;
     FrtTokenStream *ts;
-    rb_scan_args(argc, argv, "12", &rsub_ts, &ralgorithm, &rcharenc);
+    rb_scan_args(argc, argv, "11", &rsub_ts, &ralgorithm);
     ts = frb_get_cwrapped_rts(rsub_ts);
-    switch (argc) {
-        case 3: charenc = rs2s(rb_obj_as_string(rcharenc));
-        case 2: algorithm = rs2s(rb_obj_as_string(ralgorithm));
-    }
-    ts = frt_stem_filter_new(ts, algorithm, charenc);
+    if (argc == 2)
+        algorithm = rs2s(rb_obj_as_string(ralgorithm));
+    ts = frt_stem_filter_new(ts, algorithm);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
     if (((FrtStemFilter *)ts)->stemmer == NULL) {
-        rb_raise(rb_eArgError, "No stemmer could be found with the encoding "
-                 "%s and the language %s", charenc, algorithm);
+        rb_raise(rb_eArgError, "No stemmer could be found for the %s language.", algorithm);
     }
     return self;
 }
