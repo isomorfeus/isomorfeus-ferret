@@ -484,9 +484,9 @@ class StemFilterTest < Test::Unit::TestCase
     assert(! t.next)
 
     tz = LetterTokenizer.new(input)
-    assert_not_nil(StemFilter.new(tz,'HunGarIaN', 'Utf-8'))
-    assert_not_nil(StemFilter.new(tz,'romanIAN', 'iso-8859-2'))
-    assert_raises(ArgumentError) {StemFilter.new(tz, 'Jibberish', 'UTF-8')}
+    assert_not_nil(StemFilter.new(tz,'HunGarIaN'))
+    assert_not_nil(StemFilter.new(tz,'romanIAN'))
+    assert_raises(ArgumentError) {StemFilter.new(tz, 'Jibberish')}
   end
 end
 
