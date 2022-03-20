@@ -9,17 +9,6 @@
  * be truncated down to just google.com during the copy.
  * +token_length+ is the size of the resulting token.
  */
-void frt_std_scan(const char *in,
-                  char *out, size_t out_size,
-                  const char **start, const char **end,
-                  int *token_length);
-
-
-void frt_std_scan_mb(const char *in,
-                     char *out, size_t out_size,
-                     const char **start, const char **end,
-                     int *token_length);
-
 void frt_std_scan_utf8(const char *in,
                        char *out, size_t out_size,
                        const char **start, const char **end,
