@@ -82,4 +82,5 @@ void frt_std_scan_utf8(const char *in,
 
         out[*token_size] = 0;
     }
+    (void)stack;
 }
