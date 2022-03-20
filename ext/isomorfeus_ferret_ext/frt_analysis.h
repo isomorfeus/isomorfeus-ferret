@@ -159,7 +159,7 @@ extern const char *FRT_FULL_HUNGARIAN_STOP_WORDS[];
 extern FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *ts, const char **words, int len);
 extern FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *ts, const char **words);
 extern FrtTokenStream *frt_stop_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm, const char *charenc);
+extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm);
 extern FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *ts);
 extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern, const char *replacement);
 
