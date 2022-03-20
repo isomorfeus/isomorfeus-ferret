@@ -75,7 +75,6 @@ typedef enum
 typedef struct FrtStandardTokenizer
 {
     FrtCachedTokenStream     super;
-    FrtStandardTokenizerType type;
 } FrtStandardTokenizer;
 
 typedef struct FrtLegacyStandardTokenizer
@@ -136,7 +135,6 @@ extern FrtTokenStream *frt_non_tokenizer_new();
 extern FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase);
 extern FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase);
 extern FrtTokenStream *frt_mb_standard_tokenizer_new();
-extern FrtTokenStream *frt_utf8_standard_tokenizer_new();
 extern FrtTokenStream *frt_mb_legacy_standard_tokenizer_new();
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
@@ -158,17 +156,12 @@ extern const char *FRT_FULL_RUSSIAN_STOP_WORDS[];
 extern const char *FRT_FULL_FINNISH_STOP_WORDS[];
 extern const char *FRT_FULL_HUNGARIAN_STOP_WORDS[];
 
-extern FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *ts,
-                                                   const char **words, int len);
-extern FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *ts,
-                                               const char **words);
+extern FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *ts, const char **words, int len);
+extern FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *ts, const char **words);
 extern FrtTokenStream *frt_stop_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm,
-                                    const char *charenc);
-
+extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm, const char *charenc);
 extern FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern,
-                                       const char *replacement);
+extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern, const char *replacement);
 
 /****************************************************************************
  *
@@ -196,18 +189,10 @@ extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
 extern FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase);
-
 extern FrtAnalyzer *frt_mb_standard_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_utf8_standard_analyzer_new(bool lowercase);
-
-extern FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(
-    const char **words, bool lowercase);
-extern FrtAnalyzer *frt_utf8_standard_analyzer_new_with_words(
-    const char **words, bool lowercase);
-
+extern FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(const char **words, bool lowercase);
 extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(
-    const char **words, bool lowercase);
+extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(const char **words, bool lowercase);
 
 #define PFA(analyzer) ((FrtPerFieldAnalyzer *)(analyzer))
 typedef struct FrtPerFieldAnalyzer

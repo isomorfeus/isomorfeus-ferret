@@ -294,49 +294,13 @@ static FrtToken *mb_wst_next(FrtTokenStream *ts)
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
 }
 
-/*
- * Lowercasing Multi-byte WhitespaceTokenizer
- */
-static FrtToken *mb_wst_next_lc(FrtTokenStream *ts)
-{
-    int cp_len = 0;
-    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
-    OnigCodePoint cp;
-    rb_encoding *enc = ts->encoding;
-    char buf[FRT_MAX_WORD_SIZE + 1];
-    int len = 0;
-    char *buf_end = buf + FRT_MAX_WORD_SIZE - rb_enc_mbmaxlen(enc); // space for longest possible mulibyte at the end
-    char *end = ts->text + ts->length;
-    char *start, *begin;
-    char *t = ts->t;
-
-    if (t == end) { return NULL; }
-    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    while (cp_len > 0 && rb_enc_isspace(cp, enc)) {
-        t += cp_len;
-        if (t == end) { return NULL; }
-        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    }
-
-    begin = start = t;
-
-    do {
-        t += cp_len;
-        if (t == end) { break; }
-        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
-    } while (cp_len > 0 && !rb_enc_isspace(cp, enc));
-
-    len = enc->case_map(&fold_type, &begin, t, buf, buf_end, enc);
-    *(buf + len) = '\0';
-    ts->t = t;
-    return frt_tk_set(&(CTS(ts)->token), buf, len, (off_t)(start - ts->text),
-                    (off_t)(t - ts->text), 1, enc);
-}
-
 FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase)
 {
     FrtTokenStream *ts = mb_ts_new();
-    ts->next = lowercase ? &mb_wst_next_lc : &mb_wst_next;
+    ts->next = &mb_wst_next;
+    if (lowercase) {
+        ts = frt_mb_lowercase_filter_new(ts);
+    }
     return ts;
 }
 
@@ -449,27 +413,24 @@ FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase)
  */
 static FrtToken *std_next(FrtTokenStream *ts)
 {
+    rb_encoding *enc = ts->encoding;
     FrtStandardTokenizer *std_tz = STDTS(ts);
     const char *start = NULL;
     const char *end = NULL;
     int len;
     FrtToken *tk = &(CTS(ts)->token);
 
-    switch (std_tz->type) {
-        case FRT_STT_MB:
-            frt_std_scan_mb(ts->t, tk->text, sizeof(tk->text) - 1,
-                            &start, &end, &len);
-            break;
-        case FRT_STT_UTF8:
-            frt_std_scan_utf8(ts->t, tk->text, sizeof(tk->text) - 1,
-                              &start, &end, &len);
-            break;
+    if (enc == utf8_encoding) {
+        frt_std_scan_utf8(ts->t, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
+    } else {
+        rb_raise(rb_eNotImpError, "TokenStream data must be in utf8 encoding");
     }
 
     if (len == 0)
         return NULL;
 
     ts->t       = (char *)end;
+    *(tk->text + len) = '\0';
     tk->len     = len;
     tk->start   = start - ts->text;
     tk->end     = end   - ts->text;
@@ -494,14 +455,6 @@ static FrtTokenStream *std_ts_new()
 FrtTokenStream *frt_mb_standard_tokenizer_new()
 {
     FrtTokenStream *ts = std_ts_new();
-    STDTS(ts)->type = FRT_STT_MB;
-    return ts;
-}
-
-FrtTokenStream *frt_utf8_standard_tokenizer_new()
-{
-    FrtTokenStream *ts = std_ts_new();
-    STDTS(ts)->type = FRT_STT_UTF8;
     return ts;
 }
 
@@ -1179,8 +1132,8 @@ static FrtToken *mb_lcf_next(FrtTokenStream *ts)
     int len = 0;
     OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
     rb_encoding *enc = utf8_encoding; // Token encoding is always UTF-8
-    char buf[FRT_MAX_WORD_SIZE + 1];
-    char *buf_end = buf + FRT_MAX_WORD_SIZE - 1;
+    char buf[FRT_MAX_WORD_SIZE + 20]; // CASE_MAPPING_ADDITIONAL_LENGTH
+    char *buf_end = buf + FRT_MAX_WORD_SIZE + 19;
 
     FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
     if (tk == NULL) { return tk; }
@@ -1189,8 +1142,8 @@ static FrtToken *mb_lcf_next(FrtTokenStream *ts)
 
     len = enc->case_map(&fold_type, &t, tk->text + tk->len, buf, buf_end, enc);
     tk->len = len;
-    memcpy(tk->text, buf, tk->len);
-    tk->text[tk->len] = '\0';
+    memcpy(tk->text, buf, len);
+    tk->text[len] = '\0';
 
     return tk;
 }
@@ -1313,27 +1266,10 @@ FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(const char **words,
     return frt_analyzer_new(ts, NULL, NULL);
 }
 
-FrtAnalyzer *frt_utf8_standard_analyzer_new_with_words(const char **words,
-                                              bool lowercase)
-{
-    FrtTokenStream *ts = frt_utf8_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_mb_lowercase_filter_new(ts);
-    }
-    ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
 FrtAnalyzer *frt_mb_standard_analyzer_new(bool lowercase)
 {
     return frt_mb_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                lowercase);
-}
-
-FrtAnalyzer *frt_utf8_standard_analyzer_new(bool lowercase)
-{
-    return frt_utf8_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
-                                                 lowercase);
 }
 
 /****************************************************************************
