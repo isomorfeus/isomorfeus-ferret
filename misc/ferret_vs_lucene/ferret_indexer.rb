@@ -16,7 +16,7 @@ def init_writer(create)
       else
         Analysis::WhiteSpaceAnalyzer.new()
       end
-  puts a.class.name
+  print "#{a.class.name.split('::').last}\t"
   options = {
     :path => "ferret_index",
     :analyzer => a,
