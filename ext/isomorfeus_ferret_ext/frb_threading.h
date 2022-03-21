@@ -18,7 +18,6 @@ typedef int frt_thread_once_t;
 #define frt_thread_key_delete(a) frb_thread_key_delete(a)
 #define frt_thread_setspecific(a, b) frb_thread_setspecific(a, b)
 #define frt_thread_getspecific(a) frb_thread_getspecific(a)
-#define frt_thread_exit(a)
 #define frt_thread_once(a, b) frb_thread_once(a, b)
 
 void frb_thread_once(int *once_control, void (*init_routine)(void));

@@ -17,7 +17,6 @@ typedef pthread_once_t frt_thread_once_t;
 #define frt_thread_key_delete(a) pthread_key_delete(a)
 #define frt_thread_setspecific(a, b) pthread_setspecific(a, b)
 #define frt_thread_getspecific(a) pthread_getspecific(a)
-#define frt_thread_exit(a) pthread_exit(a)
 #define frt_thread_once(a, b) pthread_once(a, b)
 
 #endif
