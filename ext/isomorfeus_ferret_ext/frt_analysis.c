@@ -5,7 +5,6 @@
 #include "frt_analysis.h"
 #include "frt_hash.h"
 #include "libstemmer.h"
-#include "frt_scanner.h"
 
 /* initialized in frt_global.c */
 extern rb_encoding *utf8_encoding;
@@ -401,118 +400,6 @@ FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase)
 FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase)
 {
     return frt_analyzer_new(frt_mb_letter_tokenizer_new(lowercase), NULL, NULL);
-}
-
-/****************************************************************************
- *
- * Standard
- *
- ****************************************************************************/
-
-#define STDTS(token_stream) ((FrtStandardTokenizer *)(token_stream))
-
-/*
- * FrtStandardTokenizer
- */
-static FrtToken *std_next(FrtTokenStream *ts)
-{
-    rb_encoding *enc = ts->encoding;
-    const char *start = NULL;
-    const char *end = NULL;
-    int len = 0;
-    FrtToken *tk = &(CTS(ts)->token);
-
-    if ((ts->text + ts->length) <= ts->t)
-        return NULL;
-
-    if (enc == utf8_encoding) {
-        frt_std_scan_utf8(ts->t, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
-
-        if (len == 0)
-            return NULL;
-
-        ts->t       = (char *)end;
-        tk->start   = start - ts->text;
-        tk->end     = end   - ts->text;
-    } else {
-        // convert to UTF-8
-        char *sp = ts->t;
-        size_t slen = ts->length - (sp - ts->text);
-        if (slen == 0)
-            return NULL;
-        size_t dlen = slen * rb_enc_mbmaxlen(enc);
-
-        unsigned char *dstart = FRT_ALLOC_N(unsigned char, dlen);
-        unsigned char *dp = dstart;
-        rb_econv_t *ec = rb_econv_open(rb_enc_name(enc), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
-        assert(ec != NULL);
-        rb_econv_convert(ec, (const unsigned char **)&sp, (const unsigned char *)(sp + slen), &dp, dp + dlen, 0);
-        rb_econv_close(ec);
-
-        // scan for token
-        frt_std_scan_utf8((const char *)dstart, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
-
-        if (len == 0) {
-            free(dstart);
-            return NULL;
-        }
-
-        // compensate difference in byte length between UTF-8 and original encoding
-        int u_point = start - (char *)dstart;
-        int r_point = 0;
-        int cp_len = 0;
-        int i = 0;
-        int cp;
-
-        while (i < u_point) {
-            cp = rb_enc_codepoint_len(tk->text + i, tk->text + u_point, &cp_len, utf8_encoding);
-            i += cp_len;
-            r_point += rb_enc_code_to_mbclen(cp, enc);
-        }
-
-        // set real start in original encoding
-        tk->start = ts->t + r_point - ts->text;
-        u_point = end - (char *)dstart;
-        // continue measuring
-        while (i < u_point) {
-            // fprintf(stderr, "r_point %i\n", r_point);
-            cp = rb_enc_codepoint_len(tk->text + i, tk->text + u_point, &cp_len, utf8_encoding);
-            i += cp_len;
-            r_point += rb_enc_code_to_mbclen(cp, enc);
-        }
-
-        // set real end in original encoding
-        tk->end = ts->t + r_point - ts->text;
-        ts->t   = ts->t + r_point;
-
-        free(dstart);
-    }
-
-    *(tk->text + len) = '\0';
-    tk->len     = len;
-    tk->pos_inc = 1;
-
-    return &(CTS(ts)->token);
-}
-
-static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
-{
-    return frt_ts_clone_size(orig_ts, sizeof(FrtStandardTokenizer));
-}
-
-static FrtTokenStream *std_ts_new()
-{
-    FrtTokenStream *ts = frt_ts_new(FrtStandardTokenizer);
-    ts->clone_i        = &std_ts_clone_i;
-    ts->next           = &std_next;
-
-    return ts;
-}
-
-FrtTokenStream *frt_mb_standard_tokenizer_new()
-{
-    FrtTokenStream *ts = std_ts_new();
-    return ts;
 }
 
 /****************************************************************************
@@ -1362,27 +1249,6 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm)
  * Analyzers
  *
  ****************************************************************************/
-
-/****************************************************************************
- * Standard
- ****************************************************************************/
-
-FrtAnalyzer *frt_mb_standard_analyzer_new_with_words(const char **words,
-                                              bool lowercase)
-{
-    FrtTokenStream *ts = frt_mb_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_mb_lowercase_filter_new(ts);
-    }
-    ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
-    return frt_analyzer_new(ts, NULL, NULL);
-}
-
-FrtAnalyzer *frt_mb_standard_analyzer_new(bool lowercase)
-{
-    return frt_mb_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
-                                               lowercase);
-}
 
 /****************************************************************************
  * Legacy

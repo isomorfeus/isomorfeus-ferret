@@ -70,21 +70,6 @@ task :parser do
   FileUtils.cp('parser/frt_q_parser.c', 'ext/isomorfeus_ferret_ext/frt_q_parser.c', preserve: false, verbose: true)
 end
 
-task :scanner do
-  pwd = Dir.pwd
-  Dir.chdir('scanner')
-  system("ragel scanner_utf8.rl -o frt_scanner_utf8.c")
-  Dir.chdir(pwd)
-  FileUtils.cp('scanner/frt_scanner_utf8.c', 'ext/isomorfeus_ferret_ext/frt_scanner_utf8.c', preserve: false, verbose: true)
-end
-
-task :uchar_utf8 do
-  pwd = Dir.pwd
-  Dir.chdir('scanner')
-  system("ruby unicode2ragel.rb --encoding utf8 > uchar-utf8.rl")
-  Dir.chdir(pwd)
-end
-
 task :specs do
   Rake::Task['units'].invoke
   Rake::Task['thread_safety'].invoke
