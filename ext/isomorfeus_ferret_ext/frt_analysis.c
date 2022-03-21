@@ -231,15 +231,13 @@ FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
 /*
  * NonTokenizer
  */
-static FrtToken *nt_next(FrtTokenStream *ts)
-{
+static FrtToken *nt_next(FrtTokenStream *ts) {
     if (ts->t) {
         size_t len = strlen(ts->t);
         ts->t = NULL;
 
         return frt_tk_set(&(CTS(ts)->token), ts->text, len, 0, len, 1, ts->encoding);
-    }
-    else {
+    } else {
         return NULL;
     }
 }

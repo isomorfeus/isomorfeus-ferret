@@ -42,8 +42,7 @@ static void test_problem_text(TestCase *tc, void *data)
 
     frt_iw_add_doc(iw, problem_text);
     Aiequal(1, frt_iw_doc_count(iw));
-    Assert(!store->exists(store, "_0.cfs"),
-           "data shouldn't have been written yet");
+    Assert(!store->exists(store, "_0.cfs"), "data shouldn't have been written yet");
     frt_iw_commit(iw);
     Assert(store->exists(store, "_0.cfs"), "data should now be written");
     frt_iw_close(iw);
