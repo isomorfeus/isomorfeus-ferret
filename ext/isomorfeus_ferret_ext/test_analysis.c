@@ -169,7 +169,7 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtTokenStream *ts = frt_mb_whitespace_tokenizer_new(false);
-    unsigned char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
+    char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
     rb_encoding *enc = utf8_encoding;
     (void)data;
     ts->reset(ts, text, enc);
