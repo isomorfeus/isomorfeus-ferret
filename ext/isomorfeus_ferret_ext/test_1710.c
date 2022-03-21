@@ -3,10 +3,11 @@
 #include "testhelper.h"
 #include <stdio.h>
 
+extern rb_encoding *utf8_encoding;
+
 static FrtFieldInfos *create_fis()
 {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     return fis;
 }
 
@@ -15,13 +16,13 @@ static FrtIndexWriter *create_iw(FrtStore *store)
     FrtFieldInfos *fis = create_fis();
     frt_index_create(store, fis);
     frt_fis_deref(fis);
-    return frt_iw_open(store, frt_mb_standard_analyzer_new(true), &frt_default_config);
+    return frt_iw_open(store, frt_mb_legacy_standard_analyzer_new(true), &frt_default_config);
 }
 
 static FrtDocument *prep_doc()
 {
     FrtDocument *doc = frt_doc_new();
-    rb_encoding *enc = rb_enc_find("ASCII-8BIT");
+    rb_encoding *enc = utf8_encoding;
     frt_doc_add_field(
         doc,
         frt_df_add_data(
@@ -31,7 +32,6 @@ static FrtDocument *prep_doc()
             )
         )->destroy_data = true;
     return doc;
-
 }
 
 static void test_problem_text(TestCase *tc, void *data)

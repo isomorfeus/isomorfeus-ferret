@@ -184,7 +184,7 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
         all_fields = frt_hs_new_ptr(NULL);
     }
     if (!analyzer) {
-        analyzer = frt_mb_standard_analyzer_new(true);
+        analyzer = frt_mb_legacy_standard_analyzer_new(true);
     }
     qp = frt_qp_new(analyzer);
     //frt_hs_destroy(qp->all_fields);
