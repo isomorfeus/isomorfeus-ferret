@@ -13,8 +13,7 @@
  *
  ****************************************************************************/
 
-typedef struct FrtToken
-{
+typedef struct FrtToken {
     char text[FRT_MAX_WORD_SIZE];
     int len;
     off_t start;
@@ -37,8 +36,7 @@ extern int frt_tk_cmp(FrtToken *tk1, FrtToken *tk2);
 
 
 typedef struct FrtTokenStream FrtTokenStream;
-struct FrtTokenStream
-{
+struct FrtTokenStream {
     char            *t;             /* ptr used to scan text */
     char            *text;
     int             length;
@@ -54,40 +52,28 @@ struct FrtTokenStream
 extern FrtTokenStream *frt_ts_new_i(size_t size);
 extern FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size);
 
-typedef struct FrtCachedTokenStream
-{
+typedef struct FrtCachedTokenStream {
     FrtTokenStream super;
     FrtToken       token;
 } FrtCachedTokenStream;
 
-typedef struct FrtMultiByteTokenStream
-{
+typedef struct FrtMultiByteTokenStream {
     FrtCachedTokenStream super;
-    mbstate_t            state;
 } FrtMultiByteTokenStream;
 
-typedef enum
-{
-    FRT_STT_MB,
-    FRT_STT_UTF8
-} FrtStandardTokenizerType;
-
-typedef struct FrtStandardTokenizer
-{
+typedef struct FrtStandardTokenizer {
     FrtCachedTokenStream     super;
 } FrtStandardTokenizer;
 
-typedef struct FrtLegacyStandardTokenizer
-{
+typedef struct FrtLegacyStandardTokenizer {
     FrtCachedTokenStream super;
     bool        (*advance_to_start)(FrtTokenStream *ts);
-    bool        (*is_tok_char)(char *c);
-    int         (*get_alpha)(FrtTokenStream *ts, char *token);
+    bool        (*is_tok_cp)(FrtTokenStream *ts, int cp);
+    int         (*get_alnum)(FrtTokenStream *ts, char *token);
     int         (*get_apostrophe)(FrtTokenStream *ts, char *input);
 } FrtLegacyStandardTokenizer;
 
-typedef struct FrtTokenFilter
-{
+typedef struct FrtTokenFilter {
     FrtTokenStream super;
     FrtTokenStream *sub_ts;
 } FrtTokenFilter;
@@ -96,20 +82,17 @@ extern FrtTokenStream *frt_filter_clone_size(FrtTokenStream *ts, size_t size);
 #define tf_new(type, sub) frt_tf_new_i(sizeof(type), sub)
 extern FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts);
 
-typedef struct FrtStopFilter
-{
+typedef struct FrtStopFilter {
     FrtTokenFilter super;
     FrtHash  *words;
 } FrtStopFilter;
 
-typedef struct FrtMappingFilter
-{
+typedef struct FrtMappingFilter {
     FrtTokenFilter  super;
     FrtMultiMapper *mapper;
 } FrtMappingFilter;
 
-typedef struct FrtHyphenFilter
-{
+typedef struct FrtHyphenFilter {
     FrtTokenFilter super;
     char text[FRT_MAX_WORD_SIZE];
     int start;
@@ -118,8 +101,7 @@ typedef struct FrtHyphenFilter
     FrtToken *tk;
 } FrtHyphenFilter;
 
-typedef struct FrtStemFilter
-{
+typedef struct FrtStemFilter {
     FrtTokenFilter        super;
     struct sb_stemmer  *stemmer;
     char               *algorithm;

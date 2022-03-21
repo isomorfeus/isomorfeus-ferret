@@ -17,6 +17,9 @@ extern OnigCodePoint cp_slash;
 extern OnigCodePoint cp_underscore;
 extern OnigCodePoint cp_dash;
 extern OnigCodePoint cp_hyphen;
+extern OnigCodePoint cp_at;
+extern OnigCodePoint cp_ampersand;
+extern OnigCodePoint cp_colon;
 
 /****************************************************************************
  *
@@ -161,7 +164,6 @@ static FrtTokenStream *cts_new()
 
 static FrtTokenStream *mb_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
 {
-    FRT_ZEROSET(&(MBTS(ts)->state), mbstate_t);
     ts_reset(ts, text, encoding);
     return ts;
 }
@@ -358,7 +360,7 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
 {
     int cp_len = 0;
     OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
-    OnigCodePoint cp, cpl;
+    OnigCodePoint cp;
     rb_encoding *enc = ts->encoding;
     char buf[FRT_MAX_WORD_SIZE + 1];
     int len = 0;
@@ -383,7 +385,7 @@ static FrtToken *mb_lt_next_lc(FrtTokenStream *ts)
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     } while (cp_len > 0 && rb_enc_isalpha(cp, enc));
 
-    len = enc->case_map(&fold_type, &begin, t, buf, buf_end, enc);
+    len = enc->case_map(&fold_type, (const OnigUChar **)&begin, (OnigUChar *)t, (OnigUChar *)buf, (OnigUChar *)buf_end, enc);
     *(buf + len) = '\0';
     ts->t = t;
     return frt_tk_set(&(CTS(ts)->token), buf, len, (off_t)(start - ts->text), (off_t)(t - ts->text), 1, enc);
@@ -415,7 +417,6 @@ FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase)
 static FrtToken *std_next(FrtTokenStream *ts)
 {
     rb_encoding *enc = ts->encoding;
-    FrtStandardTokenizer *std_tz = STDTS(ts);
     const char *start = NULL;
     const char *end = NULL;
     int len = 0;
@@ -441,15 +442,15 @@ static FrtToken *std_next(FrtTokenStream *ts)
             return NULL;
         size_t dlen = slen * rb_enc_mbmaxlen(enc);
 
-        unsigned char *dp = FRT_ALLOC_N(unsigned char, dlen);
-        unsigned char *dstart = dp;
+        unsigned char *dstart = FRT_ALLOC_N(unsigned char, dlen);
+        unsigned char *dp = dstart;
         rb_econv_t *ec = rb_econv_open(rb_enc_name(enc), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
         assert(ec != NULL);
-        rb_econv_convert(ec, &sp, sp + slen, &dp, dp + dlen, 0);
+        rb_econv_convert(ec, (const unsigned char **)&sp, (const unsigned char *)(sp + slen), &dp, dp + dlen, 0);
         rb_econv_close(ec);
 
         // scan for token
-        frt_std_scan_utf8(dstart, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
+        frt_std_scan_utf8((const char *)dstart, tk->text, FRT_MAX_WORD_SIZE - 1, &start, &end, &len);
 
         if (len == 0) {
             free(dstart);
@@ -526,84 +527,58 @@ FrtTokenStream *frt_mb_standard_tokenizer_new()
  * LegacyStandardTokenizer
  */
 
-static int mb_legacy_std_get_alpha(FrtTokenStream *ts, char *token)
+static int mb_legacy_std_get_alnum(FrtTokenStream *ts, char *token)
 {
-    int i;
     int cp_len = 0;
     OnigCodePoint cp;
     rb_encoding *enc = ts->encoding;
     char *end = ts->text + ts->length;
     char *t = ts->t;
+    char *tt = ts->t;
 
     if (t == end) { return 0; }
     cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     while (cp_len > 0 && rb_enc_isalnum(cp, enc)) {
         t += cp_len;
+        if ((t - ts->t + cp_len) < FRT_MAX_WORD_SIZE)
+            tt += cp_len;
         if (t == end) { break; }
         cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    i = (int)(t - ts->t);
-    if (i > FRT_MAX_WORD_SIZE) {
-        i = FRT_MAX_WORD_SIZE - 1;
-    }
-    memcpy(token, ts->t, i);
-    return i;
+    memcpy(token, ts->t, tt - ts->t);
+    token[tt - ts->t] = '\0';
+
+    return t - ts->t;
 }
 
 static int cp_isnumpunc(OnigCodePoint cp) {
-    return (cp == cp_dot || cp == cp_comma || cp == cp_backslash
-            || cp == cp_slash || cp == cp_underscore || cp == cp_dash);
+    return (cp == cp_dot || cp == cp_comma || cp == cp_backslash || cp == cp_slash || cp == cp_underscore || cp == cp_dash);
 }
 
-static int isnumpunc(char c)
-{
-    return (c == '.' || c == ',' || c == '\\' || c == '/' || c == '_'
-            || c == '-');
+static int cp_isurlpunc(OnigCodePoint cp) {
+    return (cp == cp_dot || cp == cp_slash || cp == cp_dash || cp == cp_underscore);
 }
 
-static int w_isnumpunc(wchar_t c)
-{
-    return (c == L'.' || c == L',' || c == L'\\' || c == L'/' || c == L'_'
-            || c == L'-');
+static int cp_enc_isurlc(OnigCodePoint cp, rb_encoding *enc) {
+    return (cp_isurlpunc(cp) || rb_enc_isalnum(cp, enc));
 }
 
-static int isurlpunc(char c)
-{
-    return (c == '.' || c == '/' || c == '-' || c == '_');
+static int cp_isurlxatpunc(OnigCodePoint cp) {
+    return (cp == cp_dot || cp == cp_slash || cp == cp_dash || cp == cp_underscore || cp == cp_at);
 }
 
-static int isurlc(char c)
-{
-    return (c == '.' || c == '/' || c == '-' || c == '_' || isalnum(c));
+static int cp_enc_isurlxatc(OnigCodePoint cp, rb_encoding *enc){
+    return (cp_isurlxatpunc(cp) || rb_enc_isalnum(cp, enc));
 }
 
-static int isurlxatpunc(char c)
-{
-    return (c == '.' || c == '/' || c == '-' || c == '_' || c == '@');
-}
-
-static int isurlxatc(char c)
-{
-    return (c == '.' || c == '/' || c == '-' || c == '_' || c == '@'
-            || isalnum(c));
-}
-
-static bool mb_legacy_std_is_tok_char(char *t)
-{
-    wchar_t c;
-    mbstate_t state; FRT_ZEROSET(&state, mbstate_t);
-
-    if (((int)mbrtowc(&c, t, MB_CUR_MAX, &state)) < 0) {
-        /* error which we can handle next time round. For now just return
-         * false so that we can return a token */
-        return false;
-    }
-    if (iswspace(c)) {
+static bool mb_legacy_std_is_tok_cp(FrtTokenStream *ts, int cp) {
+    rb_encoding *enc = ts->encoding;
+    if (rb_enc_isspace(cp, enc)) {
         return false;           /* most common so check first. */
     }
-    if (iswalnum(c) || w_isnumpunc(c) || c == L'&' || c == L'@' || c == L'\''
-        || c == L':') {
+    if (rb_enc_isalnum(cp, enc) || cp_isnumpunc(cp) ||
+        cp == cp_ampersand || cp == cp_at || cp == cp_apostrophe || cp == cp_colon) {
         return true;
     }
     return false;
@@ -614,38 +589,47 @@ static bool mb_legacy_std_is_tok_char(char *t)
  * (alnum) = [a-zA-Z0-9]
  * (punc) = [_\/.,-]
  */
-static int legacy_std_get_number(char *input)
+static int mb_legacy_std_get_number(FrtTokenStream *ts, char *start, char *end)
 {
-    int i = 0;
-    int count = 0;
+    rb_encoding *enc = ts->encoding;
+    OnigCodePoint cp = 0;
+    OnigCodePoint cp_1 = 0;
+    char *t = start;
+    int cp_len = 0;
+    int cp_1_len = 0;
     int last_seen_digit = 2;
     int seen_digit = false;
 
-    while (last_seen_digit >= 0) {
-        while ((input[i] != '\0') && isalnum(input[i])) {
-            if ((last_seen_digit < 2) && isdigit(input[i])) {
+    if (start >= end)
+        return 0;
+    cp = rb_enc_codepoint_len(start, end, &cp_len, enc);
+    while (cp > 0 && last_seen_digit >= 0) {
+        while ((cp > 0) && rb_enc_isalnum(cp, enc)) {
+            if ((last_seen_digit < 2) && rb_enc_isdigit(cp, enc)) {
                 last_seen_digit = 2;
             }
-            if ((seen_digit == false) && isdigit(input[i])) {
+            if ((seen_digit == false) && rb_enc_isdigit(cp, enc)) {
                 seen_digit = true;
             }
-            i++;
+            t += cp_len;
+            if (t >= end)
+                break;
+            cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
         }
         last_seen_digit--;
-        if (!isnumpunc(input[i]) || !isalnum(input[i + 1])) {
-
+        cp_1 = 0;
+        if ((t + cp_len) < end)
+            cp_1 = rb_enc_codepoint_len(t + cp_len, end, &cp_1_len, enc);
+        if (!cp_isnumpunc(cp) || !rb_enc_isalnum(cp_1, enc)) {
             if (last_seen_digit >= 0) {
-                count = i;
+                t += cp_len ;
             }
             break;
         }
-        count = i;
-        i++;
     }
     if (seen_digit) {
-        return count;
-    }
-    else {
+        return t - start;
+    } else {
         return 0;
     }
 }
@@ -669,45 +653,64 @@ static int mb_legacy_std_get_apostrophe(FrtTokenStream *ts, char *input)
     return (int)(t - input);
 }
 
-static char *std_get_url(char *input, char *token, int i, int *len)
+static char *mb_std_get_url(FrtTokenStream *ts, char *start, char *end, char *token, int *len, int bufred)
 {
-    char *next = NULL;
-    while (isurlc(input[i])) {
-        if (isurlpunc(input[i]) && isurlpunc(input[i - 1])) {
+    rb_encoding *enc = ts->encoding;
+    OnigCodePoint cp;
+    OnigCodePoint prev_cp = 0;
+    int cp_len = 0;
+    int prev_cp_len = 0;
+    char *t = start;
+    char *tt = start;
+
+    if (start >= end)
+        return NULL;
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp > 0 && cp_enc_isurlc(cp, enc)) {
+        if (cp_isurlpunc(cp) && cp_isurlpunc(prev_cp)) {
             break; /* can't have two puncs in a row */
         }
-        if (i < FRT_MAX_WORD_SIZE) {
-            token[i] = input[i];
-        }
-        i++;
-    }
-    next = input + i;
-
-    /* We don't want to index past the end of the token capacity) */
-    if (i >= FRT_MAX_WORD_SIZE) {
-        i = FRT_MAX_WORD_SIZE - 1;
+        prev_cp = cp;
+        prev_cp_len = cp_len;
+        t += cp_len;
+        if (((t + cp_len) - start) <= (FRT_MAX_WORD_SIZE - bufred))
+            tt += cp_len;
+        if (t >= end)
+            break;
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    /* strip trailing puncs */
-    while (isurlpunc(input[i - 1])) {
-        i--;
+    /* strip trailing punc */
+    if (t == tt && cp_isurlpunc(prev_cp)) {
+        tt -= prev_cp_len;
     }
-    *len = i;
-    token[i] = '\0';
 
-    return next;
+    *len = (tt - start) + bufred;
+    memcpy(token, start, tt - start);
+    token[tt - start] = '\0';
+
+    return t;
 }
 
-/* Company names can contain '@' and '&' like AT&T and Excite@Home. Let's
-*/
-static int legacy_std_get_company_name(char *input)
+/* Company names can contain '@' and '&' like AT&T and Excite@Home. */
+static int mb_legacy_std_get_company_name(FrtTokenStream *ts, char *start, char* end)
 {
-    int i = 0;
-    while (isalpha(input[i]) || input[i] == '@' || input[i] == '&') {
-        i++;
+    rb_encoding *enc = ts->encoding;
+    char * t = start;
+    OnigCodePoint cp;
+    int cp_len = 0;
+
+    if (t >= end)
+        return 0;
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp > 0 && (rb_enc_isalpha(cp, enc) || cp == cp_at || cp == cp_ampersand)) {
+        t += cp_len;
+        if (t >= end)
+            break;
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
 
-    return i;
+    return t - start;
 }
 
 static bool mb_legacy_std_advance_to_start(FrtTokenStream *ts)
@@ -741,8 +744,16 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     char *s;
     char *t;
     char *start = NULL;
+    char *end;
     char *num_end = NULL;
     char token[FRT_MAX_WORD_SIZE + 1];
+    OnigCodePoint cp = 0;
+    OnigCodePoint cp_1 = 0;
+    OnigCodePoint cp_2 = 0;
+    OnigCodePoint prev_cp = 0;
+    int cp_len = 0;
+    int cp_1_len = 0;
+    int cp_2_len = 0;
     int token_i = 0;
     int len;
     bool is_acronym;
@@ -753,17 +764,23 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         return NULL;
     }
 
+    end = ts->text + ts->length;
     start = t = ts->t;
-    token_i = std_tz->get_alpha(ts, token);
+    token_i = std_tz->get_alnum(ts, token);
     t += token_i;
 
-    if (!std_tz->is_tok_char(t)) {
+    if (t >= end && token_i > 0) {
+        ts->t += token_i;
+        return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
+    }
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    if (!std_tz->is_tok_cp(ts, cp)) {
         /* very common case, ie a plain word, so check and return */
-        ts->t = t;
+        ts->t = t + cp_len;
         return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
     }
 
-    if (*t == '\'') {       /* apostrophe case. */
+    if (cp == cp_apostrophe) {       /* apostrophe case. */
         t += std_tz->get_apostrophe(ts, t);
         ts->t = t;
         len = (int)(t - start);
@@ -785,41 +802,65 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         return &(CTS(ts)->token);
     }
 
-    if (*t == '&') {        /* apostrophe case. */
-        t += legacy_std_get_company_name(t);
+    if (t >= end)
+        return NULL;
+
+    cp = rb_enc_codepoint_len(t, ts->text + ts->length, &cp_len, enc);
+    if (cp == cp_ampersand) {        /* ampersand case. */
+        t += mb_legacy_std_get_company_name(ts, t, end);
         ts->t = t;
         return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
     }
 
-    if ((isdigit(*start) || isnumpunc(*start))       /* possibly a number */
-        && ((len = legacy_std_get_number(start)) > 0)) {
+    if (t >= end)
+        return NULL;
+
+    cp = rb_enc_codepoint_len(start, end, &cp_len, enc);
+    if ((rb_enc_isdigit(cp, enc) || cp_isnumpunc(cp))
+        && ((len = mb_legacy_std_get_number(ts, start, end)) > 0)) { /* possibly a number */
         num_end = start + len;
-        if (!std_tz->is_tok_char(num_end)) { /* won't find a longer token */
+        cp = 0;
+        if (num_end < end)
+            cp = rb_enc_codepoint_len(num_end, end, &cp_len, enc);
+        if (cp > 0 && !std_tz->is_tok_cp(ts, cp)) { /* won't find a longer token */
             ts->t = num_end;
             return frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1, enc);
         }
         /* else there may be a longer token so check */
     }
 
-    if (t[0] == ':' && t[1] == '/' && t[2] == '/') {
+    if (t >= end)
+        return NULL;
+
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    if ((t + cp_len) < end)
+        cp_1 = rb_enc_codepoint_len(t + cp_len, end, &cp_1_len, enc);
+    if ((t + cp_len + cp_1_len) < end)
+        cp_2 = rb_enc_codepoint_len(t + cp_len + cp_1_len, end, &cp_2_len, enc);
+    if (cp == cp_colon && cp_1 == cp_slash && cp_2 == cp_slash) {
         /* check for a known url start */
         token[token_i] = '\0';
-        t += 3;
-        token_i += 3;
-        while (*t == '/') {
-            t++;
+        t += cp_len + cp_1_len + cp_2_len;
+        token_i += cp_len + cp_1_len + cp_2_len;
+        cp = 0;
+        if (t < end)
+            cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+        while (cp > 0 && cp == cp_slash) {
+            t += cp_len;
+            if (t >= end)
+                break;
+            cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
         }
-        if (isalpha(*t) &&
-            (memcmp(token, "ftp", 3) == 0 ||
-             memcmp(token, "http", 4) == 0 ||
-             memcmp(token, "https", 5) == 0 ||
-             memcmp(token, "file", 4) == 0)) {
-            ts->t = std_get_url(t, token, 0, &len); /* dispose of first part of the URL */
-        }
-        else {              /* still treat as url but keep the first part */
+        if (rb_enc_isalpha(cp, enc) &&
+               (memcmp(token, "ftp", 3) == 0 ||
+                memcmp(token, "http", 4) == 0 ||
+                memcmp(token, "https", 5) == 0 ||
+                memcmp(token, "file", 4) == 0)) {
+            ts->t = mb_std_get_url(ts, t, end, token, &len, 0); /* dispose of first part of the URL */
+        } else {              /* still treat as url but keep the first part */
             token_i = (int)(t - start);
             memcpy(token, start, token_i * sizeof(char));
-            ts->t = std_get_url(start, token, token_i, &len); /* keep start */
+            ts->t = mb_std_get_url(ts, t, end, token + token_i, &len, token_i); /* keep start */
         }
         return frt_tk_set(&(CTS(ts)->token), token, len,
                       (off_t)(start - ts->text),
@@ -829,14 +870,18 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     /* now see how long a url we can find. */
     is_acronym = true;
     seen_at_symbol = false;
-    while (isurlxatc(*t)) {
-        if (is_acronym && !isalpha(*t) && (*t != '.')) {
+
+    if (t >= end)
+        return NULL;
+    cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
+    while (cp_enc_isurlxatc(cp, enc)) {
+        if (is_acronym && !rb_enc_isalpha(cp, enc) && (cp != cp_dot)) {
             is_acronym = false;
         }
-        if (isurlxatpunc(*t) && isurlxatpunc(t[-1])) {
+        if (cp_isurlxatpunc(cp) && cp_isurlxatpunc(prev_cp)) {
             break; /* can't have two punctuation characters in a row */
         }
-        if (*t == '@') {
+        if (cp == cp_at) {
             if (seen_at_symbol) {
                 break; /* we can only have one @ symbol */
             }
@@ -844,10 +889,14 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
                 seen_at_symbol = true;
             }
         }
-        t++;
+        prev_cp = cp;
+        t += cp_len;
+        if (t >= end)
+            break;
+        cp = rb_enc_codepoint_len(t, end, &cp_len, enc);
     }
-    while (isurlxatpunc(t[-1]) && t > ts->t) {
-        t--;                /* strip trailing punctuation */
+    if (cp_isurlxatpunc(prev_cp) && t > ts->t) {
+        t -= cp_len;                /* strip trailing punctuation */
     }
 
     if (t < ts->t || (num_end != NULL && num_end < ts->t)) {
@@ -857,27 +906,31 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
         ts->t = t;
 
         if (is_acronym) {   /* check it is one letter followed by one '.' */
-            for (s = start; s < t - 1; s++) {
-                if (isalpha(*s) && (s[1] != '.'))
+            cp_len = 0;
+            for (s = start; s < t - 1; s += cp_len) {
+                cp = rb_enc_codepoint_len(s, end, &cp_len, enc);
+                cp_1 = rb_enc_codepoint_len(s + cp_len, end, &cp_1_len, enc);
+                if (rb_enc_isalpha(cp, enc) && (cp_1 != cp_dot))
                     is_acronym = false;
             }
         }
         if (is_acronym) {   /* strip '.'s */
-            for (s = start + token_i; s < t; s++) {
-                if (*s != '.') {
-                    token[token_i] = *s;
-                    token_i++;
+            cp_len = 0;
+            for (s = start + token_i; s < t; s += cp_len) {
+                cp = rb_enc_codepoint_len(s, end, &cp_len, enc);
+                if (cp > 0 && cp != cp_dot) {
+                    memcpy(token + token_i, s, cp_len);
+                    token_i += cp_len;
                 }
             }
+            token[token_i] = '\0';
             frt_tk_set(&(CTS(ts)->token), token, token_i,
                    (off_t)(start - ts->text),
                    (off_t)(t - ts->text), 1, enc);
-        }
-        else { /* just return the url as is */
+        } else { /* just return the url as is */
             frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
         }
-    }
-    else {                  /* return the number */
+    } else {                  /* return the number */
         ts->t = num_end;
         frt_tk_set_ts(&(CTS(ts)->token), start, num_end, ts->text, 1, enc);
     }
@@ -904,8 +957,8 @@ FrtTokenStream *frt_mb_legacy_standard_tokenizer_new()
     FrtTokenStream *ts = legacy_std_ts_new();
 
     LSTDTS(ts)->advance_to_start = &mb_legacy_std_advance_to_start;
-    LSTDTS(ts)->get_alpha        = &mb_legacy_std_get_alpha;
-    LSTDTS(ts)->is_tok_char      = &mb_legacy_std_is_tok_char;
+    LSTDTS(ts)->get_alnum        = &mb_legacy_std_get_alnum;
+    LSTDTS(ts)->is_tok_cp        = &mb_legacy_std_is_tok_cp;
     LSTDTS(ts)->get_apostrophe   = &mb_legacy_std_get_apostrophe;
 
     return ts;
@@ -1211,9 +1264,9 @@ static FrtToken *mb_lcf_next(FrtTokenStream *ts)
     FrtToken *tk = TkFilt(ts)->sub_ts->next(TkFilt(ts)->sub_ts);
     if (tk == NULL) { return tk; }
 
-    char *t = tk->text;
+    const OnigUChar *t = (const OnigUChar *)tk->text;
 
-    len = enc->case_map(&fold_type, &t, tk->text + tk->len, buf, buf_end, enc);
+    len = enc->case_map(&fold_type, &t, (const OnigUChar *)(tk->text + tk->len), (OnigUChar *)buf, (OnigUChar *)buf_end, enc);
     tk->len = len;
     memcpy(tk->text, buf, len);
     tk->text[len] = '\0';
