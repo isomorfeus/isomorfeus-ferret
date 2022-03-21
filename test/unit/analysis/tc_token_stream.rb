@@ -273,7 +273,7 @@ class StandardTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('e', 0, 1, 0), t.next)
     assert_equal(Token.new('mail', 2, 6, 1), t.next)
     assert_equal(Token.new('123-1235-asd-1234', 7, 24), t.next)
-    assert_equal(Token.new('www.davebalmain.com/trac-site', 25, 61), t.next)
+    assert_equal(Token.new('www.davebalmain.com/trac-site', 25, 62), t.next)
     assert(! t.next)
   end
 end
