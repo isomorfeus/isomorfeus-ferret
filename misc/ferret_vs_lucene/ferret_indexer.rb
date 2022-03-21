@@ -8,9 +8,18 @@ include Isomorfeus::Ferret
 include Isomorfeus::Ferret::Index
 
 def init_writer(create)
+  a = case @analyzer
+      when 'l' then Analysis::LetterAnalyzer.new()
+      when 'p' then Analysis::PerFieldAnalyzer.new()
+      when 's' then Analysis::StandardAnalyzer.new()
+      when 'w' then Analysis::WhiteSpaceAnalyzer.new()
+      else
+        Analysis::WhiteSpaceAnalyzer.new()
+      end
+  puts a.class.name
   options = {
     :path => "ferret_index",
-    :analyzer => Analysis::WhiteSpaceAnalyzer.new(),
+    :analyzer => a,
     :merge_factor => 100,
     :use_compound_file => true,
     :max_buffer_memory => 0x10000000,
@@ -67,6 +76,7 @@ end
 @inc = 0
 @comp = false
 @store = false
+@analyzer = 'w'
 
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: ferret_indexer.rb [options]"
@@ -80,6 +90,7 @@ opts = OptionParser.new do |opts|
   opts.on("-i", "--inc VAL", Integer) {|v| @reps = v}
   opts.on("-c", "--comp") { @comp = true }
   opts.on("-s", "--store") { @store = true }
+  opts.on("-a", "--analyzer VAL", String) {|v| @analyzer = v.downcase[0] }
 end
 
 opts.parse(ARGV)
