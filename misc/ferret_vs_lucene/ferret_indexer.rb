@@ -10,7 +10,6 @@ include Isomorfeus::Ferret::Index
 def init_writer(create)
   a = case @analyzer
       when 'l' then Analysis::LetterAnalyzer.new()
-      when 'p' then Analysis::PerFieldAnalyzer.new()
       when 's' then Analysis::StandardAnalyzer.new()
       when 'w' then Analysis::WhiteSpaceAnalyzer.new()
       else

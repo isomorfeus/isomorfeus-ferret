@@ -44,12 +44,6 @@ task :ferret_bench => :compile do
   system('bundle exec ruby ferret_search.rb')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
-  puts "title stored per field:"
-  FileUtils.rm_rf('ferret_index')
-  system('bundle exec ruby ferret_indexer.rb -r 6 -a p')
-  system('bundle exec ruby ferret_search.rb')
-  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
-
   puts "title stored standard:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -a s')
