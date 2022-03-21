@@ -861,7 +861,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
-    return get_wrapped_ts(self, rstr, frt_mb_standard_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_mb_legacy_standard_tokenizer_new());
 }
 
 /****************************************************************************
@@ -1266,10 +1266,10 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        a = frt_mb_standard_analyzer_new_with_words((const char **)stop_words, lower);
+        a = frt_mb_legacy_standard_analyzer_new_with_words((const char **)stop_words, lower);
         free(stop_words);
     } else {
-        a = frt_mb_standard_analyzer_new(lower);
+        a = frt_mb_legacy_standard_analyzer_new(lower);
     }
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
