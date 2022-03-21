@@ -85,7 +85,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <wctype.h>
 #include <assert.h>
 #include "frt_global.h"
 #include "frt_except.h"
@@ -136,7 +135,7 @@ static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
 static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding);
 static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop, rb_encoding *encoding);
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding);
 
 static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
@@ -148,7 +147,7 @@ static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper);
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding);
 
 static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
@@ -248,7 +247,7 @@ term_q    : QWRD                      { FLDS($$, get_term_q(qp, field, $1, encod
           | QWRD '~' QWRD %prec HIGH  { FLDS($$, get_fuzzy_q(qp, field, $1, $3, encoding)); Y}
           | QWRD '~' %prec LOW        { FLDS($$, get_fuzzy_q(qp, field, $1, NULL, encoding)); Y}
           ;
-wild_q    : WILD_STR                  { FLDS($$, get_wild_q(qp, field, $1)); Y}
+wild_q    : WILD_STR                  { FLDS($$, get_wild_q(qp, field, $1, encoding)); Y}
           ;
 field_q   : field ':' q { qp_pop_fields(qp); }
                                       { $$ = $3; }
@@ -269,18 +268,18 @@ ph_words  : QWRD              { $$ = ph_first_word($1); }
           | ph_words '<' '>'  { $$ = ph_add_word($1, NULL); }
           | ph_words '|' QWRD { $$ = ph_add_multi_word($1, $3);  }
           ;
-range_q   : '[' QWRD QWRD ']' { FLDS($$, get_r_q(qp, field, $2,  $3,  true,  true)); Y}
-          | '[' QWRD QWRD '}' { FLDS($$, get_r_q(qp, field, $2,  $3,  true,  false)); Y}
-          | '{' QWRD QWRD ']' { FLDS($$, get_r_q(qp, field, $2,  $3,  false, true)); Y}
-          | '{' QWRD QWRD '}' { FLDS($$, get_r_q(qp, field, $2,  $3,  false, false)); Y}
-          | '<' QWRD '}'      { FLDS($$, get_r_q(qp, field, NULL,$2,  false, false)); Y}
-          | '<' QWRD ']'      { FLDS($$, get_r_q(qp, field, NULL,$2,  false, true)); Y}
-          | '[' QWRD '>'      { FLDS($$, get_r_q(qp, field, $2,  NULL,true,  false)); Y}
-          | '{' QWRD '>'      { FLDS($$, get_r_q(qp, field, $2,  NULL,false, false)); Y}
-          | '<' QWRD          { FLDS($$, get_r_q(qp, field, NULL,$2,  false, false)); Y}
-          | '<' '=' QWRD      { FLDS($$, get_r_q(qp, field, NULL,$3,  false, true)); Y}
-          | '>' '='  QWRD     { FLDS($$, get_r_q(qp, field, $3,  NULL,true,  false)); Y}
-          | '>' QWRD          { FLDS($$, get_r_q(qp, field, $2,  NULL,false, false)); Y}
+range_q   : '[' QWRD QWRD ']' { FLDS($$, get_r_q(qp, field, $2,  $3,  true,  true,  encoding)); Y}
+          | '[' QWRD QWRD '}' { FLDS($$, get_r_q(qp, field, $2,  $3,  true,  false, encoding)); Y}
+          | '{' QWRD QWRD ']' { FLDS($$, get_r_q(qp, field, $2,  $3,  false, true,  encoding)); Y}
+          | '{' QWRD QWRD '}' { FLDS($$, get_r_q(qp, field, $2,  $3,  false, false, encoding)); Y}
+          | '<' QWRD '}'      { FLDS($$, get_r_q(qp, field, NULL,$2,  false, false, encoding)); Y}
+          | '<' QWRD ']'      { FLDS($$, get_r_q(qp, field, NULL,$2,  false, true,  encoding)); Y}
+          | '[' QWRD '>'      { FLDS($$, get_r_q(qp, field, $2,  NULL,true,  false, encoding)); Y}
+          | '{' QWRD '>'      { FLDS($$, get_r_q(qp, field, $2,  NULL,false, false, encoding)); Y}
+          | '<' QWRD          { FLDS($$, get_r_q(qp, field, NULL,$2,  false, false, encoding)); Y}
+          | '<' '=' QWRD      { FLDS($$, get_r_q(qp, field, NULL,$3,  false, true,  encoding)); Y}
+          | '>' '='  QWRD     { FLDS($$, get_r_q(qp, field, $3,  NULL,true,  false, encoding)); Y}
+          | '>' QWRD          { FLDS($$, get_r_q(qp, field, $2,  NULL,false, false, encoding)); Y}
           ;
 %%
 
@@ -708,31 +707,20 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *
 }
 
 /**
- * Downcase a string taking locale into account and works for multibyte
- * character sets.
+ * Downcase a string taking encoding into account and works for multibyte character sets.
  */
-static char *lower_str(char *str)
-{
-    const int max_len = (int)strlen(str) + 1;
-    int cnt;
-    wchar_t *wstr = FRT_ALLOC_N(wchar_t, max_len);
-    if ((cnt = mbstowcs(wstr, str, max_len)) > 0) {
-        wchar_t *w = wstr;
-        while (*w) {
-            *w = towlower(*w);
-            w++;
-        }
-        wcstombs(str, wstr, max_len);
-    }
-    else {
-        char *s = str;
-        while (*s) {
-            *s = tolower(*s);
-            s++;
-        }
-    }
-    free(wstr);
-    str[max_len] = '\0';
+static char *lower_str(char *str, int len, rb_encoding *enc) {
+    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
+    const int max_len = len + 20; // CASE_MAPPING_ADDITIONAL_LENGTH
+    char *buf = FRT_ALLOC_N(char, max_len);
+    char *buf_end = buf + max_len + 19;
+    const OnigUChar *t = (const OnigUChar *)str;
+
+    len = enc->case_map(&fold_type, &t, (const OnigUChar *)(str + len), (OnigUChar *)buf, (OnigUChar *)buf_end, enc);
+    memcpy(str, buf, len);
+    str[len] = '\0';
+    free(buf);
+
     return str;
 }
 
@@ -745,8 +733,7 @@ static char *lower_str(char *str)
  * optimized to a MatchAllQuery if the pattern is '*' or a PrefixQuery if the
  * only wild char (*, ?) in the pattern is a '*' at the end of the pattern.
  */
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
-{
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding) {
     FrtQuery *q;
     bool is_prefix = false;
     char *p;
@@ -754,7 +741,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
 
     if (qp->wild_lower
         && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
-        lower_str(pattern);
+        lower_str(pattern, len, encoding);
     }
 
     /* simplify the wildcard query to a prefix query if possible. Basically a
@@ -1042,17 +1029,14 @@ static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str, rb
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper)
-{
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding) {
     FrtQuery *rq;
     if (qp->wild_lower
         && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
-        if (from) {
-            lower_str(from);
-        }
-        if (to) {
-            lower_str(to);
-        }
+        if (from)
+            lower_str(from, strlen(from), encoding);
+        if (to)
+            lower_str(to, strlen(to), encoding);
     }
 /*
  * terms don't get tokenized as it doesn't really make sense to do so for

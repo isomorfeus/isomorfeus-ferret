@@ -155,7 +155,6 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <wctype.h>
 #include <assert.h>
 #include "frt_global.h"
 #include "frt_except.h"
@@ -181,7 +180,7 @@ float frt_qp_default_fuzzy_min_sim = 0.5;
 int frt_qp_default_fuzzy_pre_len = 0;
 
 
-#line 185 "frt_q_parser.c"
+#line 184 "frt_q_parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -238,7 +237,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 114 "frt_q_parser.y"
+#line 113 "frt_q_parser.y"
 
     FrtQuery *query;
     FrtBooleanClause *bcls;
@@ -247,7 +246,7 @@ union YYSTYPE
     Phrase *phrase;
     char *str;
 
-#line 251 "frt_q_parser.c"
+#line 250 "frt_q_parser.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -313,7 +312,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 122 "frt_q_parser.y"
+#line 121 "frt_q_parser.y"
 
 static int yylex(YYSTYPE *lvalp, FrtQParser *qp);
 static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg);
@@ -331,7 +330,7 @@ static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
 static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding);
 static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop, rb_encoding *encoding);
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern);
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding);
 
 static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
@@ -343,7 +342,7 @@ static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper);
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding);
 
 static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
@@ -396,7 +395,7 @@ static void qp_pop_fields(FrtQParser *self);
   FRT_XENDTRY\
   if (qp->destruct) Y;
 
-#line 400 "frt_q_parser.c"
+#line 399 "frt_q_parser.c"
 
 
 #ifdef short
@@ -779,12 +778,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   224,   224,   225,   227,   228,   229,   230,   232,   233,
-     234,   236,   237,   239,   240,   241,   242,   243,   244,   245,
-     247,   248,   249,   251,   253,   253,   255,   255,   255,   258,
-     259,   261,   262,   263,   264,   266,   267,   268,   269,   270,
-     272,   273,   274,   275,   276,   277,   278,   279,   280,   281,
-     282,   283
+       0,   223,   223,   224,   226,   227,   228,   229,   231,   232,
+     233,   235,   236,   238,   239,   240,   241,   242,   243,   244,
+     246,   247,   248,   250,   252,   252,   254,   254,   254,   257,
+     258,   260,   261,   262,   263,   265,   266,   267,   268,   269,
+     271,   272,   273,   274,   275,   276,   277,   278,   279,   280,
+     281,   282
 };
 #endif
 
@@ -1146,69 +1145,69 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL_bool_q: /* bool_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1152 "frt_q_parser.c"
+#line 1151 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_bool_clss: /* bool_clss  */
-#line 221 "frt_q_parser.y"
+#line 220 "frt_q_parser.y"
             { if (((*yyvaluep).bclss) && qp->destruct) bca_destroy(((*yyvaluep).bclss)); }
-#line 1158 "frt_q_parser.c"
+#line 1157 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_bool_cls: /* bool_cls  */
-#line 220 "frt_q_parser.y"
+#line 219 "frt_q_parser.y"
             { if (((*yyvaluep).bcls) && qp->destruct) frt_bc_deref(((*yyvaluep).bcls)); }
-#line 1164 "frt_q_parser.c"
+#line 1163 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_boosted_q: /* boosted_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1170 "frt_q_parser.c"
+#line 1169 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_q: /* q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1176 "frt_q_parser.c"
+#line 1175 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_term_q: /* term_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1182 "frt_q_parser.c"
+#line 1181 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_wild_q: /* wild_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1188 "frt_q_parser.c"
+#line 1187 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_field_q: /* field_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1194 "frt_q_parser.c"
+#line 1193 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_phrase_q: /* phrase_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1200 "frt_q_parser.c"
+#line 1199 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_ph_words: /* ph_words  */
-#line 222 "frt_q_parser.y"
+#line 221 "frt_q_parser.y"
             { if (((*yyvaluep).phrase) && qp->destruct) ph_destroy(((*yyvaluep).phrase)); }
-#line 1206 "frt_q_parser.c"
+#line 1205 "frt_q_parser.c"
         break;
 
     case YYSYMBOL_range_q: /* range_q  */
-#line 219 "frt_q_parser.y"
+#line 218 "frt_q_parser.y"
             { if (((*yyvaluep).query) && qp->destruct) frt_q_deref(((*yyvaluep).query)); }
-#line 1212 "frt_q_parser.c"
+#line 1211 "frt_q_parser.c"
         break;
 
       default:
@@ -1482,271 +1481,271 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* bool_q: %empty  */
-#line 224 "frt_q_parser.y"
+#line 223 "frt_q_parser.y"
                                       {   qp->result = (yyval.query) = NULL; }
-#line 1488 "frt_q_parser.c"
+#line 1487 "frt_q_parser.c"
     break;
 
   case 3: /* bool_q: bool_clss  */
-#line 225 "frt_q_parser.y"
+#line 224 "frt_q_parser.y"
                                       { T qp->result = (yyval.query) = get_bool_q((yyvsp[0].bclss)); E }
-#line 1494 "frt_q_parser.c"
+#line 1493 "frt_q_parser.c"
     break;
 
   case 4: /* bool_clss: bool_cls  */
-#line 227 "frt_q_parser.y"
+#line 226 "frt_q_parser.y"
                                       { T (yyval.bclss) = first_cls((yyvsp[0].bcls)); E }
-#line 1500 "frt_q_parser.c"
+#line 1499 "frt_q_parser.c"
     break;
 
   case 5: /* bool_clss: bool_clss AND bool_cls  */
-#line 228 "frt_q_parser.y"
+#line 227 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_and_cls((yyvsp[-2].bclss), (yyvsp[0].bcls)); E }
-#line 1506 "frt_q_parser.c"
+#line 1505 "frt_q_parser.c"
     break;
 
   case 6: /* bool_clss: bool_clss OR bool_cls  */
-#line 229 "frt_q_parser.y"
+#line 228 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_or_cls((yyvsp[-2].bclss), (yyvsp[0].bcls)); E }
-#line 1512 "frt_q_parser.c"
+#line 1511 "frt_q_parser.c"
     break;
 
   case 7: /* bool_clss: bool_clss bool_cls  */
-#line 230 "frt_q_parser.y"
+#line 229 "frt_q_parser.y"
                                       { T (yyval.bclss) = add_default_cls(qp, (yyvsp[-1].bclss), (yyvsp[0].bcls)); E }
-#line 1518 "frt_q_parser.c"
+#line 1517 "frt_q_parser.c"
     break;
 
   case 8: /* bool_cls: REQ boosted_q  */
-#line 232 "frt_q_parser.y"
+#line 231 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_MUST); E }
-#line 1524 "frt_q_parser.c"
+#line 1523 "frt_q_parser.c"
     break;
 
   case 9: /* bool_cls: NOT boosted_q  */
-#line 233 "frt_q_parser.y"
+#line 232 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_MUST_NOT); E }
-#line 1530 "frt_q_parser.c"
+#line 1529 "frt_q_parser.c"
     break;
 
   case 10: /* bool_cls: boosted_q  */
-#line 234 "frt_q_parser.y"
+#line 233 "frt_q_parser.y"
                                       { T (yyval.bcls) = get_bool_cls((yyvsp[0].query), FRT_BC_SHOULD); E }
-#line 1536 "frt_q_parser.c"
+#line 1535 "frt_q_parser.c"
     break;
 
   case 12: /* boosted_q: q '^' QWRD  */
-#line 237 "frt_q_parser.y"
+#line 236 "frt_q_parser.y"
                                       { T if ((yyvsp[-2].query)) sscanf((yyvsp[0].str),"%f",&((yyvsp[-2].query)->boost));  (yyval.query)=(yyvsp[-2].query); E }
-#line 1542 "frt_q_parser.c"
+#line 1541 "frt_q_parser.c"
     break;
 
   case 14: /* q: '(' ')'  */
-#line 240 "frt_q_parser.y"
+#line 239 "frt_q_parser.y"
                                       { T (yyval.query) = frt_bq_new_max(true, qp->max_clauses); E }
-#line 1548 "frt_q_parser.c"
+#line 1547 "frt_q_parser.c"
     break;
 
   case 15: /* q: '(' bool_clss ')'  */
-#line 241 "frt_q_parser.y"
+#line 240 "frt_q_parser.y"
                                       { T (yyval.query) = get_bool_q((yyvsp[-1].bclss)); E }
-#line 1554 "frt_q_parser.c"
+#line 1553 "frt_q_parser.c"
     break;
 
   case 20: /* term_q: QWRD  */
-#line 247 "frt_q_parser.y"
+#line 246 "frt_q_parser.y"
                                       { FLDS((yyval.query), get_term_q(qp, field, (yyvsp[0].str), encoding)); Y}
-#line 1560 "frt_q_parser.c"
+#line 1559 "frt_q_parser.c"
     break;
 
   case 21: /* term_q: QWRD '~' QWRD  */
-#line 248 "frt_q_parser.y"
+#line 247 "frt_q_parser.y"
                                       { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-2].str), (yyvsp[0].str), encoding)); Y}
-#line 1566 "frt_q_parser.c"
+#line 1565 "frt_q_parser.c"
     break;
 
   case 22: /* term_q: QWRD '~'  */
-#line 249 "frt_q_parser.y"
+#line 248 "frt_q_parser.y"
                                       { FLDS((yyval.query), get_fuzzy_q(qp, field, (yyvsp[-1].str), NULL, encoding)); Y}
-#line 1572 "frt_q_parser.c"
+#line 1571 "frt_q_parser.c"
     break;
 
   case 23: /* wild_q: WILD_STR  */
-#line 251 "frt_q_parser.y"
-                                      { FLDS((yyval.query), get_wild_q(qp, field, (yyvsp[0].str))); Y}
-#line 1578 "frt_q_parser.c"
+#line 250 "frt_q_parser.y"
+                                      { FLDS((yyval.query), get_wild_q(qp, field, (yyvsp[0].str), encoding)); Y}
+#line 1577 "frt_q_parser.c"
     break;
 
   case 24: /* $@1: %empty  */
-#line 253 "frt_q_parser.y"
+#line 252 "frt_q_parser.y"
                         { qp_pop_fields(qp); }
-#line 1584 "frt_q_parser.c"
+#line 1583 "frt_q_parser.c"
     break;
 
   case 25: /* field_q: field ':' q $@1  */
-#line 254 "frt_q_parser.y"
+#line 253 "frt_q_parser.y"
                                       { (yyval.query) = (yyvsp[-1].query); }
-#line 1590 "frt_q_parser.c"
+#line 1589 "frt_q_parser.c"
     break;
 
   case 26: /* $@2: %empty  */
-#line 255 "frt_q_parser.y"
+#line 254 "frt_q_parser.y"
                 { qp_push_fields(qp, qp->all_fields, false); }
-#line 1596 "frt_q_parser.c"
+#line 1595 "frt_q_parser.c"
     break;
 
   case 27: /* $@3: %empty  */
-#line 255 "frt_q_parser.y"
+#line 254 "frt_q_parser.y"
                                                                      { qp_pop_fields(qp); }
-#line 1602 "frt_q_parser.c"
+#line 1601 "frt_q_parser.c"
     break;
 
   case 28: /* field_q: '*' $@2 ':' q $@3  */
-#line 256 "frt_q_parser.y"
+#line 255 "frt_q_parser.y"
                                       { (yyval.query) = (yyvsp[-1].query); }
-#line 1608 "frt_q_parser.c"
+#line 1607 "frt_q_parser.c"
     break;
 
   case 29: /* field: QWRD  */
-#line 258 "frt_q_parser.y"
+#line 257 "frt_q_parser.y"
                                       { (yyval.hashset) = first_field(qp, (yyvsp[0].str)); }
-#line 1614 "frt_q_parser.c"
+#line 1613 "frt_q_parser.c"
     break;
 
   case 30: /* field: field '|' QWRD  */
-#line 259 "frt_q_parser.y"
+#line 258 "frt_q_parser.y"
                                       { (yyval.hashset) = add_field(qp, (yyvsp[0].str));}
-#line 1620 "frt_q_parser.c"
+#line 1619 "frt_q_parser.c"
     break;
 
   case 31: /* phrase_q: '"' ph_words '"'  */
-#line 261 "frt_q_parser.y"
+#line 260 "frt_q_parser.y"
                                       { (yyval.query) = get_phrase_q(qp, (yyvsp[-1].phrase), NULL, encoding); }
-#line 1626 "frt_q_parser.c"
+#line 1625 "frt_q_parser.c"
     break;
 
   case 32: /* phrase_q: '"' ph_words '"' '~' QWRD  */
-#line 262 "frt_q_parser.y"
+#line 261 "frt_q_parser.y"
                                       { (yyval.query) = get_phrase_q(qp, (yyvsp[-3].phrase), (yyvsp[0].str), encoding); }
-#line 1632 "frt_q_parser.c"
+#line 1631 "frt_q_parser.c"
     break;
 
   case 33: /* phrase_q: '"' '"'  */
-#line 263 "frt_q_parser.y"
+#line 262 "frt_q_parser.y"
                                       { (yyval.query) = NULL; }
-#line 1638 "frt_q_parser.c"
+#line 1637 "frt_q_parser.c"
     break;
 
   case 34: /* phrase_q: '"' '"' '~' QWRD  */
-#line 264 "frt_q_parser.y"
+#line 263 "frt_q_parser.y"
                                       { (yyval.query) = NULL; (void)(yyvsp[0].str);}
-#line 1644 "frt_q_parser.c"
+#line 1643 "frt_q_parser.c"
     break;
 
   case 35: /* ph_words: QWRD  */
-#line 266 "frt_q_parser.y"
+#line 265 "frt_q_parser.y"
                               { (yyval.phrase) = ph_first_word((yyvsp[0].str)); }
-#line 1650 "frt_q_parser.c"
+#line 1649 "frt_q_parser.c"
     break;
 
   case 36: /* ph_words: '<' '>'  */
-#line 267 "frt_q_parser.y"
+#line 266 "frt_q_parser.y"
                               { (yyval.phrase) = ph_first_word(NULL); }
-#line 1656 "frt_q_parser.c"
+#line 1655 "frt_q_parser.c"
     break;
 
   case 37: /* ph_words: ph_words QWRD  */
-#line 268 "frt_q_parser.y"
+#line 267 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_word((yyvsp[-1].phrase), (yyvsp[0].str)); }
-#line 1662 "frt_q_parser.c"
+#line 1661 "frt_q_parser.c"
     break;
 
   case 38: /* ph_words: ph_words '<' '>'  */
-#line 269 "frt_q_parser.y"
+#line 268 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_word((yyvsp[-2].phrase), NULL); }
-#line 1668 "frt_q_parser.c"
+#line 1667 "frt_q_parser.c"
     break;
 
   case 39: /* ph_words: ph_words '|' QWRD  */
-#line 270 "frt_q_parser.y"
+#line 269 "frt_q_parser.y"
                               { (yyval.phrase) = ph_add_multi_word((yyvsp[-2].phrase), (yyvsp[0].str));  }
-#line 1674 "frt_q_parser.c"
+#line 1673 "frt_q_parser.c"
     break;
 
   case 40: /* range_q: '[' QWRD QWRD ']'  */
-#line 272 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  true)); Y}
-#line 1680 "frt_q_parser.c"
+#line 271 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  true,  encoding)); Y}
+#line 1679 "frt_q_parser.c"
     break;
 
   case 41: /* range_q: '[' QWRD QWRD '}'  */
-#line 273 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  false)); Y}
-#line 1686 "frt_q_parser.c"
+#line 272 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  true,  false, encoding)); Y}
+#line 1685 "frt_q_parser.c"
     break;
 
   case 42: /* range_q: '{' QWRD QWRD ']'  */
-#line 274 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, true)); Y}
-#line 1692 "frt_q_parser.c"
+#line 273 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, true,  encoding)); Y}
+#line 1691 "frt_q_parser.c"
     break;
 
   case 43: /* range_q: '{' QWRD QWRD '}'  */
-#line 275 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, false)); Y}
-#line 1698 "frt_q_parser.c"
+#line 274 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-2].str),  (yyvsp[-1].str),  false, false, encoding)); Y}
+#line 1697 "frt_q_parser.c"
     break;
 
   case 44: /* range_q: '<' QWRD '}'  */
-#line 276 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, false)); Y}
-#line 1704 "frt_q_parser.c"
+#line 275 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, false, encoding)); Y}
+#line 1703 "frt_q_parser.c"
     break;
 
   case 45: /* range_q: '<' QWRD ']'  */
-#line 277 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, true)); Y}
-#line 1710 "frt_q_parser.c"
+#line 276 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[-1].str),  false, true,  encoding)); Y}
+#line 1709 "frt_q_parser.c"
     break;
 
   case 46: /* range_q: '[' QWRD '>'  */
-#line 278 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,true,  false)); Y}
-#line 1716 "frt_q_parser.c"
+#line 277 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,true,  false, encoding)); Y}
+#line 1715 "frt_q_parser.c"
     break;
 
   case 47: /* range_q: '{' QWRD '>'  */
-#line 279 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,false, false)); Y}
-#line 1722 "frt_q_parser.c"
+#line 278 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[-1].str),  NULL,false, false, encoding)); Y}
+#line 1721 "frt_q_parser.c"
     break;
 
   case 48: /* range_q: '<' QWRD  */
-#line 280 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, false)); Y}
-#line 1728 "frt_q_parser.c"
+#line 279 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, false, encoding)); Y}
+#line 1727 "frt_q_parser.c"
     break;
 
   case 49: /* range_q: '<' '=' QWRD  */
-#line 281 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, true)); Y}
-#line 1734 "frt_q_parser.c"
+#line 280 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, NULL,(yyvsp[0].str),  false, true,  encoding)); Y}
+#line 1733 "frt_q_parser.c"
     break;
 
   case 50: /* range_q: '>' '=' QWRD  */
-#line 282 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,true,  false)); Y}
-#line 1740 "frt_q_parser.c"
+#line 281 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,true,  false, encoding)); Y}
+#line 1739 "frt_q_parser.c"
     break;
 
   case 51: /* range_q: '>' QWRD  */
-#line 283 "frt_q_parser.y"
-                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,false, false)); Y}
-#line 1746 "frt_q_parser.c"
+#line 282 "frt_q_parser.y"
+                              { FLDS((yyval.query), get_r_q(qp, field, (yyvsp[0].str),  NULL,false, false, encoding)); Y}
+#line 1745 "frt_q_parser.c"
     break;
 
 
-#line 1750 "frt_q_parser.c"
+#line 1749 "frt_q_parser.c"
 
       default: break;
     }
@@ -1939,7 +1938,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 285 "frt_q_parser.y"
+#line 284 "frt_q_parser.y"
 
 
 static const char *special_char = "&:()[]{}!\"~^|<>=*?+-";
@@ -2366,31 +2365,20 @@ static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *
 }
 
 /**
- * Downcase a string taking locale into account and works for multibyte
- * character sets.
+ * Downcase a string taking encoding into account and works for multibyte character sets.
  */
-static char *lower_str(char *str)
-{
-    const int max_len = (int)strlen(str) + 1;
-    int cnt;
-    wchar_t *wstr = FRT_ALLOC_N(wchar_t, max_len);
-    if ((cnt = mbstowcs(wstr, str, max_len)) > 0) {
-        wchar_t *w = wstr;
-        while (*w) {
-            *w = towlower(*w);
-            w++;
-        }
-        wcstombs(str, wstr, max_len);
-    }
-    else {
-        char *s = str;
-        while (*s) {
-            *s = tolower(*s);
-            s++;
-        }
-    }
-    free(wstr);
-    str[max_len] = '\0';
+static char *lower_str(char *str, int len, rb_encoding *enc) {
+    OnigCaseFoldType fold_type = ONIGENC_CASE_DOWNCASE;
+    const int max_len = len + 20; // CASE_MAPPING_ADDITIONAL_LENGTH
+    char *buf = FRT_ALLOC_N(char, max_len);
+    char *buf_end = buf + max_len + 19;
+    const OnigUChar *t = (const OnigUChar *)str;
+
+    len = enc->case_map(&fold_type, &t, (const OnigUChar *)(str + len), (OnigUChar *)buf, (OnigUChar *)buf_end, enc);
+    memcpy(str, buf, len);
+    str[len] = '\0';
+    free(buf);
+
     return str;
 }
 
@@ -2403,8 +2391,7 @@ static char *lower_str(char *str)
  * optimized to a MatchAllQuery if the pattern is '*' or a PrefixQuery if the
  * only wild char (*, ?) in the pattern is a '*' at the end of the pattern.
  */
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
-{
+static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding) {
     FrtQuery *q;
     bool is_prefix = false;
     char *p;
@@ -2412,7 +2399,7 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern)
 
     if (qp->wild_lower
         && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
-        lower_str(pattern);
+        lower_str(pattern, len, encoding);
     }
 
     /* simplify the wildcard query to a prefix query if possible. Basically a
@@ -2700,17 +2687,14 @@ static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str, rb
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper)
-{
+static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding) {
     FrtQuery *rq;
     if (qp->wild_lower
         && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
-        if (from) {
-            lower_str(from);
-        }
-        if (to) {
-            lower_str(to);
-        }
+        if (from)
+            lower_str(from, strlen(from), encoding);
+        if (to)
+            lower_str(to, strlen(to), encoding);
     }
 /*
  * terms don't get tokenized as it doesn't really make sense to do so for
