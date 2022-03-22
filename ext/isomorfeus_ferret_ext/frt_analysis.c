@@ -43,7 +43,7 @@ FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end,
     } else {
         const unsigned char *sp = (unsigned char *)text;
         unsigned char *dp = (unsigned char *)tk->text;
-        rb_econv_t *ec = rb_econv_open(rb_enc_name(encoding), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
+        rb_econv_t *ec = rb_econv_open(rb_enc_name(encoding), "UTF-8", RUBY_ECONV_INVALID_REPLACE);
         assert(ec != NULL);
         rb_econv_convert(ec, &sp, (unsigned char *)text + tlen, &dp, (unsigned char *)tk->text + FRT_MAX_WORD_SIZE - 1, 0);
         rb_econv_close(ec);
