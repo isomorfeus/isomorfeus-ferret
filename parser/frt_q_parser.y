@@ -92,6 +92,9 @@
 #include "frt_array.h"
 #include <ruby/encoding.h>
 
+extern rb_encoding *utf8_encoding;
+extern int utf8_mbmaxlen;
+
 typedef struct Phrase {
     int             size;
     int             capa;
@@ -1305,40 +1308,63 @@ static FrtQuery *qp_get_bad_query(FrtQParser *qp, char *str, rb_encoding *encodi
  * and turns them into a boolean query on the default fields.
  */
 
-FrtQuery *qp_parse(FrtQParser *self, char *qstr, rb_encoding *encoding)
+FrtQuery *qp_parse(FrtQParser *self, char *query_string, rb_encoding *encoding)
 {
     FrtQuery *result = NULL;
+    char *qstr;
+    unsigned char *dp_start = NULL;
+
     frt_mutex_lock(&self->mutex);
     /* if qp->fields_top->next is not NULL we have a left over field-stack
      * object that was not popped during the last query parse */
     assert(NULL == self->fields_top->next);
 
+    /* encode query_string to utf8 for futher processing unless it is utf8 encoded */
+    if (encoding == utf8_encoding) {
+        qstr = query_string;
+    } else {
+        /* assume query is sbc encoded und encoding to utf results in maximum utf mbc expansion */
+        const unsigned char *sp = (unsigned char *)query_string;
+        int query_string_len = strlen(query_string);
+        int dp_length = query_string_len * utf8_mbmaxlen + 1;
+        unsigned char *dp = FRT_ALLOC_N(unsigned char, dp_length);
+        dp_start = dp;
+        rb_econv_t *ec = rb_econv_open(rb_enc_name(encoding), rb_enc_name(utf8_encoding), RUBY_ECONV_INVALID_REPLACE);
+        assert(ec != NULL);
+        rb_econv_convert(ec, &sp, (unsigned char *)query_string + query_string_len, &dp, (unsigned char *)dp + dp_length - 1, 0);
+        rb_econv_close(ec);
+        *dp = '\0';
+        qstr = dp_start;
+    }
+
     self->recovering = self->destruct = false;
+
     if (self->clean_str) {
         self->qstrp = self->qstr = frt_qp_clean_str(qstr);
-    }
-    else {
+    } else {
         self->qstrp = self->qstr = qstr;
     }
     self->fields = self->def_fields;
     self->result = NULL;
 
-    if (0 == yyparse(self, encoding)) {
+    if (0 == yyparse(self, encoding))
       result = self->result;
-    }
+
     if (!result && self->handle_parse_errors) {
         self->destruct = false;
         result = qp_get_bad_query(self, self->qstr, encoding);
     }
-    if (self->destruct && !self->handle_parse_errors) {
+    if (self->destruct && !self->handle_parse_errors)
         FRT_RAISE(FRT_PARSE_ERROR, frt_xmsg_buffer);
-    }
-    if (!result) {
+
+    if (!result)
         result = frt_bq_new(false);
-    }
-    if (self->clean_str) {
+
+    if (self->clean_str)
         free(self->qstr);
-    }
+    if (dp_start)
+        free(dp_start);
+
     frt_mutex_unlock(&self->mutex);
     return result;
 }

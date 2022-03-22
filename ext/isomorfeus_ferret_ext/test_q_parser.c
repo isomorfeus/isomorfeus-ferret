@@ -1,6 +1,8 @@
 #include "frt_search.h"
 #include "test.h"
 
+extern rb_encoding *utf8_encoding;
+
 typedef struct QPTestPair {
     const char *qstr;
     const char *qres;
@@ -411,6 +413,37 @@ static void test_qp_bad_queries(TestCase *tc, void *data)
     frt_qp_destroy(parser);
 }
 
+static void test_mb_qp_bad_queries(TestCase *tc, void *data)
+{
+    int i;
+    FrtQParser *parser;
+    QPTestPair pairs[] = {
+        {"[, ]", ""},
+        {"::*word", "word"},
+        {"::))*&)(*^&*(", ""},
+        {"::|)*&one)(*two(*&\"", "\"one two\"~1"}
+    };
+    (void)data;
+    rb_encoding *enc = utf8_encoding;
+
+    parser = frt_qp_new(frt_letter_analyzer_new(true));
+    frt_qp_add_field(parser, rb_intern("xx"),    true,  true);
+    frt_qp_add_field(parser, rb_intern("f1"),    false, true);
+    frt_qp_add_field(parser, rb_intern("f2"),    false, true);
+    frt_qp_add_field(parser, rb_intern("field"), false, true);
+
+    parser->handle_parse_errors = true;
+
+    for (i = 0; i < FRT_NELEMS(pairs); i++) {
+        PARSER_TEST(pairs[i].qstr, pairs[i].qres);
+    }
+    parser->clean_str = true;
+    for (i = 0; i < FRT_NELEMS(pairs); i++) {
+        PARSER_TEST(pairs[i].qstr, pairs[i].qres);
+    }
+    frt_qp_destroy(parser);
+}
+
 static void test_qp_prefix_query(TestCase *tc, void *data)
 {
     FrtQParser *parser;
@@ -461,6 +494,7 @@ TestSuite *ts_q_parser(TestSuite *suite)
     tst_run_test(suite, test_q_parser_standard_analyzer, NULL);
     tst_run_test(suite, test_qp_clean_str, NULL);
     tst_run_test(suite, test_qp_bad_queries, NULL);
+    tst_run_test(suite, test_mb_qp_bad_queries, NULL);
     tst_run_test(suite, test_qp_prefix_query, NULL);
     tst_run_test(suite, test_qp_keyword_switch, NULL);
 
