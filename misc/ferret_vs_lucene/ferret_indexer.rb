@@ -94,9 +94,11 @@ end
 
 opts.parse(ARGV)
 @inc = @inc == 0 ? @docs + 1 : @inc
+num_indexed = 0
 
-puts "-" * 60
+puts "-" * 63
 times = []
+
 @reps.times do |i|
   t = Time.now
   num_indexed = build_index(FL, @docs, @inc)
@@ -104,6 +106,7 @@ times = []
   times << t
   puts "#{i+1}  Secs: %.2f  Docs: #{num_indexed}, #{(num_indexed/t).to_i} docs/s" % t
 end
+
 times.sort!
 num_to_chop = @reps >> 2
 num_kept = 0
@@ -118,8 +121,8 @@ end
 
 mean_time /= @reps
 trunc_mean_time /= num_kept
-puts "-" * 60
+puts "-" * 63
 puts "Mean %.2f secs" % mean_time
 puts "Truncated Mean (#{num_kept} kept, #{@reps - num_kept} discarded): " +
-     "%.2f secs" % trunc_mean_time
+     "%.2f secs, #{(num_indexed/trunc_mean_time).to_i} docs/s" % trunc_mean_time
 puts "-" * 60
