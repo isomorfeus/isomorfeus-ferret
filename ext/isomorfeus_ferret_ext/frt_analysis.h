@@ -56,14 +56,6 @@ typedef struct FrtCachedTokenStream {
     FrtToken       token;
 } FrtCachedTokenStream;
 
-typedef struct FrtMultiByteTokenStream {
-    FrtCachedTokenStream super;
-} FrtMultiByteTokenStream;
-
-typedef struct FrtStandardTokenizer {
-    FrtCachedTokenStream     super;
-} FrtStandardTokenizer;
-
 typedef struct FrtLegacyStandardTokenizer {
     FrtCachedTokenStream super;
 } FrtLegacyStandardTokenizer;
@@ -109,12 +101,12 @@ typedef struct FrtStemFilter {
 extern void frt_ts_deref(FrtTokenStream *ts);
 
 extern FrtTokenStream *frt_non_tokenizer_new();
-extern FrtTokenStream *frt_mb_whitespace_tokenizer_new(bool lowercase);
-extern FrtTokenStream *frt_mb_letter_tokenizer_new(bool lowercase);
-extern FrtTokenStream *frt_mb_legacy_standard_tokenizer_new();
+extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase);
+extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase);
+extern FrtTokenStream *frt_legacy_standard_tokenizer_new();
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_mb_lowercase_filter_new(FrtTokenStream *ts);
+extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts);
 
 extern const char *FRT_ENGLISH_STOP_WORDS[];
 extern const char *FRT_FULL_ENGLISH_STOP_WORDS[];
@@ -163,10 +155,10 @@ extern FrtAnalyzer *frt_non_analyzer_new();
 
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
-extern FrtAnalyzer *frt_mb_whitespace_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_mb_letter_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_mb_legacy_standard_analyzer_new_with_words(const char **words, bool lowercase);
+extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
+extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
+extern FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase);
+extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words, bool lowercase);
 
 #define PFA(analyzer) ((FrtPerFieldAnalyzer *)(analyzer))
 typedef struct FrtPerFieldAnalyzer

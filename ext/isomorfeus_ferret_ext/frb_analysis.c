@@ -830,7 +830,7 @@ static VALUE
 frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
-    return get_wrapped_ts(self, rstr, frt_mb_letter_tokenizer_new(lower));
+    return get_wrapped_ts(self, rstr, frt_letter_tokenizer_new(lower));
 }
 
 /*
@@ -846,7 +846,7 @@ static VALUE
 frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 {
     TS_ARGS(false);
-    return get_wrapped_ts(self, rstr, frt_mb_whitespace_tokenizer_new(lower));
+    return get_wrapped_ts(self, rstr, frt_whitespace_tokenizer_new(lower));
 }
 
 /*
@@ -861,7 +861,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
 static VALUE
 frb_standard_tokenizer_init(VALUE self, VALUE rstr)
 {
-    return get_wrapped_ts(self, rstr, frt_mb_legacy_standard_tokenizer_new());
+    return get_wrapped_ts(self, rstr, frt_legacy_standard_tokenizer_new());
 }
 
 /****************************************************************************
@@ -878,7 +878,7 @@ static VALUE
 frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
     FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = frt_mb_lowercase_filter_new(ts);
+    ts = frt_lowercase_filter_new(ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
     Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
@@ -1203,7 +1203,7 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(false);
-    a = frt_mb_whitespace_analyzer_new(lower);
+    a = frt_whitespace_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1224,7 +1224,7 @@ frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
 {
     FrtAnalyzer *a;
     GET_LOWER(true);
-    a = frt_mb_letter_analyzer_new(lower);
+    a = frt_letter_analyzer_new(lower);
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
     return self;
@@ -1266,10 +1266,10 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     lower = ((rlower == Qnil) ? true : RTEST(rlower));
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        a = frt_mb_legacy_standard_analyzer_new_with_words((const char **)stop_words, lower);
+        a = frt_legacy_standard_analyzer_new_with_words((const char **)stop_words, lower);
         free(stop_words);
     } else {
-        a = frt_mb_legacy_standard_analyzer_new(lower);
+        a = frt_legacy_standard_analyzer_new(lower);
     }
     Frt_Wrap_Struct(self, NULL, &frb_analyzer_free, a);
     object_add(a, self);
