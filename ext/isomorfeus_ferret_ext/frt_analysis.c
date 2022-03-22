@@ -18,7 +18,7 @@ extern OnigCodePoint cp_at;
 extern OnigCodePoint cp_ampersand;
 extern OnigCodePoint cp_colon;
 
-int get_cp(char *start, char *end, int *cp_len, rb_encoding *enc) {
+static inline int get_cp(char *start, char *end, int *cp_len, rb_encoding *enc) {
     if (start >= end) {
         *cp_len = 0;
         return 0;
