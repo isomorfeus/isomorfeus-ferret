@@ -186,7 +186,7 @@ static void test_q_parser(TestCase *tc, void *data)
 static void test_q_parser_standard_analyzer(TestCase *tc, void *data)
 {
     int i;
-    FrtAnalyzer *analyzer = frt_legacy_standard_analyzer_new(true);
+    FrtAnalyzer *analyzer = frt_standard_analyzer_new(true);
     FrtQParser *parser;
     QPTestPair pairs[] = {
         {"", ""},

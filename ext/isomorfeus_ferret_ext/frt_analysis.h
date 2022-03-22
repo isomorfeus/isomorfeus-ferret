@@ -56,9 +56,9 @@ typedef struct FrtCachedTokenStream {
     FrtToken       token;
 } FrtCachedTokenStream;
 
-typedef struct FrtLegacyStandardTokenizer {
+typedef struct FrtStandardTokenizer {
     FrtCachedTokenStream super;
-} FrtLegacyStandardTokenizer;
+} FrtStandardTokenizer;
 
 typedef struct FrtTokenFilter {
     FrtTokenStream super;
@@ -103,7 +103,7 @@ extern void frt_ts_deref(FrtTokenStream *ts);
 extern FrtTokenStream *frt_non_tokenizer_new();
 extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase);
 extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase);
-extern FrtTokenStream *frt_legacy_standard_tokenizer_new();
+extern FrtTokenStream *frt_standard_tokenizer_new();
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
 extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts);
@@ -157,8 +157,8 @@ extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
 extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words, bool lowercase);
+extern FrtAnalyzer *frt_standard_analyzer_new(bool lowercase);
+extern FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words, bool lowercase);
 
 #define PFA(analyzer) ((FrtPerFieldAnalyzer *)(analyzer))
 typedef struct FrtPerFieldAnalyzer

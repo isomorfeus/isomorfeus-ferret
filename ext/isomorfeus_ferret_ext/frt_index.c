@@ -6240,7 +6240,7 @@ FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
 
     iw->similarity = frt_sim_create_default();
     iw->analyzer = analyzer ? (FrtAnalyzer *)analyzer
-                            : frt_legacy_standard_analyzer_new(true);
+                            : frt_standard_analyzer_new(true);
 
     iw->deleter = frt_deleter_new(iw->sis, store);
     deleter_delete_deletable_files(iw->deleter);

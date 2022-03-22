@@ -363,13 +363,13 @@ FrtAnalyzer *frt_letter_analyzer_new(bool lowercase) {
  *
  ****************************************************************************/
 
-#define LSTDTS(token_stream) ((FrtLegacyStandardTokenizer *)(token_stream))
+#define LSTDTS(token_stream) ((FrtStandardTokenizer *)(token_stream))
 
 /*
  * LegacyStandardTokenizer
  */
 
-static int legacy_std_get_alnum(FrtTokenStream *ts, char *token, OnigCodePoint cp, int *cp_len_p, OnigCodePoint *cp_out_p, rb_encoding *enc)
+static int std_get_alnum(FrtTokenStream *ts, char *token, OnigCodePoint cp, int *cp_len_p, OnigCodePoint *cp_out_p, rb_encoding *enc)
 {
     char *end = ts->text + ts->length;
     char *t = ts->t;
@@ -426,7 +426,7 @@ static bool cp_enc_istok(OnigCodePoint cp, rb_encoding *enc) {
  * (alnum) = [a-zA-Z0-9]
  * (punc) = [_\/.,-]
  */
-static int legacy_std_get_number(FrtTokenStream *ts, char *start, char *end, OnigCodePoint cp, int cp_len_a, rb_encoding *enc)
+static int std_get_number(FrtTokenStream *ts, char *start, char *end, OnigCodePoint cp, int cp_len_a, rb_encoding *enc)
 {
 
     OnigCodePoint cp_1 = 0;
@@ -463,7 +463,7 @@ static int legacy_std_get_number(FrtTokenStream *ts, char *start, char *end, Oni
     }
 }
 
-static int legacy_std_get_apostrophe(FrtTokenStream *ts, char *input, OnigCodePoint cp, int *cp_len_p, rb_encoding *enc)
+static int std_get_apostrophe(FrtTokenStream *ts, char *input, OnigCodePoint cp, int *cp_len_p, rb_encoding *enc)
 {
     int cp_len = *cp_len_p;
     char *end = ts->text + ts->length;
@@ -512,7 +512,7 @@ static char *std_get_url(FrtTokenStream *ts, char *start, char *end, char *token
 }
 
 /* Company names can contain '@' and '&' like AT&T and Excite@Home. */
-static int legacy_std_get_company_name(FrtTokenStream *ts, char *start, char* end)
+static int std_get_company_name(FrtTokenStream *ts, char *start, char* end)
 {
     rb_encoding *enc = ts->encoding;
     char * t = start;
@@ -528,7 +528,7 @@ static int legacy_std_get_company_name(FrtTokenStream *ts, char *start, char* en
     return t - start;
 }
 
-static int legacy_std_advance_to_start(FrtTokenStream *ts, int *cp_len_p, OnigCodePoint *cp_out_p, rb_encoding *enc)
+static int std_advance_to_start(FrtTokenStream *ts, int *cp_len_p, OnigCodePoint *cp_out_p, rb_encoding *enc)
 {
     int cp_len = 0;
     int cp_next = 0;
@@ -553,7 +553,7 @@ static int legacy_std_advance_to_start(FrtTokenStream *ts, int *cp_len_p, OnigCo
     return (t < end);
 }
 
-static FrtToken *legacy_std_next(FrtTokenStream *ts)
+static FrtToken *std_next(FrtTokenStream *ts)
 {
     char *s;
     char *t;
@@ -575,14 +575,14 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     rb_encoding *enc = ts->encoding;
 
     /* advance to start and return first cp and len */
-    if (!legacy_std_advance_to_start(ts, &cp_len, &cp, enc))
+    if (!std_advance_to_start(ts, &cp_len, &cp, enc))
         return NULL;
 
     end = ts->text + ts->length;
     start = t = ts->t;
 
     /* get all alnums */
-    token_i = legacy_std_get_alnum(ts, token, cp, &cp_len, &cp, enc);
+    token_i = std_get_alnum(ts, token, cp, &cp_len, &cp, enc);
     t += token_i;
 
     if (t >= end && token_i > 0) {
@@ -602,7 +602,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     }
 
     if (cp == cp_apostrophe) {       /* apostrophe case. */
-        t += legacy_std_get_apostrophe(ts, t, cp, &cp_len, enc);
+        t += std_get_apostrophe(ts, t, cp, &cp_len, enc);
         ts->t = t;
         len = (int)(t - start);
         /* strip possesive */
@@ -626,7 +626,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     // already got cp and cp_len from get_alnum above
     // cp = get_cp(t, end, &cp_len, enc);
     if (cp == cp_ampersand) {        /* ampersand case. */
-        t += legacy_std_get_company_name(ts, t, end);
+        t += std_get_company_name(ts, t, end);
         ts->t = t;
         return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
     }
@@ -634,7 +634,7 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     // already got cp and cp_len from get_alnum above
     // cp = get_cp(start, end, &cp_len, enc);
     if ((rb_enc_isdigit(cp, enc) || cp_isnumpunc(cp))
-        && ((len = legacy_std_get_number(ts, start, end, cp, cp_len, enc)) > 0)) { /* possibly a number */
+        && ((len = std_get_number(ts, start, end, cp, cp_len, enc)) > 0)) { /* possibly a number */
         num_end = start + len;
         cp = get_cp(num_end, end, &cp_len, enc);
         if (cp > 0 && !cp_enc_istok(cp, enc)) { /* won't find a longer token */
@@ -740,23 +740,23 @@ static FrtToken *legacy_std_next(FrtTokenStream *ts)
     return &(CTS(ts)->token);
 }
 
-static FrtTokenStream *legacy_std_ts_clone_i(FrtTokenStream *orig_ts)
+static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
 {
-    return frt_ts_clone_size(orig_ts, sizeof(FrtLegacyStandardTokenizer));
+    return frt_ts_clone_size(orig_ts, sizeof(FrtStandardTokenizer));
 }
 
-static FrtTokenStream *legacy_std_ts_new()
+static FrtTokenStream *std_ts_new()
 {
-    FrtTokenStream *ts = frt_ts_new(FrtLegacyStandardTokenizer);
-    ts->clone_i        = &legacy_std_ts_clone_i;
-    ts->next           = &legacy_std_next;
+    FrtTokenStream *ts = frt_ts_new(FrtStandardTokenizer);
+    ts->clone_i        = &std_ts_clone_i;
+    ts->next           = &std_next;
 
     return ts;
 }
 
-FrtTokenStream *frt_legacy_standard_tokenizer_new()
+FrtTokenStream *frt_standard_tokenizer_new()
 {
-    return legacy_std_ts_new();
+    return std_ts_new();
 }
 
 /****************************************************************************
@@ -1155,10 +1155,10 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm)
  * Legacy
  ****************************************************************************/
 
-FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words,
+FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words,
                                                      bool lowercase)
 {
-    FrtTokenStream *ts = frt_legacy_standard_tokenizer_new();
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
     if (lowercase) {
         ts = frt_lowercase_filter_new(ts);
     }
@@ -1166,9 +1166,9 @@ FrtAnalyzer *frt_legacy_standard_analyzer_new_with_words(const char **words,
     return frt_analyzer_new(ts, NULL, NULL);
 }
 
-FrtAnalyzer *frt_legacy_standard_analyzer_new(bool lowercase)
+FrtAnalyzer *frt_standard_analyzer_new(bool lowercase)
 {
-    return frt_legacy_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
+    return frt_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
                                                       lowercase);
 }
 
