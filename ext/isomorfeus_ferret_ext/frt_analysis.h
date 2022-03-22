@@ -66,10 +66,6 @@ typedef struct FrtStandardTokenizer {
 
 typedef struct FrtLegacyStandardTokenizer {
     FrtCachedTokenStream super;
-    bool        (*advance_to_start)(FrtTokenStream *ts);
-    bool        (*is_tok_cp)(FrtTokenStream *ts, int cp);
-    int         (*get_alnum)(FrtTokenStream *ts, char *token);
-    int         (*get_apostrophe)(FrtTokenStream *ts, char *input);
 } FrtLegacyStandardTokenizer;
 
 typedef struct FrtTokenFilter {
