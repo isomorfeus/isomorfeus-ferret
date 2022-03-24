@@ -93,9 +93,9 @@ static void frb_token_mark(void *p) {
     rb_gc_mark(token->text);
 }
 
-static size_t frb_token_size(const void *c) {
+static size_t frb_token_size(const void *p) {
     return sizeof(RToken);
-    (void)c;
+    (void)p;
 }
 
 const rb_data_type_t frb_rtoken_t = {
@@ -112,8 +112,7 @@ static VALUE frb_token_alloc(VALUE klass) {
     return TypedData_Wrap_Struct(klass, &frb_rtoken_t, ALLOC(RToken));
 }
 
-static VALUE get_token(FrtToken *tk)
-{
+static VALUE get_token(FrtToken *tk) {
     RToken *token = ALLOC(RToken);
 
     token->text = rb_str_new2(tk->text);
@@ -133,8 +132,6 @@ FrtToken * frb_set_token(FrtToken *tk, VALUE rt) {
     frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text), rtk->start, rtk->end, rtk->pos_inc, rb_enc_get(rtk->text));
     return tk;
 }
-
-#define GET_TK(tk, self) TypedData_Get_Struct(self, RToken, &frb_rtoken_t, tk)
 
 /*
  *  call-seq:
@@ -171,14 +168,13 @@ static VALUE
 frb_token_init(int argc, VALUE *argv, VALUE self)
 {
     RToken *token;
-    VALUE rtext, rstart, rend, rpos_inc, rtype;
-    GET_TK(token, self);
+    VALUE rtext, rstart, rend, rpos_inc;
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->pos_inc = 1;
-    switch (rb_scan_args(argc, argv, "32", &rtext, &rstart,
-                         &rend, &rpos_inc, &rtype)) {
-        case 5: /* type gets ignored at this stage */
+    switch (rb_scan_args(argc, argv, "31", &rtext, &rstart, &rend, &rpos_inc)) {
         case 4: token->pos_inc = FIX2INT(rpos_inc);
     }
+    // TODO encoding, use frt_tk_set or something
     token->text = rb_obj_as_string(rtext);
     token->start = FIX2INT(rstart);
     token->end = FIX2INT(rend);
@@ -202,8 +198,8 @@ frb_token_cmp(VALUE self, VALUE rother)
 {
     RToken *token, *other;
     int cmp;
-    GET_TK(token, self);
-    GET_TK(other, rother);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
+    TypedData_Get_Struct(rother, RToken, &frb_rtoken_t, other);
     if (token->start > other->start) {
         cmp = 1;
     } else if (token->start < other->start) {
@@ -230,7 +226,7 @@ static VALUE
 frb_token_get_text(VALUE self)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return token->text;
 }
 
@@ -244,7 +240,7 @@ static VALUE
 frb_token_set_text(VALUE self, VALUE rtext)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->text = rtext;
     return rtext;
 }
@@ -259,7 +255,7 @@ static VALUE
 frb_token_get_start_offset(VALUE self)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->start);
 }
 
@@ -273,7 +269,7 @@ static VALUE
 frb_token_get_end_offset(VALUE self)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->end);
 }
 
@@ -287,7 +283,7 @@ static VALUE
 frb_token_get_pos_inc(VALUE self)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->pos_inc);
 }
 
@@ -301,7 +297,7 @@ static VALUE
 frb_token_set_start_offset(VALUE self, VALUE rstart)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->start = FIX2INT(rstart);
     return rstart;
 }
@@ -316,7 +312,7 @@ static VALUE
 frb_token_set_end_offset(VALUE self, VALUE rend)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->end = FIX2INT(rend);
     return rend;
 }
@@ -352,7 +348,7 @@ static VALUE
 frb_token_set_pos_inc(VALUE self, VALUE rpos_inc)
 {
     RToken *token;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->pos_inc = FIX2INT(rpos_inc);
     return rpos_inc;
 }
@@ -368,7 +364,7 @@ frb_token_to_s(VALUE self)
 {
     RToken *token;
     char *buf;
-    GET_TK(token, self);
+    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     buf = alloca(RSTRING_LEN(token->text) + 80);
     sprintf(buf, "token[\"%s\":%d:%d:%d]", rs2s(token->text),
             token->start, token->end, token->pos_inc);
@@ -381,18 +377,13 @@ frb_token_to_s(VALUE self)
  *
  ****************************************************************************/
 
-#define GET_TS(ts, self) Data_Get_Struct(self, FrtTokenStream, ts)
-
-static void
-frb_ts_mark(void *p)
-{
+static void frb_ts_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
     if (ts->text)   frb_gc_mark(&ts->text);
 }
 
-static void
-frb_ts_free(FrtTokenStream *ts)
-{
+static void frb_ts_free(void *p) {
+    FrtTokenStream *ts = (FrtTokenStream *)p;
     if (object_get(&ts->text) != Qnil) {
         object_del(&ts->text);
     }
@@ -400,8 +391,61 @@ frb_ts_free(FrtTokenStream *ts)
     frt_ts_deref(ts);
 }
 
-static void frb_rets_free(FrtTokenStream *ts);
-static void frb_rets_mark(FrtTokenStream *ts);
+static size_t frb_ts_size(const void *p) {
+    return sizeof(FrtTokenStream);
+    (void)p;
+}
+
+typedef struct RegExpTokenStream {
+    FrtCachedTokenStream super;
+    VALUE rtext;
+    VALUE regex;
+    VALUE proc;
+    long   curr_ind;
+} RegExpTokenStream;
+
+static void frb_rets_free(void *p) {
+    RegExpTokenStream *ts = (RegExpTokenStream *)p;
+    if (object_get(&ts->super.super.text) != Qnil) {
+        object_del(&ts->super.super.text);
+    }
+    object_del(ts);
+    frt_ts_deref((FrtTokenStream *)ts);
+}
+
+static void frb_rets_mark(void *p) {
+    RegExpTokenStream *ts = (RegExpTokenStream *)p;
+    if (ts->super.super.text)   frb_gc_mark(&ts->super.super.text);
+    rb_gc_mark(ts->rtext);
+    rb_gc_mark(ts->regex);
+    rb_gc_mark(ts->proc);
+}
+
+static size_t frb_rets_size(const void *p) {
+    return sizeof(RegExpTokenStream);
+    (void)p;
+}
+
+const rb_data_type_t frb_token_stream_t = {
+    .wrap_struct_name = "FrbTokenStream",
+    .function = {
+        .dmark = frb_ts_mark,
+        .dfree = frb_ts_free,
+        .dsize = frb_ts_size
+    },
+    .data = NULL
+};
+
+const rb_data_type_t frb_reg_exp_token_stream_t = {
+    .wrap_struct_name = "FrbRegExpTokenStream",
+    .function = {
+        .dmark = frb_rets_mark,
+        .dfree = frb_rets_free,
+        .dsize = frb_rets_size
+    },
+    .data = NULL
+};
+
 static FrtToken *rets_next(FrtTokenStream *ts);
 
 static VALUE
@@ -410,11 +454,9 @@ get_rb_token_stream(FrtTokenStream *ts)
     VALUE rts = object_get(ts);
     if (rts == Qnil) {
         if (ts->next == &rets_next) {
-            rts = Data_Wrap_Struct(cTokenStream, &frb_rets_mark,
-                                   &frb_rets_free, ts);
+            rts = TypedData_Wrap_Struct(cTokenStream, &frb_reg_exp_token_stream_t, ts);
         } else {
-            rts = Data_Wrap_Struct(cTokenStream, &frb_ts_mark,
-                                   &frb_ts_free, ts);
+            rts = TypedData_Wrap_Struct(cTokenStream, &frb_token_stream_t, ts);
         }
         object_add(ts, rts);
     }
@@ -445,7 +487,7 @@ static VALUE
 frb_ts_set_text(VALUE self, VALUE rtext)
 {
     FrtTokenStream *ts;
-    Data_Get_Struct(self, FrtTokenStream, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
     StringValue(rtext);
     ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
 
@@ -461,12 +503,10 @@ frb_ts_set_text(VALUE self, VALUE rtext)
  *
  *  Return the text that the TokenStream is tokenizing
  */
-static VALUE
-frb_ts_get_text(VALUE self)
-{
+static VALUE frb_ts_get_text(VALUE self) {
     VALUE rtext = Qnil;
     FrtTokenStream *ts;
-    Data_Get_Struct(self, FrtTokenStream, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
     if ((rtext = object_get(&ts->text)) == Qnil) {
         if (ts->text) {
             rtext = rb_str_new2(ts->text);
@@ -483,12 +523,10 @@ frb_ts_get_text(VALUE self)
  *  Return the next token from the TokenStream or nil if there are no more
  *  tokens.
  */
-static VALUE
-frb_ts_next(VALUE self)
-{
+static VALUE frb_ts_next(VALUE self) {
     FrtTokenStream *ts;
     FrtToken *next;
-    GET_TS(ts, self);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
     next = ts->next(ts);
     if (next == NULL) {
         return Qnil;
@@ -504,17 +542,14 @@ frb_ts_next(VALUE self)
 #define TkFilt(filter) ((FrtTokenFilter *)(filter))
 
 static void
-frb_tf_mark(void *p)
-{
+frb_tf_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
     if (TkFilt(ts)->sub_ts) {
         frb_gc_mark(&TkFilt(ts)->sub_ts);
     }
 }
 
-static void
-frb_tf_free(FrtTokenStream *ts)
-{
+static void frb_tf_free(FrtTokenStream *ts) {
     if (TkFilt(ts)->sub_ts && (object_get(&TkFilt(ts)->sub_ts) != Qnil)) {
         object_del(&TkFilt(ts)->sub_ts);
     }
@@ -576,7 +611,7 @@ frb_get_cwrapped_rts(VALUE rts)
 {
     FrtTokenStream *ts;
     if (frb_is_cclass(rts) && DATA_PTR(rts)) {
-        GET_TS(ts, rts);
+        TypedData_Get_Struct(rts, FrtTokenStream, &frb_token_stream_t, ts);
         FRT_REF(ts);
     }
     else {
@@ -614,14 +649,6 @@ static const char *TOKEN_RE =
     ")";
 static VALUE rtoken_re;
 
-typedef struct RegExpTokenStream {
-    FrtCachedTokenStream super;
-    VALUE rtext;
-    VALUE regex;
-    VALUE proc;
-    long   curr_ind;
-} RegExpTokenStream;
-
 static void
 rets_destroy_i(FrtTokenStream *ts)
 {
@@ -632,25 +659,6 @@ rets_destroy_i(FrtTokenStream *ts)
     free(ts);
 }
 
-static void
-frb_rets_free(FrtTokenStream *ts)
-{
-    if (object_get(&ts->text) != Qnil) {
-        object_del(&ts->text);
-    }
-    object_del(ts);
-    frt_ts_deref(ts);
-}
-
-static void
-frb_rets_mark(FrtTokenStream *ts)
-{
-    if (ts->text)   frb_gc_mark(&ts->text);
-    rb_gc_mark(RETS(ts)->rtext);
-    rb_gc_mark(RETS(ts)->regex);
-    rb_gc_mark(RETS(ts)->proc);
-}
-
 /*
  *  call-seq:
  *     tokenizer.text = text -> text
@@ -658,16 +666,14 @@ frb_rets_mark(FrtTokenStream *ts)
  *  Set the text to be tokenized by the tokenizer. The tokenizer gets reset to
  *  tokenize the text from the beginning.
  */
-static VALUE
-frb_rets_set_text(VALUE self, VALUE rtext)
-{
-    FrtTokenStream *ts;
-    GET_TS(ts, self);
+static VALUE frb_rets_set_text(VALUE self, VALUE rtext) {
+    RegExpTokenStream *ts;
+    TypedData_Get_Struct(self, RegExpTokenStream, &frb_reg_exp_token_stream_t, ts);
 
     rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
     StringValue(rtext);
-    RETS(ts)->rtext = rtext;
-    RETS(ts)->curr_ind = 0;
+    ts->rtext = rtext;
+    ts->curr_ind = 0;
 
     return rtext;
 }
@@ -678,12 +684,10 @@ frb_rets_set_text(VALUE self, VALUE rtext)
  *
  *  Get the text being tokenized by the tokenizer.
  */
-static VALUE
-frb_rets_get_text(VALUE self)
-{
-    FrtTokenStream *ts;
-    GET_TS(ts, self);
-    return RETS(ts)->rtext;
+static VALUE frb_rets_get_text(VALUE self) {
+    RegExpTokenStream *ts;
+    TypedData_Get_Struct(self, RegExpTokenStream, &frb_reg_exp_token_stream_t, ts);
+    return ts->rtext;
 }
 
 // partly lifted from ruby 1.9 string.c
@@ -691,8 +695,7 @@ frb_rets_get_text(VALUE self)
 #define BEG(no) regs->beg[no]
 #define END(no) regs->end[no]
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
-static VALUE scan_once(VALUE str, VALUE pat, long *start)
-{
+static VALUE scan_once(VALUE str, VALUE pat, long *start) {
   VALUE match;
   struct re_registers *regs;
 
@@ -719,8 +722,7 @@ static VALUE scan_once(VALUE str, VALUE pat, long *start)
 }
 //
 
-static FrtToken * rets_next(FrtTokenStream *ts)
-{
+static FrtToken *rets_next(FrtTokenStream *ts) {
   VALUE ret;
   long rtok_len;
   int beg, end;
@@ -744,24 +746,19 @@ static FrtToken * rets_next(FrtTokenStream *ts)
   }
 }
 
-static FrtTokenStream *
-rets_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
-{
+static FrtTokenStream *rets_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
     // TODO encoding
     RETS(ts)->rtext = rb_str_new2(text);
     RETS(ts)->curr_ind = 0;
     return ts;
 }
 
-static FrtTokenStream *
-rets_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *rets_clone_i(FrtTokenStream *orig_ts) {
     FrtTokenStream *ts = frt_ts_clone_size(orig_ts, sizeof(RegExpTokenStream));
     return ts;
 }
 
-static FrtTokenStream *
-rets_new(VALUE rtext, VALUE regex, VALUE proc)
+static FrtTokenStream *rets_new(VALUE rtext, VALUE regex, VALUE proc)
 {
     FrtTokenStream *ts = frt_ts_new(RegExpTokenStream);
 
@@ -1405,7 +1402,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "02&", &regex, &lower, &proc);
 
     ts = rets_new(Qnil, regex, proc);
-    rets = Data_Wrap_Struct(cRegExpTokenizer, &frb_rets_mark, &frb_rets_free, ts);
+    rets = TypedData_Wrap_Struct(cRegExpTokenizer, &frb_reg_exp_token_stream_t, ts);
     object_add(ts, rets);
 
     if (lower != Qfalse) {
@@ -1431,9 +1428,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
  *  field_name:: name of the field to be tokenized
  *  input::      data from the field to be tokenized
  */
-static VALUE
-frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
-{
+static VALUE frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext) {
     FrtTokenStream *ts;
     FrtAnalyzer *a;
     GET_A(a, self);
