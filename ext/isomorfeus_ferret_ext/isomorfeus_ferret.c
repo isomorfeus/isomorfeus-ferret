@@ -67,10 +67,7 @@ VALUE object_get(void *key)
     return val;
 }
 
-//static int hash_cnt = 0;
-void
-//object_add(void *key, VALUE obj)
-object_add2(void *key, VALUE obj, const char *file, int line)
+void object_add2(void *key, VALUE obj, const char *file, int line)
 {
     if (frt_h_get(object_map, key))
         printf("failed adding %lx to %lld; already contains %llx. %s:%d\n",
@@ -78,16 +75,12 @@ object_add2(void *key, VALUE obj, const char *file, int line)
     frt_h_set(object_map, key, (void *)obj);
 }
 
-void
-//object_set(void *key, VALUE obj)
-object_set2(void *key, VALUE obj, const char *file, int line)
+void object_set2(void *key, VALUE obj, const char *file, int line)
 {
     frt_h_set(object_map, key, (void *)obj);
 }
 
-void
-//object_del(void *key)
-object_del2(void *key, const char *file, int line)
+void object_del2(void *key, const char *file, int line)
 {
     if (object_get(key) == Qnil)
         printf("failed deleting %lld. %s:%d\n", (long long)key, file, line);
