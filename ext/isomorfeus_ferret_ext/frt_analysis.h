@@ -69,16 +69,6 @@ extern FrtTokenStream *frt_filter_clone_size(FrtTokenStream *ts, size_t size);
 #define tf_new(type, sub, ats) frt_tf_new_i(sizeof(type), sub, ats)
 extern FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts, FrtTokenStream *ats);
 
-typedef struct FrtStopFilter {
-    FrtTokenFilter super;
-    FrtHash  *words;
-} FrtStopFilter;
-
-typedef struct FrtMappingFilter {
-    FrtTokenFilter  super;
-    FrtMultiMapper *mapper;
-} FrtMappingFilter;
-
 typedef struct FrtStemFilter {
     FrtTokenFilter        super;
     struct sb_stemmer  *stemmer;
@@ -117,6 +107,8 @@ extern FrtTokenStream *frt_lowercase_filter_alloc();
 extern void            frt_lowercase_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts);
 
+/*** FrtStopFilter ***********************************************************/
+
 extern const char *FRT_ENGLISH_STOP_WORDS[];
 extern const char *FRT_FULL_ENGLISH_STOP_WORDS[];
 extern const char *FRT_EXTENDED_ENGLISH_STOP_WORDS[];
@@ -133,11 +125,31 @@ extern const char *FRT_FULL_RUSSIAN_STOP_WORDS[];
 extern const char *FRT_FULL_FINNISH_STOP_WORDS[];
 extern const char *FRT_FULL_HUNGARIAN_STOP_WORDS[];
 
-extern FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *ts, const char **words, int len);
-extern FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *ts, const char **words);
-extern FrtTokenStream *frt_stop_filter_new(FrtTokenStream *ts);
+typedef struct FrtStopFilter {
+    FrtTokenFilter super;
+    FrtHash  *words;
+} FrtStopFilter;
+
+extern FrtTokenStream *frt_stop_filter_alloc();
+extern void            frt_stop_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
+extern void            frt_stop_filter_set_words(FrtTokenStream *ts, const char **words);
+extern void            frt_stop_filter_set_words_len(FrtTokenStream *ts, const char **words, int len);
+extern FrtTokenStream *frt_stop_filter_new(FrtTokenStream *sub_ts);
+extern FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *sub_ts, const char **words);
+extern FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *sub_ts, const char **words, int len);
+
 extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm);
-extern FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *ts);
+
+/*** FrtMappingFilter ***********************************************************/
+
+typedef struct FrtMappingFilter {
+    FrtTokenFilter  super;
+    FrtMultiMapper *mapper;
+} FrtMappingFilter;
+
+extern FrtTokenStream *frt_mapping_filter_alloc();
+extern void            frt_mapping_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
+extern FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern, const char *replacement);
 
 /****************************************************************************

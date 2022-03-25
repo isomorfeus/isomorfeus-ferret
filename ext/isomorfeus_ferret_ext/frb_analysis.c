@@ -568,11 +568,6 @@ const rb_data_type_t frb_token_filter_t = {
     .data = NULL
 };
 
-static VALUE frb_token_filter_alloc(VALUE rclass) {
-    FrtTokenFilter *tf;
-    return TypedData_Make_Struct(rclass, FrtTokenFilter, &frb_token_filter_t, tf);
-}
-
 /****************************************************************************
  * CWrappedTokenStream
  ****************************************************************************/
@@ -928,8 +923,8 @@ const rb_data_type_t frb_lowercase_filter_t = {
 };
 
 static VALUE frb_lowercase_filter_alloc(VALUE rclass) {
-    FrtTokenFilter *tf;
-    return TypedData_Make_Struct(rclass, FrtTokenFilter, &frb_lowercase_filter_t, tf);
+    FrtTokenStream *tf = frt_lowercase_filter_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_lowercase_filter_t, tf);
 }
 
 static VALUE frb_lowercase_filter_init(VALUE self, VALUE rsub_ts) {
@@ -969,8 +964,8 @@ const rb_data_type_t frb_hyphen_filter_t = {
 };
 
 static VALUE frb_hyphen_filter_alloc(VALUE rclass) {
-    FrtHyphenFilter *hf;
-    return TypedData_Make_Struct(rclass, FrtHyphenFilter, &frb_hyphen_filter_t, hf);
+    FrtTokenStream *hf = frt_hyphen_filter_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_hyphen_filter_t, hf);
 }
 
 static VALUE frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) {
@@ -996,31 +991,50 @@ static VALUE frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) {
  *                 defaults to a list of English stop-words. The
  *                 Ferret::Analysis contains a number of stop-word lists.
  */
-static VALUE
-frb_stop_filter_init(int argc, VALUE *argv, VALUE self)
-{
+
+static size_t frb_stop_filter_size(const void *p) {
+    return sizeof(FrtStopFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_stop_filter_t = {
+    .wrap_struct_name = "FrbStopFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_stop_filter_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_stop_filter_alloc(VALUE rclass) {
+    FrtTokenStream *sf = frt_stop_filter_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_stop_filter_t, sf);
+}
+
+static VALUE frb_stop_filter_init(int argc, VALUE *argv, VALUE self) {
     VALUE rsub_ts, rstop_words;
+    FrtTokenStream *sub_ts;
     FrtTokenStream *ts;
     rb_scan_args(argc, argv, "11", &rsub_ts, &rstop_words);
-    ts = frb_get_cwrapped_rts(rsub_ts);
+    sub_ts = frb_get_cwrapped_rts(rsub_ts);
+
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_stop_filter_t, ts);
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        ts = frt_stop_filter_new_with_words(ts, (const char **)stop_words);
-
+        frt_stop_filter_init(ts, sub_ts);
+        frt_stop_filter_set_words(ts, (const char **)stop_words);
         free(stop_words);
     } else {
-        ts = frt_stop_filter_new(ts);
+        frt_stop_filter_init(ts, sub_ts);
     }
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
     return self;
 }
 
-static void frb_add_mapping_i(FrtTokenStream *mf, VALUE from,
-                                     const char *to)
-{
+static void frb_add_mapping_i(FrtTokenStream *mf, VALUE from, const char *to) {
     switch (TYPE(from)) {
         case T_STRING:
             frt_mapping_filter_add(mf, rs2s(from), to);
@@ -1036,8 +1050,7 @@ static void frb_add_mapping_i(FrtTokenStream *mf, VALUE from,
     }
 }
 
-static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg)
-{
+static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg) {
     if (key == Qundef) {
         return ST_CONTINUE;
     } else {
@@ -1061,8 +1074,7 @@ static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg)
             for (i = RARRAY_LEN(key) - 1; i >= 0; i--) {
                 frb_add_mapping_i(mf, RARRAY_PTR(key)[i], to);
             }
-        }
-        else {
+        } else {
             frb_add_mapping_i(mf, key, to);
         }
     }
@@ -1094,17 +1106,38 @@ static int frb_add_mappings_i(VALUE key, VALUE value, VALUE arg)
  *                                ['è','é','ê','ë','ē','ę'] => 'e'
  *                              })
  */
-static VALUE
-frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping)
-{
+
+static size_t frb_mapping_filter_size(const void *p) {
+    return sizeof(FrtMappingFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_mapping_filter_t = {
+    .wrap_struct_name = "FrbMappingFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_mapping_filter_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_mapping_filter_alloc(VALUE rclass) {
+    FrtTokenStream *mf = frt_mapping_filter_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_mapping_filter_t, mf);
+}
+
+static VALUE frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) {
     FrtTokenStream *ts;
-    ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = frt_mapping_filter_new(ts);
+    FrtTokenStream *sub_ts = frb_get_cwrapped_rts(rsub_ts);
+
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_mapping_filter_t, ts);
+    frt_mapping_filter_init(ts, sub_ts);
+
     rb_hash_foreach(mapping, frb_add_mappings_i, (VALUE)ts);
     frt_mulmap_compile(((FrtMappingFilter *)ts)->mapper);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
     return self;
 }
@@ -1803,14 +1836,11 @@ static void Init_HyphenFilter(void) {
  *     }
  *     filt = MappingFilter.new(token_stream, mapping)
  */
-static void Init_MappingFilter(void)
-{
-    cMappingFilter =
-        rb_define_class_under(mAnalysis, "MappingFilter", cTokenStream);
+static void Init_MappingFilter(void) {
+    cMappingFilter = rb_define_class_under(mAnalysis, "MappingFilter", cTokenStream);
     frb_mark_cclass(cMappingFilter);
-    rb_define_alloc_func(cMappingFilter, frb_data_alloc);
-    rb_define_method(cMappingFilter, "initialize",
-                     frb_mapping_filter_init, 2);
+    rb_define_alloc_func(cMappingFilter, frb_mapping_filter_alloc);
+    rb_define_method(cMappingFilter, "initialize", frb_mapping_filter_init, 2);
 }
 
 /*
@@ -1826,14 +1856,11 @@ static void Init_MappingFilter(void)
  *
  *    ["the", "pig", "and", "whistle"] => ["pig", "whistle"]
  */
-static void Init_StopFilter(void)
-{
-    cStopFilter =
-        rb_define_class_under(mAnalysis, "StopFilter", cTokenStream);
+static void Init_StopFilter(void) {
+    cStopFilter = rb_define_class_under(mAnalysis, "StopFilter", cTokenStream);
     frb_mark_cclass(cStopFilter);
-    rb_define_alloc_func(cStopFilter, frb_data_alloc);
-    rb_define_method(cStopFilter, "initialize",
-                     frb_stop_filter_init, -1);
+    rb_define_alloc_func(cStopFilter, frb_stop_filter_alloc);
+    rb_define_method(cStopFilter, "initialize", frb_stop_filter_init, -1);
 }
 
 /*

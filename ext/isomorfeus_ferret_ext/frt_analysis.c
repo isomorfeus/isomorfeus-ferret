@@ -799,27 +799,24 @@ void frt_token_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
     TkFilt(ts)->sub_ts  = sub_ts;
 }
 
-/****************************************************************************
- * FrtStopFilter
- ****************************************************************************/
+/*****************************************************************************/
+/**** FrtStopFilter **********************************************************/
+/*****************************************************************************/
 
 #define StopFilt(filter) ((FrtStopFilter *)(filter))
 
-static void sf_destroy_i(FrtTokenStream *ts)
-{
+static void sf_destroy_i(FrtTokenStream *ts) {
     frt_h_destroy(StopFilt(ts)->words);
     filter_destroy_i(ts);
 }
 
-static FrtTokenStream *sf_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *sf_clone_i(FrtTokenStream *orig_ts) {
     FrtTokenStream *new_ts = frt_filter_clone_size(orig_ts, sizeof(FrtMappingFilter));
     FRT_REF(StopFilt(new_ts)->words);
     return new_ts;
 }
 
-static FrtToken *sf_next(FrtTokenStream *ts)
-{
+static FrtToken *sf_next(FrtTokenStream *ts) {
     int pos_inc = 0;
     FrtHash *words = StopFilt(ts)->words;
     FrtTokenFilter *tf = TkFilt(ts);
@@ -837,71 +834,75 @@ static FrtToken *sf_next(FrtTokenStream *ts)
     return tk;
 }
 
-FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *sub_ts,
-                                            const char **words, int len)
-{
+FrtTokenStream *frt_stop_filter_alloc() {
+    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtStopFilter));
+}
+
+void frt_stop_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
+    frt_token_filter_init(ts, sub_ts);
+    ts->next            = &sf_next;
+    ts->destroy_i       = &sf_destroy_i;
+    ts->clone_i         = &sf_clone_i;
+}
+
+void frt_stop_filter_set_words_len(FrtTokenStream *ts, const char **words, int len) {
     int i;
     char *word;
     FrtHash *word_table = frt_h_new_str(&free, (frt_free_ft) NULL);
-    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts, NULL);
-
     for (i = 0; i < len; i++) {
         word = frt_estrdup(words[i]);
         frt_h_set(word_table, word, word);
     }
     StopFilt(ts)->words = word_table;
-    ts->next            = &sf_next;
-    ts->destroy_i       = &sf_destroy_i;
-    ts->clone_i         = &sf_clone_i;
+}
+
+FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *sub_ts, const char **words, int len) {
+    FrtTokenStream *ts = frt_stop_filter_alloc();
+    frt_stop_filter_init(ts, sub_ts);
+    frt_stop_filter_set_words_len(ts, words, len);
     return ts;
 }
 
-FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *sub_ts,
-                                        const char **words)
-{
+void frt_stop_filter_set_words(FrtTokenStream *ts, const char **words) {
     char *word;
     FrtHash *word_table = frt_h_new_str(&free, (frt_free_ft) NULL);
-    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts, NULL);
-
     while (*words) {
         word = frt_estrdup(*words);
         frt_h_set(word_table, word, word);
         words++;
     }
-
     StopFilt(ts)->words = word_table;
-    ts->next            = &sf_next;
-    ts->destroy_i       = &sf_destroy_i;
-    ts->clone_i         = &sf_clone_i;
+}
+
+FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *sub_ts, const char **words) {
+    FrtTokenStream *ts = frt_stop_filter_alloc();
+    frt_stop_filter_init(ts, sub_ts);
+    frt_stop_filter_set_words(ts, words);
     return ts;
 }
 
-FrtTokenStream *frt_stop_filter_new(FrtTokenStream *ts)
-{
-    return frt_stop_filter_new_with_words(ts, FRT_FULL_ENGLISH_STOP_WORDS);
+FrtTokenStream *frt_stop_filter_new(FrtTokenStream *sub_ts) {
+    return frt_stop_filter_new_with_words(sub_ts, FRT_FULL_ENGLISH_STOP_WORDS);
 }
 
-/****************************************************************************
- * MappingFilter
- ****************************************************************************/
+/*****************************************************************************/
+/*** MappingFilter ***********************************************************/
+/*****************************************************************************/
 
 #define MFilt(filter) ((FrtMappingFilter *)(filter))
 
-static void mf_destroy_i(FrtTokenStream *ts)
-{
+static void mf_destroy_i(FrtTokenStream *ts) {
     frt_mulmap_destroy(MFilt(ts)->mapper);
     filter_destroy_i(ts);
 }
 
-static FrtTokenStream *mf_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *mf_clone_i(FrtTokenStream *orig_ts) {
     FrtTokenStream *new_ts = frt_filter_clone_size(orig_ts, sizeof(FrtMappingFilter));
     FRT_REF(MFilt(new_ts)->mapper);
     return new_ts;
 }
 
-static FrtToken *mf_next(FrtTokenStream *ts)
-{
+static FrtToken *mf_next(FrtTokenStream *ts) {
     char buf[FRT_MAX_WORD_SIZE + 1];
     FrtMultiMapper *mapper = MFilt(ts)->mapper;
     FrtTokenFilter *tf = TkFilt(ts);
@@ -913,30 +914,33 @@ static FrtToken *mf_next(FrtTokenStream *ts)
     return tk;
 }
 
-static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
-{
+static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
     FrtMultiMapper *mm = MFilt(ts)->mapper;
-    if (mm->d_size == 0) {
+    if (mm->d_size == 0)
         frt_mulmap_compile(MFilt(ts)->mapper);
-    }
     filter_reset(ts, text, encoding);
     return ts;
 }
 
-FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts)
-{
-    FrtTokenStream *ts = tf_new(FrtMappingFilter, sub_ts, NULL);
-    MFilt(ts)->mapper  = frt_mulmap_new();
+FrtTokenStream *frt_mapping_filter_alloc() {
+    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtMappingFilter));
+}
+
+void frt_mapping_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
     ts->next           = &mf_next;
     ts->destroy_i      = &mf_destroy_i;
     ts->clone_i        = &mf_clone_i;
     ts->reset          = &mf_reset;
+    MFilt(ts)->mapper  = frt_mulmap_new();
+}
+
+FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts) {
+    FrtTokenStream *ts = frt_mapping_filter_alloc();
+    frt_mapping_filter_init(ts, sub_ts);
     return ts;
 }
 
-FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern,
-                                const char *replacement)
-{
+FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern, const char *replacement) {
     frt_mulmap_add_mapping(MFilt(ts)->mapper, pattern, replacement);
     return ts;
 }
