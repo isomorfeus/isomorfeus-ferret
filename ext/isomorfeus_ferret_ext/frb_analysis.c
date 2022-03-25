@@ -513,9 +513,16 @@ static VALUE frb_ts_get_text(VALUE self) {
  *  tokens.
  */
 static VALUE frb_ts_next(VALUE self) {
-    FrtTokenStream *ts;
+    FrtTokenStream *ts = NULL;
     FrtToken *next;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    struct RTypedData *t = RTYPEDDATA(self);
+    if (strcmp(t->type->wrap_struct_name, "FrbTokenStream") == 0) {
+        TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    } else if (strcmp(t->type->wrap_struct_name, "FrbRegExpTokenStream") ==0) {
+        TypedData_Get_Struct(self, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
+    } else {
+        TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    }
     next = ts->next(ts);
     if (next == NULL) {
         return Qnil;
