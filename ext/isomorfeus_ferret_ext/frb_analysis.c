@@ -917,13 +917,26 @@ frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self)
  *  lowercase based on the current locale.
  */
 
-static VALUE
-frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
-{
+const rb_data_type_t frb_lowercase_filter_t = {
+    .wrap_struct_name = "FrbLowercaseFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_tf_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_lowercase_filter_alloc(VALUE rclass) {
+    FrtTokenFilter *tf;
+    return TypedData_Make_Struct(rclass, FrtTokenFilter, &frb_lowercase_filter_t, tf);
+}
+
+static VALUE frb_lowercase_filter_init(VALUE self, VALUE rsub_ts) {
     FrtTokenStream *sub_ts = frb_get_cwrapped_rts(rsub_ts);
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_filter_t, ts);
-    ts = frt_lowercase_filter_new(sub_ts, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_lowercase_filter_t, ts);
+    frt_lowercase_filter_init(ts, sub_ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
     object_add(ts, self);
     return self;
@@ -939,14 +952,33 @@ frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
  *  search for "e-mail", "email" and "mail" will all match. This filter is
  *  used by default by the StandardAnalyzer.
  */
-static VALUE
-frb_hyphen_filter_init(VALUE self, VALUE rsub_ts)
-{
-    FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = frt_hyphen_filter_new(ts);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
+static size_t frb_hyphen_filter_size(const void *p) {
+    return sizeof(FrtHyphenFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_hyphen_filter_t = {
+    .wrap_struct_name = "FrbHyphenFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_hyphen_filter_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_hyphen_filter_alloc(VALUE rclass) {
+    FrtHyphenFilter *hf;
+    return TypedData_Make_Struct(rclass, FrtHyphenFilter, &frb_hyphen_filter_t, hf);
+}
+
+static VALUE frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) {
+    FrtTokenStream *sub_ts = frb_get_cwrapped_rts(rsub_ts);
+    FrtTokenStream *ts;
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_hyphen_filter_t, ts);
+    frt_hyphen_filter_init(ts, sub_ts);
+    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
     object_add(ts, self);
     return self;
 }
@@ -1701,11 +1733,10 @@ static void Init_RegExpTokenizer(void) {
  *    ["One", "TWO", "three", "RÉSUMÉ"] => ["one", "two", "three", "résumé"]
  *
  */
-static void Init_LowerCaseFilter(void)
-{
+static void Init_LowerCaseFilter(void) {
     cLowerCaseFilter = rb_define_class_under(mAnalysis, "LowerCaseFilter", cTokenStream);
     frb_mark_cclass(cLowerCaseFilter);
-    rb_define_alloc_func(cLowerCaseFilter, frb_token_filter_alloc);
+    rb_define_alloc_func(cLowerCaseFilter, frb_lowercase_filter_alloc);
     rb_define_method(cLowerCaseFilter, "initialize", frb_lowercase_filter_init, 1);
 }
 
@@ -1727,7 +1758,7 @@ static void Init_LowerCaseFilter(void)
 static void Init_HyphenFilter(void) {
     cHyphenFilter = rb_define_class_under(mAnalysis, "HyphenFilter", cTokenStream);
     frb_mark_cclass(cHyphenFilter);
-    rb_define_alloc_func(cHyphenFilter, frb_data_alloc);
+    rb_define_alloc_func(cHyphenFilter, frb_hyphen_filter_alloc);
     rb_define_method(cHyphenFilter, "initialize", frb_hyphen_filter_init, 1);
 }
 

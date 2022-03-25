@@ -79,15 +79,6 @@ typedef struct FrtMappingFilter {
     FrtMultiMapper *mapper;
 } FrtMappingFilter;
 
-typedef struct FrtHyphenFilter {
-    FrtTokenFilter super;
-    char text[FRT_MAX_WORD_SIZE];
-    int start;
-    int pos;
-    int len;
-    FrtToken *tk;
-} FrtHyphenFilter;
-
 typedef struct FrtStemFilter {
     FrtTokenFilter        super;
     struct sb_stemmer  *stemmer;
@@ -105,8 +96,26 @@ extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase, FrtTokenStre
 extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *ats);
 extern FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats);
 
-extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts, FrtTokenStream *ats);
+/*** FrtHyphenFilter *********************************************************/
+
+typedef struct FrtHyphenFilter {
+    FrtTokenFilter super;
+    char text[FRT_MAX_WORD_SIZE];
+    int start;
+    int pos;
+    int len;
+    FrtToken *tk;
+} FrtHyphenFilter;
+
+extern FrtTokenStream *frt_hyphen_filter_alloc();
+extern void            frt_hyphen_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
+extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts);
+
+/*** FrtLowercaseFilter *********************************************************/
+
+extern FrtTokenStream *frt_lowercase_filter_alloc();
+extern void            frt_lowercase_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
+extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts);
 
 extern const char *FRT_ENGLISH_STOP_WORDS[];
 extern const char *FRT_FULL_ENGLISH_STOP_WORDS[];

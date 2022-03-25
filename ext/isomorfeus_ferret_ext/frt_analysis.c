@@ -287,7 +287,7 @@ FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase, FrtTokenStream *ats
     FrtTokenStream *ts = ts_new(ats);
     ts->next = &wst_next;
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts, NULL);
+        ts = frt_lowercase_filter_new(ts);
     return ts;
 }
 
@@ -342,7 +342,7 @@ FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
     FrtTokenStream *ts = ts_new(ats);
     ts->next = &lt_next;
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts, NULL);
+        ts = frt_lowercase_filter_new(ts);
     return ts;
 }
 
@@ -748,7 +748,7 @@ static FrtTokenStream *std_ts_new(FrtTokenStream *ats) {
 FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
     FrtTokenStream *ts = std_ts_new(ats);
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts, NULL);
+        ts = frt_lowercase_filter_new(ts);
     return ts;
 }
 
@@ -787,15 +787,16 @@ static void filter_destroy_i(FrtTokenStream *ts)
 FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts, FrtTokenStream *ats)
 {
     FrtTokenStream *ts  = (ats != NULL) ? ats : (FrtTokenStream *)frt_ecalloc(size);
+    return ts;
+}
 
-    TkFilt(ts)->sub_ts  = sub_ts;
-
+void frt_token_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
     ts->clone_i         = &filter_clone_i;
     ts->destroy_i       = &filter_destroy_i;
     ts->reset           = &filter_reset;
     ts->ref_cnt         = 1;
 
-    return ts;
+    TkFilt(ts)->sub_ts  = sub_ts;
 }
 
 /****************************************************************************
@@ -940,20 +941,18 @@ FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern,
     return ts;
 }
 
-/****************************************************************************
- * HyphenFilter
- ****************************************************************************/
+/*****************************************************************************/
+/*** FrtHyphenFilter *********************************************************/
+/*****************************************************************************/
 
 #define HyphenFilt(filter) ((FrtHyphenFilter *)(filter))
 
-static FrtTokenStream *hf_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *hf_clone_i(FrtTokenStream *orig_ts) {
     FrtTokenStream *new_ts = frt_filter_clone_size(orig_ts, sizeof(FrtHyphenFilter));
     return new_ts;
 }
 
-static FrtToken *hf_next(FrtTokenStream *ts)
-{
+static FrtToken *hf_next(FrtTokenStream *ts) {
     int cp_len = 0;
     OnigCodePoint cp;
     rb_encoding *enc = utf8_encoding;
@@ -1024,18 +1023,25 @@ static FrtToken *hf_next(FrtTokenStream *ts)
     return tk;
 }
 
-FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts)
-{
-    FrtTokenStream *ts = tf_new(FrtHyphenFilter, sub_ts, NULL);
+FrtTokenStream *frt_hyphen_filter_alloc() {
+    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtHyphenFilter));
+}
+
+void frt_hyphen_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
+    frt_token_filter_init(ts, sub_ts);
     ts->next           = &hf_next;
     ts->clone_i        = &hf_clone_i;
+}
+
+FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts) {
+    FrtTokenStream *ts = frt_hyphen_filter_alloc();
+    frt_hyphen_filter_init(ts, sub_ts);
     return ts;
 }
 
-/****************************************************************************
- * LowerCaseFilter
- ****************************************************************************/
-
+/*****************************************************************************/
+/*** FrtLowercaseFilter ******************************************************/
+/*****************************************************************************/
 
 static FrtToken *lcf_next(FrtTokenStream *ts) {
     int len = 0;
@@ -1058,10 +1064,18 @@ static FrtToken *lcf_next(FrtTokenStream *ts) {
     return tk;
 }
 
-FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts, FrtTokenStream *ats)
-{
-    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts, ats);
+FrtTokenStream *frt_lowercase_filter_alloc() {
+    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtTokenFilter));
+}
+
+void frt_lowercase_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
+    frt_token_filter_init(ts, sub_ts);
     ts->next = &lcf_next;
+}
+
+FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts) {
+    FrtTokenStream *ts = frt_lowercase_filter_alloc();
+    frt_lowercase_filter_init(ts, sub_ts);
     return ts;
 }
 
