@@ -40,7 +40,7 @@ void prepare_filter_index(FrtStore *store)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false, NULL), NULL);
     for (i = 0; i < FILTER_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);

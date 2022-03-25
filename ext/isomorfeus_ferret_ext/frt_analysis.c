@@ -135,14 +135,11 @@ FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size)
     return ts;
 }
 
-FrtTokenStream *frt_ts_new_i(size_t size)
-{
-    FrtTokenStream *ts = (FrtTokenStream *)frt_ecalloc(size);
-
+FrtTokenStream *frt_ts_new_i(size_t size, FrtTokenStream *ats) {
+    FrtTokenStream *ts = (ats != NULL) ? ats : (FrtTokenStream *)frt_ecalloc(size);
     ts->destroy_i = (void (*)(FrtTokenStream *))&free;
     ts->reset = &ts_reset;
     ts->ref_cnt = 1;
-
     return ts;
 }
 
@@ -152,23 +149,18 @@ FrtTokenStream *frt_ts_new_i(size_t size)
 
 #define CTS(token_stream) ((FrtCachedTokenStream *)(token_stream))
 
-static FrtTokenStream *cts_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *cts_clone_i(FrtTokenStream *orig_ts) {
     return frt_ts_clone_size(orig_ts, sizeof(FrtCachedTokenStream));
 }
 
-static FrtTokenStream *cts_new()
-{
-    FrtTokenStream *ts = frt_ts_new(FrtCachedTokenStream);
+static FrtTokenStream *cts_new() {
+    FrtTokenStream *ts = frt_ts_new(FrtCachedTokenStream, NULL);
     ts->clone_i = &cts_clone_i;
     return ts;
 }
 
-/* * Multi-byte TokenStream * */
-
-static FrtTokenStream *ts_new()
-{
-    FrtTokenStream *ts = frt_ts_new(FrtCachedTokenStream);
+static FrtTokenStream *ts_new(FrtTokenStream *ats) {
+    FrtTokenStream *ts = frt_ts_new(FrtCachedTokenStream, ats);
     ts->reset = &ts_reset;
     ts->clone_i = &cts_clone_i;
     ts->ref_cnt = 1;
@@ -206,9 +198,10 @@ static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a, FrtSymbol field, char *
 
 FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
                        void (*destroy_i)(FrtAnalyzer *a),
-                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding))
+                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding),
+                       FrtAnalyzer *aa)
 {
-    FrtAnalyzer *a = FRT_ALLOC(FrtAnalyzer);
+    FrtAnalyzer *a = (aa != NULL) ? aa : FRT_ALLOC(FrtAnalyzer);
     a->current_ts = ts;
     a->destroy_i = (destroy_i ? destroy_i : &frt_a_standard_destroy_i);
     a->get_ts = (get_ts ? get_ts : &a_standard_get_ts);
@@ -247,7 +240,7 @@ FrtTokenStream *frt_non_tokenizer_new()
  */
 FrtAnalyzer *frt_non_analyzer_new()
 {
-    return frt_analyzer_new(frt_non_tokenizer_new(), NULL, NULL);
+    return frt_analyzer_new(frt_non_tokenizer_new(), NULL, NULL, NULL);
 }
 
 /****************************************************************************
@@ -290,8 +283,8 @@ static FrtToken *wst_next(FrtTokenStream *ts)
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
 }
 
-FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase) {
-    FrtTokenStream *ts = ts_new();
+FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
+    FrtTokenStream *ts = ts_new(ats);
     ts->next = &wst_next;
     if (lowercase)
         ts = frt_lowercase_filter_new(ts);
@@ -302,8 +295,8 @@ FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase) {
  * WhitespaceAnalyzer
  */
 
-FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase) {
-    return frt_analyzer_new(frt_whitespace_tokenizer_new(lowercase), NULL, NULL);
+FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase, FrtAnalyzer *aa) {
+    return frt_analyzer_new(frt_whitespace_tokenizer_new(lowercase, NULL), NULL, NULL, aa);
 }
 
 /****************************************************************************
@@ -345,16 +338,16 @@ static FrtToken *lt_next(FrtTokenStream *ts) {
     return frt_tk_set_ts(&(CTS(ts)->token), start, t, ts->text, 1, enc);
 }
 
-FrtTokenStream *frt_letter_tokenizer_new(bool lowercase) {
-    FrtTokenStream *ts = ts_new();
+FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
+    FrtTokenStream *ts = ts_new(ats);
     ts->next = &lt_next;
     if (lowercase)
         ts = frt_lowercase_filter_new(ts);
     return ts;
 }
 
-FrtAnalyzer *frt_letter_analyzer_new(bool lowercase) {
-    return frt_analyzer_new(frt_letter_tokenizer_new(lowercase), NULL, NULL);
+FrtAnalyzer *frt_letter_analyzer_new(bool lowercase, FrtAnalyzer *aa) {
+    return frt_analyzer_new(frt_letter_tokenizer_new(lowercase, NULL), NULL, NULL, aa);
 }
 
 /****************************************************************************
@@ -740,23 +733,23 @@ static FrtToken *std_next(FrtTokenStream *ts)
     return &(CTS(ts)->token);
 }
 
-static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts) {
     return frt_ts_clone_size(orig_ts, sizeof(FrtStandardTokenizer));
 }
 
-static FrtTokenStream *std_ts_new()
-{
-    FrtTokenStream *ts = frt_ts_new(FrtStandardTokenizer);
+static FrtTokenStream *std_ts_new(FrtTokenStream *ats) {
+    FrtTokenStream *ts = frt_ts_new(FrtStandardTokenizer, ats);
     ts->clone_i        = &std_ts_clone_i;
     ts->next           = &std_next;
 
     return ts;
 }
 
-FrtTokenStream *frt_standard_tokenizer_new()
-{
-    return std_ts_new();
+FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
+    FrtTokenStream *ts = std_ts_new(ats);
+    if (lowercase)
+        ts = frt_lowercase_filter_new(ts);
+    return ts;
 }
 
 /****************************************************************************
@@ -1155,21 +1148,14 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm)
  * Legacy
  ****************************************************************************/
 
-FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words,
-                                                     bool lowercase)
-{
-    FrtTokenStream *ts = frt_standard_tokenizer_new();
-    if (lowercase) {
-        ts = frt_lowercase_filter_new(ts);
-    }
+FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words, bool lowercase, FrtAnalyzer *aa) {
+    FrtTokenStream *ts = frt_standard_tokenizer_new(lowercase, NULL);
     ts = frt_hyphen_filter_new(frt_stop_filter_new_with_words(ts, words));
-    return frt_analyzer_new(ts, NULL, NULL);
+    return frt_analyzer_new(ts, NULL, NULL, aa);
 }
 
-FrtAnalyzer *frt_standard_analyzer_new(bool lowercase)
-{
-    return frt_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS,
-                                                      lowercase);
+FrtAnalyzer *frt_standard_analyzer_new(bool lowercase, FrtAnalyzer *aa) {
+    return frt_standard_analyzer_new_with_words(FRT_FULL_ENGLISH_STOP_WORDS, lowercase, aa);
 }
 
 /****************************************************************************

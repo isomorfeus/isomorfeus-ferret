@@ -16,7 +16,7 @@ static FrtIndexWriter *create_iw(FrtStore *store)
     FrtFieldInfos *fis = create_fis();
     frt_index_create(store, fis);
     frt_fis_deref(fis);
-    return frt_iw_open(store, frt_standard_analyzer_new(true), &frt_default_config);
+    return frt_iw_open(store, frt_standard_analyzer_new(true, NULL), &frt_default_config);
 }
 
 static FrtDocument *prep_doc()

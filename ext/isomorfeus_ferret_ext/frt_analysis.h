@@ -47,8 +47,8 @@ struct FrtTokenStream {
     int             ref_cnt;
 };
 
-#define frt_ts_new(type) frt_ts_new_i(sizeof(type))
-extern FrtTokenStream *frt_ts_new_i(size_t size);
+#define frt_ts_new(type, ats) frt_ts_new_i(sizeof(type), ats)
+extern FrtTokenStream *frt_ts_new_i(size_t size, FrtTokenStream *ats);
 extern FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size);
 
 typedef struct FrtCachedTokenStream {
@@ -101,9 +101,9 @@ typedef struct FrtStemFilter {
 extern void frt_ts_deref(FrtTokenStream *ts);
 
 extern FrtTokenStream *frt_non_tokenizer_new();
-extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase);
-extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase);
-extern FrtTokenStream *frt_standard_tokenizer_new();
+extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase, FrtTokenStream *ats);
+extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *ats);
+extern FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats);
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
 extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts);
@@ -150,19 +150,20 @@ extern void frt_a_deref(FrtAnalyzer *a);
 
 extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts,
                               void (*destroy)(FrtAnalyzer *a),
-                              FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding));
+                              FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding),
+                              FrtAnalyzer *aa);
 extern FrtAnalyzer *frt_non_analyzer_new();
 
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
-extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_standard_analyzer_new(bool lowercase);
-extern FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words, bool lowercase);
+extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase, FrtAnalyzer *aa);
+extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase, FrtAnalyzer *aa);
+extern FrtAnalyzer *frt_standard_analyzer_new(bool lowercase, FrtAnalyzer *aa);
+extern FrtAnalyzer *frt_standard_analyzer_new_with_words(const char **words, bool lowercase, FrtAnalyzer *aa);
 
 #define PFA(analyzer) ((FrtPerFieldAnalyzer *)(analyzer))
-typedef struct FrtPerFieldAnalyzer
-{
+
+typedef struct FrtPerFieldAnalyzer {
     FrtAnalyzer    super;
     FrtHash  *dict;
     FrtAnalyzer   *default_a;

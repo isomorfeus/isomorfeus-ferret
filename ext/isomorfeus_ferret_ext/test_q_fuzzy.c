@@ -35,7 +35,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false, NULL), NULL);
 
     add_doc("aaaaa", iw);
     add_doc("aaaab", iw);
@@ -122,7 +122,7 @@ static void test_fuzziness_long(TestCase *tc, void *data)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false, NULL), NULL);
 
     add_doc("aaaaaaa", iw);
     add_doc("segment", iw);
