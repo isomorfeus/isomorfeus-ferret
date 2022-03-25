@@ -516,6 +516,7 @@ static VALUE frb_ts_next(VALUE self) {
     FrtTokenStream *ts = NULL;
     FrtToken *next;
     struct RTypedData *t = RTYPEDDATA(self);
+    // TODO find better/faster solution
     if (strcmp(t->type->wrap_struct_name, "FrbTokenStream") == 0) {
         TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
     } else if (strcmp(t->type->wrap_struct_name, "FrbRegExpTokenStream") ==0) {
@@ -540,19 +541,37 @@ static VALUE frb_ts_next(VALUE self) {
 static void
 frb_tf_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (TkFilt(ts)->sub_ts) {
+    if (TkFilt(ts)->sub_ts)
         frb_gc_mark(&TkFilt(ts)->sub_ts);
-    }
 }
 
-static void frb_tf_free(FrtTokenStream *ts) {
-    if (TkFilt(ts)->sub_ts && (object_get(&TkFilt(ts)->sub_ts) != Qnil)) {
+static void frb_tf_free(void *p) {
+    FrtTokenStream *ts = (FrtTokenStream *)p;
+    if (TkFilt(ts)->sub_ts && (object_get(&TkFilt(ts)->sub_ts) != Qnil))
         object_del(&TkFilt(ts)->sub_ts);
-    }
     object_del(ts);
     frt_ts_deref(ts);
 }
 
+static size_t frb_tf_size(const void *p) {
+    return sizeof(FrtTokenFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_token_filter_t = {
+    .wrap_struct_name = "FrbTokenFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_tf_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_token_filter_alloc(VALUE rclass) {
+    FrtTokenFilter *tf;
+    return TypedData_Make_Struct(rclass, FrtTokenFilter, &frb_token_filter_t, tf);
+}
 
 /****************************************************************************
  * CWrappedTokenStream
@@ -897,14 +916,15 @@ frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self)
  *  Create an LowerCaseFilter which normalizes a token's text to
  *  lowercase based on the current locale.
  */
+
 static VALUE
 frb_lowercase_filter_init(VALUE self, VALUE rsub_ts)
 {
-    FrtTokenStream *ts = frb_get_cwrapped_rts(rsub_ts);
-    ts = frt_lowercase_filter_new(ts);
+    FrtTokenStream *sub_ts = frb_get_cwrapped_rts(rsub_ts);
+    FrtTokenStream *ts;
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_filter_t, ts);
+    ts = frt_lowercase_filter_new(sub_ts, ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
     return self;
 }
@@ -1683,12 +1703,10 @@ static void Init_RegExpTokenizer(void) {
  */
 static void Init_LowerCaseFilter(void)
 {
-    cLowerCaseFilter =
-        rb_define_class_under(mAnalysis, "LowerCaseFilter", cTokenStream);
+    cLowerCaseFilter = rb_define_class_under(mAnalysis, "LowerCaseFilter", cTokenStream);
     frb_mark_cclass(cLowerCaseFilter);
-    rb_define_alloc_func(cLowerCaseFilter, frb_data_alloc);
-    rb_define_method(cLowerCaseFilter, "initialize",
-                     frb_lowercase_filter_init, 1);
+    rb_define_alloc_func(cLowerCaseFilter, frb_token_filter_alloc);
+    rb_define_method(cLowerCaseFilter, "initialize", frb_lowercase_filter_init, 1);
 }
 
 /*

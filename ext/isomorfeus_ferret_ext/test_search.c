@@ -137,7 +137,7 @@ static FrtTokenStream *dbl_tf_clone_i(FrtTokenStream *ts)
 
 static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts = tf_new(DoubleFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(DoubleFilter, sub_ts, NULL);
     ts->next           = &dbl_tf_next;
     ts->clone_i        = &dbl_tf_clone_i;
     return ts;

@@ -183,7 +183,7 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "23#!$", 49, 54, enc);
     test_token(frt_ts_next(ts), "ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ", 55, 86, enc);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
-    ts = frt_lowercase_filter_new(ts);
+    ts = frt_lowercase_filter_new(ts, NULL);
     ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18, enc);
     test_token(frt_ts_next(ts), "is", 19, 21, enc);
@@ -330,7 +330,7 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "ÚØÃ", 72, 78, enc);
     test_token(frt_ts_next(ts), "ÖÎÍ", 80, 86, enc);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
-    ts = frt_lowercase_filter_new(ts);
+    ts = frt_lowercase_filter_new(ts, NULL);
     ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8, enc);
     test_token(frt_ts_next(ts), "gmail", 9, 14, enc);

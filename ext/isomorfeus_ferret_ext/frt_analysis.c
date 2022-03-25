@@ -287,7 +287,7 @@ FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase, FrtTokenStream *ats
     FrtTokenStream *ts = ts_new(ats);
     ts->next = &wst_next;
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts, NULL);
     return ts;
 }
 
@@ -342,7 +342,7 @@ FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
     FrtTokenStream *ts = ts_new(ats);
     ts->next = &lt_next;
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts, NULL);
     return ts;
 }
 
@@ -748,7 +748,7 @@ static FrtTokenStream *std_ts_new(FrtTokenStream *ats) {
 FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats) {
     FrtTokenStream *ts = std_ts_new(ats);
     if (lowercase)
-        ts = frt_lowercase_filter_new(ts);
+        ts = frt_lowercase_filter_new(ts, NULL);
     return ts;
 }
 
@@ -784,9 +784,9 @@ static void filter_destroy_i(FrtTokenStream *ts)
     free(ts);
 }
 
-FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts)
+FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts, FrtTokenStream *ats)
 {
-    FrtTokenStream *ts     = (FrtTokenStream *)frt_ecalloc(size);
+    FrtTokenStream *ts  = (ats != NULL) ? ats : (FrtTokenStream *)frt_ecalloc(size);
 
     TkFilt(ts)->sub_ts  = sub_ts;
 
@@ -842,7 +842,7 @@ FrtTokenStream *frt_stop_filter_new_with_words_len(FrtTokenStream *sub_ts,
     int i;
     char *word;
     FrtHash *word_table = frt_h_new_str(&free, (frt_free_ft) NULL);
-    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts, NULL);
 
     for (i = 0; i < len; i++) {
         word = frt_estrdup(words[i]);
@@ -860,7 +860,7 @@ FrtTokenStream *frt_stop_filter_new_with_words(FrtTokenStream *sub_ts,
 {
     char *word;
     FrtHash *word_table = frt_h_new_str(&free, (frt_free_ft) NULL);
-    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtStopFilter, sub_ts, NULL);
 
     while (*words) {
         word = frt_estrdup(*words);
@@ -924,7 +924,7 @@ static FrtTokenStream *mf_reset(FrtTokenStream *ts, char *text, rb_encoding *enc
 
 FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts = tf_new(FrtMappingFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtMappingFilter, sub_ts, NULL);
     MFilt(ts)->mapper  = frt_mulmap_new();
     ts->next           = &mf_next;
     ts->destroy_i      = &mf_destroy_i;
@@ -1026,7 +1026,7 @@ static FrtToken *hf_next(FrtTokenStream *ts)
 
 FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts = tf_new(FrtHyphenFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtHyphenFilter, sub_ts, NULL);
     ts->next           = &hf_next;
     ts->clone_i        = &hf_clone_i;
     return ts;
@@ -1058,9 +1058,9 @@ static FrtToken *lcf_next(FrtTokenStream *ts) {
     return tk;
 }
 
-FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts)
+FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts, FrtTokenStream *ats)
 {
-    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts);
+    FrtTokenStream *ts = tf_new(FrtTokenFilter, sub_ts, ats);
     ts->next = &lcf_next;
     return ts;
 }
@@ -1114,7 +1114,7 @@ static FrtTokenStream *stemf_clone_i(FrtTokenStream *orig_ts) {
 
 FrtTokenStream *frt_stem_filter_new(FrtTokenStream *ts, const char *algorithm)
 {
-    FrtTokenStream *tf = tf_new(FrtStemFilter, ts);
+    FrtTokenStream *tf = tf_new(FrtStemFilter, ts, NULL);
     char *my_algorithm = NULL;
     char *s = NULL;
 

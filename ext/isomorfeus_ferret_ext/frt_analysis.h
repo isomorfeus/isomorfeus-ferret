@@ -66,8 +66,8 @@ typedef struct FrtTokenFilter {
 } FrtTokenFilter;
 
 extern FrtTokenStream *frt_filter_clone_size(FrtTokenStream *ts, size_t size);
-#define tf_new(type, sub) frt_tf_new_i(sizeof(type), sub)
-extern FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts);
+#define tf_new(type, sub, ats) frt_tf_new_i(sizeof(type), sub, ats)
+extern FrtTokenStream *frt_tf_new_i(size_t size, FrtTokenStream *sub_ts, FrtTokenStream *ats);
 
 typedef struct FrtStopFilter {
     FrtTokenFilter super;
@@ -106,7 +106,7 @@ extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase, FrtTokenStream *
 extern FrtTokenStream *frt_standard_tokenizer_new(bool lowercase, FrtTokenStream *ats);
 
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *ts);
-extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts);
+extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *ts, FrtTokenStream *ats);
 
 extern const char *FRT_ENGLISH_STOP_WORDS[];
 extern const char *FRT_FULL_ENGLISH_STOP_WORDS[];
@@ -170,8 +170,6 @@ typedef struct FrtPerFieldAnalyzer {
 } FrtPerFieldAnalyzer;
 
 extern FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *a);
-extern void frt_pfa_add_field(FrtAnalyzer *self,
-                              FrtSymbol field,
-                              FrtAnalyzer *analyzer);
+extern void frt_pfa_add_field(FrtAnalyzer *self, FrtSymbol field, FrtAnalyzer *analyzer);
 
 #endif
