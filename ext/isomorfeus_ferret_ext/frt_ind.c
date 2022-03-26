@@ -99,7 +99,7 @@ void frt_ensure_writer_open(FrtIndex *self)
 
         /* make sure the analzyer isn't deleted by the FrtIndexWriter */
         FRT_REF(self->analyzer);
-        self->iw = frt_iw_open(self->store, self->analyzer, false);
+        self->iw = frt_iw_open(NULL, self->store, self->analyzer, false);
         self->iw->config.use_compound_file = self->config.use_compound_file;
     }
 }

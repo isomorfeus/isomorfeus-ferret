@@ -213,7 +213,7 @@ static void prepare_search_index(FrtStore *store)
     frt_fis_deref(fis);
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    iw = frt_iw_open(store, dbl_analyzer_new(), NULL);
+    iw = frt_iw_open(NULL, store, dbl_analyzer_new(), NULL);
     for (i = 0; i < SEARCH_DOCS_SIZE; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+1);
@@ -1712,7 +1712,7 @@ static void prepare_multi_search_index(FrtStore *store, struct Data data[],
     frt_fis_deref(fis);
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    iw = frt_iw_open(store, dbl_analyzer_new(), NULL);
+    iw = frt_iw_open(NULL, store, dbl_analyzer_new(), NULL);
     for (i = 0; i < d_cnt; i++) {
         FrtDocument *doc = frt_doc_new();
         doc->boost = (float)(i+w);

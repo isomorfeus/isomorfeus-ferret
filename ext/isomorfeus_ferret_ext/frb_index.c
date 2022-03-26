@@ -438,11 +438,30 @@ frb_get_field_infos(FrtFieldInfos *fis)
  *  specified in the +default+ hash parameter. See FieldInfo for available
  *  property values.
  */
-static VALUE
-frb_fis_init(int argc, VALUE *argv, VALUE self)
-{
+const size_t frb_field_infos_t_size(const void *p) {
+    return sizeof(FrtFieldInfos);
+    (void)p;
+}
+
+const rb_data_type_t frb_field_infos_t = {
+    .wrap_struct_name = "FrbFieldInfos",
+    .function = {
+        .dmark = frb_fis_mark,
+        .dfree = frb_fis_free,
+        .dsize = frb_field_infos_t_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_fis_alloc(VALUE rclass) {
+    FrtFieldInfos *fis = frt_fis_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_field_infos_t, fis);
+}
+
+static VALUE frb_fis_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions;
     FrtFieldInfos *fis;
+    TypedData_Get_Struct(self, FrtFieldInfos, &frb_field_infos_t, fis);
     FrtStoreValue store = FRT_STORE_YES;
     FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
@@ -452,8 +471,7 @@ frb_fis_init(int argc, VALUE *argv, VALUE self)
     if (argc > 0) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
-    fis = frt_fis_new(store, index, term_vector);
-    Frt_Wrap_Struct(self, &frb_fis_mark, &frb_fis_free, fis);
+    fis = frt_fis_init(fis, store, index, term_vector);
     object_add(fis, self);
     return self;
 }
@@ -1341,9 +1359,26 @@ frb_iw_close(VALUE self)
  *
  * See FrtIndexWriter for more options.
  */
-static VALUE
-frb_iw_init(int argc, VALUE *argv, VALUE self)
-{
+const size_t frb_index_writer_t_size(const void *p) {
+    return sizeof(FrtIndexWriter);
+    (void)p;
+}
+
+const rb_data_type_t frb_index_writer_t = {
+    .wrap_struct_name = "FrbIndexWriter",
+    .function = {
+        .dmark = frb_iw_mark,
+        .dfree = frb_iw_free,
+        .dsize = frb_index_writer_t_size
+    }
+};
+
+static VALUE frb_iw_alloc(VALUE rclass) {
+    FrtIndexWriter *iw = frt_iw_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_index_writer_t, iw);
+}
+
+static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions, rval;
     bool create = false;
     bool create_if_missing = true;
@@ -1418,9 +1453,9 @@ frb_iw_init(int argc, VALUE *argv, VALUE self)
             }
         }
 
-        iw = frt_iw_open(store, analyzer, &config);
+        TypedData_Get_Struct(self, FrtIndexWriter, &frb_index_writer_t, iw);
+        iw = frt_iw_open(iw, store, analyzer, &config);
 
-        Frt_Wrap_Struct(self, &frb_iw_mark, &frb_iw_free, iw);
     default:
         ex_code = xcontext.excode;
         msg = xcontext.msg;
@@ -2935,13 +2970,11 @@ Init_FieldInfo(void)
  *  along. If you add a document to the index which has fields that the index
  *  doesn't know about then the default properties are used for the new field.
  */
-static void
-Init_FieldInfos(void)
-{
+static void Init_FieldInfos(void) {
     Init_FieldInfo();
 
     cFieldInfos = rb_define_class_under(mIndex, "FieldInfos", rb_cObject);
-    rb_define_alloc_func(cFieldInfos, frb_data_alloc);
+    rb_define_alloc_func(cFieldInfos, frb_fis_alloc);
 
     rb_define_method(cFieldInfos, "initialize", frb_fis_init, -1);
     rb_define_method(cFieldInfos, "to_a",       frb_fis_to_a, 0);
@@ -3287,7 +3320,7 @@ Init_IndexWriter(void)
     sym_use_compound_file   = ID2SYM(rb_intern("use_compound_file"));
 
     cIndexWriter = rb_define_class_under(mIndex, "IndexWriter", rb_cObject);
-    rb_define_alloc_func(cIndexWriter, frb_data_alloc);
+    rb_define_alloc_func(cIndexWriter, frb_iw_alloc);
 
     rb_define_const(cIndexWriter, "WRITE_LOCK_TIMEOUT", INT2FIX(1));
     rb_define_const(cIndexWriter, "COMMIT_LOCK_TIMEOUT", INT2FIX(10));

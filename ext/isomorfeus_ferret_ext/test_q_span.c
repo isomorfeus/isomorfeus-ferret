@@ -64,7 +64,7 @@ static void span_test_setup(FrtStore *store)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), NULL);
 
     for (d = data; *d != NULL; d++) {
         add_doc(*d, iw);

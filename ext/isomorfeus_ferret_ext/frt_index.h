@@ -96,19 +96,17 @@ typedef enum
 #define FRT_FI_STORE_POSITIONS_BM   0x040
 #define FRT_FI_STORE_OFFSETS_BM     0x080
 
-typedef struct FrtFieldInfo
-{
-    FrtSymbol name;
-    float boost;
+typedef struct FrtFieldInfo {
+    FrtSymbol    name;
+    float        boost;
     unsigned int bits;
-    int number;
-    int ref_cnt;
+    int          number;
+    int          ref_cnt;
 } FrtFieldInfo;
 
-extern FrtFieldInfo *frt_fi_new(FrtSymbol name,
-                                FrtStoreValue store,
-                                FrtIndexValue index,
-                                FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_alloc();
+extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_new(FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern char *frt_fi_to_s(FrtFieldInfo *fi);
 extern void frt_fi_deref(FrtFieldInfo *fi);
 
@@ -131,25 +129,24 @@ extern void frt_fi_deref(FrtFieldInfo *fi);
 
 #define FIELD_INFOS_INIT_CAPA 4
 /* carry changes over to dummy_fis in test/test_segments.c */
-typedef struct FrtFieldInfos
-{
-    FrtStoreValue store;
-    FrtIndexValue index;
+typedef struct FrtFieldInfos {
+    FrtStoreValue      store;
+    FrtIndexValue      index;
     FrtTermVectorValue term_vector;
-    int size;
-    int capa;
-    FrtFieldInfo **fields;
-    FrtHash *field_dict;
-    int ref_cnt;
+    int                size;
+    int                capa;
+    FrtFieldInfo    **fields;
+    FrtHash          *field_dict;
+    int               ref_cnt;
 } FrtFieldInfos;
 
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
-                                  FrtTermVectorValue term_vector);
+FrtFieldInfos *frt_fis_alloc();
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi);
 extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name);
 extern int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name);
-extern FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis,
-                                              FrtSymbol name);
+extern FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name);
 extern void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os);
 extern FrtFieldInfos *frt_fis_read(FrtInStream *is);
 extern char *frt_fis_to_s(FrtFieldInfos *fis);
@@ -820,23 +817,23 @@ extern void frt_dw_reset_postings(FrtHash *postings);
  *
  ****************************************************************************/
 
-struct FrtIndexWriter
-{
-    FrtConfig config;
-    frt_mutex_t mutex;
-    FrtStore *store;
-    FrtAnalyzer *analyzer;
+struct FrtIndexWriter {
+    FrtConfig        config;
+    frt_mutex_t      mutex;
+    FrtStore        *store;
+    FrtAnalyzer     *analyzer;
     FrtSegmentInfos *sis;
-    FrtFieldInfos *fis;
-    FrtDocWriter *dw;
-    FrtSimilarity *similarity;
-    FrtLock *write_lock;
-    FrtDeleter *deleter;
+    FrtFieldInfos   *fis;
+    FrtDocWriter    *dw;
+    FrtSimilarity   *similarity;
+    FrtLock         *write_lock;
+    FrtDeleter      *deleter;
 };
 
 extern void frt_index_create(FrtStore *store, FrtFieldInfos *fis);
 extern bool frt_index_is_locked(FrtStore *store);
-extern FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *analyzer, const FrtConfig *config);
+extern FrtIndexWriter *frt_iw_alloc();
+extern FrtIndexWriter *frt_iw_open(FrtIndexWriter *, FrtStore *store, FrtAnalyzer *analyzer, const FrtConfig *config);
 extern void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term);
 extern void frt_iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field, char **terms, const int term_cnt);
 extern void frt_iw_close(FrtIndexWriter *iw);

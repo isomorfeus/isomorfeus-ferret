@@ -330,7 +330,7 @@ static FrtIndexWriter *create_book_iw_conf(FrtStore *store, const FrtConfig *con
     FrtFieldInfos *fis = prep_book_fis();
     frt_index_create(store, fis);
     frt_fis_deref(fis);
-    return frt_iw_open(store, frt_whitespace_analyzer_new(false), config);
+    return frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), config);
 }
 
 static FrtIndexWriter *create_book_iw(FrtStore *store)
@@ -517,7 +517,7 @@ static void prep_test_1seg_index(FrtStore *store, FrtDocument **docs,
     FrtSegmentInfo *si = frt_si_new(frt_estrdup("_0"), doc_cnt, store);
 
     frt_index_create(store, fis);
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), NULL);
 
     dw = frt_dw_open(iw, si);
 
@@ -754,7 +754,7 @@ static void test_index_version(TestCase *tc, void *data)
     frt_ir_close(ir);
 
     /* modify index and check version has been incremented: */
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &frt_default_config);
     add_document_with_fields(iw, 1);
     frt_iw_close(iw);
     ir = frt_ir_open(store);
@@ -924,7 +924,7 @@ static void test_iw_add_doc(TestCase *tc, void *data)
     frt_iw_close(iw);
     Assert(store->exists(store, "_0.cfs"), "data should still be there");
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &frt_default_config);
     frt_iw_add_doc(iw, docs[1]);
     Aiequal(2, frt_iw_doc_count(iw));
     Assert(!store->exists(store, "_1.cfs"),
@@ -1029,7 +1029,7 @@ static void test_simulated_crashed_writer(TestCase *tc, void *data)
     ir = frt_ir_open(store);
     frt_ir_close(ir);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
 
     /* add all books */
     for (i = 0; i < BOOK_LIST_LENGTH; i++) {
@@ -1186,7 +1186,7 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &frt_default_config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &frt_default_config);
     doc = frt_doc_new();
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv1")), (char *)"", enc));
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("tv2")), (char *)"", enc));
@@ -1224,7 +1224,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     Aiequal(BOOK_LIST_LENGTH, ir->max_doc(ir));
     frt_ir_close(ir);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
     frt_iw_delete_term(iw, title, "State");
     frt_iw_close(iw);
 
@@ -1234,7 +1234,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     frt_ir_close(ir);
 
     /* test deleting multiple Terms */
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
     frt_iw_delete_term(iw, title, "The");
     frt_iw_delete_term(iw, title, "Blind");
     terms[0] = "Berger";
@@ -1270,7 +1270,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     Atrue(ir->is_deleted(ir, 36));
     frt_ir_commit(ir);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
     frt_iw_optimize(iw);
     frt_iw_close(iw);
 
@@ -1348,7 +1348,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
         frt_fis_deref(fis);
         config.max_buffered_docs = 3;
 
-        iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+        iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
 
         for (j = start_doc; j < end_doc; j++) {
             int k;
@@ -1402,10 +1402,10 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
         }
         frt_index_create(store, fis);
         frt_fis_deref(fis);
-        iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+        iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
         frt_iw_add_readers(iw, readers, rte->store_cnt - 10);
         frt_iw_close(iw);
-        iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+        iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
         frt_iw_add_readers(iw, readers + (rte->store_cnt - 10), 10);
         frt_iw_close(iw);
         for (i = 0; i < rte->store_cnt; i++) {
@@ -1444,7 +1444,7 @@ static void write_ir_test_docs(FrtStore *store)
     frt_fis_deref(fis);
     config.max_buffered_docs = 5;
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), &config);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
 
     for (i = 0; i < IR_TEST_DOC_CNT; i++) {
         frt_iw_add_doc(iw, docs[i]);
@@ -1933,7 +1933,7 @@ static void test_ir_norms(TestCase *tc, void *data)
     frt_ir_commit(ir);
 
     for (i = 0; i < rte->store_cnt; i++) {
-        iw = frt_iw_open(rte->stores[i], frt_whitespace_analyzer_new(false),
+        iw = frt_iw_open(NULL, rte->stores[i], frt_whitespace_analyzer_new(false),
                      &frt_default_config);
         frt_iw_optimize(iw);
         frt_iw_close(iw);
@@ -2060,8 +2060,7 @@ static void test_ir_delete(TestCase *tc, void *data)
     frt_ir_commit(ir);
 
     for (i = 0; i < rte->store_cnt; i++) {
-        iw = frt_iw_open(rte->stores[i], frt_whitespace_analyzer_new(false),
-                     &frt_default_config);
+        iw = frt_iw_open(NULL, rte->stores[i], frt_whitespace_analyzer_new(false), &frt_default_config);
         frt_iw_optimize(iw);
         frt_iw_close(iw);
     }
@@ -2094,7 +2093,7 @@ static void test_ir_read_while_optimizing(TestCase *tc, void *data)
 
     test_ir_term_doc_enum(tc, ir);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), false);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), false);
     frt_iw_optimize(iw);
     frt_iw_close(iw);
 
@@ -2120,7 +2119,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
 
     frt_index_create(store, fis);
     frt_fis_deref(fis);
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), NULL);
 
     df = frt_doc_add_field(doc, frt_df_add_data(frt_df_new(tag), (char *)"Ruby", enc));
     frt_df_add_data(df, (char *)"C", enc);

@@ -50,7 +50,7 @@ static void sort_test_setup(FrtStore *store)
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), NULL);
 
     for (i = 0; i < FRT_NELEMS(data); i++) {
         add_sort_test_data(&data[i], iw);
@@ -68,14 +68,14 @@ static void sort_multi_test_setup(FrtStore *store1, FrtStore *store2)
     frt_index_create(store2, fis);
     frt_fis_deref(fis);
 
-    iw = frt_iw_open(store1, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store1, frt_whitespace_analyzer_new(false), NULL);
 
     for (i = 0; i < FRT_NELEMS(data)/2; i++) {
         add_sort_test_data(&data[i], iw);
     }
     frt_iw_close(iw);
 
-    iw = frt_iw_open(store2, frt_whitespace_analyzer_new(false), NULL);
+    iw = frt_iw_open(NULL, store2, frt_whitespace_analyzer_new(false), NULL);
 
     for (i = FRT_NELEMS(data)/2; i < FRT_NELEMS(data); i++) {
         add_sort_test_data(&data[i], iw);

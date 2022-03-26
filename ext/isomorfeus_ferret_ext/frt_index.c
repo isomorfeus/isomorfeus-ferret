@@ -337,10 +337,11 @@ char *frt_fi_to_s(FrtFieldInfo *fi)
  *
  ****************************************************************************/
 
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
-                    FrtTermVectorValue term_vector)
-{
-    FrtFieldInfos *fis = FRT_ALLOC(FrtFieldInfos);
+FrtFieldInfos *frt_fis_alloc() {
+    return FRT_ALLOC(FrtFieldInfos);
+}
+
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
     fi_check_params(store, index, term_vector);
     fis->field_dict = frt_h_new_ptr((frt_free_ft)&frt_fi_deref);
     fis->size = 0;
@@ -351,6 +352,11 @@ FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index,
     fis->term_vector = term_vector;
     fis->ref_cnt = 1;
     return fis;
+}
+
+FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+    FrtFieldInfos *fis = frt_fis_alloc();
+    return frt_fis_init(fis, store, index, term_vector);
 }
 
 FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
@@ -6210,10 +6216,13 @@ void frt_iw_close(FrtIndexWriter *iw)
     free(iw);
 }
 
-FrtIndexWriter *frt_iw_open(FrtStore *store, FrtAnalyzer *volatile analyzer,
-                     const FrtConfig *config)
-{
-    FrtIndexWriter *iw = FRT_ALLOC_AND_ZERO(FrtIndexWriter);
+FrtIndexWriter *frt_iw_alloc() {
+    return FRT_ALLOC_AND_ZERO(FrtIndexWriter);
+}
+
+FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *volatile analyzer, const FrtConfig *config) {
+    if (iw == NULL)
+        iw = frt_iw_alloc();
     frt_mutex_init(&iw->mutex, NULL);
     iw->store = store;
     if (!config) {
