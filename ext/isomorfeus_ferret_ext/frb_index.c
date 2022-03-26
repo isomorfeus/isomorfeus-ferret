@@ -178,11 +178,31 @@ frb_get_field_info(FrtFieldInfo *fi)
  *  :term_vector, :boost]. See the description of FieldInfo for more
  *  information on these properties.
  */
-static VALUE
-frb_fi_init(int argc, VALUE *argv, VALUE self)
-{
+
+const size_t frb_fi_size(const void *p) {
+    return sizeof(FrtFieldInfo);
+    (void)p;
+}
+
+const rb_data_type_t frb_field_info_t = {
+    .wrap_struct_name = "FrbFieldInfo",
+    .function = {
+        .dmark = NULL,
+        .dfree = frb_fi_free,
+        .dsize = frb_fi_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_fi_alloc(VALUE rclass) {
+    FrtFieldInfo *fi = frt_fi_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_field_info_t, fi);
+}
+
+static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions, rname;
     FrtFieldInfo *fi;
+    TypedData_Get_Struct(self, FrtFieldInfo, &frb_field_info_t, fi);
     FrtStoreValue store = FRT_STORE_YES;
     FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
@@ -192,9 +212,8 @@ frb_fi_init(int argc, VALUE *argv, VALUE self)
     if (argc > 1) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
-    fi = frt_fi_new(frb_field(rname), store, index, term_vector);
+    fi = frt_fi_init(fi, frb_field(rname), store, index, term_vector);
     fi->boost = boost;
-    Frt_Wrap_Struct(self, NULL, &frb_fi_free, fi);
     object_add(fi, self);
     return self;
 }
@@ -2856,7 +2875,7 @@ Init_FieldInfo(void)
     sym_with_positions_offsets = ID2SYM(rb_intern("with_positions_offsets"));
 
     cFieldInfo = rb_define_class_under(mIndex, "FieldInfo", rb_cObject);
-    rb_define_alloc_func(cFieldInfo, frb_data_alloc);
+    rb_define_alloc_func(cFieldInfo, frb_fi_alloc);
 
     rb_define_method(cFieldInfo, "initialize",  frb_fi_init, -1);
     rb_define_method(cFieldInfo, "name",        frb_fi_name, 0);

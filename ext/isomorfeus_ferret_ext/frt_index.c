@@ -279,12 +279,11 @@ static void fi_check_params(int store, int index, int term_vector)
     }
 }
 
-FrtFieldInfo *frt_fi_new(FrtSymbol name,
-                  FrtStoreValue store,
-                  FrtIndexValue index,
-                  FrtTermVectorValue term_vector)
-{
-    FrtFieldInfo *fi = FRT_ALLOC(FrtFieldInfo);
+FrtFieldInfo *frt_fi_alloc() {
+    return FRT_ALLOC(FrtFieldInfo);
+}
+
+FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
     assert(NULL != name);
     fi_check_params(store, index, term_vector);
     fi->name = name;
@@ -295,6 +294,11 @@ FrtFieldInfo *frt_fi_new(FrtSymbol name,
     fi_set_term_vector(fi, term_vector);
     fi->ref_cnt = 1;
     return fi;
+}
+
+FrtFieldInfo *frt_fi_new(FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+    FrtFieldInfo *fi = frt_fi_alloc();
+    return frt_fi_init(fi, name, store, index, term_vector);
 }
 
 void frt_fi_deref(FrtFieldInfo *fi)
