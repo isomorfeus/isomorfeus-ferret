@@ -153,6 +153,21 @@ frb_fi_get_params(VALUE roptions,
     }
 }
 
+const size_t frb_fi_size(const void *p) {
+    return sizeof(FrtFieldInfo);
+    (void)p;
+}
+
+const rb_data_type_t frb_field_info_t = {
+    .wrap_struct_name = "FrbFieldInfo",
+    .function = {
+        .dmark = NULL,
+        .dfree = frb_fi_free,
+        .dsize = frb_fi_size
+    },
+    .data = NULL
+};
+
 static VALUE
 frb_get_field_info(FrtFieldInfo *fi)
 {
@@ -161,7 +176,7 @@ frb_get_field_info(FrtFieldInfo *fi)
     if (fi) {
         rfi = object_get(fi);
         if (rfi == Qnil) {
-            rfi = Data_Wrap_Struct(cFieldInfo, NULL, &frb_fi_free, fi);
+            rfi = TypedData_Wrap_Struct(cFieldInfo, &frb_field_info_t, fi);
             FRT_REF(fi);
             object_add(fi, rfi);
         }
@@ -178,22 +193,6 @@ frb_get_field_info(FrtFieldInfo *fi)
  *  :term_vector, :boost]. See the description of FieldInfo for more
  *  information on these properties.
  */
-
-const size_t frb_fi_size(const void *p) {
-    return sizeof(FrtFieldInfo);
-    (void)p;
-}
-
-const rb_data_type_t frb_field_info_t = {
-    .wrap_struct_name = "FrbFieldInfo",
-    .function = {
-        .dmark = NULL,
-        .dfree = frb_fi_free,
-        .dsize = frb_fi_size
-    },
-    .data = NULL
-};
-
 static VALUE frb_fi_alloc(VALUE rclass) {
     FrtFieldInfo *fi = frt_fi_alloc();
     return TypedData_Wrap_Struct(rclass, &frb_field_info_t, fi);
@@ -395,16 +394,12 @@ frb_fi_to_s(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_fis_free(void *p)
-{
+static void frb_fis_free(void *p) {
     object_del(p);
     frt_fis_deref((FrtFieldInfos *)p);
 }
 
-static void
-frb_fis_mark(void *p)
-{
+static void frb_fis_mark(void *p) {
     int i;
     FrtFieldInfos *fis = (FrtFieldInfos *)p;
 
@@ -413,16 +408,26 @@ frb_fis_mark(void *p)
     }
 }
 
-static VALUE
-frb_get_field_infos(FrtFieldInfos *fis)
-{
+const size_t frb_field_infos_t_size(const void *p) {
+    return sizeof(FrtFieldInfos);
+    (void)p;
+}
 
+const rb_data_type_t frb_field_infos_t = {
+    .wrap_struct_name = "FrbFieldInfos",
+    .function = {
+        .dmark = frb_fis_mark,
+        .dfree = frb_fis_free,
+        .dsize = frb_field_infos_t_size
+    }
+};
+
+static VALUE frb_get_field_infos(FrtFieldInfos *fis) {
     VALUE rfis = Qnil;
     if (fis) {
         rfis = object_get(fis);
         if (rfis == Qnil) {
-            rfis = Data_Wrap_Struct(cFieldInfos, &frb_fis_mark, &frb_fis_free,
-                                    fis);
+            rfis = TypedData_Wrap_Struct(cFieldInfos, &frb_field_infos_t, fis);
             FRT_REF(fis);
             object_add(fis, rfis);
         }
@@ -438,20 +443,6 @@ frb_get_field_infos(FrtFieldInfos *fis)
  *  specified in the +default+ hash parameter. See FieldInfo for available
  *  property values.
  */
-const size_t frb_field_infos_t_size(const void *p) {
-    return sizeof(FrtFieldInfos);
-    (void)p;
-}
-
-const rb_data_type_t frb_field_infos_t = {
-    .wrap_struct_name = "FrbFieldInfos",
-    .function = {
-        .dmark = frb_fis_mark,
-        .dfree = frb_fis_free,
-        .dsize = frb_field_infos_t_size
-    },
-    .data = NULL
-};
 
 static VALUE frb_fis_alloc(VALUE rclass) {
     FrtFieldInfos *fis = frt_fis_alloc();
@@ -708,28 +699,35 @@ frb_fis_get_tk_fields(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_te_free(void *p)
-{
+static void frb_te_free(void *p) {
     FrtTermEnum *te = (FrtTermEnum *)p;
     te->close(te);
 }
 
-static VALUE
-frb_te_get_set_term(VALUE self, const char *term)
-{
+const size_t frb_te_size(const void *p) {
+    return sizeof(FrtTermEnum);
+    (void)p;
+}
+
+const rb_data_type_t frb_term_enum_t = {
+    .wrap_struct_name = "FrbTermEnum",
+    .function = {
+        .dfree = frb_te_free,
+        .dsize = frb_te_size
+    }
+};
+
+static VALUE frb_te_get_set_term(VALUE self, const char *term) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     VALUE str = term ? rb_str_new(term, te->curr_term_len) : Qnil;
     rb_ivar_set(self, id_term, str);
     return str;
 }
 
-static VALUE
-frb_get_te(VALUE rir, FrtTermEnum *te)
-{
+static VALUE frb_get_te(VALUE rir, FrtTermEnum *te) {
     VALUE self = Qnil;
     if (te != NULL) {
-        self = Data_Wrap_Struct(cTermEnum, NULL, &frb_te_free, te);
+        self = TypedData_Wrap_Struct(cTermEnum, &frb_term_enum_t, te);
         frb_te_get_set_term(self, te->curr_term);
         rb_ivar_set(self, id_fld_num_map, rb_ivar_get(rir, id_fld_num_map));
     }
@@ -742,9 +740,7 @@ frb_get_te(VALUE rir, FrtTermEnum *te)
  *
  *  Returns the next term in the enumeration or nil otherwise.
  */
-static VALUE
-frb_te_next(VALUE self)
-{
+static VALUE frb_te_next(VALUE self) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return frb_te_get_set_term(self, te->next(te));
 }
@@ -756,9 +752,7 @@ frb_te_next(VALUE self)
  *  Returns the current term pointed to by the enum. This method should only
  *  be called after a successful call to TermEnum#next.
  */
-static VALUE
-frb_te_term(VALUE self)
-{
+static VALUE frb_te_term(VALUE self) {
     return rb_ivar_get(self, id_term);
 }
 
@@ -770,9 +764,7 @@ frb_te_term(VALUE self)
  *  That is the number of documents that this term appears in. The method
  *  should only be called after a successful call to TermEnum#next.
  */
-static VALUE
-frb_te_doc_freq(VALUE self)
-{
+static VALUE frb_te_doc_freq(VALUE self) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return INT2FIX(te->curr_ti.doc_freq);
 }
@@ -788,9 +780,7 @@ frb_te_doc_freq(VALUE self)
  *
  *  Returns the first term greater than or equal to +target+
  */
-static VALUE
-frb_te_skip_to(VALUE self, VALUE rterm)
-{
+static VALUE frb_te_skip_to(VALUE self, VALUE rterm) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     return frb_te_get_set_term(self, te->skip_to(te, rs2s(rterm)));
 }
@@ -802,9 +792,7 @@ frb_te_skip_to(VALUE self, VALUE rterm)
  *  Iterates through all the terms in the field, yielding the term and the
  *  document frequency.
  */
-static VALUE
-frb_te_each(VALUE self)
-{
+static VALUE frb_te_each(VALUE self) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     char *term;
     int term_cnt = 0;
@@ -836,9 +824,7 @@ frb_te_each(VALUE self)
  *      do_something()
  *    end
  */
-static VALUE
-frb_te_set_field(VALUE self, VALUE rfield)
-{
+static VALUE frb_te_set_field(VALUE self, VALUE rfield) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     int field_num = 0;
     VALUE rfnum_map = rb_ivar_get(self, id_fld_num_map);
@@ -878,9 +864,7 @@ frb_te_set_field(VALUE self, VALUE rfield)
  *    #   ["cantaloupe",12]
  *    # ]
  */
-static VALUE
-frb_te_to_json(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_te_to_json(int argc, VALUE *argv, VALUE self) {
     FrtTermEnum *te = (FrtTermEnum *)DATA_PTR(self);
     VALUE rjson;
     char *json, *jp;
@@ -905,8 +889,7 @@ frb_te_to_json(int argc, VALUE *argv, VALUE self)
             *(jp++) = ']';
             *(jp++) = ',';
         }
-    }
-    else {
+    } else {
         while (NULL != (term = te->next(te))) {
             /* enough room for for term after converting " to '"' and frequency
              * plus some extra for good measure */
@@ -942,17 +925,26 @@ frb_te_to_json(int argc, VALUE *argv, VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_tde_free(void *p)
-{
+static void frb_tde_free(void *p) {
     FrtTermDocEnum *tde = (FrtTermDocEnum *)p;
     tde->close(tde);
 }
 
-static VALUE
-frb_get_tde(VALUE rir, FrtTermDocEnum *tde)
-{
-    VALUE self = Data_Wrap_Struct(cTermDocEnum, NULL, &frb_tde_free, tde);
+const size_t frb_tde_size(const void *p) {
+    return sizeof(FrtTermDocEnum);
+    (void)p;
+}
+
+const rb_data_type_t frb_term_doc_enum_t = {
+    .wrap_struct_name = "FrbTermDocEnum",
+    .function = {
+        .dfree = frb_tde_free,
+        .dsize = frb_tde_size
+    }
+};
+
+static VALUE frb_get_tde(VALUE rir, FrtTermDocEnum *tde) {
+    VALUE self = TypedData_Wrap_Struct(cTermDocEnum, &frb_term_doc_enum_t, tde);
     rb_ivar_set(self, id_fld_num_map, rb_ivar_get(rir, id_fld_num_map));
     return self;
 }
@@ -1443,7 +1435,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
         if (create) {
             FrtFieldInfos *fis;
             if ((rval = rb_hash_aref(roptions, sym_field_infos)) != Qnil) {
-                Data_Get_Struct(rval, FrtFieldInfos, fis);
+                TypedData_Get_Struct(rval, FrtFieldInfos, &frb_field_infos_t, fis);
                 frt_index_create(store, fis);
             } else {
                 fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
@@ -1628,6 +1620,42 @@ frb_iw_commit(VALUE self)
     return self;
 }
 
+/* index reader intermission */
+static VALUE frb_ir_close(VALUE self);
+
+void frb_ir_free(void *p) {
+    object_del(p);
+    frt_ir_close((FrtIndexReader *)p);
+}
+
+void frb_ir_mark(void *p) {
+    FrtIndexReader *ir = (FrtIndexReader *)p;
+    FrtMultiReader *mr = (FrtMultiReader *)p;
+
+    if (ir->type == FRT_MULTI_READER) {
+        int i;
+        for (i = 0; i < mr->r_cnt; i++) {
+            frb_gc_mark(mr->sub_readers[i]);
+        }
+    } else {
+        frb_gc_mark(ir->store);
+    }
+}
+
+const size_t frb_index_reader_t_size(const void *p) {
+    return sizeof(FrtMultiReader);
+    (void)p;
+}
+
+const rb_data_type_t frb_index_reader_t = {
+    .wrap_struct_name = "FrbIndexReader",
+    .function = {
+        .dmark = frb_ir_mark,
+        .dfree = frb_ir_free,
+        .dsize = frb_index_reader_t_size
+    }
+};
+
 /*
  *  call-seq:
  *     iw.add_readers(reader_array) -> iw
@@ -1638,9 +1666,7 @@ frb_iw_commit(VALUE self)
  *  machines. Then you can finish by merging all of the indexes into a single
  *  index.
  */
-static VALUE
-frb_iw_add_readers(VALUE self, VALUE rreaders)
-{
+static VALUE frb_iw_add_readers(VALUE self, VALUE rreaders) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     int i;
     FrtIndexReader **irs;
@@ -1650,7 +1676,7 @@ frb_iw_add_readers(VALUE self, VALUE rreaders)
     i = RARRAY_LEN(rreaders);
     while (i-- > 0) {
         FrtIndexReader *ir;
-        Data_Get_Struct(RARRAY_PTR(rreaders)[i], FrtIndexReader, ir);
+        TypedData_Get_Struct(RARRAY_PTR(rreaders)[i], FrtIndexReader, &frb_index_reader_t, ir);
         irs[i] = ir;
     }
     frt_iw_add_readers(iw, irs, RARRAY_LEN(rreaders));
@@ -1996,15 +2022,24 @@ frb_iw_set_use_compound_file(VALUE self, VALUE rval)
  *
  ****************************************************************************/
 
-static void
-frb_lzd_data_free(void *p)
-{
+static void frb_lzd_data_free(void *p) {
     frt_lazy_doc_close((FrtLazyDoc *)p);
 }
 
-static VALUE
-frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df)
-{
+const size_t frb_lazy_doc_size(const void *p) {
+    return sizeof(FrtLazyDoc);
+    (void)p;
+}
+
+const rb_data_type_t frb_lazy_doc_t = {
+    .wrap_struct_name = "FrbLazyDoc",
+    .function = {
+        .dfree = frb_lzd_data_free,
+        .dsize = frb_lazy_doc_size
+    }
+};
+
+static VALUE frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df) {
     VALUE rdata = Qnil;
     if (lazy_df) {
         if (lazy_df->size == 1) {
@@ -2034,9 +2069,7 @@ frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df)
  *  This method is used internally to lazily load fields. You should never
  *  really need to call it yourself.
  */
-static VALUE
-frb_lzd_default(VALUE self, VALUE rkey)
-{
+static VALUE frb_lzd_default(VALUE self, VALUE rkey) {
     FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
     FrtSymbol field = frb_field(rkey);
     VALUE rfield = ID2SYM(field);
@@ -2052,9 +2085,7 @@ frb_lzd_default(VALUE self, VALUE rkey)
  *  to access any of these fields in the document the field will be loaded.
  *  Try to access any other field an nil will be returned.
  */
-static VALUE
-frb_lzd_fields(VALUE self)
-{
+static VALUE frb_lzd_fields(VALUE self) {
     return rb_ivar_get(self, id_fields);
 }
 
@@ -2064,9 +2095,7 @@ frb_lzd_fields(VALUE self)
  *
  *  Load all unloaded fields in the document from the index.
  */
-static VALUE
-frb_lzd_load(VALUE self)
-{
+static VALUE frb_lzd_load(VALUE self) {
     FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
     int i;
     for (i = 0; i < lazy_doc->size; i++) {
@@ -2076,9 +2105,7 @@ frb_lzd_load(VALUE self)
     return self;
 }
 
-VALUE
-frb_get_lazy_doc(FrtLazyDoc *lazy_doc)
-{
+VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc) {
     int i;
     VALUE rfields = rb_ary_new2(lazy_doc->size);
 
@@ -2086,7 +2113,7 @@ frb_get_lazy_doc(FrtLazyDoc *lazy_doc)
     self = rb_hash_new();
     OBJSETUP(self, cLazyDoc, T_HASH);
 
-    rdata = Data_Wrap_Struct(cLazyDocData, NULL, &frb_lzd_data_free, lazy_doc);
+    rdata = TypedData_Wrap_Struct(cLazyDocData, &frb_lazy_doc_t, lazy_doc);
     rb_ivar_set(self, id_data, rdata);
 
     for (i = 0; i < lazy_doc->size; i++) {
@@ -2102,30 +2129,6 @@ frb_get_lazy_doc(FrtLazyDoc *lazy_doc)
  * IndexReader Methods
  *
  ****************************************************************************/
-
-void
-frb_ir_free(void *p)
-{
-    object_del(p);
-    frt_ir_close((FrtIndexReader *)p);
-}
-
-static VALUE frb_ir_close(VALUE self);
-
-void
-frb_ir_mark(void *p) {
-    FrtIndexReader *ir = (FrtIndexReader *)p;
-    FrtMultiReader *mr = (FrtMultiReader *)p;
-
-    if (ir->type == FRT_MULTI_READER) {
-        int i;
-        for (i = 0; i < mr->r_cnt; i++) {
-            frb_gc_mark(mr->sub_readers[i]);
-        }
-    } else {
-        frb_gc_mark(ir->store);
-    }
-}
 
 /*
  *  call-seq:
@@ -2153,19 +2156,6 @@ frb_ir_mark(void *p) {
  *
  *    iw = IndexReader.new(["/path/to/index1", "/path/to/index2"])
  */
-const size_t frb_index_reader_t_size(const void *p) {
-    return sizeof(FrtMultiReader);
-    (void)p;
-}
-
-const rb_data_type_t frb_index_reader_t = {
-    .wrap_struct_name = "FrbIndexReader",
-    .function = {
-        .dmark = frb_ir_mark,
-        .dfree = frb_ir_free,
-        .dsize = frb_index_reader_t_size
-    }
-};
 
 static VALUE frb_ir_alloc(VALUE rclass) {
     // allocate for FrtSegmentReader, the largest of the Frt*Reader structs,
@@ -2194,7 +2184,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                 switch (TYPE(rdir)) {
                     case T_DATA:
                         if (CLASS_OF(rdir) == cIndexReader) {
-                            Data_Get_Struct(rdir, FrtIndexReader, sub_readers[i]);
+                            TypedData_Get_Struct(rdir, FrtIndexReader, &frb_index_reader_t, sub_readers[i]);
                             FRT_REF(sub_readers[i]);
                             continue;
                         } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
