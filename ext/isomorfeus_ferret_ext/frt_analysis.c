@@ -167,11 +167,6 @@ FrtTokenStream *frt_ts_new_i(size_t size) {
     return frt_ts_init(ts);
 }
 
-static FrtTokenStream *frt_ts_new() {
-    FrtTokenStream *ts = frt_ts_new_i(sizeof(FrtTokenStream));
-    return frt_ts_init(ts);
-}
-
 /*****************************************************************************/
 /*** FrtCachedTokenStream ****************************************************/
 /*****************************************************************************/

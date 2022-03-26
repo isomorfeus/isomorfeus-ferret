@@ -42,7 +42,6 @@ struct FrtTokenStream {
     int              ref_cnt;
 };
 
-// #define frt_ts_new(type) frt_ts_new_i(sizeof(type))
 extern FrtTokenStream *frt_ts_new_i(size_t size);
 extern FrtTokenStream *frt_ts_init(FrtTokenStream *ts);
 extern FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size);

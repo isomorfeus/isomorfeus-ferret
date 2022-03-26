@@ -161,11 +161,9 @@ const size_t frb_fi_size(const void *p) {
 const rb_data_type_t frb_field_info_t = {
     .wrap_struct_name = "FrbFieldInfo",
     .function = {
-        .dmark = NULL,
         .dfree = frb_fi_free,
         .dsize = frb_fi_size
     },
-    .data = NULL
 };
 
 static VALUE frb_get_field_info(FrtFieldInfo *fi) {

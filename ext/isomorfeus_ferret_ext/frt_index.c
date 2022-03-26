@@ -4709,11 +4709,6 @@ FrtMultiReader *frt_mr_init(FrtMultiReader *mr, FrtIndexReader **sub_readers, co
     return mr;
 }
 
-static FrtIndexReader *mr_new(FrtIndexReader **sub_readers, const int r_cnt) {
-    FrtMultiReader *mr = frt_mr_alloc();
-    return (FrtIndexReader *)frt_mr_init(mr, sub_readers, r_cnt);
-}
-
 static FrtIndexReader *frt_mr_open_i(FrtStore *store, FrtSegmentInfos *sis, FrtFieldInfos *fis, FrtIndexReader **sub_readers, const int r_cnt, FrtIndexReader *ir) {
     if (ir == NULL)
         ir = (FrtIndexReader *)frt_mr_alloc();
