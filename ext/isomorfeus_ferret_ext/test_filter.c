@@ -316,7 +316,7 @@ TestSuite *ts_filter(TestSuite *suite)
 
     store = frt_open_ram_store();
     prepare_filter_index(store);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     searcher = frt_isea_new(ir);
 
     tst_run_test(suite, test_range_filter, (void *)searcher);

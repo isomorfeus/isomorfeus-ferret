@@ -80,7 +80,7 @@ static void test_delete_leftover_files(TestCase *tc, void *data)
     frt_iw_close(iw);
 
     /* Delete one doc so we get a .del file: */
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     frt_ir_delete_doc(ir, 7);
     Aiequal(1, ir->max_doc(ir) - ir->num_docs(ir));
 

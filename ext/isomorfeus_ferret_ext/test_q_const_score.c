@@ -72,7 +72,7 @@ TestSuite *ts_q_const_score(TestSuite *suite)
     suite = ADD_SUITE(suite);
 
     prepare_filter_index(store);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     searcher = frt_isea_new(ir);
 
     tst_run_test(suite, test_const_score_query, (void *)searcher);

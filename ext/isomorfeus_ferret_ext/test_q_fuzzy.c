@@ -48,7 +48,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     add_doc("aaaaaaaaaaaaaaaaaaaaaaa", iw); /* test max_distances problem */
     frt_iw_close(iw);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     q = frt_fuzq_new_conf(field, "aaaaa", 0.0, 5, 10);
@@ -127,7 +127,7 @@ static void test_fuzziness_long(TestCase *tc, void *data)
     add_doc("aaaaaaa", iw);
     add_doc("segment", iw);
     frt_iw_close(iw);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     /* not similar enough: */

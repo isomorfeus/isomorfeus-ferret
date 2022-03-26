@@ -1654,7 +1654,7 @@ TestSuite *ts_search(TestSuite *suite)
     tst_run_test(suite, test_default_similarity, NULL);
 
     prepare_search_index(store);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     searcher = frt_isea_new(ir);
 
     tst_run_test(suite, test_get_doc, (void *)searcher);
@@ -1845,8 +1845,8 @@ TestSuite *ts_multi_search(TestSuite *suite)
     prepare_multi_search_index(store0, test_data, 9, 1);
     prepare_multi_search_index(store1, test_data + 9, FRT_NELEMS(test_data) - 9, 10);
 
-    ir0 = frt_ir_open(store0);
-    ir1 = frt_ir_open(store1);
+    ir0 = frt_ir_open(NULL, store0);
+    ir1 = frt_ir_open(NULL, store1);
     searchers = FRT_ALLOC_N(FrtSearcher *, 2);
     searchers[0] = frt_isea_new(ir0);
     searchers[1] = frt_isea_new(ir1);

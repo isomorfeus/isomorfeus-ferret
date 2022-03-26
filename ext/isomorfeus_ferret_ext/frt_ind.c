@@ -109,7 +109,7 @@ void frt_ensure_reader_open(FrtIndex *self)
     if (self->ir) {
         if (self->check_latest && !frt_ir_is_latest(self->ir)) {
             INDEX_CLOSE_READER(self);
-            self->ir = frt_ir_open(self->store);
+            self->ir = frt_ir_open(NULL, self->store);
         }
         return;
     }
@@ -117,7 +117,7 @@ void frt_ensure_reader_open(FrtIndex *self)
         frt_iw_close(self->iw);
         self->iw = NULL;
     }
-    self->ir = frt_ir_open(self->store);
+    self->ir = frt_ir_open(NULL, self->store);
 }
 
 void frt_ensure_searcher_open(FrtIndex *self)

@@ -303,7 +303,7 @@ TestSuite *ts_sort(TestSuite *suite)
     tst_run_test(suite, test_sort_field_to_s, NULL);
     tst_run_test(suite, test_sort_to_s, NULL);
 
-    sea = frt_isea_new(frt_ir_open(store));
+    sea = frt_isea_new(frt_ir_open(NULL, store));
 
     tst_run_test(suite, test_sorts, (void *)sea);
 
@@ -320,8 +320,8 @@ TestSuite *ts_sort(TestSuite *suite)
 
     searchers = FRT_ALLOC_N(FrtSearcher *, 2);
 
-    searchers[0] = frt_isea_new(frt_ir_open(store));
-    searchers[1] = frt_isea_new(frt_ir_open(fs_store));
+    searchers[0] = frt_isea_new(frt_ir_open(NULL, store));
+    searchers[1] = frt_isea_new(frt_ir_open(NULL, fs_store));
 
     sea = frt_msea_new(searchers, 2, true);
     tst_run_test(suite, test_sorts, (void *)sea);

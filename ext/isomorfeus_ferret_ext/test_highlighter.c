@@ -103,7 +103,7 @@ static void add_string_docs(FrtStore *store, const char *string[])
 #define Chk_sea_mv(query, doc_num, expected) check_searcher_match_vector(tc, store, query, doc_num, expected)
 static void check_searcher_match_vector(TestCase *tc, FrtStore *store, FrtQuery *query, int doc_num, const char *expected)
 {
-    FrtIndexReader *ir = frt_ir_open(store);
+    FrtIndexReader *ir = frt_ir_open(NULL, store);
     FrtSearcher *sea = frt_isea_new(ir);
     FrtMatchVector *mv = frt_searcher_get_match_vector(sea, query, doc_num, rb_intern("field"));
     static int offset_array[ARRAY_SIZE];
@@ -123,7 +123,7 @@ static void check_searcher_match_vector(TestCase *tc, FrtStore *store, FrtQuery 
 #define Chk_mv(query, doc_num, expected) check_match_vector(tc, store, query, doc_num, expected)
 static void check_match_vector(TestCase *tc, FrtStore *store, FrtQuery *query, int doc_num, const char *expected)
 {
-    FrtIndexReader *ir = frt_ir_open(store);
+    FrtIndexReader *ir = frt_ir_open(NULL, store);
     FrtMatchVector *mv = frt_matchv_new();
     FrtTermVector *term_vector = ir->term_vector(ir, doc_num, rb_intern("field"));
     static int offset_array[ARRAY_SIZE];
@@ -377,7 +377,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     frt_doc_destroy(doc);
     frt_iw_close(iw);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     q = frt_tq_new(rb_intern("field"), "one");

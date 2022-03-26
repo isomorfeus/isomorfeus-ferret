@@ -748,7 +748,7 @@ static void test_index_version(TestCase *tc, void *data)
     Atrue(frt_index_is_locked(store));  /* writer open, so dir is locked */
     frt_iw_close(iw);
     Atrue(!frt_index_is_locked(store));
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Atrue(!frt_index_is_locked(store)); /* reader only, no lock */
     version = frt_sis_read_current_version(store);
     frt_ir_close(ir);
@@ -757,7 +757,7 @@ static void test_index_version(TestCase *tc, void *data)
     iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &frt_default_config);
     add_document_with_fields(iw, 1);
     frt_iw_close(iw);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Atrue(version < frt_sis_read_current_version(store));
     Atrue(frt_ir_is_latest(ir));
     frt_ir_close(ir);
@@ -771,15 +771,15 @@ static void test_index_undelete_all_after_close(TestCase *tc, void *data)
     add_document_with_fields(iw, 0);
     add_document_with_fields(iw, 1);
     frt_iw_close(iw);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     frt_ir_delete_doc(ir, 0);
     frt_ir_delete_doc(ir, 1);
     frt_ir_close(ir);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     frt_ir_undelete_all(ir);
     Aiequal(2, ir->num_docs(ir)); /* nothing has really been deleted */
     frt_ir_close(ir);
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(2, ir->num_docs(ir)); /* nothing has really been deleted */
     Atrue(frt_ir_is_latest(ir));
     frt_ir_close(ir);
@@ -959,7 +959,7 @@ static void test_create_with_reader(TestCase *tc, void *data)
     frt_iw_close(iw);
 
     /* now open reader: */
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(1, ir->num_docs(ir));
 
     /* now open index for create: */
@@ -969,7 +969,7 @@ static void test_create_with_reader(TestCase *tc, void *data)
     frt_iw_close(iw);
 
     Aiequal(1, ir->num_docs(ir));
-    ir2 = frt_ir_open(store);
+    ir2 = frt_ir_open(NULL, store);
     Aiequal(1, ir2->num_docs(ir));
     frt_ir_close(ir);
     frt_ir_close(ir2);
@@ -1026,7 +1026,7 @@ static void test_simulated_crashed_writer(TestCase *tc, void *data)
     frt_is_close(is);
     frt_os_close(os);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     frt_ir_close(ir);
 
     iw = frt_iw_open(NULL, store, frt_whitespace_analyzer_new(false), &config);
@@ -1089,7 +1089,7 @@ static void test_simulated_corrupt_index1(TestCase *tc, void *data)
     store->remove(store, file_name_in);
 
     FRT_TRY
-        ir = frt_ir_open(store);
+        ir = frt_ir_open(NULL, store);
         frt_ir_close(ir);
         Afail("reader should have failed to open on a crashed index");
         break;
@@ -1135,7 +1135,7 @@ static void test_simulated_corrupt_index2(TestCase *tc, void *data)
     store->remove(store, "_0.cfs");
 
     FRT_TRY
-        ir = frt_ir_open(store);
+        ir = frt_ir_open(NULL, store);
         frt_ir_close(ir);
         Afail("reader should have failed to open on a crashed index");
         break;
@@ -1219,7 +1219,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     frt_iw_close(iw);
     destroy_docs(docs, BOOK_LIST_LENGTH);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(BOOK_LIST_LENGTH, ir->num_docs(ir));
     Aiequal(BOOK_LIST_LENGTH, ir->max_doc(ir));
     frt_ir_close(ir);
@@ -1228,7 +1228,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     frt_iw_delete_term(iw, title, "State");
     frt_iw_close(iw);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(BOOK_LIST_LENGTH - 1, ir->num_docs(ir));
     Aiequal(BOOK_LIST_LENGTH, ir->max_doc(ir));
     frt_ir_close(ir);
@@ -1243,7 +1243,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
     frt_iw_delete_terms(iw, author, (char **)terms, 3);
     frt_iw_close(iw);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(BOOK_LIST_LENGTH - 17, ir->num_docs(ir));
     Aiequal(BOOK_LIST_LENGTH, ir->max_doc(ir));
     Atrue(!ir->is_deleted(ir, 0));
@@ -1276,7 +1276,7 @@ static void test_iw_del_terms(TestCase *tc, void *data)
 
     frt_ir_close(ir);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     Aiequal(BOOK_LIST_LENGTH - 17, ir->num_docs(ir));
     Aiequal(BOOK_LIST_LENGTH - 17, ir->max_doc(ir));
     frt_ir_close(ir);
@@ -1311,15 +1311,15 @@ static void reader_test_env_destroy(ReaderTestEnvironment *rte)
 static FrtIndexReader *reader_test_env_ir_open(ReaderTestEnvironment *rte)
 {
     if (rte->store_cnt == 1) {
-        return frt_ir_open(rte->stores[0]);
+        return frt_ir_open(NULL, rte->stores[0]);
     }
     else {
         FrtIndexReader **sub_readers = FRT_ALLOC_N(FrtIndexReader *, rte->store_cnt);
         int i;
         for (i = 0; i < rte->store_cnt; i++) {
-            sub_readers[i] = frt_ir_open(rte->stores[i]);
+            sub_readers[i] = frt_ir_open(NULL, rte->stores[i]);
         }
-        return (frt_mr_open(sub_readers, rte->store_cnt));
+        return (frt_mr_open(NULL, sub_readers, rte->store_cnt));
     }
 }
 
@@ -1398,7 +1398,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
         FrtIndexReader **readers = FRT_ALLOC_N(FrtIndexReader *, rte->store_cnt);
         int i;
         for (i = 0; i < rte->store_cnt; i++) {
-            readers[i] = frt_ir_open(rte->stores[i]);
+            readers[i] = frt_ir_open(NULL, rte->stores[i]);
         }
         frt_index_create(store, fis);
         frt_fis_deref(fis);
@@ -1459,7 +1459,7 @@ static void test_ir_open_empty_index(TestCase *tc, void *data)
     FrtStore *store = (FrtStore *)data;
     store->clear_all(store);
     FRT_TRY
-        frt_ir_close(frt_ir_open(store));
+        frt_ir_close(frt_ir_open(NULL, store));
         Afail("IndexReader should have failed when opening empty index");
         break;
     case FRT_FILE_NOT_FOUND_ERROR:
@@ -2089,7 +2089,7 @@ static void test_ir_read_while_optimizing(TestCase *tc, void *data)
 
     write_ir_test_docs(store);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
 
     test_ir_term_doc_enum(tc, ir);
 
@@ -2146,7 +2146,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
    frt_doc_destroy(doc);
     frt_iw_close(iw);
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
 
     doc = ir->get_doc(ir, 0);
     Aiequal(4, doc->size);

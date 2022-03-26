@@ -79,7 +79,7 @@ static void test_span_term(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *tq;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     tq = frt_spantq_new(rb_intern("notafield"), "nine");
@@ -133,7 +133,7 @@ static void test_span_multi_term(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *mtq;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     mtq = frt_spanmtq_new(rb_intern("notafield"));
@@ -207,7 +207,7 @@ static void test_span_prefix(TestCase *tc, void *data)
     FrtQuery *prq;
     char *tmp;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     prq = frt_spanprq_new(rb_intern("notafield"), "fl");
@@ -262,7 +262,7 @@ static void test_span_first(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *q;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     q = frt_spanfq_new_nr(frt_spantq_new(field, "finish"), 1);
@@ -312,7 +312,7 @@ static void test_span_or(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *q;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
     q = frt_spanoq_new();
     tst_check_hits(tc, sea, q, "", -1);
@@ -366,7 +366,7 @@ static void test_span_near(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *q;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     q = frt_spannq_new(0, true);
@@ -467,7 +467,7 @@ static void test_span_not(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtQuery *q, *nearq0, *nearq1;
 
-    ir = frt_ir_open(store);
+    ir = frt_ir_open(NULL, store);
     sea = frt_isea_new(ir);
 
     nearq0 = frt_spannq_new(4, true);

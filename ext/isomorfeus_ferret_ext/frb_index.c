@@ -2110,22 +2110,20 @@ frb_ir_free(void *p)
     frt_ir_close((FrtIndexReader *)p);
 }
 
-void
-frb_ir_mark(void *p)
-{
-    FrtIndexReader *ir = (FrtIndexReader *)p;
-    frb_gc_mark(ir->store);
-}
-
 static VALUE frb_ir_close(VALUE self);
 
 void
-frb_mr_mark(void *p)
-{
+frb_ir_mark(void *p) {
+    FrtIndexReader *ir = (FrtIndexReader *)p;
     FrtMultiReader *mr = (FrtMultiReader *)p;
-    int i;
-    for (i = 0; i < mr->r_cnt; i++) {
-        frb_gc_mark(mr->sub_readers[i]);
+
+    if (ir->type == FRT_MULTI_READER) {
+        int i;
+        for (i = 0; i < mr->r_cnt; i++) {
+            frb_gc_mark(mr->sub_readers[i]);
+        }
+    } else {
+        frb_gc_mark(ir->store);
     }
 }
 
@@ -2155,9 +2153,28 @@ frb_mr_mark(void *p)
  *
  *    iw = IndexReader.new(["/path/to/index1", "/path/to/index2"])
  */
-static VALUE
-frb_ir_init(VALUE self, VALUE rdir)
-{
+const size_t frb_index_reader_t_size(const void *p) {
+    return sizeof(FrtMultiReader);
+    (void)p;
+}
+
+const rb_data_type_t frb_index_reader_t = {
+    .wrap_struct_name = "FrbIndexReader",
+    .function = {
+        .dmark = frb_ir_mark,
+        .dfree = frb_ir_free,
+        .dsize = frb_index_reader_t_size
+    }
+};
+
+static VALUE frb_ir_alloc(VALUE rclass) {
+    // allocate for FrtSegmentReader, the largest of the Frt*Reader structs,
+    // FrtIndexReader is part of it and later on its determined what its going to be
+    FrtIndexReader *ir = (FrtIndexReader *)frt_sr_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_index_reader_t, ir);
+}
+
+static VALUE frb_ir_init(VALUE self, VALUE rdir) {
     FrtStore *store = NULL;
     FrtIndexReader *ir;
     int i;
@@ -2202,10 +2219,10 @@ frb_ir_init(VALUE self, VALUE rdir)
                                 rs2s(rb_obj_as_string(rdir)));
                         break;
                 }
-                sub_readers[i] = frt_ir_open(store);
+                sub_readers[i] = frt_ir_open(NULL, store);
             }
-            ir = frt_mr_open(sub_readers, reader_cnt);
-            Frt_Wrap_Struct(self, &frb_mr_mark, &frb_ir_free, ir);
+            TypedData_Get_Struct(self, FrtIndexReader, &frb_index_reader_t, ir);
+            ir = frt_mr_open(ir, sub_readers, reader_cnt);
         } else {
             switch (TYPE(rdir)) {
                 case T_DATA:
@@ -2222,8 +2239,8 @@ frb_ir_init(VALUE self, VALUE rdir)
                             rs2s(rb_obj_as_string(rdir)));
                     break;
             }
-            ir = frt_ir_open(store);
-            Frt_Wrap_Struct(self, &frb_ir_mark, &frb_ir_free, ir);
+            TypedData_Get_Struct(self, FrtIndexReader, &frb_index_reader_t, ir);
+            ir = frt_ir_open(ir, store);
         }
     default:
         ex_code = xcontext.excode;
@@ -3466,7 +3483,7 @@ void
 Init_IndexReader(void)
 {
     cIndexReader = rb_define_class_under(mIndex, "IndexReader", rb_cObject);
-    rb_define_alloc_func(cIndexReader, frb_data_alloc);
+    rb_define_alloc_func(cIndexReader, frb_ir_alloc);
     rb_define_method(cIndexReader, "initialize",    frb_ir_init, 1);
     rb_define_method(cIndexReader, "set_norm",      frb_ir_set_norm, 3);
     rb_define_method(cIndexReader, "norms",         frb_ir_norms, 1);

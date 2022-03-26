@@ -3073,14 +3073,14 @@ frb_sea_init(VALUE self, VALUE obj)
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
         store = frt_open_fs_store(rs2s(obj));
-        ir = frt_ir_open(store);
+        ir = frt_ir_open(NULL, store);
         FRT_DEREF(store);
         FRT_GET_IR(obj, ir);
     } else {
         Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
             Data_Get_Struct(obj, FrtStore, store);
-            ir = frt_ir_open(store);
+            ir = frt_ir_open(NULL, store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
             Data_Get_Struct(obj, FrtIndexReader, ir);
