@@ -137,7 +137,7 @@ static FrtTokenStream *dbl_tf_clone_i(FrtTokenStream *ts)
 
 static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 {
-    FrtTokenStream *ts = tf_new(DoubleFilter, sub_ts, NULL);
+    FrtTokenStream *ts = frt_tf_new_i(sizeof(DoubleFilter), sub_ts);
     ts->next           = &dbl_tf_next;
     ts->clone_i        = &dbl_tf_clone_i;
     return ts;
@@ -146,8 +146,8 @@ static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 FrtAnalyzer *dbl_analyzer_new()
 {
     FrtTokenStream *ts;
-    ts = dbl_tf_new(frt_whitespace_tokenizer_new(false, NULL));
-    return frt_analyzer_new(ts, NULL, NULL, NULL);
+    ts = dbl_tf_new(frt_whitespace_tokenizer_new(false));
+    return frt_analyzer_new(ts, NULL, NULL);
 }
 
 struct Data {

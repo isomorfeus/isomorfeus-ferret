@@ -184,12 +184,9 @@ frb_qp_init(int argc, VALUE *argv, VALUE self)
         all_fields = frt_hs_new_ptr(NULL);
     }
     if (!analyzer) {
-        analyzer = frt_standard_analyzer_new(true, NULL);
+        analyzer = frt_standard_analyzer_new(true);
     }
     qp = frt_qp_new(analyzer);
-    //frt_hs_destroy(qp->all_fields);
-    //frt_hs_destroy(qp->def_fields);
-    //frt_hs_destroy(qp->tokenized_fields);
     if (def_fields) hs_safe_merge(all_fields, def_fields);
     if (tkz_fields) hs_safe_merge(all_fields, tkz_fields);
     qp->all_fields = all_fields;
@@ -292,9 +289,7 @@ frb_qp_get_fields(VALUE self)
  *
  *  Set the list of fields. These fields are expanded for searches on "*".
  */
-static VALUE
-frb_qp_set_fields(VALUE self, VALUE rfields)
-{
+static VALUE frb_qp_set_fields(VALUE self, VALUE rfields) {
     GET_QP;
     FrtHashSet *fields = frb_get_fields(rfields, NULL);
 

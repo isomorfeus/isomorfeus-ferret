@@ -50,7 +50,7 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
         self->analyzer = analyzer;
         FRT_REF(analyzer);
     } else {
-        self->analyzer = frt_standard_analyzer_new(true, NULL);
+        self->analyzer = frt_standard_analyzer_new(true);
     }
 
     if (create) {

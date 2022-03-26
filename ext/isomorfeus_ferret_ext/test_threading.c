@@ -154,7 +154,7 @@ TestSuite *ts_threading(TestSuite *suite)
     id = rb_intern("id");
     contents = rb_intern("contents");
 
-    FrtAnalyzer *a = frt_letter_analyzer_new(true, NULL);
+    FrtAnalyzer *a = frt_letter_analyzer_new(true);
     FrtStore *store = frt_open_fs_store("./test/testdir/store");
     FrtIndex *index;
     FrtHashSet *def_fields = frt_hs_new_ptr(NULL);

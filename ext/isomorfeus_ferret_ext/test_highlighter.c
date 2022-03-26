@@ -87,7 +87,7 @@ static void make_index(FrtStore *store)
 
 static void add_string_docs(FrtStore *store, const char *string[])
 {
-    FrtIndexWriter *iw = frt_iw_open(store, frt_whitespace_analyzer_new(true, NULL), NULL);
+    FrtIndexWriter *iw = frt_iw_open(store, frt_whitespace_analyzer_new(true), NULL);
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     while (*string) {
@@ -371,7 +371,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     make_index(store);
     add_string_docs(store, docs);
 
-    iw = frt_iw_open(store, frt_letter_analyzer_new(true, NULL), NULL);
+    iw = frt_iw_open(store, frt_letter_analyzer_new(true), NULL);
     frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("field")), (char *)"That's how it goes now.", enc));
     frt_iw_add_doc(iw, doc);
     frt_doc_destroy(doc);

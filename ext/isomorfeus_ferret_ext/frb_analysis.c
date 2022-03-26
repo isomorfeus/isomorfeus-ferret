@@ -625,7 +625,7 @@ frb_get_cwrapped_rts(VALUE rts)
         FRT_REF(ts);
     }
     else {
-        ts = frt_ts_new(CWrappedTokenStream, NULL);
+        ts = frt_ts_new_i(sizeof(CWrappedTokenStream));
         CWTS(ts)->rts = rts;
         ts->next = &cwrts_next;
         ts->reset = &cwrts_reset;
@@ -768,18 +768,21 @@ static FrtTokenStream *rets_clone_i(FrtTokenStream *orig_ts) {
     return ts;
 }
 
-static FrtTokenStream *rets_new(VALUE rtext, VALUE regex, VALUE proc, FrtTokenStream *ats)
-{
-    FrtTokenStream *ts = frt_ts_new(RegExpTokenStream, ats);
+FrtTokenStream *rets_alloc() {
+    return (FrtTokenStream *)frt_ecalloc(sizeof(RegExpTokenStream));
+}
+
+FrtTokenStream *rets_init(FrtTokenStream *ts, VALUE rtext, VALUE regex, VALUE proc) {
+    ts = frt_ts_init(ts);
+    ts->reset = &rets_reset;
+    ts->next = &rets_next;
+    ts->clone_i = &rets_clone_i;
+    ts->destroy_i = &rets_destroy_i;
 
     if (rtext != Qnil) {
         rtext = StringValue(rtext);
         rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
     }
-    ts->reset = &rets_reset;
-    ts->next = &rets_next;
-    ts->clone_i = &rets_clone_i;
-    ts->destroy_i = &rets_destroy_i;
 
     RETS(ts)->curr_ind = 0;
     RETS(ts)->rtext = rtext;
@@ -791,14 +794,18 @@ static FrtTokenStream *rets_new(VALUE rtext, VALUE regex, VALUE proc, FrtTokenSt
         Check_Type(regex, T_REGEXP);
         RETS(ts)->regex = regex;
     }
-
     return ts;
+}
+
+static FrtTokenStream *rets_new(VALUE rtext, VALUE regex, VALUE proc) {
+    FrtTokenStream *ts = rets_alloc();
+    return rets_init(ts, rtext, regex, proc);
 }
 
 
 static VALUE frb_reg_exp_tokenizer_alloc(VALUE rclass) {
-    FrtTokenStream *ts;
-    return TypedData_Make_Struct(rclass, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
+    FrtTokenStream *ts = rets_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_reg_exp_token_stream_t, ts);
 }
 
 /*
@@ -817,7 +824,7 @@ frb_rets_init(int argc, VALUE *argv, VALUE self)
     rb_scan_args(argc, argv, "11&", &rtext, &regex, &proc);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
-    ts = rets_new(rtext, regex, proc, ts);
+    ts = rets_init(ts, rtext, regex, proc);
     object_add(ts, self);
     return self;
 }
@@ -850,7 +857,7 @@ static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
-    frt_letter_tokenizer_new(lower, ts);
+    ts = frt_letter_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -872,7 +879,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
-    frt_whitespace_tokenizer_new(lower, ts);
+    ts = frt_whitespace_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -894,7 +901,7 @@ frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self)
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
-    frt_standard_tokenizer_new(lower, ts);
+    ts = frt_standard_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -1157,20 +1164,42 @@ static VALUE frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) {
  *  token_stream:: TokenStream to be filtered
  *  algorithm::    The algorithm (or language) to use
  */
-static VALUE
-frb_stem_filter_init(int argc, VALUE *argv, VALUE self)
-{
+
+static size_t frb_stem_filter_size(const void *p) {
+    return sizeof(FrtStemFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_stem_filter_t = {
+    .wrap_struct_name = "FrbStemFilter",
+    .function = {
+        .dmark = frb_tf_mark,
+        .dfree = frb_tf_free,
+        .dsize = frb_stem_filter_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_stem_filter_alloc(VALUE rclass) {
+    FrtTokenStream *sf = frt_stem_filter_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_stem_filter_t, sf);
+}
+
+static VALUE frb_stem_filter_init(int argc, VALUE *argv, VALUE self) {
     VALUE rsub_ts, ralgorithm;
     const char *algorithm = "english";
+    FrtTokenStream *sub_ts;
     FrtTokenStream *ts;
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_stem_filter_t, ts);
+
     rb_scan_args(argc, argv, "11", &rsub_ts, &ralgorithm);
-    ts = frb_get_cwrapped_rts(rsub_ts);
+    sub_ts = frb_get_cwrapped_rts(rsub_ts);
     if (argc == 2)
         algorithm = rs2s(rb_obj_as_string(ralgorithm));
-    ts = frt_stem_filter_new(ts, algorithm);
+
+    frt_stem_filter_init(ts, sub_ts, algorithm);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    Frt_Wrap_Struct(self, &frb_tf_mark, &frb_tf_free, ts);
     object_add(ts, self);
     if (((FrtStemFilter *)ts)->stemmer == NULL) {
         rb_raise(rb_eArgError, "No stemmer could be found for the %s language.", algorithm);
@@ -1304,10 +1333,23 @@ rb_scan_args(argc, argv, "01", &rlower);\
 lower = (argc ? RTEST(rlower) : dflt)
 
 static VALUE frb_analyzer_alloc(VALUE rclass) {
-    FrtAnalyzer *a;
-    return TypedData_Make_Struct(rclass, FrtAnalyzer, &frb_analyzer_t, a);
+    FrtAnalyzer *a = frt_analyzer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_analyzer_t, a);
 }
 
+static VALUE frb_analyzer_init(int argc, VALUE *argv, VALUE self) {
+    FrtAnalyzer *a;
+    TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
+    // TODO
+    // frt_analyzer_init(a, , NULL, NULL);
+    object_add(a, self);
+    return self;
+}
+
+
+/*****************************************************************************/
+/*** WhiteSpaceAnalyzer ******************************************************/
+/*****************************************************************************/
 /*
  *  call-seq:
  *     WhiteSpaceAnalyzer.new(lower = false) -> analyzer
@@ -1318,13 +1360,17 @@ static VALUE frb_analyzer_alloc(VALUE rclass) {
  *
  *  lower:: set to false if you don't want the field's tokens to be downcased
  */
-static VALUE
-frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
+
+static VALUE frb_whitespace_analyzer_alloc(VALUE rclass) {
+    FrtAnalyzer *a = frt_whitespace_analyzer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_analyzer_t, a);
+}
+
+static VALUE frb_whitespace_analyzer_init(int argc, VALUE *argv, VALUE self) {
     FrtAnalyzer *a;
     GET_LOWER(false);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
-    a = frt_whitespace_analyzer_new(lower, a);
+    frt_whitespace_analyzer_init(a, lower);
     object_add(a, self);
     return self;
 }
@@ -1339,13 +1385,18 @@ frb_white_space_analyzer_init(int argc, VALUE *argv, VALUE self)
  *
  *  lower:: set to false if you don't want the field's tokens to be downcased
  */
-static VALUE
-frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
+
+static VALUE frb_letter_analyzer_alloc(VALUE rclass) {
+    FrtAnalyzer *a = frt_letter_analyzer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_analyzer_t, a);
+}
+
+static VALUE frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self) {
     FrtAnalyzer *a;
     GET_LOWER(true);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
-    a = frt_letter_analyzer_new(lower, a);
+
+    frt_letter_analyzer_init(a, lower);
     object_add(a, self);
     return self;
 }
@@ -1376,9 +1427,12 @@ get_rstopwords(const char **stop_words)
  *  lower::      set to false if you don't want the field's tokens to be downcased
  *  stop_words:: list of stop-words to pass to the StopFilter
  */
-static VALUE
-frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_standard_analyzer_alloc(VALUE rclass) {
+    FrtAnalyzer *a = frt_standard_analyzer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_analyzer_t, a);
+}
+
+static VALUE frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self) {
     bool lower;
     VALUE rlower, rstop_words;
     FrtAnalyzer *a;
@@ -1387,24 +1441,20 @@ frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self)
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
     if (rstop_words != Qnil) {
         char **stop_words = get_stopwords(rstop_words);
-        a = frt_standard_analyzer_new_with_words((const char **)stop_words, lower, a);
+        frt_standard_analyzer_init(a, lower, (const char **)stop_words);
         free(stop_words);
     } else {
-        a = frt_standard_analyzer_new(lower, a);
+        frt_standard_analyzer_init(a, lower, FRT_FULL_ENGLISH_STOP_WORDS);
     }
     object_add(a, self);
     return self;
 }
 
-static void
-frb_h_mark_values_i(void *key, void *value, void *arg)
-{
+static void frb_h_mark_values_i(void *key, void *value, void *arg) {
     frb_gc_mark(value);
 }
 
-static void
-frb_pfa_mark(void *p)
-{
+static void frb_pfa_mark(void *p) {
     frb_gc_mark(PFA(p)->default_a);
     frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
 }
@@ -1421,12 +1471,32 @@ frb_pfa_mark(void *p)
  *  default_analyzer:: analyzer to be used on fields that aren't otherwise
  *                     specified
  */
-static VALUE
-frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer)
-{
+
+static size_t frb_per_field_analyzer_size(const void *p) {
+    return sizeof(FrtPerFieldAnalyzer);
+    (void)p;
+}
+
+const rb_data_type_t frb_per_field_analyzer_t = {
+    .wrap_struct_name = "FrbPerFieldAnalyzer",
+    .function = {
+        .dmark = frb_pfa_mark,
+        .dfree = frb_analyzer_free,
+        .dsize = frb_per_field_analyzer_size
+    },
+    .data = NULL
+};
+
+static VALUE frb_per_field_analyzer_alloc(VALUE rclass) {
+    FrtAnalyzer *a = frt_per_field_analyzer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_per_field_analyzer_t, a);
+}
+
+static VALUE frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer) {
     FrtAnalyzer *def = frb_get_cwrapped_analyzer(ranalyzer);
-    FrtAnalyzer *a = frt_per_field_analyzer_new(def);
-    Frt_Wrap_Struct(self, &frb_pfa_mark, &frb_analyzer_free, a);
+    FrtAnalyzer *a;
+    TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, a);
+    frt_per_field_analyzer_init(a, def);
     object_add(a, self);
     return self;
 }
@@ -1535,7 +1605,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
     FrtTokenStream *ts;
     rb_scan_args(argc, argv, "02&", &regex, &lower, &proc);
 
-    ts = rets_new(Qnil, regex, proc, NULL);
+    ts = rets_new(Qnil, regex, proc);
     rets = TypedData_Wrap_Struct(cRegExpTokenizer, &frb_reg_exp_token_stream_t, ts);
     object_add(ts, rets);
 
@@ -1546,7 +1616,7 @@ frb_re_analyzer_init(int argc, VALUE *argv, VALUE self)
     FRT_REF(ts);
 
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_reg_exp_analyzer_t, a);
-    a = frt_analyzer_new(ts, &re_analyzer_destroy_i, NULL, a);
+    frt_analyzer_init(a, ts, &re_analyzer_destroy_i, NULL);
     object_add(a, self);
     return self;
 }
@@ -1925,14 +1995,11 @@ static void Init_StopFilter(void) {
  *  algorithm::    The algorithm (or language) to use (default: "english")
  *  encoding::     The encoding of the data (default: "UTF-8")
  */
-static void Init_StemFilter(void)
-{
-    cStemFilter =
-        rb_define_class_under(mAnalysis, "StemFilter", cTokenStream);
+static void Init_StemFilter(void) {
+    cStemFilter = rb_define_class_under(mAnalysis, "StemFilter", cTokenStream);
     frb_mark_cclass(cStemFilter);
-    rb_define_alloc_func(cStemFilter, frb_data_alloc);
-    rb_define_method(cStemFilter, "initialize",
-                     frb_stem_filter_init, -1);
+    rb_define_alloc_func(cStemFilter, frb_stem_filter_alloc);
+    rb_define_method(cStemFilter, "initialize", frb_stem_filter_init, -1);
 }
 
 /*************************/
@@ -1973,8 +2040,7 @@ static void Init_Analyzer(void) {
     cAnalyzer = rb_define_class_under(mAnalysis, "Analyzer", rb_cObject);
     frb_mark_cclass(cAnalyzer);
     rb_define_alloc_func(cAnalyzer, frb_analyzer_alloc);
-    // TODO use NonAnalyzer here
-    rb_define_method(cAnalyzer, "initialize", frb_letter_analyzer_init, -1);
+    rb_define_method(cAnalyzer, "initialize", frb_analyzer_init, -1);
     rb_define_method(cAnalyzer, "token_stream", frb_analyzer_token_stream, 2);
 }
 
@@ -1984,7 +2050,7 @@ static void Init_Analyzer(void) {
  *  == Summary
  *
  *  A LetterAnalyzer creates a TokenStream that splits the input up into
- *  maximal strings of characters as recognized by the current locale. If
+ *  maximal strings of characters as recognized by the current encoding. If
  *  implemented in Ruby it would look like;
  *
  *    class LetterAnalyzer
@@ -2002,10 +2068,9 @@ static void Init_Analyzer(void) {
 static void Init_LetterAnalyzer(void) {
     cLetterAnalyzer = rb_define_class_under(mAnalysis, "LetterAnalyzer", cAnalyzer);
     frb_mark_cclass(cLetterAnalyzer);
-    rb_define_alloc_func(cLetterAnalyzer, frb_analyzer_alloc);
+    rb_define_alloc_func(cLetterAnalyzer, frb_letter_analyzer_alloc);
     rb_define_method(cLetterAnalyzer, "initialize", frb_letter_analyzer_init, -1);
 }
-
 
 /*
  *  Document-class: Ferret::Analysis::WhiteSpaceAnalyzer
@@ -2031,8 +2096,8 @@ static void Init_LetterAnalyzer(void) {
 static void Init_WhiteSpaceAnalyzer(void) {
     cWhiteSpaceAnalyzer = rb_define_class_under(mAnalysis, "WhiteSpaceAnalyzer", cAnalyzer);
     frb_mark_cclass(cWhiteSpaceAnalyzer);
-    rb_define_alloc_func(cWhiteSpaceAnalyzer, frb_analyzer_alloc);
-    rb_define_method(cWhiteSpaceAnalyzer, "initialize", frb_white_space_analyzer_init, -1);
+    rb_define_alloc_func(cWhiteSpaceAnalyzer, frb_whitespace_analyzer_alloc);
+    rb_define_method(cWhiteSpaceAnalyzer, "initialize", frb_whitespace_analyzer_init, -1);
 }
 
 /*
@@ -2063,7 +2128,7 @@ static void Init_WhiteSpaceAnalyzer(void) {
 static void Init_StandardAnalyzer(void) {
     cStandardAnalyzer = rb_define_class_under(mAnalysis, "StandardAnalyzer", cAnalyzer);
     frb_mark_cclass(cStandardAnalyzer);
-    rb_define_alloc_func(cStandardAnalyzer, frb_analyzer_alloc);
+    rb_define_alloc_func(cStandardAnalyzer, frb_standard_analyzer_alloc);
     rb_define_method(cStandardAnalyzer, "initialize", frb_standard_analyzer_init, -1);
 }
 
@@ -2087,20 +2152,14 @@ static void Init_StandardAnalyzer(void) {
  *    # Use a custom analyzer on the :created_at field
  *    pfa[:created_at] = DateAnalyzer.new
  */
-static void Init_PerFieldAnalyzer(void)
-{
-    cPerFieldAnalyzer =
-        rb_define_class_under(mAnalysis, "PerFieldAnalyzer", cAnalyzer);
+static void Init_PerFieldAnalyzer(void) {
+    cPerFieldAnalyzer = rb_define_class_under(mAnalysis, "PerFieldAnalyzer", cAnalyzer);
     frb_mark_cclass(cPerFieldAnalyzer);
-    rb_define_alloc_func(cPerFieldAnalyzer, frb_data_alloc);
-    rb_define_method(cPerFieldAnalyzer, "initialize",
-                     frb_per_field_analyzer_init, 1);
-    rb_define_method(cPerFieldAnalyzer, "add_field",
-                     frb_per_field_analyzer_add_field, 2);
-    rb_define_method(cPerFieldAnalyzer, "[]=",
-                     frb_per_field_analyzer_add_field, 2);
-    rb_define_method(cPerFieldAnalyzer, "token_stream",
-                     frb_pfa_analyzer_token_stream, 2);
+    rb_define_alloc_func(cPerFieldAnalyzer, frb_per_field_analyzer_alloc);
+    rb_define_method(cPerFieldAnalyzer, "initialize", frb_per_field_analyzer_init, 1);
+    rb_define_method(cPerFieldAnalyzer, "add_field", frb_per_field_analyzer_add_field, 2);
+    rb_define_method(cPerFieldAnalyzer, "[]=", frb_per_field_analyzer_add_field, 2);
+    rb_define_method(cPerFieldAnalyzer, "token_stream", frb_pfa_analyzer_token_stream, 2);
 }
 
 /*
