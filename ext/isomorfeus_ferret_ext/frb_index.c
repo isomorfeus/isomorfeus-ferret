@@ -168,10 +168,7 @@ const rb_data_type_t frb_field_info_t = {
     .data = NULL
 };
 
-static VALUE
-frb_get_field_info(FrtFieldInfo *fi)
-{
-
+static VALUE frb_get_field_info(FrtFieldInfo *fi) {
     VALUE rfi = Qnil;
     if (fi) {
         rfi = object_get(fi);
@@ -223,9 +220,7 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
  *
  *  Return the name of the field
  */
-static VALUE
-frb_fi_name(VALUE self)
-{
+static VALUE frb_fi_name(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return rb_str_new_cstr(rb_id2name(fi->name));
 }
@@ -236,9 +231,7 @@ frb_fi_name(VALUE self)
  *
  *  Return true if the field is stored in the index.
  */
-static VALUE
-frb_fi_is_stored(VALUE self)
-{
+static VALUE frb_fi_is_stored(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_stored(fi) ? Qtrue : Qfalse;
 }
@@ -249,9 +242,7 @@ frb_fi_is_stored(VALUE self)
  *
  *  Return true if the field is stored in the index in compressed format.
  */
-static VALUE
-frb_fi_is_compressed(VALUE self)
-{
+static VALUE frb_fi_is_compressed(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_compressed(fi) ? Qtrue : Qfalse;
 }
@@ -262,9 +253,7 @@ frb_fi_is_compressed(VALUE self)
  *
  *  Return true if the field is indexed, ie searchable in the index.
  */
-static VALUE
-frb_fi_is_indexed(VALUE self)
-{
+static VALUE frb_fi_is_indexed(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_indexed(fi) ? Qtrue : Qfalse;
 }
@@ -280,9 +269,7 @@ frb_fi_is_indexed(VALUE self)
  *
  *  A field can only be tokenized if it is indexed.
  */
-static VALUE
-frb_fi_is_tokenized(VALUE self)
-{
+static VALUE frb_fi_is_tokenized(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_is_tokenized(fi) ? Qtrue : Qfalse;
 }
@@ -298,9 +285,7 @@ frb_fi_is_tokenized(VALUE self)
  *  boost and it will use less memory, especially for indexes which have a
  *  large number of documents.
  */
-static VALUE
-frb_fi_omit_norms(VALUE self)
-{
+static VALUE frb_fi_omit_norms(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_omit_norms(fi) ? Qtrue : Qfalse;
 }
@@ -311,9 +296,7 @@ frb_fi_omit_norms(VALUE self)
  *
  *  Return true if the term-vectors are stored for this field.
  */
-static VALUE
-frb_fi_store_term_vector(VALUE self)
-{
+static VALUE frb_fi_store_term_vector(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_term_vector(fi) ? Qtrue : Qfalse;
 }
@@ -324,9 +307,7 @@ frb_fi_store_term_vector(VALUE self)
  *
  *  Return true if positions are stored with the term-vectors for this field.
  */
-static VALUE
-frb_fi_store_positions(VALUE self)
-{
+static VALUE frb_fi_store_positions(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_positions(fi) ? Qtrue : Qfalse;
 }
@@ -337,9 +318,7 @@ frb_fi_store_positions(VALUE self)
  *
  *  Return true if offsets are stored with the term-vectors for this field.
  */
-static VALUE
-frb_fi_store_offsets(VALUE self)
-{
+static VALUE frb_fi_store_offsets(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_store_offsets(fi) ? Qtrue : Qfalse;
 }
@@ -352,9 +331,7 @@ frb_fi_store_offsets(VALUE self)
  *
  *    fi.indexed? and not fi.omit_norms?
  */
-static VALUE
-frb_fi_has_norms(VALUE self)
-{
+static VALUE frb_fi_has_norms(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return fi_has_norms(fi) ? Qtrue : Qfalse;
 }
@@ -365,9 +342,7 @@ frb_fi_has_norms(VALUE self)
  *
  *  Return the default boost for this field
  */
-static VALUE
-frb_fi_boost(VALUE self)
-{
+static VALUE frb_fi_boost(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     return rb_float_new((double)fi->boost);
 }
@@ -378,9 +353,7 @@ frb_fi_boost(VALUE self)
  *
  *  Return a string representation of the FieldInfo object.
  */
-static VALUE
-frb_fi_to_s(VALUE self)
-{
+static VALUE frb_fi_to_s(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
     char *fi_s = frt_fi_to_s(fi);
     VALUE rfi_s = rb_str_new2(fi_s);
@@ -474,9 +447,7 @@ static VALUE frb_fis_init(int argc, VALUE *argv, VALUE self) {
  *  Return an array of the FieldInfo objects contained but this FieldInfos
  *  object.
  */
-static VALUE
-frb_fis_to_a(VALUE self)
-{
+static VALUE frb_fis_to_a(VALUE self) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rary = rb_ary_new();
     int i;
@@ -499,9 +470,7 @@ frb_fis_to_a(VALUE self)
  *    fi = fis[:name]
  *    fi = fis[2]
  */
-static VALUE
-frb_fis_get(VALUE self, VALUE ridx)
-{
+static VALUE frb_fis_get(VALUE self, VALUE ridx) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     VALUE rfi = Qnil;
     switch (TYPE(ridx)) {
@@ -540,9 +509,7 @@ frb_fis_get(VALUE self, VALUE ridx)
  *  Add a FieldInfo object. Use the FieldInfos#add_field method where
  *  possible.
  */
-static VALUE
-frb_fis_add(VALUE self, VALUE rfi)
-{
+static VALUE frb_fis_add(VALUE self, VALUE rfi) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi = (FrtFieldInfo *)frb_rb_data_ptr(rfi);
     frt_fis_add_field(fis, fi);
