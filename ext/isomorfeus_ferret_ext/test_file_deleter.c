@@ -159,7 +159,7 @@ static void test_delete_leftover_files(TestCase *tc, void *data)
 
 TestSuite *ts_file_deleter(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
     suite = ADD_SUITE(suite);
 
     tst_run_test(suite, test_delete_leftover_files, store);

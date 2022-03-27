@@ -1287,7 +1287,8 @@ static VALUE
 frb_iw_close(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
-    Frt_Unwrap_Struct(self);
+    // TODO Why?
+    // Frt_Unwrap_Struct(self);
     frt_iw_close(iw);
     return Qnil;
 }
@@ -1391,7 +1392,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
             SET_INT_ATTR(max_field_length);
         }
         if (NULL == store) {
-            store = frt_open_ram_store();
+            store = frt_open_ram_store(NULL);
             FRT_DEREF(store);
         }
         if (!create && create_if_missing && !store->exists(store, "segments")) {
@@ -2311,7 +2312,8 @@ frb_ir_close(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     object_del(ir);
-    Frt_Unwrap_Struct(self);
+    // TODO Why?
+    // Frt_Unwrap_Struct(self);
     frt_ir_close(ir);
     return self;
 }

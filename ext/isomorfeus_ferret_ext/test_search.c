@@ -1638,7 +1638,7 @@ static void test_search_unscored(TestCase *tc, void *data)
 
 TestSuite *ts_search(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
     FrtIndexReader *ir;
     FrtSearcher *searcher;
 
@@ -1828,8 +1828,8 @@ static void test_query_combine(TestCase *tc, void *data)
 
 TestSuite *ts_multi_search(TestSuite *suite)
 {
-    FrtStore *store0 = frt_open_ram_store();
-    FrtStore *store1 = frt_open_ram_store();
+    FrtStore *store0 = frt_open_ram_store(NULL);
+    FrtStore *store1 = frt_open_ram_store(NULL);
 
     FrtIndexReader *ir0, *ir1;
     FrtSearcher **searchers;

@@ -289,7 +289,7 @@ static void test_sorts(TestCase *tc, void *data)
 TestSuite *ts_sort(TestSuite *suite)
 {
     FrtSearcher *sea, **searchers;
-    FrtStore *store = frt_open_ram_store(), *fs_store;
+    FrtStore *store = frt_open_ram_store(NULL), *fs_store;
 
     search = rb_intern("search");
     string = rb_intern("string");

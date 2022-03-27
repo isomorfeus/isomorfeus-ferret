@@ -531,7 +531,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
 
 TestSuite *ts_highlighter(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
 
     suite = ADD_SUITE(suite);
 

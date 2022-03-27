@@ -51,7 +51,7 @@ static void test_problem_text(TestCase *tc, void *data)
 
 TestSuite *ts_1710(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
 
     suite = ADD_SUITE(suite);
 

@@ -1336,7 +1336,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
 
     rte->stores = FRT_ALLOC_N(FrtStore *, store_cnt);
     for (i = 0; i < store_cnt; i++) {
-        FrtStore *store = rte->stores[i] = frt_open_ram_store();
+        FrtStore *store = rte->stores[i] = frt_open_ram_store(NULL);
         FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                                   FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         int start_doc = i * doc_cnt;
@@ -1392,7 +1392,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
 
     if (type == add_indexes_reader_type) {
         /* Prepare store for Add Indexes test */
-        FrtStore *store = frt_open_ram_store();
+        FrtStore *store = frt_open_ram_store(NULL);
         FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
                                   FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         FrtIndexReader **readers = FRT_ALLOC_N(FrtIndexReader *, rte->store_cnt);
@@ -1968,7 +1968,7 @@ static void test_ir_norms(TestCase *tc, void *data)
 static void test_ir_delete(TestCase *tc, void *data)
 {
     int i;
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
     FrtIndexReader *ir, *ir2;
     FrtIndexWriter *iw;
     int type = *((int *)data);
@@ -2182,7 +2182,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
 TestSuite *ts_index(TestSuite *suite)
 {
     FrtIndexReader *ir;
-    FrtStore *fs_store, *store = frt_open_ram_store();
+    FrtStore *fs_store, *store = frt_open_ram_store(NULL);
     ReaderTestEnvironment *rte = NULL;
     /* FrtStore *store = frt_open_fs_store(TEST_DIR); */
 

@@ -226,7 +226,7 @@ static void test_fuzzy_query_hash(TestCase *tc, void *data)
 
 TestSuite *ts_q_fuzzy(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
 
     field = rb_intern("field");
 

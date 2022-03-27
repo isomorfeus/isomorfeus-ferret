@@ -63,7 +63,7 @@ static void test_const_score_query_hash(TestCase *tc, void *data)
 
 TestSuite *ts_q_const_score(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
     FrtIndexReader *ir;
     FrtSearcher *searcher;
 

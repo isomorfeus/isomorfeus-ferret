@@ -552,7 +552,7 @@ static void test_span_not_hash(TestCase *tc, void *data)
 
 TestSuite *ts_q_span(TestSuite *suite)
 {
-    FrtStore *store = frt_open_ram_store();
+    FrtStore *store = frt_open_ram_store(NULL);
     field = rb_intern("field");
     span_test_setup(store);
 

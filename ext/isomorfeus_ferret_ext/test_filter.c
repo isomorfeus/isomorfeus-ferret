@@ -314,7 +314,7 @@ TestSuite *ts_filter(TestSuite *suite)
 
     suite = ADD_SUITE(suite);
 
-    store = frt_open_ram_store();
+    store = frt_open_ram_store(NULL);
     prepare_filter_index(store);
     ir = frt_ir_open(NULL, store);
     searcher = frt_isea_new(ir);
