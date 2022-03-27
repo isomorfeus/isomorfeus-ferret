@@ -912,6 +912,8 @@ typedef struct FrtQueryParser
 } FrtQueryParser;
 typedef FrtQueryParser FrtQParser; /* FrtQParser is an alias for FrtQueryParser */
 
+extern FrtQParser *frt_qp_alloc();
+extern FrtQParser *frt_qp_init(FrtQParser *, FrtAnalyzer *analyzer);
 extern FrtQParser *frt_qp_new(FrtAnalyzer *analyzer);
 extern void frt_qp_add_field(FrtQParser *self, FrtSymbol field,
                              bool is_default, bool is_tokenized);
