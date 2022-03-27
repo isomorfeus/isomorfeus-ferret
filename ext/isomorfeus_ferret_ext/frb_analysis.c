@@ -1,7 +1,7 @@
 #include "frt_analysis.h"
 #include "isomorfeus_ferret.h"
+#include <ruby.h>
 #include <ruby/re.h>
-#include <ruby/st.h>
 
 static VALUE mAnalysis;
 

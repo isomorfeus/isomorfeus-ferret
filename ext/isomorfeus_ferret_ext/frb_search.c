@@ -2,7 +2,7 @@
 #include "frt_array.h"
 #include "frt_search.h"
 #include "isomorfeus_ferret.h"
-#include <ruby/st.h>
+#include <ruby.h>
 
 VALUE mSearch;
 

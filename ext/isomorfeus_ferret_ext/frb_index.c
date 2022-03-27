@@ -1,7 +1,6 @@
 #include "frt_index.h"
 #include "isomorfeus_ferret.h"
-#include <ruby/st.h>
-#include <ruby/encoding.h>
+#include <ruby.h>
 
 VALUE mIndex;
 
