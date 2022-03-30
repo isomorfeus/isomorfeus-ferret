@@ -1932,28 +1932,41 @@ static void Init_StopFilter(void) {
  *  stemming algorithm.  Note: the input to the stemming filter must already
  *  be in lower case, so you will need to use LowerCaseFilter or lowercasing
  *  Tokenizer further down the Tokenizer chain in order for this to work
- *  properly!
+ *  properly! Stemmers work on UTF-8 encoding only.
  *
- *  === Available algorithms and encodings
+ *  === Available algorithms
  *
- *    Algorithm       Algorithm Pseudonyms       Encoding
- *    ----------------------------------------------------------------
- *     "danish",     | "da", "dan"              | "ISO_8859_1", "UTF_8"
- *     "dutch",      | "dut", "nld"             | "ISO_8859_1", "UTF_8"
- *     "english",    | "en", "eng"              | "ISO_8859_1", "UTF_8"
- *     "finnish",    | "fi", "fin"              | "ISO_8859_1", "UTF_8"
- *     "french",     | "fr", "fra", "fre"       | "ISO_8859_1", "UTF_8"
- *     "german",     | "de", "deu", "ge", "ger" | "ISO_8859_1", "UTF_8"
- *     "hungarian",  | "hu", "hun"              | "ISO_8859_1", "UTF_8"
- *     "italian",    | "it", "ita"              | "ISO_8859_1", "UTF_8"
- *     "norwegian",  | "nl", "no"               | "ISO_8859_1", "UTF_8"
- *     "porter",     |                          | "ISO_8859_1", "UTF_8"
- *     "portuguese", | "por", "pt"              | "ISO_8859_1", "UTF_8"
- *     "romanian",   | "ro", "ron", "rum"       | "ISO_8859_2", "UTF_8"
- *     "russian",    | "ru", "rus"              | "KOI8_R",     "UTF_8"
- *     "spanish",    | "es", "esl"              | "ISO_8859_1", "UTF_8"
- *     "swedish",    | "sv", "swe"              | "ISO_8859_1", "UTF_8"
- *     "turkish",    | "tr", "tur"              |               "UTF_8"
+ *    Algorithm       Algorithm Pseudonyms
+ *    ------------------------------------------
+ *     "arabic"      | "ar", "ara"
+ *     "armenian"    | "arm", "hy", "hye"
+ *     "basque"      | "baq", "eu", "eus"
+ *     "catalan"     | "ca", "cat"
+ *     "danish"      | "da", "dan"
+ *     "dutch"       | "dut", "nl", "nld"
+ *     "english"     | "en", "eng"
+ *     "finnish"     | "fi", "fin"
+ *     "french"      | "fr", "fra", "fre"
+ *     "german"      | "de", "deu", "ge", "ger"
+ *     "greek"       | "el", "ell", "gre"
+ *     "hindi"       | "hi", "hin"
+ *     "hungarian"   | "hu", "hun"
+ *     "indonesian"  | "id", "ind"
+ *     "italian"     | "it", "ita"
+ *     "irish"       | "ga", "gle"
+ *     "lithuanian"  | "lit"
+ *     "nepali"      | "ne", "nep"
+ *     "norwegian"   | "nl", "no", "nor"
+ *     "porter"      |
+ *     "portuguese"  | "por", "pt"
+ *     "romanian"    | "ro", "ron", "rum"
+ *     "russian"     | "ru", "rus"
+ *     "serbian"     | "sr", "srp"
+ *     "spanish"     | "es", "esl", "spa"
+ *     "swedish"     | "sv", "swe"
+ *     "tamil"       | "ta", "tam"
+ *     "turkish"     | "tr", "tur"
+ *     "yiddish"     | "yi", "yid"
  *
  *
  *  === New Stemmers
