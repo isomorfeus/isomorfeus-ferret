@@ -885,9 +885,7 @@ frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
  *
  *  lower:: set to false if you don't wish to downcase tokens
  */
-static VALUE
-frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
@@ -915,8 +913,7 @@ const rb_data_type_t frb_lowercase_filter_t = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
         .dsize = frb_tf_size
-    },
-    .data = NULL
+    }
 };
 
 static VALUE frb_lowercase_filter_alloc(VALUE rclass) {

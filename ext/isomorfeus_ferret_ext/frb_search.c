@@ -584,10 +584,26 @@ frb_get_q(FrtQuery *q)
 }
 
 /****************************************************************************
- *
  * TermQuery Methods
- *
  ****************************************************************************/
+
+static size_t frb_term_query_size(const void *p) {
+    return sizeof(FrtTermQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_term_query_t = {
+    .wrap_struct_name = "FrbTermQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_term_query_size
+    }
+};
+
+static VALUE frb_tq_alloc(VALUE rclass) {
+    FrtQuery *tq = frt_tq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_term_query_t, tq);
+}
 
 /*
  *  call-seq:
@@ -598,13 +614,12 @@ frb_get_q(FrtQuery *q)
  *
  *  Note: As usual, field should be a symbol
  */
-static VALUE
-frb_tq_init(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_tq_init(VALUE self, VALUE rfield, VALUE rterm) {
     FrtSymbol field = frb_field(rfield);
     char *term = rs2s(rb_obj_as_string(rterm));
-    FrtQuery *q = frt_tq_new(field, term);
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_term_query_t, q);
+    frt_tq_init(q, field, term);
     object_add(q, self);
     return self;
 }
@@ -3343,8 +3358,7 @@ static void
 Init_TermQuery(void)
 {
     cTermQuery = rb_define_class_under(mSearch, "TermQuery", cQuery);
-    rb_define_alloc_func(cTermQuery, frb_data_alloc);
-
+    rb_define_alloc_func(cTermQuery, frb_tq_alloc);
     rb_define_method(cTermQuery, "initialize", frb_tq_init, 2);
 }
 
