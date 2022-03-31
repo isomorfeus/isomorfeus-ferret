@@ -784,31 +784,42 @@ static VALUE frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_
  *
  ****************************************************************************/
 
-static void
-frb_bc_mark(void *p)
-{
+static size_t frb_boolean_clause_t_size(const void *p) {
+    return sizeof(FrtBooleanClause);
+    (void)p;
+}
+
+static void frb_bc_mark(void *p) {
     frb_gc_mark(((FrtBooleanClause *)p)->query);
 }
 
-static void
-frb_bc_free(void *p)
-{
+static void frb_bc_free(void *p) {
     object_del(p);
     frt_bc_deref((FrtBooleanClause *)p);
 }
 
-static VALUE
-frb_bc_wrap(FrtBooleanClause *bc)
-{
+const rb_data_type_t frb_boolean_clause_t = {
+    .wrap_struct_name = "FrbBooleanClause",
+    .function = {
+        .dmark = frb_bc_mark,
+        .dfree = frb_bc_free,
+        .dsize = frb_boolean_clause_t_size
+    }
+};
+
+static VALUE frb_bc_alloc(VALUE rclass) {
+    FrtBooleanClause *bc = frt_bc_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_boolean_clause_t, bc);
+}
+
+static VALUE frb_bc_wrap(FrtBooleanClause *bc) {
     VALUE self = Data_Wrap_Struct(cBooleanClause, &frb_bc_mark, &frb_bc_free, bc);
     FRT_REF(bc);
     object_add(bc, self);
     return self;
 }
 
-static FrtBCType
-frb_get_occur(VALUE roccur)
-{
+static FrtBCType frb_get_occur(VALUE roccur) {
     FrtBCType occur = FRT_BC_SHOULD;
 
     if (roccur == sym_should) {
@@ -818,8 +829,7 @@ frb_get_occur(VALUE roccur)
     } else if (roccur == sym_must_not) {
         occur = FRT_BC_MUST_NOT;
     } else {
-        rb_raise(rb_eArgError, "occur argument must be one of [:must, "
-                 ":should, :must_not]");
+        rb_raise(rb_eArgError, "occur argument must be one of [:must, :should, :must_not]");
     }
     return occur;
 }
@@ -831,10 +841,9 @@ frb_get_occur(VALUE roccur)
  *  Create a new BooleanClause object, wrapping the query +query+. +occur+
  *  must be one of +:must+, +:should+ or +:must_not+.
  */
-static VALUE
-frb_bc_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_bc_init(int argc, VALUE *argv, VALUE self) {
     FrtBooleanClause *bc;
+    TypedData_Get_Struct(self, FrtBooleanClause, &frb_boolean_clause_t, bc);
     VALUE rquery, roccur;
     unsigned int occur = FRT_BC_SHOULD;
     FrtQuery *sub_q;
@@ -843,8 +852,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
     }
     Data_Get_Struct(rquery, FrtQuery, sub_q);
     FRT_REF(sub_q);
-    bc = frt_bc_new(sub_q, occur);
-    Frt_Wrap_Struct(self, &frb_bc_mark, &frb_bc_free, bc);
+    frt_bc_init(bc, sub_q, occur);
     object_add(bc, self);
     return self;
 }
@@ -856,9 +864,7 @@ frb_bc_init(int argc, VALUE *argv, VALUE self)
  *
  *  Return the query object wrapped by this BooleanClause.
  */
-static VALUE
-frb_bc_get_query(VALUE self)
-{
+static VALUE frb_bc_get_query(VALUE self) {
     GET_BC();
     return object_get(bc->query);
 }
@@ -869,9 +875,7 @@ frb_bc_get_query(VALUE self)
  *
  *  Set the query wrapped by this BooleanClause.
  */
-static VALUE
-frb_bc_set_query(VALUE self, VALUE rquery)
-{
+static VALUE frb_bc_set_query(VALUE self, VALUE rquery) {
     GET_BC();
     Data_Get_Struct(rquery, FrtQuery, bc->query);
     return rquery;
@@ -884,9 +888,7 @@ frb_bc_set_query(VALUE self, VALUE rquery)
  *  Return true if this clause is required. ie, this will be true if occur was
  *  equal to +:must+.
  */
-static VALUE
-frb_bc_is_required(VALUE self)
-{
+static VALUE frb_bc_is_required(VALUE self) {
     GET_BC();
     return bc->is_required ? Qtrue : Qfalse;
 }
@@ -898,9 +900,7 @@ frb_bc_is_required(VALUE self)
  *  Return true if this clause is prohibited. ie, this will be true if occur was
  *  equal to +:must_not+.
  */
-static VALUE
-frb_bc_is_prohibited(VALUE self)
-{
+static VALUE frb_bc_is_prohibited(VALUE self) {
     GET_BC();
     return bc->is_prohibited ? Qtrue : Qfalse;
 }
@@ -912,9 +912,7 @@ frb_bc_is_prohibited(VALUE self)
  *  Set the +occur+ value for this BooleanClause. +occur+ must be one of
  *  +:must+, +:should+ or +:must_not+.
  */
-static VALUE
-frb_bc_set_occur(VALUE self, VALUE roccur)
-{
+static VALUE frb_bc_set_occur(VALUE self, VALUE roccur) {
     GET_BC();
     FrtBCType occur = frb_get_occur(roccur);
     frt_bc_set_occur(bc, occur);
@@ -930,9 +928,7 @@ frb_bc_set_occur(VALUE self, VALUE roccur)
  *  BooleanQuery#to_s. It is only used by BooleanClause#to_s and will specify
  *  whether the clause is +:must+, +:should+ or +:must_not+.
  */
-static VALUE
-frb_bc_to_s(VALUE self)
-{
+static VALUE frb_bc_to_s(VALUE self) {
     VALUE rstr;
     char *qstr, *str;
     const char *ostr = "";
@@ -965,9 +961,7 @@ frb_bc_to_s(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_bq_mark(void *p)
-{
+static void frb_bq_mark(void *p) {
     int i;
     FrtQuery *q = (FrtQuery *)p;
     FrtBooleanQuery *bq = (FrtBooleanQuery *)q;
@@ -986,9 +980,7 @@ frb_bq_mark(void *p)
  *  score. This will slightly improve performance for the query. Usually you
  *  should leave this parameter as is.
  */
-static VALUE
-frb_bq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_bq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rcoord_disabled;
     bool coord_disabled = false;
     FrtQuery *q;
@@ -1022,9 +1014,7 @@ frb_bq_init(int argc, VALUE *argv, VALUE self)
  *            [:must, :should, :must_not]
  *  returns:: BooleanClause which was added
  */
-static VALUE
-frb_bq_add_query(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_bq_add_query(int argc, VALUE *argv, VALUE self) {
     GET_Q();
     VALUE rquery, roccur;
     FrtBCType occur = FRT_BC_SHOULD;
@@ -3463,16 +3453,13 @@ Init_BooleanQuery(void)
  *    query = BooleanQuery.new
  *    query << clause1 << clause2
  */
-static void
-Init_BooleanClause(void)
-{
+static void Init_BooleanClause(void) {
     sym_should = ID2SYM(rb_intern("should"));
     sym_must = ID2SYM(rb_intern("must"));
     sym_must_not = ID2SYM(rb_intern("must_not"));
 
-    cBooleanClause = rb_define_class_under(cBooleanQuery, "BooleanClause",
-                                           rb_cObject);
-    rb_define_alloc_func(cBooleanClause, frb_data_alloc);
+    cBooleanClause = rb_define_class_under(cBooleanQuery, "BooleanClause", rb_cObject);
+    rb_define_alloc_func(cBooleanClause, frb_bc_alloc);
 
     rb_define_method(cBooleanClause, "initialize", frb_bc_init, -1);
     rb_define_method(cBooleanClause, "query", frb_bc_get_query, 0);

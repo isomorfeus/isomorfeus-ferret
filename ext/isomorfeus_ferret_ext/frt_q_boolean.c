@@ -1175,8 +1175,7 @@ static void bw_destroy(FrtWeight *self)
     frt_w_destroy(self);
 }
 
-static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num)
-{
+static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_num) {
     FrtBooleanQuery *bq = BQ(self->query);
     FrtExplanation *sum_expl = frt_expl_new(0.0f, "sum of:");
     FrtExplanation *explanation;
@@ -1229,8 +1228,7 @@ static FrtExplanation *bw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     }
 }
 
-static FrtWeight *bw_new(FrtQuery *query, FrtSearcher *searcher)
-{
+static FrtWeight *bw_new(FrtQuery *query, FrtSearcher *searcher) {
     int i;
     FrtWeight *self = w_new(BooleanWeight, query);
 
@@ -1259,8 +1257,7 @@ static FrtWeight *bw_new(FrtQuery *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
-{
+void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur) {
     self->occur = occur;
     switch (occur) {
         case FRT_BC_SHOULD:
@@ -1281,31 +1278,35 @@ void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur)
     }
 }
 
-void frt_bc_deref(FrtBooleanClause *self)
-{
+void frt_bc_deref(FrtBooleanClause *self) {
     if (--self->ref_cnt <= 0) {
         frt_q_deref(self->query);
         free(self);
     }
 }
 
-static unsigned long long bc_hash(FrtBooleanClause *self)
-{
+static unsigned long long bc_hash(FrtBooleanClause *self) {
     return ((frt_q_hash(self->query) << 2) | self->occur);
 }
 
-static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o)
-{
+static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o) {
     return ((self->occur == o->occur) && frt_q_eq(self->query, o->query));
 }
 
-FrtBooleanClause *frt_bc_new(FrtQuery *query, FrtBCType occur)
-{
-    FrtBooleanClause *self = FRT_ALLOC(FrtBooleanClause);
+FrtBooleanClause *frt_bc_alloc(void) {
+    return FRT_ALLOC(FrtBooleanClause);
+}
+
+FrtBooleanClause *frt_bc_init(FrtBooleanClause *self, FrtQuery *query, FrtBCType occur) {
     self->ref_cnt = 1;
     self->query = query;
     frt_bc_set_occur(self, occur);
     return self;
+}
+
+FrtBooleanClause *frt_bc_new(FrtQuery *query, FrtBCType occur) {
+    FrtBooleanClause *self = frt_bc_alloc();
+    return frt_bc_init(self, query, occur);
 }
 
 /***************************************************************************

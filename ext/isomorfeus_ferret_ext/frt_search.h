@@ -262,6 +262,8 @@ typedef struct FrtBooleanClause {
     bool      is_required : 1;
 } FrtBooleanClause;
 
+extern FrtBooleanClause *frt_bc_alloc(void);
+extern FrtBooleanClause *frt_bc_init(FrtBooleanClause *self, FrtQuery *query, FrtBCType occur);
 extern FrtBooleanClause *frt_bc_new(FrtQuery *query, FrtBCType occur);
 extern void frt_bc_deref(FrtBooleanClause *self);
 extern void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur);
