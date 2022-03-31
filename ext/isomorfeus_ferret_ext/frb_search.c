@@ -630,6 +630,24 @@ static VALUE frb_tq_init(VALUE self, VALUE rfield, VALUE rterm) {
  *
  ****************************************************************************/
 
+static size_t frb_multi_term_query_size(const void *p) {
+    return sizeof(FrtMultiTermQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_multi_term_query_t = {
+    .wrap_struct_name = "FrbTermQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_multi_term_query_size
+    }
+};
+
+static VALUE frb_mtq_alloc(VALUE rclass) {
+    FrtQuery *tq = frt_multi_tq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_multi_term_query_t, tq);
+}
+
 /*
  *  call-seq:
  *     MultiTermQuery.default_max_terms -> number
@@ -637,9 +655,7 @@ static VALUE frb_tq_init(VALUE self, VALUE rfield, VALUE rterm) {
  *  Get the default value for +:max_terms+ in a MultiTermQuery. This value is
  *  also used by PrefixQuery, FuzzyQuery and WildcardQuery.
  */
-static VALUE
-frb_mtq_get_dmt(VALUE self)
-{
+static VALUE frb_mtq_get_dmt(VALUE self) {
     return rb_cvar_get(cMultiTermQuery, id_default_max_terms);
 }
 
@@ -650,9 +666,7 @@ frb_mtq_get_dmt(VALUE self)
  *  Set the default value for +:max_terms+ in a MultiTermQuery. This value is
  *  also used by PrefixQuery, FuzzyQuery and WildcardQuery.
  */
-static VALUE
-frb_mtq_set_dmt(VALUE self, VALUE rnum_terms)
-{
+static VALUE frb_mtq_set_dmt(VALUE self, VALUE rnum_terms) {
     int max_terms = FIX2INT(rnum_terms);
     if (max_terms <= 0) {
         rb_raise(rb_eArgError,
@@ -686,14 +700,12 @@ frb_mtq_set_dmt(VALUE self, VALUE rnum_terms)
  *               added to the query you could set a lower limit to this score.
  *               FuzzyQuery in particular makes use of this parameter.
  */
-static VALUE
-frb_mtq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_mtq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rfield, roptions;
     float min_score = 0.0f;
     int max_terms = FIX2INT(frb_mtq_get_dmt(self));
     FrtQuery *q;
-
+    TypedData_Get_Struct(self, FrtQuery, &frb_multi_term_query_t, q);
     if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_max_terms))) {
@@ -703,8 +715,7 @@ frb_mtq_init(int argc, VALUE *argv, VALUE self)
             min_score = (float)NUM2DBL(v);
         }
     }
-    q = frt_multi_tq_new_conf(frb_field(rfield), max_terms, min_score);
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    frt_multi_tq_init_conf(q, frb_field(rfield), max_terms, min_score);
     object_add(q, self);
     return self;
 }
@@ -717,9 +728,7 @@ frb_mtq_init(int argc, VALUE *argv, VALUE self)
  *  Add a term to the MultiTermQuery with the score 1.0 unless specified
  *  otherwise.
  */
-static VALUE
-frb_mtq_add_term(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_mtq_add_term(int argc, VALUE *argv, VALUE self) {
     GET_Q();
     VALUE rterm, rboost;
     float boost = 1.0f;
@@ -735,9 +744,7 @@ frb_mtq_add_term(int argc, VALUE *argv, VALUE self)
 
 typedef FrtQuery *(*mtq_maker_ft)(FrtSymbol field, const char *term);
 
-static int
-get_max_terms(VALUE rmax_terms, int max_terms)
-{
+static int get_max_terms(VALUE rmax_terms, int max_terms) {
     VALUE v;
     switch (TYPE(rmax_terms)) {
         case T_HASH:
@@ -754,9 +761,7 @@ get_max_terms(VALUE rmax_terms, int max_terms)
     return max_terms;
 }
 
-static VALUE
-frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm)
-{
+static VALUE frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm) {
     VALUE rfield, rterm, rmax_terms;
     int max_terms =
         FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
@@ -3383,20 +3388,16 @@ Init_TermQuery(void)
  *
  *    multi_term_query << "Ruby" << "Ferret" << "Rails" << "Search"
  */
-static void
-Init_MultiTermQuery(void)
-{
+static void Init_MultiTermQuery(void) {
     id_default_max_terms = rb_intern("@@default_max_terms");
     sym_max_terms = ID2SYM(rb_intern("max_terms"));
     sym_min_score = ID2SYM(rb_intern("min_score"));
 
     cMultiTermQuery = rb_define_class_under(mSearch, "MultiTermQuery", cQuery);
-    rb_define_alloc_func(cMultiTermQuery, frb_data_alloc);
+    rb_define_alloc_func(cMultiTermQuery, frb_mtq_alloc);
     rb_cvar_set(cMultiTermQuery, id_default_max_terms, INT2FIX(512));
-    rb_define_singleton_method(cMultiTermQuery, "default_max_terms",
-                               frb_mtq_get_dmt, 0);
-    rb_define_singleton_method(cMultiTermQuery, "default_max_terms=",
-                               frb_mtq_set_dmt, 1);
+    rb_define_singleton_method(cMultiTermQuery, "default_max_terms", frb_mtq_get_dmt, 0);
+    rb_define_singleton_method(cMultiTermQuery, "default_max_terms=", frb_mtq_set_dmt, 1);
 
     rb_define_method(cMultiTermQuery, "initialize", frb_mtq_init, -1);
     rb_define_method(cMultiTermQuery, "add_term", frb_mtq_add_term, -1);

@@ -315,8 +315,7 @@ extern void frt_phq_set_slop(FrtQuery *self, int slop);
  ***************************************************************************/
 
 #define MULTI_TERM_QUERY_MAX_TERMS 256
-typedef struct FrtMultiTermQuery
-{
+typedef struct FrtMultiTermQuery {
     FrtQuery         super;
     FrtSymbol        field;
     FrtPriorityQueue *boosted_terms;
@@ -325,9 +324,10 @@ typedef struct FrtMultiTermQuery
 
 extern void frt_multi_tq_add_term(FrtQuery *self, const char *term);
 extern void frt_multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost);
+extern FrtQuery *frt_multi_tq_alloc();
 extern FrtQuery *frt_multi_tq_new(FrtSymbol field);
-extern FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms,
-                                          float min_boost);
+extern FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, FrtSymbol field, int max_terms, float min_boost);
+extern FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost);
 
 #define FrtMTQMaxTerms(query) (((FrtMTQSubQuery *)(query))->max_terms)
 typedef struct FrtMTQSubQuery {
