@@ -1700,12 +1700,29 @@ static VALUE frb_csq_init(VALUE self, VALUE rfilter) {
  *
  ****************************************************************************/
 
-static void
-frb_fqq_mark(void *p)
-{
+static size_t frb_filtered_query_size(const void *p) {
+    return sizeof(FrtFilteredQuery);
+    (void)p;
+}
+
+static void frb_fqq_mark(void *p) {
     FrtFilteredQuery *fq = (FrtFilteredQuery *)p;
     frb_gc_mark(fq->query);
     frb_gc_mark(fq->filter);
+}
+
+const rb_data_type_t frb_filtered_query_t = {
+    .wrap_struct_name = "FrbFilteredQuery",
+    .function = {
+        .dmark = frb_fqq_mark,
+        .dfree = frb_q_free,
+        .dsize = frb_filtered_query_size
+    }
+};
+
+static VALUE frb_fqq_alloc(VALUE rclass) {
+    FrtQuery *fqq = frt_fq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_filtered_query_t, fqq);
 }
 
 /*
@@ -1714,17 +1731,15 @@ frb_fqq_mark(void *p)
  *
  *  Create a new FilteredQuery which filters +query+ with +filter+.
  */
-static VALUE
-frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter)
-{
+static VALUE frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter) {
     FrtQuery *sq, *q;
     FrtFilter *f;
     Data_Get_Struct(rquery, FrtQuery, sq);
     Data_Get_Struct(rfilter, FrtFilter, f);
-    q = frt_fq_new(sq, f);
+    TypedData_Get_Struct(self, FrtQuery, &frb_filtered_query_t, q);
+    frt_fq_init(q, sq, f);
     FRT_REF(sq);
     FRT_REF(f);
-    Frt_Wrap_Struct(self, &frb_fqq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -3879,11 +3894,9 @@ static void Init_ConstantScoreQuery(void) {
  *  directly to a Searcher#search method unless you are applying more than one
  *  filter since the search method also takes a filter as a parameter.
  */
-static void
-Init_FilteredQuery(void)
-{
+static void Init_FilteredQuery(void) {
     cFilteredQuery = rb_define_class_under(mSearch, "FilteredQuery", cQuery);
-    rb_define_alloc_func(cFilteredQuery, frb_data_alloc);
+    rb_define_alloc_func(cFilteredQuery, frb_fqq_alloc);
 
     rb_define_method(cFilteredQuery, "initialize", frb_fqq_init, 2);
 }

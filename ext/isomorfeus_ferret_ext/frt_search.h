@@ -425,6 +425,8 @@ typedef struct FrtFilteredQuery {
     FrtFilter *filter;
 } FrtFilteredQuery;
 
+extern FrtQuery *frt_fq_alloc(void);
+extern FrtQuery *frt_fq_init(FrtQuery *self, FrtQuery *query, FrtFilter *filter);
 extern FrtQuery *frt_fq_new(FrtQuery *query, FrtFilter *filter);
 
 /***************************************************************************
