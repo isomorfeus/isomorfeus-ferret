@@ -4,21 +4,11 @@
 
 /*****************************************************************************
  *
- * Range
+ * FrtRange
  *
  *****************************************************************************/
 
-typedef struct Range
-{
-    FrtSymbol field;
-    char *lower_term;
-    char *upper_term;
-    bool include_lower : 1;
-    bool include_upper : 1;
-} Range;
-
-static char *range_to_s(Range *range, FrtSymbol default_field, float boost)
-{
+static char *range_to_s(FrtRange *range, FrtSymbol default_field, float boost) {
     char *buffer, *b;
     size_t flen, llen, ulen;
     const char *field_name = rb_id2name(range->field);
@@ -68,14 +58,14 @@ static char *range_to_s(Range *range, FrtSymbol default_field, float boost)
     return buffer;
 }
 
-static void range_destroy(Range *range)
+static void range_destroy(FrtRange *range)
 {
     free(range->lower_term);
     free(range->upper_term);
     free(range);
 }
 
-static unsigned long long range_hash(Range *filt)
+static unsigned long long range_hash(FrtRange *filt)
 {
     return filt->include_lower | (filt->include_upper << 1)
         | ((frt_str_hash(rb_id2name(filt->field))
@@ -83,7 +73,7 @@ static unsigned long long range_hash(Range *filt)
             ^ (filt->upper_term ? frt_str_hash(filt->upper_term) : 0)) << 2);
 }
 
-static int range_eq(Range *filt, Range *o)
+static int range_eq(FrtRange *filt, FrtRange *o)
 {
     if ((filt->lower_term && !o->lower_term) || (!filt->lower_term && o->lower_term)) { return false; }
     if ((filt->upper_term && !o->upper_term) || (!filt->upper_term && o->upper_term)) { return false; }
@@ -94,11 +84,11 @@ static int range_eq(Range *filt, Range *o)
             && (filt->include_upper == o->include_upper));
 }
 
-static Range *range_new(FrtSymbol field, const char *lower_term,
+static FrtRange *range_new(FrtSymbol field, const char *lower_term,
                  const char *upper_term, bool include_lower,
                  bool include_upper)
 {
-    Range *range;
+    FrtRange *range;
 
     if (!lower_term && !upper_term) {
         FRT_RAISE(FRT_ARG_ERROR, "Nil bounds for range. A range must include either "
@@ -119,7 +109,7 @@ static Range *range_new(FrtSymbol field, const char *lower_term,
               "\"%s\" < \"%s\"", upper_term, lower_term);
     }
 
-    range = FRT_ALLOC(Range);
+    range = FRT_ALLOC(FrtRange);
 
     range->field = field;
     range->lower_term = lower_term ? frt_estrdup(lower_term) : NULL;
@@ -129,11 +119,11 @@ static Range *range_new(FrtSymbol field, const char *lower_term,
     return range;
 }
 
-static Range *trange_new(FrtSymbol field, const char *lower_term,
+static FrtRange *trange_new(FrtSymbol field, const char *lower_term,
                   const char *upper_term, bool include_lower,
                   bool include_upper)
 {
-    Range *range;
+    FrtRange *range;
     int len;
     double upper_num, lower_num;
 
@@ -173,7 +163,7 @@ static Range *trange_new(FrtSymbol field, const char *lower_term,
         }
     }
 
-    range = FRT_ALLOC(Range);
+    range = FRT_ALLOC(FrtRange);
 
     range->field = field;
     range->lower_term = lower_term ? frt_estrdup(lower_term) : NULL;
@@ -192,7 +182,7 @@ static Range *trange_new(FrtSymbol field, const char *lower_term,
 typedef struct RangeFilter
 {
     FrtFilter super;
-    Range *range;
+    FrtRange *range;
 } RangeFilter;
 
 #define RF(filt) ((RangeFilter *)(filt))
@@ -214,7 +204,7 @@ static char *frt_rfilt_to_s(FrtFilter *filt)
 static FrtBitVector *frt_rfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
     FrtBitVector *bv = frt_bv_new_capa(ir->max_doc(ir));
-    Range *range = RF(filt)->range;
+    FrtRange *range = RF(filt)->range;
     FrtFieldInfo *fi = frt_fis_get_field(ir->fis, range->field);
     /* the field info exists we need to add docs to the bit vector, otherwise
      * we just return an empty bit vector */
@@ -336,7 +326,7 @@ do {\
 
 static FrtBitVector *frt_trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
 {
-    Range *range = RF(filt)->range;
+    FrtRange *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
     int len = 0;
     const char *lt = range->lower_term;
@@ -437,27 +427,18 @@ FrtFilter *frt_trfilt_new(FrtSymbol field,
  *****************************************************************************/
 
 #define RQ(query) ((FrtRangeQuery *)(query))
-typedef struct FrtRangeQuery
-{
-    FrtQuery f;
-    Range *range;
-} FrtRangeQuery;
 
-static char *frt_rq_to_s(FrtQuery *self, FrtSymbol field)
-{
+static char *frt_rq_to_s(FrtQuery *self, FrtSymbol field) {
     return range_to_s(RQ(self)->range, field, self->boost);
 }
 
-static void frt_rq_destroy(FrtQuery *self)
-{
+static void frt_rq_destroy(FrtQuery *self) {
     range_destroy(RQ(self)->range);
     frt_q_destroy_i(self);
 }
 
-static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
-                                    FrtTermVector *tv)
-{
-    Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
+static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv) {
+    FrtRange *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (tv->field == range->field) {
         const int term_cnt = tv->term_cnt;
         int i, j;
@@ -487,12 +468,10 @@ static FrtMatchVector *rq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
     return mv;
 }
 
-static FrtQuery *frt_rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *frt_rq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     FrtQuery *csq;
-    Range *r = RQ(self)->range;
-    FrtFilter *filter = frt_rfilt_new(r->field, r->lower_term, r->upper_term,
-                               r->include_lower, r->include_upper);
+    FrtRange *r = RQ(self)->range;
+    FrtFilter *filter = frt_rfilt_new(r->field, r->lower_term, r->upper_term, r->include_lower, r->include_upper);
     (void)ir;
     csq = frt_csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
@@ -500,8 +479,7 @@ static FrtQuery *frt_rq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return (FrtQuery *)csq;
 }
 
-static unsigned long long frt_rq_hash(FrtQuery *self)
-{
+static unsigned long long frt_rq_hash(FrtQuery *self) {
     return range_hash(RQ(self)->range);
 }
 
@@ -517,13 +495,12 @@ FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_
     return frt_rq_new(field, lower_term, NULL, include_lower, false);
 }
 
-FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
-              const char *upper_term, bool include_lower, bool include_upper)
-{
-    FrtQuery *self;
-    Range *range            = range_new(field, lower_term, upper_term,
-                                        include_lower, include_upper);
-    self                    = frt_q_new(FrtRangeQuery);
+FrtQuery *frt_rq_alloc(void) {
+    return frt_q_new(FrtRangeQuery);
+}
+
+FrtQuery *frt_rq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+    FrtRange *range            = range_new(field, lower_term, upper_term, include_lower, include_upper);
     RQ(self)->range         = range;
 
     self->type              = RANGE_QUERY;
@@ -534,6 +511,11 @@ FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
     self->destroy_i         = &frt_rq_destroy;
     self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
+}
+
+FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+    FrtQuery *self = frt_rq_alloc();
+    return frt_rq_init(self, field, lower_term, upper_term, include_lower, include_upper);
 }
 
 /*****************************************************************************
@@ -562,7 +544,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
 static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                                      FrtTermVector *tv)
 {
-    Range *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
+    FrtRange *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (tv->field == range->field) {
         double lnum = 0.0, unum = 0.0;
         int len = 0;
@@ -627,7 +609,7 @@ static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
 static FrtQuery *frt_trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     FrtQuery *csq;
-    Range *r = RQ(self)->range;
+    FrtRange *r = RQ(self)->range;
     FrtFilter *filter = frt_trfilt_new(r->field, r->lower_term, r->upper_term,
                                 r->include_lower, r->include_upper);
     (void)ir;
@@ -649,8 +631,7 @@ FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
                const char *upper_term, bool include_lower, bool include_upper)
 {
     FrtQuery *self;
-    Range *range            = trange_new(field, lower_term, upper_term,
-                                         include_lower, include_upper);
+    FrtRange *range         = trange_new(field, lower_term, upper_term, include_lower, include_upper);
     self                    = frt_q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 

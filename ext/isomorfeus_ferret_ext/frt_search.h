@@ -432,9 +432,22 @@ extern FrtQuery *frt_maq_new();
  * FrtRangeQuery
  ***************************************************************************/
 
-extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term,
-                     const char *upper_term, bool include_lower,
-                     bool include_upper);
+typedef struct FrtRange {
+    FrtSymbol field;
+    char      *lower_term;
+    char      *upper_term;
+    bool      include_lower : 1;
+    bool      include_upper : 1;
+} FrtRange;
+
+typedef struct FrtRangeQuery {
+    FrtQuery f;
+    FrtRange *range;
+} FrtRangeQuery;
+
+extern FrtQuery *frt_rq_alloc(void);
+extern FrtQuery *frt_rq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
+extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
 extern FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term, bool include_upper);
 extern FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_lower);
 

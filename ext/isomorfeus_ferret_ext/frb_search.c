@@ -1067,10 +1067,25 @@ static VALUE frb_bq_add_query(int argc, VALUE *argv, VALUE self) {
  *
  ****************************************************************************/
 
-static void
-get_range_params(VALUE roptions, char **lterm, char **uterm,
-                 bool *include_lower, bool *include_upper)
-{
+static size_t frb_range_query_size(const void *p) {
+    return sizeof(FrtRangeQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_range_query_t = {
+    .wrap_struct_name = "FrbRangeQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_range_query_size
+    }
+};
+
+static VALUE frb_rq_alloc(VALUE rclass) {
+    FrtQuery *rq = frt_rq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_range_query_t, rq);
+}
+
+static void get_range_params(VALUE roptions, char **lterm, char **uterm, bool *include_lower, bool *include_upper) {
     VALUE v;
     Check_Type(roptions, T_HASH);
     if (Qnil != (v = rb_hash_aref(roptions, sym_lower))) {
@@ -1148,20 +1163,15 @@ get_range_params(VALUE roptions, char **lterm, char **uterm,
  *    q = RangeQuery.new(:date, :>= => "200501", :<= => 200502)
  *
  */
-static VALUE
-frb_rq_init(VALUE self, VALUE rfield, VALUE roptions)
-{
+static VALUE frb_rq_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtQuery *q;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-
+    TypedData_Get_Struct(self, FrtQuery, &frb_range_query_t, q);
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    q = frt_rq_new(frb_field(rfield),
-               lterm, uterm,
-               include_lower, include_upper);
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    frt_rq_init(q, frb_field(rfield), lterm, uterm, include_lower, include_upper);
     object_add(q, self);
     return self;
 }
@@ -3520,9 +3530,7 @@ static void Init_BooleanClause(void) {
  *    [1010, 0001, 0910, 1100, 1534]
  *
  */
-static void
-Init_RangeQuery(void)
-{
+static void Init_RangeQuery(void) {
     sym_upper = ID2SYM(rb_intern("upper"));
     sym_lower = ID2SYM(rb_intern("lower"));
     sym_upper_exclusive = ID2SYM(rb_intern("upper_exclusive"));
@@ -3536,7 +3544,7 @@ Init_RangeQuery(void)
     sym_greater_than_or_equal_to = ID2SYM(rb_intern(">="));
 
     cRangeQuery = rb_define_class_under(mSearch, "RangeQuery", cQuery);
-    rb_define_alloc_func(cRangeQuery, frb_data_alloc);
+    rb_define_alloc_func(cRangeQuery, frb_rq_alloc);
 
     rb_define_method(cRangeQuery, "initialize", frb_rq_init, 2);
 }
