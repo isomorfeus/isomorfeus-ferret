@@ -1658,6 +1658,24 @@ frb_maq_init(VALUE self)
  *
  ****************************************************************************/
 
+static size_t frb_constant_score_query_size(const void *p) {
+    return sizeof(FrtConstantScoreQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_constant_score_query_t = {
+    .wrap_struct_name = "FrbConstantScoreQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_constant_score_query_size
+    }
+};
+
+static VALUE frb_csq_alloc(VALUE rclass) {
+    FrtQuery *csq = frt_csq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_constant_score_query_t, csq);
+}
+
 /*
  *  call-seq:
  *     ConstantScoreQuery.new(filter) -> query
@@ -1665,13 +1683,12 @@ frb_maq_init(VALUE self)
  *  Create a ConstantScoreQuery which uses +filter+ to match documents giving
  *  each document a constant score.
  */
-static VALUE
-frb_csq_init(VALUE self, VALUE rfilter)
-{
+static VALUE frb_csq_init(VALUE self, VALUE rfilter) {
     FrtQuery *q;
     FrtFilter *filter;
     Data_Get_Struct(rfilter, FrtFilter, filter);
-    q = frt_csq_new(filter);
+    TypedData_Get_Struct(self, FrtQuery, &frb_constant_score_query_t, q);
+    frt_csq_init(q, filter);
 
     Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
@@ -3845,12 +3862,9 @@ Init_MatchAllQuery(void)
  *  Once this is run once the results are cached and will be returned very
  *  quickly in future requests.
  */
-static void
-Init_ConstantScoreQuery(void)
-{
-    cConstantScoreQuery = rb_define_class_under(mSearch,
-                                                "ConstantScoreQuery", cQuery);
-    rb_define_alloc_func(cConstantScoreQuery, frb_data_alloc);
+static void Init_ConstantScoreQuery(void) {
+    cConstantScoreQuery = rb_define_class_under(mSearch, "ConstantScoreQuery", cQuery);
+    rb_define_alloc_func(cConstantScoreQuery, frb_csq_alloc);
 
     rb_define_method(cConstantScoreQuery, "initialize", frb_csq_init, 1);
 }

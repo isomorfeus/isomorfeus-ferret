@@ -410,6 +410,8 @@ typedef struct FrtConstantScoreQuery {
     FrtQuery  *original;
 } FrtConstantScoreQuery;
 
+extern FrtQuery *frt_csq_alloc(void);
+extern FrtQuery *frt_csq_init(FrtQuery *self, FrtFilter *filter);
 extern FrtQuery *frt_csq_new(FrtFilter *filter);
 extern FrtQuery *frt_csq_new_nr(FrtFilter *filter);
 
