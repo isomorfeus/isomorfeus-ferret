@@ -988,6 +988,7 @@ static VALUE frb_bq_alloc(VALUE rclass) {
     FrtQuery *bq = frt_bq_alloc();
     return TypedData_Wrap_Struct(rclass, &frb_boolean_query_t, bq);
 }
+
 /*
  *  call-seq:
  *     BooleanQuery.new(coord_disable = false)
@@ -1182,6 +1183,24 @@ static VALUE frb_rq_init(VALUE self, VALUE rfield, VALUE roptions) {
  *
  ****************************************************************************/
 
+static size_t frb_typed_range_query_size(const void *p) {
+    return sizeof(FrtRangeQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_typed_range_query_t = {
+    .wrap_struct_name = "FrbTypedRangeQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_typed_range_query_size
+    }
+};
+
+static VALUE frb_trq_alloc(VALUE rclass) {
+    FrtQuery *trq = frt_trq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_typed_range_query_t, trq);
+}
+
 /*
  *  call-seq:
  *     TypedRangeQuery.new(field, options = {}) -> range_query
@@ -1210,20 +1229,15 @@ static VALUE frb_rq_init(VALUE self, VALUE rfield, VALUE roptions) {
  *    # is equivalent to
  *    q = TypedRangeQuery.new(:date, :>= => "-12.32", :<= => 0.21)
  */
-static VALUE
-frb_trq_init(VALUE self, VALUE rfield, VALUE roptions)
-{
+static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtQuery *q;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-
+    TypedData_Get_Struct(self, FrtQuery, &frb_typed_range_query_t, q);
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    q = frt_trq_new(frb_field(rfield),
-                lterm, uterm,
-                include_lower, include_upper);
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    q = frt_trq_init(q, frb_field(rfield), lterm, uterm, include_lower, include_upper);
     object_add(q, self);
     return self;
 }
@@ -3574,12 +3588,9 @@ static void Init_RangeQuery(void) {
  *  usually better to use a standard RangeQuery. This will require a little
  *  work on your behalf. See RangeQuery for notes on how to do this.
  */
-static void
-Init_TypedRangeQuery(void)
-{
-    cTypedRangeQuery =
-        rb_define_class_under(mSearch, "TypedRangeQuery", cQuery);
-    rb_define_alloc_func(cTypedRangeQuery, frb_data_alloc);
+static void Init_TypedRangeQuery(void) {
+    cTypedRangeQuery = rb_define_class_under(mSearch, "TypedRangeQuery", cQuery);
+    rb_define_alloc_func(cTypedRangeQuery, frb_trq_alloc);
 
     rb_define_method(cTypedRangeQuery, "initialize", frb_trq_init, 2);
 }

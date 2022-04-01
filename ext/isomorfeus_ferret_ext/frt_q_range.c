@@ -541,9 +541,7 @@ for (i = tv->term_cnt - 1; i >= 0; i--) {\
     }\
 }\
 
-static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
-                                     FrtTermVector *tv)
-{
+static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv) {
     FrtRange *range = RQ(((FrtConstantScoreQuery *)self)->original)->range;
     if (tv->field == range->field) {
         double lnum = 0.0, unum = 0.0;
@@ -597,21 +595,17 @@ static FrtMatchVector *trq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
                     /* should never happen. Error should have been rb_raised */
                     assert(false);
             }
-
-        }
-        else {
+        } else {
             return rq_get_matchv_i(self, mv, tv);
         }
     }
     return mv;
 }
 
-static FrtQuery *frt_trq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *frt_trq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     FrtQuery *csq;
     FrtRange *r = RQ(self)->range;
-    FrtFilter *filter = frt_trfilt_new(r->field, r->lower_term, r->upper_term,
-                                r->include_lower, r->include_upper);
+    FrtFilter *filter = frt_trfilt_new(r->field, r->lower_term, r->upper_term, r->include_lower, r->include_upper);
     (void)ir;
     csq = frt_csq_new_nr(filter);
     ((FrtConstantScoreQuery *)csq)->original = self;
@@ -627,12 +621,12 @@ FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term, bool include
     return frt_trq_new(field, lower_term, NULL, include_lower, false);
 }
 
-FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
-               const char *upper_term, bool include_lower, bool include_upper)
-{
-    FrtQuery *self;
+FrtQuery *frt_trq_alloc(void) {
+    return frt_q_new(FrtRangeQuery);
+}
+
+FrtQuery *frt_trq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtRange *range         = trange_new(field, lower_term, upper_term, include_lower, include_upper);
-    self                    = frt_q_new(FrtRangeQuery);
     RQ(self)->range         = range;
 
     self->type              = TYPED_RANGE_QUERY;
@@ -643,4 +637,9 @@ FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term,
     self->destroy_i         = &frt_rq_destroy;
     self->create_weight_i   = &frt_q_create_weight_unsup;
     return self;
+}
+
+FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+    FrtQuery *self = frt_trq_alloc();
+    return frt_trq_init(self, field, lower_term, upper_term, include_lower, include_upper);
 }
