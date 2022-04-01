@@ -1690,7 +1690,6 @@ static VALUE frb_csq_init(VALUE self, VALUE rfilter) {
     TypedData_Get_Struct(self, FrtQuery, &frb_constant_score_query_t, q);
     frt_csq_init(q, filter);
 
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
