@@ -961,6 +961,11 @@ static VALUE frb_bc_to_s(VALUE self) {
  *
  ****************************************************************************/
 
+static size_t frb_boolean_query_size(const void *p) {
+    return sizeof(FrtBooleanQuery);
+    (void)p;
+}
+
 static void frb_bq_mark(void *p) {
     int i;
     FrtQuery *q = (FrtQuery *)p;
@@ -970,6 +975,19 @@ static void frb_bq_mark(void *p) {
     }
 }
 
+const rb_data_type_t frb_boolean_query_t = {
+    .wrap_struct_name = "FrbBooleanQuery",
+    .function = {
+        .dmark = frb_bq_mark,
+        .dfree = frb_q_free,
+        .dsize = frb_boolean_query_size
+    }
+};
+
+static VALUE frb_bq_alloc(VALUE rclass) {
+    FrtQuery *bq = frt_bq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_boolean_query_t, bq);
+}
 /*
  *  call-seq:
  *     BooleanQuery.new(coord_disable = false)
@@ -984,11 +1002,11 @@ static VALUE frb_bq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rcoord_disabled;
     bool coord_disabled = false;
     FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_boolean_query_t, q);
     if (rb_scan_args(argc, argv, "01", &rcoord_disabled)) {
         coord_disabled = RTEST(rcoord_disabled);
     }
-    q = frt_bq_new(coord_disabled);
-    Frt_Wrap_Struct(self, &frb_bq_mark, &frb_q_free, q);
+    q = frt_bq_init(q, coord_disabled);
     object_add(q, self);
     return self;
 }
@@ -3349,9 +3367,7 @@ Init_Query(void)
  *  downcase all text added to the index. The title in this case was not
  *  tokenized so the case would have been left as is.
  */
-static void
-Init_TermQuery(void)
-{
+static void Init_TermQuery(void) {
     cTermQuery = rb_define_class_under(mSearch, "TermQuery", cQuery);
     rb_define_alloc_func(cTermQuery, frb_tq_alloc);
     rb_define_method(cTermQuery, "initialize", frb_tq_init, 2);
@@ -3421,11 +3437,9 @@ static void Init_BooleanClause(void);
  *    query = BooleanQuery.new
  *    query.add_query(tq1, :must).add_query(bq2, :must).add_query(rq3, :must)
  */
-static void
-Init_BooleanQuery(void)
-{
+static void Init_BooleanQuery(void) {
     cBooleanQuery = rb_define_class_under(mSearch, "BooleanQuery", cQuery);
-    rb_define_alloc_func(cBooleanQuery, frb_data_alloc);
+    rb_define_alloc_func(cBooleanQuery, frb_bq_alloc);
 
     rb_define_method(cBooleanQuery, "initialize", frb_bq_init, -1);
     rb_define_method(cBooleanQuery, "add_query", frb_bq_add_query, -1);

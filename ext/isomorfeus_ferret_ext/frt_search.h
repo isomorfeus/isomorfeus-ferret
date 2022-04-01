@@ -285,6 +285,8 @@ typedef struct FrtBooleanQuery {
     FrtSimilarity    *similarity;
 } FrtBooleanQuery;
 
+extern FrtQuery *frt_bq_alloc(void);
+extern FrtQuery *frt_bq_init(FrtQuery *self, bool coord_disabled);
 extern FrtQuery *frt_bq_new(bool coord_disabled);
 extern FrtQuery *frt_bq_new_max(bool coord_disabled, int max);
 extern FrtBooleanClause *frt_bq_add_query(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur);
