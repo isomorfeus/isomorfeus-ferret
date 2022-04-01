@@ -394,7 +394,9 @@ typedef struct FrtFuzzyQuery {
     int            *da;
 } FrtFuzzyQuery;
 
+extern FrtQuery *frt_fuzq_alloc(void);
 extern FrtQuery *frt_fuzq_new(FrtSymbol field, const char *term);
+extern FrtQuery *frt_fuzq_init_conf(FrtQuery *self, FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms);
 extern FrtQuery *frt_fuzq_new_conf(FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms);
 extern float frt_fuzq_score(FrtFuzzyQuery *fuzq, const char *target);
 

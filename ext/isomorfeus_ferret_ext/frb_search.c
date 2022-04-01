@@ -1435,6 +1435,24 @@ frb_wcq_init(int argc, VALUE *argv, VALUE self)
  *
  ****************************************************************************/
 
+static size_t frb_fuzzy_query_size(const void *p) {
+    return sizeof(FrtFuzzyQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_fuzzy_query_t = {
+    .wrap_struct_name = "FrbFuzzyQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_fuzzy_query_size
+    }
+};
+
+static VALUE frb_fq_alloc(VALUE rclass) {
+    FrtQuery *fq = frt_fuzq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_fuzzy_query_t, fq);
+}
+
 /*
  *  call-seq:
  *     FuzzyQuery.new(field, term, options = {}) -> fuzzy-query
@@ -1475,18 +1493,12 @@ frb_wcq_init(int argc, VALUE *argv, VALUE self)
  *                    not usually a problem with FuzzyQueries unless you set
  *                    +:min_similarity+ to a very low value.
  */
-static VALUE
-frb_fq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_fq_init(int argc, VALUE *argv, VALUE self) {
     FrtQuery *q;
     VALUE rfield, rterm, roptions;
-    float min_sim =
-        (float)NUM2DBL(rb_cvar_get(cFuzzyQuery, id_default_min_similarity));
-    int pre_len =
-        FIX2INT(rb_cvar_get(cFuzzyQuery, id_default_prefix_length));
-    int max_terms =
-        FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
-
+    float min_sim = (float)NUM2DBL(rb_cvar_get(cFuzzyQuery, id_default_min_similarity));
+    int pre_len = FIX2INT(rb_cvar_get(cFuzzyQuery, id_default_prefix_length));
+    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
 
     if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &roptions) >= 3) {
         VALUE v;
@@ -1503,24 +1515,18 @@ frb_fq_init(int argc, VALUE *argv, VALUE self)
     }
 
     if (min_sim >= 1.0f) {
-        rb_raise(rb_eArgError,
-                 "%f >= 1.0. :min_similarity must be < 1.0", min_sim);
+        rb_raise(rb_eArgError, "%f >= 1.0. :min_similarity must be < 1.0", min_sim);
     } else if (min_sim < 0.0f) {
-        rb_raise(rb_eArgError,
-                 "%f < 0.0. :min_similarity must be > 0.0", min_sim);
+        rb_raise(rb_eArgError, "%f < 0.0. :min_similarity must be > 0.0", min_sim);
     }
     if (pre_len < 0) {
-        rb_raise(rb_eArgError,
-                 "%d < 0. :prefix_length must be >= 0", pre_len);
+        rb_raise(rb_eArgError, "%d < 0. :prefix_length must be >= 0", pre_len);
     }
     if (max_terms < 0) {
-        rb_raise(rb_eArgError,
-                 "%d < 0. :max_terms must be >= 0", max_terms);
+        rb_raise(rb_eArgError, "%d < 0. :max_terms must be >= 0", max_terms);
     }
-
-    q = frt_fuzq_new_conf(frb_field(rfield), StringValuePtr(rterm),
-                      min_sim, pre_len, max_terms);
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    TypedData_Get_Struct(self, FrtQuery, &frb_fuzzy_query_t, q);
+    frt_fuzq_init_conf(q, frb_field(rfield), StringValuePtr(rterm), min_sim, pre_len, max_terms);
     object_add(q, self);
     return self;
 }
@@ -3779,9 +3785,7 @@ Init_WildcardQuery(void)
  *                   :prefix_length => 2)
  *    # matches => "gogle", "goggle", "googol", "googel"
  */
-static void
-Init_FuzzyQuery(void)
-{
+static void Init_FuzzyQuery(void) {
     id_default_min_similarity = rb_intern("@@default_min_similarity");
     id_default_prefix_length = rb_intern("@@default_prefix_length");
 
@@ -3789,20 +3793,14 @@ Init_FuzzyQuery(void)
     sym_prefix_length = ID2SYM(rb_intern("prefix_length"));
 
     cFuzzyQuery = rb_define_class_under(mSearch, "FuzzyQuery", cQuery);
-    rb_define_alloc_func(cFuzzyQuery, frb_data_alloc);
-    rb_cvar_set(cFuzzyQuery, id_default_min_similarity,
-                rb_float_new(0.5));
-    rb_cvar_set(cFuzzyQuery, id_default_prefix_length,
-                INT2FIX(0));
+    rb_define_alloc_func(cFuzzyQuery, frb_fq_alloc);
+    rb_cvar_set(cFuzzyQuery, id_default_min_similarity, rb_float_new(0.5));
+    rb_cvar_set(cFuzzyQuery, id_default_prefix_length, INT2FIX(0));
 
-    rb_define_singleton_method(cFuzzyQuery, "default_min_similarity",
-                               frb_fq_get_dms, 0);
-    rb_define_singleton_method(cFuzzyQuery, "default_min_similarity=",
-                               frb_fq_set_dms, 1);
-    rb_define_singleton_method(cFuzzyQuery, "default_prefix_length",
-                               frb_fq_get_dpl, 0);
-    rb_define_singleton_method(cFuzzyQuery, "default_prefix_length=",
-                               frb_fq_set_dpl, 1);
+    rb_define_singleton_method(cFuzzyQuery, "default_min_similarity", frb_fq_get_dms, 0);
+    rb_define_singleton_method(cFuzzyQuery, "default_min_similarity=", frb_fq_set_dms, 1);
+    rb_define_singleton_method(cFuzzyQuery, "default_prefix_length", frb_fq_get_dpl, 0);
+    rb_define_singleton_method(cFuzzyQuery, "default_prefix_length=", frb_fq_set_dpl, 1);
 
     rb_define_method(cFuzzyQuery, "initialize",     frb_fq_init, -1);
     rb_define_method(cFuzzyQuery, "prefix_length",  frb_fq_pre_len, 0);
