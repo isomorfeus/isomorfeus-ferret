@@ -1248,6 +1248,24 @@ static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
  *
  ****************************************************************************/
 
+static size_t frb_phrase_query_size(const void *p) {
+    return sizeof(FrtPhraseQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_phrase_query_t = {
+    .wrap_struct_name = "FrbPhraseQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_phrase_query_size
+    }
+};
+
+static VALUE frb_phq_alloc(VALUE rclass) {
+    FrtQuery *phq = frt_phq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_phrase_query_t, phq);
+}
+
 /*
  *  call-seq:
  *     PhraseQuery.new(field, slop = 0) -> phrase_query
@@ -1255,17 +1273,15 @@ static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
  *  Create a new PhraseQuery on the field +field+. You need to add terms to
  *  the query it will do anything of value. See PhraseQuery#add_term.
  */
-static VALUE
-frb_phq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_phq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rfield, rslop;
     FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_phrase_query_t, q);
     rb_scan_args(argc, argv, "11", &rfield, &rslop);
-    q = frt_phq_new(frb_field(rfield));
+    frt_phq_init(q, frb_field(rfield));
     if (argc == 2) {
         ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
     }
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -3658,11 +3674,9 @@ static void Init_TypedRangeQuery(void) {
  *  italic text for example. If you want more information about this, ask on
  *  the mailing list.
  */
-static void
-Init_PhraseQuery(void)
-{
+static void Init_PhraseQuery(void) {
     cPhraseQuery = rb_define_class_under(mSearch, "PhraseQuery", cQuery);
-    rb_define_alloc_func(cPhraseQuery, frb_data_alloc);
+    rb_define_alloc_func(cPhraseQuery, frb_phq_alloc);
 
     rb_define_method(cPhraseQuery, "initialize", frb_phq_init, -1);
     rb_define_method(cPhraseQuery, "add_term", frb_phq_add, -1);

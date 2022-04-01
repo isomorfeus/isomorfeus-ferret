@@ -298,8 +298,7 @@ extern FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *
  * FrtPhraseQuery
  ***************************************************************************/
 
-typedef struct FrtPhraseQuery
-{
+typedef struct FrtPhraseQuery {
     FrtQuery          super;
     int               slop;
     FrtSymbol         field;
@@ -308,6 +307,8 @@ typedef struct FrtPhraseQuery
     int               pos_capa;
 } FrtPhraseQuery;
 
+extern FrtQuery *frt_phq_alloc(void);
+extern FrtQuery *frt_phq_init(FrtQuery *self, FrtSymbol field);
 extern FrtQuery *frt_phq_new(FrtSymbol field);
 extern void frt_phq_add_term(FrtQuery *self, const char *term, int pos_inc);
 extern void frt_phq_add_term_abs(FrtQuery *self, const char *term, int position);
@@ -328,7 +329,7 @@ typedef struct FrtMultiTermQuery {
 
 extern void frt_multi_tq_add_term(FrtQuery *self, const char *term);
 extern void frt_multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost);
-extern FrtQuery *frt_multi_tq_alloc();
+extern FrtQuery *frt_multi_tq_alloc(void);
 extern FrtQuery *frt_multi_tq_new(FrtSymbol field);
 extern FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, FrtSymbol field, int max_terms, float min_boost);
 extern FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost);
@@ -856,7 +857,7 @@ typedef struct FrtQueryParser {
 } FrtQueryParser;
 typedef FrtQueryParser FrtQParser; /* FrtQParser is an alias for FrtQueryParser */
 
-extern FrtQParser *frt_qp_alloc();
+extern FrtQParser *frt_qp_alloc(void);
 extern FrtQParser *frt_qp_init(FrtQParser *, FrtAnalyzer *analyzer);
 extern FrtQParser *frt_qp_new(FrtAnalyzer *analyzer);
 extern void frt_qp_add_field(FrtQParser *self, FrtSymbol field, bool is_default, bool is_tokenized);
