@@ -501,6 +501,9 @@ typedef struct FrtSpanTermQuery {
     FrtSpanQuery super;
     char         *term;
 } FrtSpanTermQuery;
+
+extern FrtQuery *frt_spantq_alloc(void);
+extern FrtQuery *frt_spantq_init(FrtQuery *self, FrtSymbol field, const char *term);
 extern FrtQuery *frt_spantq_new(FrtSymbol field, const char *term);
 
 /***************************************************************************

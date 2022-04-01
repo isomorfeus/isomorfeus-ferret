@@ -1525,8 +1525,7 @@ static FrtWeight *spanw_new(FrtQuery *query, FrtSearcher *searcher)
  * FrtSpanTermQuery
  *****************************************************************************/
 
-static char *spantq_to_s(FrtQuery *self, FrtSymbol default_field)
-{
+static char *spantq_to_s(FrtQuery *self, FrtSymbol default_field) {
     if (default_field && default_field == SpQ(self)->field) {
         return frt_strfmt("span_terms(%s)", SpTQ(self)->term);
     } else {
@@ -1534,38 +1533,34 @@ static char *spantq_to_s(FrtQuery *self, FrtSymbol default_field)
     }
 }
 
-static void spantq_destroy_i(FrtQuery *self)
-{
+static void spantq_destroy_i(FrtQuery *self) {
     free(SpTQ(self)->term);
     spanq_destroy_i(self);
 }
 
-static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void spantq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     frt_hs_add(terms, frt_term_new(SpQ(self)->field, SpTQ(self)->term));
 }
 
-static FrtHashSet *spantq_get_terms(FrtQuery *self)
-{
+static FrtHashSet *spantq_get_terms(FrtQuery *self) {
     FrtHashSet *terms = frt_hs_new_str(&free);
     frt_hs_add(terms, frt_estrdup(SpTQ(self)->term));
     return terms;
 }
 
-static unsigned long long spantq_hash(FrtQuery *self)
-{
+static unsigned long long spantq_hash(FrtQuery *self) {
     return spanq_hash(self) ^ frt_str_hash(SpTQ(self)->term);
 }
 
-static int spantq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spantq_eq(FrtQuery *self, FrtQuery *o) {
     return spanq_eq(self, o) && strcmp(SpTQ(self)->term, SpTQ(o)->term) == 0;
 }
 
-FrtQuery *frt_spantq_new(FrtSymbol field, const char *term)
-{
-    FrtQuery *self             = frt_q_new(FrtSpanTermQuery);
+FrtQuery *frt_spantq_alloc(void) {
+    return frt_q_new(FrtSpanTermQuery);
+}
 
+FrtQuery *frt_spantq_init(FrtQuery *self, FrtSymbol field, const char *term) {
     SpTQ(self)->term        = frt_estrdup(term);
     SpQ(self)->field        = field;
     SpQ(self)->get_spans    = &spante_new;
@@ -1580,6 +1575,11 @@ FrtQuery *frt_spantq_new(FrtSymbol field, const char *term)
     self->create_weight_i   = &spanw_new;
     self->get_matchv_i      = &spanq_get_matchv_i;
     return self;
+}
+
+FrtQuery *frt_spantq_new(FrtSymbol field, const char *term) {
+    FrtQuery *self = frt_spantq_alloc();
+    return frt_spantq_init(self, field, term);
 }
 
 /*****************************************************************************

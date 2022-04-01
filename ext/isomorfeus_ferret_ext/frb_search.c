@@ -1750,6 +1750,24 @@ static VALUE frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter) {
  *
  ****************************************************************************/
 
+static size_t frb_span_term_query_size(const void *p) {
+    return sizeof(FrtSpanTermQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_span_term_query_t = {
+    .wrap_struct_name = "FrbSpanTermQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_span_term_query_size
+    }
+};
+
+static VALUE frb_spantq_alloc(VALUE rclass) {
+    FrtQuery *stq = frt_spantq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_term_query_t, stq);
+}
+
 /*
  *  call-seq:
  *     SpanTermQuery.new(field, term) -> query
@@ -1757,11 +1775,10 @@ static VALUE frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter) {
  *  Create a new SpanTermQuery which matches all documents with the term
  *  +term+ in the field +field+.
  */
-static VALUE
-frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm)
-{
-    FrtQuery *q = frt_spantq_new(frb_field(rfield), StringValuePtr(rterm));
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+static VALUE frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm) {
+    FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_term_query_t, q);
+    frt_spantq_init(q, frb_field(rfield), StringValuePtr(rterm));
     object_add(q, self);
     return self;
 }
@@ -3910,11 +3927,9 @@ static void Init_FilteredQuery(void) {
  *  being that it returns the start and end offset of all of its matches for
  *  use by enclosing SpanQueries.
  */
-static void
-Init_SpanTermQuery(void)
-{
+static void Init_SpanTermQuery(void) {
     cSpanTermQuery = rb_define_class_under(mSpans, "SpanTermQuery", cQuery);
-    rb_define_alloc_func(cSpanTermQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanTermQuery, frb_spantq_alloc);
 
     rb_define_method(cSpanTermQuery, "initialize", frb_spantq_init, 2);
 }
