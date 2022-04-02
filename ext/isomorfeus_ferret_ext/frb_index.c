@@ -1286,8 +1286,6 @@ static VALUE
 frb_iw_close(VALUE self)
 {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
-    // TODO Why?
-    // Frt_Unwrap_Struct(self);
     frt_iw_close(iw);
     return Qnil;
 }
@@ -2311,8 +2309,6 @@ frb_ir_close(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     object_del(ir);
-    // TODO Why?
-    // Frt_Unwrap_Struct(self);
     frt_ir_close(ir);
     return self;
 }

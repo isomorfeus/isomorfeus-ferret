@@ -2807,8 +2807,6 @@ static VALUE
 frb_sea_close(VALUE self)
 {
     GET_SEA();
-    // TODO Why?
-    // Frt_Unwrap_Struct(self);
     object_del(sea);
     sea->close(sea);
     return Qnil;

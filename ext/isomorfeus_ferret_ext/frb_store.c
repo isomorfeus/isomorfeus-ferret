@@ -20,8 +20,6 @@ void frb_unwrap_locks(FrtStore *store) {
         VALUE rlock = object_get(lock);
         if (rlock != Qnil) {
             object_del(lock);
-            // Why?
-            // Frt_Unwrap_Struct(rlock);
         }
     }
 }
@@ -209,8 +207,6 @@ frb_dir_close(VALUE self)
     int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) - 1;
     rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
     if (ref_cnt < 0) {
-        // TODO Why?
-        // Frt_Unwrap_Struct(self);
         object_del(store);
         frb_unwrap_locks(store);
         frt_store_deref(store);
