@@ -2298,8 +2298,7 @@ FrtQuery *frt_spanxq_new(FrtQuery *inc, FrtQuery *exc)
 
 #define SpPfxQ(query) ((FrtSpanPrefixQuery *)(query))
 
-static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
-{
+static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field) {
     char *buffer, *bptr;
     const char *prefix = SpPfxQ(self)->prefix;
     size_t plen = strlen(prefix);
@@ -2323,8 +2322,7 @@ static char *spanprq_to_s(FrtQuery *self, FrtSymbol default_field)
     return buffer;
 }
 
-static FrtQuery *spanprq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *spanprq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     const int field_num = frt_fis_get_field_num(ir->fis, SpQ(self)->field);
     FrtQuery *volatile q = frt_spanmtq_new_conf(SpQ(self)->field, SpPfxQ(self)->max_terms);
     q->boost = self->boost;        /* set the boost */
@@ -2350,27 +2348,25 @@ static FrtQuery *spanprq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return q;
 }
 
-static void spanprq_destroy(FrtQuery *self)
-{
+static void spanprq_destroy(FrtQuery *self) {
     free(SpPfxQ(self)->prefix);
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanprq_hash(FrtQuery *self)
-{
+static unsigned long long spanprq_hash(FrtQuery *self) {
     return frt_str_hash(rb_id2name(SpQ(self)->field)) ^ frt_str_hash(SpPfxQ(self)->prefix);
 }
 
-static int spanprq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spanprq_eq(FrtQuery *self, FrtQuery *o) {
     return (strcmp(SpPfxQ(self)->prefix, SpPfxQ(o)->prefix) == 0)
         && (SpQ(self)->field == SpQ(o)->field);
 }
 
-FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix)
-{
-    FrtQuery *self = frt_q_new(FrtSpanPrefixQuery);
+FrtQuery *frt_spanprq_alloc(void) {
+    return frt_q_new(FrtSpanPrefixQuery);
+}
 
+FrtQuery *frt_spanprq_init(FrtQuery *self, FrtSymbol field, const char *prefix) {
     SpQ(self)->field        = field;
     SpPfxQ(self)->prefix    = frt_estrdup(prefix);
     SpPfxQ(self)->max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
@@ -2384,4 +2380,9 @@ FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix)
     self->create_weight_i   = &frt_q_create_weight_unsup;
 
     return self;
+}
+
+FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix) {
+    FrtQuery *self = frt_spanprq_alloc();
+    return frt_spanprq_init(self, field, prefix);
 }

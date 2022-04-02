@@ -582,7 +582,6 @@ typedef struct FrtSpanNotQuery {
 extern FrtQuery *frt_spanxq_new(FrtQuery *inc, FrtQuery *exc);
 extern FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc);
 
-
 /***************************************************************************
  * FrtSpanPrefixQuery
  ***************************************************************************/
@@ -595,8 +594,9 @@ typedef struct FrtSpanPrefixQuery {
     int          max_terms;
 } FrtSpanPrefixQuery;
 
+extern FrtQuery *frt_spanprq_alloc(void);
+extern FrtQuery *frt_spanprq_init(FrtQuery *self, FrtSymbol field, const char *prefix);
 extern FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix);
-
 
 /***************************************************************************
  *

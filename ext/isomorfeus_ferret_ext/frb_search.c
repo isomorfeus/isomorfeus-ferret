@@ -1832,6 +1832,24 @@ static VALUE frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms) {
  *
  ****************************************************************************/
 
+static size_t frb_span_prefix_query_size(const void *p) {
+    return sizeof(FrtSpanPrefixQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_span_prefix_query_t = {
+    .wrap_struct_name = "FrbSpanPrefixQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_span_prefix_query_size
+    }
+};
+
+static VALUE frb_spanprq_alloc(VALUE rclass) {
+    FrtQuery *spq = frt_spanprq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_prefix_query_t, spq);
+}
+
 /*
  *  call-seq:
  *     SpanPrefixQuery.new(field, prefix, max_terms = 256) -> query
@@ -1839,18 +1857,16 @@ static VALUE frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms) {
  *  Create a new SpanPrefixQuery which matches all documents with the prefix
  *  +prefix+ in the field +field+.
  */
-static VALUE
-frb_spanprq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_spanprq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rfield, rprefix, rmax_terms;
     int max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
     FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_prefix_query_t, q);
     if (rb_scan_args(argc, argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
         max_terms = FIX2INT(rmax_terms);
     }
-    q = frt_spanprq_new(frb_field(rfield), StringValuePtr(rprefix));
+    frt_spanprq_init(q, frb_field(rfield), StringValuePtr(rprefix));
     ((FrtSpanPrefixQuery *)q)->max_terms = max_terms;
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -3960,9 +3976,7 @@ static void Init_SpanTermQuery(void) {
  *  difference being that it returns the start and end offset of all of its
  *  matches for use by enclosing SpanQueries.
  */
-static void
-Init_SpanMultiTermQuery(void)
-{
+static void Init_SpanMultiTermQuery(void) {
     cSpanMultiTermQuery = rb_define_class_under(mSpans, "SpanMultiTermQuery", cQuery);
     rb_define_alloc_func(cSpanMultiTermQuery, frb_spanmtq_alloc);
 
@@ -3978,11 +3992,9 @@ Init_SpanMultiTermQuery(void)
  *  being that it returns the start and end offset of all of its matches for
  *  use by enclosing SpanQueries.
  */
-static void
-Init_SpanPrefixQuery(void)
-{
+static void Init_SpanPrefixQuery(void) {
     cSpanPrefixQuery = rb_define_class_under(mSpans, "SpanPrefixQuery", cQuery);
-    rb_define_alloc_func(cSpanPrefixQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanPrefixQuery, frb_spanprq_alloc);
 
     rb_define_method(cSpanPrefixQuery, "initialize", frb_spanprq_init, -1);
 }
