@@ -289,8 +289,7 @@ FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *up
  *
  ***************************************************************************/
 
-static char *frt_trfilt_to_s(FrtFilter *filt)
-{
+static char *frt_trfilt_to_s(FrtFilter *filt) {
     char *rstr = range_to_s(RF(filt)->range, (FrtSymbol)NULL, 1.0);
     char *rfstr = frt_strfmt("TypedRangeFilter< %s >", rstr);
     free(rstr);
@@ -323,9 +322,7 @@ do {\
     }\
 } while (te->next(te))
 
-
-static FrtBitVector *frt_trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
-{
+static FrtBitVector *frt_trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir) {
     FrtRange *range = RF(filt)->range;
     double lnum = 0.0, unum = 0.0;
     int len = 0;
@@ -398,17 +395,17 @@ static FrtBitVector *frt_trfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
         }
 
         return bv;
-    }
-    else {
+    } else {
         return frt_rfilt_get_bv_i(filt, ir);
     }
 }
 
-FrtFilter *frt_trfilt_new(FrtSymbol field,
-                   const char *lower_term, const char *upper_term,
-                   bool include_lower, bool include_upper)
-{
-    FrtFilter *filt = filt_new(FrtRangeFilter);
+FrtFilter *frt_trfilt_alloc(void) {
+    return filt_new(FrtRangeFilter);
+}
+
+FrtFilter *frt_trfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+                   bool include_lower, bool include_upper) {
     RF(filt)->range = trange_new(field, lower_term, upper_term, include_lower, include_upper);
 
     filt->get_bv_i  = &frt_trfilt_get_bv_i;
@@ -417,6 +414,12 @@ FrtFilter *frt_trfilt_new(FrtSymbol field,
     filt->to_s      = &frt_trfilt_to_s;
     filt->destroy_i = &frt_rfilt_destroy_i;
     return filt;
+}
+
+FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
+                   bool include_lower, bool include_upper) {
+    FrtFilter *filt = frt_trfilt_alloc();
+    return frt_trfilt_init(filt, field, lower_term, upper_term, include_lower, include_upper);
 }
 
 /*****************************************************************************

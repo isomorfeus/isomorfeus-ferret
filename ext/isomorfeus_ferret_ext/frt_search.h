@@ -145,6 +145,9 @@ extern FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const c
  *
  ***************************************************************************/
 
+extern FrtFilter *frt_trfilt_alloc(void);
+extern FrtFilter *frt_trfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+                          bool include_lower, bool include_upper);
 extern FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
                           bool include_lower, bool include_upper);
 

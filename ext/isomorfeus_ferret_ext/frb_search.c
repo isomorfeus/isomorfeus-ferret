@@ -2275,6 +2275,23 @@ static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
  *
  ****************************************************************************/
 
+static size_t frb_typed_range_filter_size(const void *p) {
+    return sizeof(FrtRangeFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_typed_range_filter_t = {
+    .wrap_struct_name = "FrbTypedRangeFilter",
+    .function = {
+        .dfree = frb_f_free,
+        .dsize = frb_typed_range_filter_size
+    }
+};
+
+static VALUE frb_trf_alloc(VALUE rclass) {
+    FrtFilter *f = frt_trfilt_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_typed_range_filter_t, f);
+}
 
 /*
  *  call-seq:
@@ -2299,19 +2316,15 @@ static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
  *    # is equivalent to
  *    f = TypedRangeFilter.new(:date, :>= => "-132.2", :<= => -1.4)
  */
-static VALUE
-frb_trf_init(VALUE self, VALUE rfield, VALUE roptions)
-{
+static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtFilter *f;
     char *lterm = NULL;
     char *uterm = NULL;
     bool include_lower = false;
     bool include_upper = false;
-
+    TypedData_Get_Struct(self, FrtFilter, &frb_typed_range_filter_t, f);
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    f = frt_trfilt_new(frb_field(rfield), lterm, uterm,
-                   include_lower, include_upper);
-    Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
+    frt_trfilt_init(f, frb_field(rfield), lterm, uterm, include_lower, include_upper);
     object_add(f, self);
     return self;
 }
@@ -4301,13 +4314,10 @@ static void Init_RangeFilter(void) {
  *
  *    filter = TypedRangeFilter.new(:created_on, :<= => "50.00")
  */
-static void
-Init_TypedRangeFilter(void)
-{
-    cTypedRangeFilter =
-        rb_define_class_under(mSearch, "TypedRangeFilter", cFilter);
+static void Init_TypedRangeFilter(void) {
+    cTypedRangeFilter = rb_define_class_under(mSearch, "TypedRangeFilter", cFilter);
     frb_mark_cclass(cTypedRangeFilter);
-    rb_define_alloc_func(cTypedRangeFilter, frb_data_alloc);
+    rb_define_alloc_func(cTypedRangeFilter, frb_trf_alloc);
 
     rb_define_method(cTypedRangeFilter, "initialize", frb_trf_init, 2);
 }
