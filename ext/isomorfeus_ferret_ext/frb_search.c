@@ -2375,16 +2375,30 @@ static VALUE frb_qf_init(VALUE self, VALUE rquery) {
  *
  ****************************************************************************/
 
-static void
-frb_sf_free(void *p)
-{
+static size_t frb_sort_field_size(const void *p) {
+    return sizeof(FrtSortField);
+    (void)p;
+}
+
+static void frb_sf_free(void *p) {
     object_del(p);
     frt_sort_field_destroy((FrtSortField *)p);
 }
 
-static VALUE
-frb_get_sf(FrtSortField *sf)
-{
+const rb_data_type_t frb_sort_field_t = {
+    .wrap_struct_name = "FrbSortField",
+    .function = {
+        .dfree = frb_sf_free,
+        .dsize = frb_sort_field_size
+    }
+};
+
+static VALUE frb_sf_alloc(VALUE rclass) {
+    FrtSortField *sf = frt_sort_field_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_sort_field_t, sf);
+}
+
+static VALUE frb_get_sf(FrtSortField *sf) {
     VALUE self = object_get(sf);
     if (self == Qnil) {
         self = Data_Wrap_Struct(cSortField, NULL, &frb_sf_free, sf);
@@ -2393,9 +2407,7 @@ frb_get_sf(FrtSortField *sf)
     return self;
 }
 
-static int
-get_sort_type(VALUE rtype)
-{
+static int get_sort_type(VALUE rtype) {
     Check_Type(rtype, T_SYMBOL);
     if (rtype == sym_byte) {
         return FRT_SORT_TYPE_BYTE;
@@ -2439,16 +2451,14 @@ get_sort_type(VALUE rtype)
  *  :reverse        Default: false. Set to true if you want to reverse the
  *                  sort.
  */
-static VALUE
-frb_sf_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_sf_init(int argc, VALUE *argv, VALUE self) {
     FrtSortField *sf;
     VALUE rfield, roptions;
     VALUE rval;
     int type = FRT_SORT_TYPE_AUTO;
     int is_reverse = false;
     FrtSymbol field;
-
+    TypedData_Get_Struct(self, FrtSortField, &frb_sort_field_t, sf);
     if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
         if (Qnil != (rval = rb_hash_aref(roptions, sym_type))) {
             type = get_sort_type(rval);
@@ -2463,12 +2473,11 @@ frb_sf_init(int argc, VALUE *argv, VALUE self)
     if (NIL_P(rfield)) rb_raise(rb_eArgError, "must pass a valid field name");
     field = frb_field(rfield);
 
-    sf = frt_sort_field_new(field, type, is_reverse);
+    frt_sort_field_init(sf, field, type, is_reverse);
     if (sf->field == (FrtSymbol)NULL) {
         sf->field = field;
     }
 
-    Frt_Wrap_Struct(self, NULL, &frb_sf_free, sf);
     object_add(sf, self);
     return self;
 }
@@ -4435,9 +4444,7 @@ Init_Filter(void)
  *  Note 2: When sorting by integer, integers are only 4 bytes so anything
  *  larger will cause strange sorting behaviour.
  */
-static void
-Init_SortField(void)
-{
+static void Init_SortField(void) {
     /* option hash keys for SortField#initialize */
     sym_type  = ID2SYM(rb_intern("type"));
     sym_reverse    = ID2SYM(rb_intern("reverse"));
@@ -4453,7 +4460,7 @@ Init_SortField(void)
     sym_byte = ID2SYM(rb_intern("byte"));
 
     cSortField = rb_define_class_under(mSearch, "SortField", rb_cObject);
-    rb_define_alloc_func(cSortField, frb_data_alloc);
+    rb_define_alloc_func(cSortField, frb_sf_alloc);
 
     rb_define_method(cSortField, "initialize", frb_sf_init, -1);
     rb_define_method(cSortField, "reverse?", frb_sf_is_reverse, 0);

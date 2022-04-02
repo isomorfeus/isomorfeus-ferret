@@ -695,13 +695,22 @@ typedef struct FrtSortField {
     void      (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable);
 } FrtSortField;
 
+extern FrtSortField *frt_sort_field_alloc(void);
+extern FrtSortField *frt_sort_field_init(FrtSortField *self, FrtSymbol field, SortType type, bool reverse);
 extern FrtSortField *frt_sort_field_new(FrtSymbol field, SortType type, bool reverse);
+extern FrtSortField *frt_sort_field_score_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_score_new(bool reverse);
+extern FrtSortField *frt_sort_field_doc_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_doc_new(bool reverse);
+extern FrtSortField *frt_sort_field_int_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_int_new(FrtSymbol field, bool reverse);
+extern FrtSortField *frt_sort_field_byte_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_byte_new(FrtSymbol field, bool reverse);
+extern FrtSortField *frt_sort_field_float_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_float_new(FrtSymbol field, bool reverse);
+extern FrtSortField *frt_sort_field_string_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_string_new(FrtSymbol field, bool reverse);
+extern FrtSortField *frt_sort_field_auto_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_auto_new(FrtSymbol field, bool reverse);
 extern void frt_sort_field_destroy(void *p);
 extern char *frt_sort_field_to_s(FrtSortField *self);
