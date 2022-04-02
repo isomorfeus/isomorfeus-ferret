@@ -2184,8 +2184,7 @@ FrtQuery *frt_spannq_add_clause(FrtQuery *self, FrtQuery *clause)
  *
  *****************************************************************************/
 
-static char *spanxq_to_s(FrtQuery *self, FrtSymbol field)
-{
+static char *spanxq_to_s(FrtQuery *self, FrtSymbol field) {
     FrtSpanNotQuery *sxq = SpXQ(self);
     char *inc_s = sxq->inc->to_s(sxq->inc, field);
     char *exc_s = sxq->exc->to_s(sxq->exc, field);
@@ -2196,18 +2195,15 @@ static char *spanxq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanxq_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void spanxq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     SpXQ(self)->inc->extract_terms(SpXQ(self)->inc, terms);
 }
 
-static FrtHashSet *spanxq_get_terms(FrtQuery *self)
-{
+static FrtHashSet *spanxq_get_terms(FrtQuery *self) {
     return SpQ(SpXQ(self)->inc)->get_terms(SpXQ(self)->inc);
 }
 
-static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     FrtSpanNotQuery *sxq = SpXQ(self);
     FrtQuery *q, *rq;
 
@@ -2227,8 +2223,7 @@ static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;
 }
 
-static void spanxq_destroy(FrtQuery *self)
-{
+static void spanxq_destroy(FrtQuery *self) {
     FrtSpanNotQuery *sxq = SpXQ(self);
 
     frt_q_deref(sxq->inc);
@@ -2237,32 +2232,31 @@ static void spanxq_destroy(FrtQuery *self)
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanxq_hash(FrtQuery *self)
-{
+static unsigned long long spanxq_hash(FrtQuery *self) {
     FrtSpanNotQuery *sxq = SpXQ(self);
     return spanq_hash(self) ^ sxq->inc->hash(sxq->inc)
         ^ sxq->exc->hash(sxq->exc);
 }
 
-static int spanxq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spanxq_eq(FrtQuery *self, FrtQuery *o) {
     FrtSpanNotQuery *sxq1 = SpXQ(self);
     FrtSpanNotQuery *sxq2 = SpXQ(o);
     return spanq_eq(self, o) && sxq1->inc->eq(sxq1->inc, sxq2->inc)
         && sxq1->exc->eq(sxq1->exc, sxq2->exc);
 }
 
+FrtQuery *frt_spanxq_alloc(void) {
+    return frt_q_new(FrtSpanNotQuery);
+}
 
-FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc)
-{
-    FrtQuery *self;
+FrtQuery *frt_spanxq_init_nr(FrtQuery *self, FrtQuery *inc, FrtQuery *exc) {
     if (SpQ(inc)->field != SpQ(exc)->field) {
+        free(self);
         FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" along with a "
               "SpanQuery with field \"%s\" to an SpanNotQuery",
               rb_id2name(SpQ(inc)->field), rb_id2name(SpQ(exc)->field));
     }
-    self = frt_q_new(FrtSpanNotQuery);
 
     SpXQ(self)->inc         = inc;
     SpXQ(self)->exc         = exc;
@@ -2284,13 +2278,22 @@ FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc)
     return self;
 }
 
-FrtQuery *frt_spanxq_new(FrtQuery *inc, FrtQuery *exc)
-{
+FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc) {
+    FrtQuery *self = frt_spanxq_alloc();
+    return frt_spanxq_init_nr(self, inc, exc);
+}
+
+FrtQuery *frt_spanxq_init(FrtQuery *self, FrtQuery *inc, FrtQuery *exc) {
+    FRT_REF(inc);
+    FRT_REF(exc);
+    return frt_spanxq_init_nr(self, inc, exc);
+}
+
+FrtQuery *frt_spanxq_new(FrtQuery *inc, FrtQuery *exc) {
     FRT_REF(inc);
     FRT_REF(exc);
     return frt_spanxq_new_nr(inc, exc);
 }
-
 
 /*****************************************************************************
  *

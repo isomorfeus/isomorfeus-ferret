@@ -2102,12 +2102,29 @@ frb_spanoq_add(VALUE self, VALUE rclause)
  *
  ****************************************************************************/
 
-static void
-frb_spanxq_mark(void *p)
-{
+static size_t frb_span_not_query_size(const void *p) {
+    return sizeof(FrtSpanNotQuery);
+    (void)p;
+}
+
+static void frb_spanxq_mark(void *p) {
     FrtSpanNotQuery *sxq = (FrtSpanNotQuery *)p;
     frb_gc_mark(sxq->inc);
     frb_gc_mark(sxq->exc);
+}
+
+const rb_data_type_t frb_span_not_query_t = {
+    .wrap_struct_name = "FrbSpanNotQuery",
+    .function = {
+        .dmark = frb_spanxq_mark,
+        .dfree = frb_q_free,
+        .dsize = frb_span_not_query_size
+    }
+};
+
+static VALUE frb_spanxq_alloc(VALUE rclass) {
+    FrtQuery *snq = frt_spanxq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_not_query_t, snq);
 }
 
 /*
@@ -2117,14 +2134,12 @@ frb_spanxq_mark(void *p)
  *  Create a new SpanNotQuery which matches all documents which match
  *  +include_query+ and don't match +exclude_query+.
  */
-static VALUE
-frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc)
-{
+static VALUE frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc) {
     FrtQuery *q;
     Check_Type(rinc, T_DATA);
     Check_Type(rexc, T_DATA);
-    q = frt_spanxq_new(DATA_PTR(rinc), DATA_PTR(rexc));
-    Frt_Wrap_Struct(self, &frb_spanxq_mark, &frb_q_free, q);
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_not_query_t, q);
+    frt_spanxq_init(q, DATA_PTR(rinc), DATA_PTR(rexc));
     object_add(q, self);
     return self;
 }
@@ -4191,11 +4206,9 @@ static void Init_SpanOrQuery(void) {
  *
  *  SpanOrQuery only works with other SpanQueries.
  */
-static void
-Init_SpanNotQuery(void)
-{
+static void Init_SpanNotQuery(void) {
     cSpanNotQuery = rb_define_class_under(mSpans, "SpanNotQuery", cQuery);
-    rb_define_alloc_func(cSpanNotQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanNotQuery, frb_spanxq_alloc);
 
     rb_define_method(cSpanNotQuery, "initialize", frb_spanxq_init, 2);
 }

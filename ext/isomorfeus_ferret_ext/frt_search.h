@@ -585,6 +585,8 @@ typedef struct FrtSpanNotQuery {
     FrtQuery     *exc;
 } FrtSpanNotQuery;
 
+extern FrtQuery *frt_spanxq_alloc(void);
+extern FrtQuery *frt_spanxq_init(FrtQuery *self, FrtQuery *inc, FrtQuery *exc);
 extern FrtQuery *frt_spanxq_new(FrtQuery *inc, FrtQuery *exc);
 extern FrtQuery *frt_spanxq_new_nr(FrtQuery *inc, FrtQuery *exc);
 
