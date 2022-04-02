@@ -378,6 +378,8 @@ typedef struct FrtPrefixQuery {
     char           *prefix;
 } FrtPrefixQuery;
 
+extern FrtQuery *frt_prefixq_alloc(void);
+extern FrtQuery *frt_prefixq_init(FrtQuery *self, FrtSymbol field, const char *prefix);
 extern FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix);
 
 /***************************************************************************

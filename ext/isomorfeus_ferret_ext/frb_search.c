@@ -761,23 +761,6 @@ static int get_max_terms(VALUE rmax_terms, int max_terms) {
     return max_terms;
 }
 
-static VALUE frb_mtq_init_specific(int argc, VALUE *argv, VALUE self, mtq_maker_ft mm) {
-    VALUE rfield, rterm, rmax_terms;
-    int max_terms =
-        FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
-    FrtQuery *q;
-
-    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
-        max_terms = get_max_terms(rmax_terms, max_terms);
-    }
-
-    q = (*mm)(frb_field(rfield), StringValuePtr(rterm));
-    FrtMTQMaxTerms(q) = max_terms;
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
-    object_add(q, self);
-    return self;
-}
-
 /****************************************************************************
  *
  * BooleanClause Methods
@@ -1377,6 +1360,24 @@ frb_phq_set_slop(VALUE self, VALUE rslop)
  *
  ****************************************************************************/
 
+static size_t frb_prefix_query_size(const void *p) {
+    return sizeof(FrtPrefixQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_prefix_query_t = {
+    .wrap_struct_name = "FrbPrefixQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_prefix_query_size
+    }
+};
+
+static VALUE frb_prq_alloc(VALUE rclass) {
+    FrtQuery *pq = frt_prefixq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_prefix_query_t, pq);
+}
+
 /*
  *  call-seq:
  *     PrefixQuery.new(field, prefix, options = {}) -> prefix-query
@@ -1393,10 +1394,19 @@ frb_phq_set_slop(VALUE self, VALUE rslop)
  *  +:max_terms+ which limits the number of terms that get added to the query.
  *  By default it is set to 512.
  */
-static VALUE
-frb_prq_init(int argc, VALUE *argv, VALUE self)
-{
-    return frb_mtq_init_specific(argc, argv, self, &frt_prefixq_new);
+static VALUE frb_prq_init(int argc, VALUE *argv, VALUE self) {
+    VALUE rfield, rterm, rmax_terms;
+    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_prefix_query_t, q);
+    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
+        max_terms = get_max_terms(rmax_terms, max_terms);
+    }
+
+    frt_prefixq_init(q, frb_field(rfield), StringValuePtr(rterm));
+    FrtMTQMaxTerms(q) = max_terms;
+    object_add(q, self);
+    return self;
 }
 
 /****************************************************************************
@@ -1423,10 +1433,20 @@ frb_prq_init(int argc, VALUE *argv, VALUE self)
  *  set +:max_terms+ which limits the number of terms that get added to the
  *  query.  By default it is set to 512.
  */
-static VALUE
-frb_wcq_init(int argc, VALUE *argv, VALUE self)
-{
-    return frb_mtq_init_specific(argc, argv, self, &frt_wcq_new);
+static VALUE frb_wcq_init(int argc, VALUE *argv, VALUE self) {
+    VALUE rfield, rterm, rmax_terms;
+    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    FrtQuery *q;
+
+    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
+        max_terms = get_max_terms(rmax_terms, max_terms);
+    }
+
+    q = frt_wcq_new(frb_field(rfield), StringValuePtr(rterm));
+    FrtMTQMaxTerms(q) = max_terms;
+    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    object_add(q, self);
+    return self;
 }
 
 /****************************************************************************
@@ -3939,11 +3959,9 @@ static void Init_PhraseQuery(void) {
  *    # matches => "cat2/sub_cat1"
  *    # matches => "cat2/sub_cat2"
  */
-static void
-Init_PrefixQuery(void)
-{
+static void Init_PrefixQuery(void) {
     cPrefixQuery = rb_define_class_under(mSearch, "PrefixQuery", cQuery);
-    rb_define_alloc_func(cPrefixQuery, frb_data_alloc);
+    rb_define_alloc_func(cPrefixQuery, frb_prq_alloc);
 
     rb_define_method(cPrefixQuery, "initialize", frb_prq_init, -1);
 }
