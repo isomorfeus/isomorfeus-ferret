@@ -157,6 +157,13 @@ extern FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const 
  *
  ***************************************************************************/
 
+typedef struct FrtQueryFilter {
+    FrtFilter super;
+    FrtQuery *query;
+} FrtQueryFilter;
+
+extern FrtFilter *frt_qfilt_alloc(void);
+extern FrtFilter *frt_qfilt_init(FrtFilter *filt, FrtQuery *query);
 extern FrtFilter *frt_qfilt_new(FrtQuery *query);
 extern FrtFilter *frt_qfilt_new_nr(FrtQuery *query);
 

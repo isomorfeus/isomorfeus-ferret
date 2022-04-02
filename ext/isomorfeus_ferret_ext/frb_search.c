@@ -2335,20 +2335,36 @@ static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
  *
  ****************************************************************************/
 
+static size_t frb_query_filter_size(const void *p) {
+    return sizeof(FrtQueryFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_query_filter_t = {
+    .wrap_struct_name = "FrbQueryFilter",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_query_filter_size
+    }
+};
+
+static VALUE frb_qf_alloc(VALUE rclass) {
+    FrtFilter *qf = frt_qfilt_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_query_filter_t, qf);
+}
+
 /*
  *  call-seq:
  *     QueryFilter.new(query) -> filter
  *
  *  Create a new QueryFilter which applies the query +query+.
  */
-static VALUE
-frb_qf_init(VALUE self, VALUE rquery)
-{
+static VALUE frb_qf_init(VALUE self, VALUE rquery) {
     FrtQuery *q;
     FrtFilter *f;
+    TypedData_Get_Struct(self, FrtFilter, &frb_query_filter_t, f);
     Data_Get_Struct(rquery, FrtQuery, q);
-    f = frt_qfilt_new(q);
-    Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
+    frt_qfilt_init(f, q);
     object_add(f, self);
     return self;
 }
@@ -4347,12 +4363,10 @@ static void Init_TypedRangeFilter(void) {
  *  caching. Don't create a new one for each request. Of course, this won't
  *  work in a CGI application.
  */
-static void
-Init_QueryFilter(void)
-{
+static void Init_QueryFilter(void) {
     cQueryFilter = rb_define_class_under(mSearch, "QueryFilter", cFilter);
     frb_mark_cclass(cQueryFilter);
-    rb_define_alloc_func(cQueryFilter, frb_data_alloc);
+    rb_define_alloc_func(cQueryFilter, frb_qf_alloc);
 
     rb_define_method(cQueryFilter, "initialize", frb_qf_init, 1);
 }
