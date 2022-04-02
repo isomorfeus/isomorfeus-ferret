@@ -1415,6 +1415,24 @@ static VALUE frb_prq_init(int argc, VALUE *argv, VALUE self) {
  *
  ****************************************************************************/
 
+static size_t frb_wildcard_query_size(const void *p) {
+    return sizeof(FrtWildCardQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_wilcard_query_t = {
+    .wrap_struct_name = "FrbWildcardQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_wildcard_query_size
+    }
+};
+
+static VALUE frb_wcq_alloc(VALUE rclass) {
+    FrtQuery *wq = frt_wcq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_wilcard_query_t, wq);
+}
+
 /*
  *  call-seq:
  *     WildcardQuery.new(field, pattern, options = {}) -> wild-card-query
@@ -1437,14 +1455,13 @@ static VALUE frb_wcq_init(int argc, VALUE *argv, VALUE self) {
     VALUE rfield, rterm, rmax_terms;
     int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
     FrtQuery *q;
-
+    TypedData_Get_Struct(self, FrtQuery, &frb_wilcard_query_t, q);
     if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
         max_terms = get_max_terms(rmax_terms, max_terms);
     }
 
-    q = frt_wcq_new(frb_field(rfield), StringValuePtr(rterm));
+    frt_wcq_init(q, frb_field(rfield), StringValuePtr(rterm));
     FrtMTQMaxTerms(q) = max_terms;
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -3992,11 +4009,9 @@ static void Init_PrefixQuery(void) {
  *    # matches => "falling"
  *    # matches => "folly"
  */
-static void
-Init_WildcardQuery(void)
-{
+static void Init_WildcardQuery(void) {
     cWildcardQuery = rb_define_class_under(mSearch, "WildcardQuery", cQuery);
-    rb_define_alloc_func(cWildcardQuery, frb_data_alloc);
+    rb_define_alloc_func(cWildcardQuery, frb_wcq_alloc);
 
     rb_define_method(cWildcardQuery, "initialize", frb_wcq_init, -1);
 }

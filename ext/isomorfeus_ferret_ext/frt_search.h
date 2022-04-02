@@ -396,6 +396,8 @@ typedef struct FrtWildCardQuery {
     char           *pattern;
 } FrtWildCardQuery;
 
+extern FrtQuery *frt_wcq_alloc(void);
+extern FrtQuery *frt_wcq_init(FrtQuery *self, FrtSymbol field, const char *pattern);
 extern FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern);
 extern bool frt_wc_match(const char *pattern, const char *text);
 

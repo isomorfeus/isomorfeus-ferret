@@ -72,13 +72,6 @@ extern char *rstrdup(VALUE rstr);
 #define Frt_Make_Struct(klass)\
   rb_data_object_wrap(klass,NULL,(RUBY_DATA_FUNC)NULL,(RUBY_DATA_FUNC)NULL)
 
-#define Frt_Wrap_Struct(self,mmark,mfree,mdata)\
-  do {\
-    ((struct RData *)(self))->data = mdata;\
-    ((struct RData *)(self))->dmark = (RUBY_DATA_FUNC)mmark;\
-    ((struct RData *)(self))->dfree = (RUBY_DATA_FUNC)mfree;\
-  } while (0)
-
 #define Frt_Unwrap_Struct(self)\
   do {\
     ((struct RData *)(self))->data = NULL;\
