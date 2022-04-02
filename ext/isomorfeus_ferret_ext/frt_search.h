@@ -857,6 +857,8 @@ typedef struct FrtMultiSearcher {
     bool        close_subs : 1;
 } FrtMultiSearcher;
 
+extern FrtSearcher *frt_msea_alloc(void);
+extern FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt, bool close_subs);
 extern FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs);
 
 /***************************************************************************

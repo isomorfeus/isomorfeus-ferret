@@ -3308,7 +3308,7 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
  *
  ****************************************************************************/
 
-static size_t frb_sea_size(const void *p) {
+static size_t frb_index_searcher_size(const void *p) {
     return sizeof(FrtIndexSearcher);
     (void)p;
 }
@@ -3324,7 +3324,7 @@ const rb_data_type_t frb_index_searcher_t = {
     .function = {
         .dmark = frb_sea_mark,
         .dfree = frb_sea_free,
-        .dsize = frb_sea_size
+        .dsize = frb_index_searcher_size
     }
 };
 
@@ -3383,9 +3383,12 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
  *
  ****************************************************************************/
 
-static void
-frb_ms_free(void *p)
-{
+static size_t frb_multi_searcher_size(const void *p) {
+    return sizeof(FrtMultiSearcher);
+    (void)p;
+}
+
+static void frb_ms_free(void *p) {
     FrtSearcher *sea = (FrtSearcher *)p;
     FrtMultiSearcher *msea = (FrtMultiSearcher *)sea;
     free(msea->searchers);
@@ -3393,14 +3396,26 @@ frb_ms_free(void *p)
     frt_searcher_close(sea);
 }
 
-static void
-frb_ms_mark(void *p)
-{
+static void frb_ms_mark(void *p) {
     int i;
     FrtMultiSearcher *msea = (FrtMultiSearcher *)p;
     for (i = 0; i < msea->s_cnt; i++) {
         frb_gc_mark(msea->searchers[i]);
     }
+}
+
+const rb_data_type_t frb_multi_searcher_t = {
+    .wrap_struct_name = "FrbMultiSearcher",
+    .function = {
+        .dmark = frb_ms_mark,
+        .dfree = frb_ms_free,
+        .dsize = frb_multi_searcher_size
+    }
+};
+
+static VALUE frb_ms_alloc(VALUE rclass) {
+    FrtSearcher *s = frt_msea_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_multi_searcher_t, s);
 }
 
 /*
@@ -3410,15 +3425,13 @@ frb_ms_mark(void *p)
  *  Create a new MultiSearcher by passing a list of subsearchers to the
  *  constructor.
  */
-static VALUE
-frb_ms_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
     int i, j, top = 0, capa = argc;
 
     VALUE rsearcher;
     FrtSearcher **searchers = FRT_ALLOC_N(FrtSearcher *, capa);
     FrtSearcher *s;
-
+    TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, s);
     for (i = 0; i < argc; i++) {
         rsearcher = argv[i];
         switch (TYPE(rsearcher)) {
@@ -3441,8 +3454,7 @@ frb_ms_init(int argc, VALUE *argv, VALUE self)
                 break;
         }
     }
-    s = frt_msea_new(searchers, top, false);
-    Frt_Wrap_Struct(self, &frb_ms_mark, &frb_ms_free, s);
+    frt_msea_init(s, searchers, top, false);
     object_add(s, self);
     return self;
 }
@@ -4630,11 +4642,9 @@ Init_Searcher(void)
  *  RemoteSearcher, the MultiSearcher can be used to search multiple machines
  *  at once.
  */
-static void
-Init_MultiSearcher(void)
-{
+static void Init_MultiSearcher(void) {
     cMultiSearcher = rb_define_class_under(mSearch, "MultiSearcher", cSearcher);
-    rb_define_alloc_func(cMultiSearcher, frb_data_alloc);
+    rb_define_alloc_func(cMultiSearcher, frb_ms_alloc);
     rb_define_method(cMultiSearcher, "initialize", frb_ms_init, -1);
 }
 
