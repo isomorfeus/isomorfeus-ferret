@@ -175,17 +175,11 @@ static FrtRange *trange_new(FrtSymbol field, const char *lower_term,
 
 /***************************************************************************
  *
- * RangeFilter
+ * FrtRangeFilter
  *
  ***************************************************************************/
 
-typedef struct RangeFilter
-{
-    FrtFilter super;
-    FrtRange *range;
-} RangeFilter;
-
-#define RF(filt) ((RangeFilter *)(filt))
+#define RF(filt) ((FrtRangeFilter *)(filt))
 
 static void frt_rfilt_destroy_i(FrtFilter *filt)
 {
@@ -268,13 +262,13 @@ static int frt_rfilt_eq(FrtFilter *filt, FrtFilter *o) {
     return range_eq(RF(filt)->range, RF(o)->range);
 }
 
-FrtFilter *frt_rfilt_new(FrtSymbol field,
-                  const char *lower_term, const char *upper_term,
-                  bool include_lower, bool include_upper)
-{
-    FrtFilter *filt = filt_new(RangeFilter);
-    RF(filt)->range =  range_new(field, lower_term, upper_term,
-                                 include_lower, include_upper);
+FrtFilter *frt_rfilt_alloc(void) {
+    return filt_new(FrtRangeFilter);
+}
+
+FrtFilter *frt_rfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+                  bool include_lower, bool include_upper) {
+    RF(filt)->range = range_new(field, lower_term, upper_term, include_lower, include_upper);
     filt->get_bv_i  = &frt_rfilt_get_bv_i;
     filt->hash      = &frt_rfilt_hash;
     filt->eq        = &frt_rfilt_eq;
@@ -283,9 +277,15 @@ FrtFilter *frt_rfilt_new(FrtSymbol field,
     return filt;
 }
 
+FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
+                  bool include_lower, bool include_upper) {
+    FrtFilter *filt = frt_rfilt_alloc();
+    return frt_rfilt_init(filt, field, lower_term, upper_term, include_lower, include_upper);
+}
+
 /***************************************************************************
  *
- * RangeFilter
+ * FrtRangeFilter
  *
  ***************************************************************************/
 
@@ -408,9 +408,8 @@ FrtFilter *frt_trfilt_new(FrtSymbol field,
                    const char *lower_term, const char *upper_term,
                    bool include_lower, bool include_upper)
 {
-    FrtFilter *filt = filt_new(RangeFilter);
-    RF(filt)->range =  trange_new(field, lower_term, upper_term,
-                                  include_lower, include_upper);
+    FrtFilter *filt = filt_new(FrtRangeFilter);
+    RF(filt)->range = trange_new(field, lower_term, upper_term, include_lower, include_upper);
 
     filt->get_bv_i  = &frt_trfilt_get_bv_i;
     filt->hash      = &frt_rfilt_hash;

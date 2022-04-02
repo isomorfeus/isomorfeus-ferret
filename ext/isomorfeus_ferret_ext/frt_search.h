@@ -120,6 +120,22 @@ extern int frt_filt_eq(FrtFilter *filt, FrtFilter *o);
  *
  ***************************************************************************/
 
+typedef struct FrtRange {
+    FrtSymbol field;
+    char      *lower_term;
+    char      *upper_term;
+    bool      include_lower : 1;
+    bool      include_upper : 1;
+} FrtRange;
+
+typedef struct FrtRangeFilter {
+    FrtFilter super;
+    FrtRange  *range;
+} FrtRangeFilter;
+
+extern FrtFilter *frt_rfilt_alloc(void);
+extern FrtFilter *frt_rfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+                         bool include_lower, bool include_upper);
 extern FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
                          bool include_lower, bool include_upper);
 
@@ -368,7 +384,6 @@ typedef struct FrtWildCardQuery {
     char           *pattern;
 } FrtWildCardQuery;
 
-
 extern FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern);
 extern bool frt_wc_match(const char *pattern, const char *text);
 
@@ -438,14 +453,6 @@ extern FrtQuery *frt_maq_new();
 /***************************************************************************
  * FrtRangeQuery
  ***************************************************************************/
-
-typedef struct FrtRange {
-    FrtSymbol field;
-    char      *lower_term;
-    char      *upper_term;
-    bool      include_lower : 1;
-    bool      include_upper : 1;
-} FrtRange;
 
 typedef struct FrtRangeQuery {
     FrtQuery f;

@@ -2204,6 +2204,23 @@ frb_f_get_bits(VALUE self, VALUE rindex_reader)
  *
  ****************************************************************************/
 
+static size_t frb_range_filter_size(const void *p) {
+    return sizeof(FrtRangeFilter);
+    (void)p;
+}
+
+const rb_data_type_t frb_range_filter_t = {
+    .wrap_struct_name = "FrbRangeFilter",
+    .function = {
+        .dfree = frb_f_free,
+        .dsize = frb_range_filter_size
+    }
+};
+
+static VALUE frb_rf_alloc(VALUE rclass) {
+    FrtFilter *rf = frt_rfilt_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_range_filter_t, rf);
+}
 
 /*
  *  call-seq:
@@ -2227,9 +2244,7 @@ frb_f_get_bits(VALUE self, VALUE rindex_reader)
  *    # is equivalent to
  *    f = RangeFilter.new(:date, :>= => "200501", :<= => 200502)
  */
-static VALUE
-frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
-{
+static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtFilter *f;
     char *lterm = NULL;
     char *uterm = NULL;
@@ -2237,9 +2252,10 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
     bool include_upper = false;
     int ex_code = 0;
     const char *msg = NULL;
+    TypedData_Get_Struct(self, FrtFilter, &frb_range_filter_t, f);
     get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
     FRT_TRY
-        f = frt_rfilt_new(frb_field(rfield), lterm, uterm, include_lower, include_upper);
+        f = frt_rfilt_init(f, frb_field(rfield), lterm, uterm, include_lower, include_upper);
         break;
     default:
         ex_code = xcontext.excode;
@@ -2249,7 +2265,6 @@ frb_rf_init(VALUE self, VALUE rfield, VALUE roptions)
 
     if (ex_code && msg) { frb_raise(ex_code, msg); }
 
-    Frt_Wrap_Struct(self, NULL, &frb_f_free, f);
     object_add(f, self);
     return self;
 }
@@ -4261,12 +4276,10 @@ Init_Spans(void)
  *  See RangeQuery for notes on how to use the RangeFilter on a field
  *  containing numbers.
  */
-static void
-Init_RangeFilter(void)
-{
+static void Init_RangeFilter(void) {
     cRangeFilter = rb_define_class_under(mSearch, "RangeFilter", cFilter);
     frb_mark_cclass(cRangeFilter);
-    rb_define_alloc_func(cRangeFilter, frb_data_alloc);
+    rb_define_alloc_func(cRangeFilter, frb_rf_alloc);
 
     rb_define_method(cRangeFilter, "initialize", frb_rf_init, 2);
 }
