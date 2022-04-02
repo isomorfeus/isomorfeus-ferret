@@ -1586,8 +1586,7 @@ FrtQuery *frt_spantq_new(FrtSymbol field, const char *term) {
  * SpanMultiTermQuery
  *****************************************************************************/
 
-static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field)
-{
+static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field) {
     char *terms = NULL, *p;
     int len = 3, i;
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
@@ -1606,16 +1605,14 @@ static char *spanmtq_to_s(FrtQuery *self, FrtSymbol field)
 
     if (field == SpQ(self)->field) {
         p = frt_strfmt("span_terms(%s)", terms);
-    }
-    else {
+    } else {
         p = frt_strfmt("span_terms(%s:%s)", rb_id2name(SpQ(self)->field), terms);
     }
     free(terms);
     return p;
 }
 
-static void spanmtq_destroy_i(FrtQuery *self)
-{
+static void spanmtq_destroy_i(FrtQuery *self) {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
@@ -1625,8 +1622,7 @@ static void spanmtq_destroy_i(FrtQuery *self)
     spanq_destroy_i(self);
 }
 
-static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
     for (i = 0; i < smtq->term_cnt; i++) {
@@ -1634,8 +1630,7 @@ static void spanmtq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     }
 }
 
-static FrtHashSet *spanmtq_get_terms(FrtQuery *self)
-{
+static FrtHashSet *spanmtq_get_terms(FrtQuery *self) {
     FrtHashSet *terms = frt_hs_new_str(&free);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
@@ -1645,8 +1640,7 @@ static FrtHashSet *spanmtq_get_terms(FrtQuery *self)
     return terms;
 }
 
-static unsigned long long spanmtq_hash(FrtQuery *self)
-{
+static unsigned long long spanmtq_hash(FrtQuery *self) {
     unsigned long long hash = spanq_hash(self);
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     int i;
@@ -1656,8 +1650,7 @@ static unsigned long long spanmtq_hash(FrtQuery *self)
     return hash;
 }
 
-static int spanmtq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spanmtq_eq(FrtQuery *self, FrtQuery *o) {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     FrtSpanMultiTermQuery *smtqo = SpMTQ(o);
     int i;
@@ -1669,10 +1662,11 @@ static int spanmtq_eq(FrtQuery *self, FrtQuery *o)
     return true;;
 }
 
-FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_terms)
-{
-    FrtQuery *self             = frt_q_new(FrtSpanMultiTermQuery);
+FrtQuery *frt_spanmtq_alloc(void) {
+    return frt_q_new(FrtSpanMultiTermQuery);
+}
 
+FrtQuery *frt_spanmtq_init_conf(FrtQuery *self, FrtSymbol field, int max_terms) {
     SpMTQ(self)->terms      = FRT_ALLOC_N(char *, max_terms);
     SpMTQ(self)->term_cnt   = 0;
     SpMTQ(self)->term_capa  = max_terms;
@@ -1693,13 +1687,20 @@ FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_terms)
     return self;
 }
 
-FrtQuery *frt_spanmtq_new(FrtSymbol field)
-{
+FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_terms) {
+    FrtQuery *self = frt_spanmtq_alloc();
+    return frt_spanmtq_init_conf(self, field, max_terms);
+}
+
+FrtQuery *frt_spanmtq_init(FrtQuery *self, FrtSymbol field) {
+    return frt_spanmtq_init_conf(self, field, SPAN_MULTI_TERM_QUERY_CAPA);
+}
+
+FrtQuery *frt_spanmtq_new(FrtSymbol field) {
     return frt_spanmtq_new_conf(field, SPAN_MULTI_TERM_QUERY_CAPA);
 }
 
-void frt_spanmtq_add_term(FrtQuery *self, const char *term)
-{
+void frt_spanmtq_add_term(FrtQuery *self, const char *term) {
     FrtSpanMultiTermQuery *smtq = SpMTQ(self);
     if (smtq->term_cnt < smtq->term_capa) {
         smtq->terms[smtq->term_cnt++] = frt_estrdup(term);

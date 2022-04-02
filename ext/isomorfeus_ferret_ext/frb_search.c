@@ -1789,6 +1789,24 @@ static VALUE frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm) {
  *
  ****************************************************************************/
 
+static size_t frb_span_multi_term_query_size(const void *p) {
+    return sizeof(FrtSpanMultiTermQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_span_multi_term_query_t = {
+    .wrap_struct_name = "FrbSpanMultiTermQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_span_multi_term_query_size
+    }
+};
+
+static VALUE frb_spanmtq_alloc(VALUE rclass) {
+    FrtQuery *smtq = frt_spanmtq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_multi_term_query_t, smtq);
+}
+
 /*
  *  call-seq:
  *     SpanMultiTermQuery.new(field, terms) -> query
@@ -1796,15 +1814,14 @@ static VALUE frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm) {
  *  Create a new SpanMultiTermQuery which matches all documents with the terms
  *  +terms+ in the field +field+. +terms+ should be an array of Strings.
  */
-static VALUE
-frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms)
-{
-    FrtQuery *q = frt_spanmtq_new(frb_field(rfield));
+static VALUE frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms) {
+    FrtQuery *q;
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_multi_term_query_t, q);
+    frt_spanmtq_init(q, frb_field(rfield));
     int i;
     for (i = RARRAY_LEN(rterms) - 1; i >= 0; i--) {
         frt_spanmtq_add_term(q, StringValuePtr(RARRAY_PTR(rterms)[i]));
     }
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -3947,7 +3964,7 @@ static void
 Init_SpanMultiTermQuery(void)
 {
     cSpanMultiTermQuery = rb_define_class_under(mSpans, "SpanMultiTermQuery", cQuery);
-    rb_define_alloc_func(cSpanMultiTermQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanMultiTermQuery, frb_spanmtq_alloc);
 
     rb_define_method(cSpanMultiTermQuery, "initialize", frb_spanmtq_init, 2);
 }

@@ -518,6 +518,8 @@ typedef struct FrtSpanMultiTermQuery {
     int          term_capa;
 } FrtSpanMultiTermQuery;
 
+extern FrtQuery *frt_spanmtq_alloc(void);
+extern FrtQuery *frt_spanmtq_init(FrtQuery *self, FrtSymbol field);
 extern FrtQuery *frt_spanmtq_new(FrtSymbol field);
 extern FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_size);
 extern void frt_spanmtq_add_term(FrtQuery *self, const char *term);
