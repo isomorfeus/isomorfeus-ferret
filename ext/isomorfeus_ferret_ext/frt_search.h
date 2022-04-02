@@ -567,6 +567,8 @@ typedef struct FrtSpanNearQuery {
     bool         in_order : 1;
 } FrtSpanNearQuery;
 
+extern FrtQuery *frt_spannq_alloc(void);
+extern FrtQuery *frt_spannq_init(FrtQuery *self, int slop, bool in_order);
 extern FrtQuery *frt_spannq_new(int slop, bool in_order);
 extern FrtQuery *frt_spannq_add_clause(FrtQuery *self, FrtQuery *clause);
 extern FrtQuery *frt_spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause);

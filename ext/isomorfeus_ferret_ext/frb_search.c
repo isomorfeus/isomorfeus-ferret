@@ -1919,14 +1919,31 @@ static VALUE frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend) {
  *
  ****************************************************************************/
 
-static void
-frb_spannq_mark(void *p)
-{
+static size_t frb_span_near_query_size(const void *p) {
+    return sizeof(FrtSpanNearQuery);
+    (void)p;
+}
+
+static void frb_spannq_mark(void *p) {
     int i;
     FrtSpanNearQuery *snq = (FrtSpanNearQuery *)p;
     for (i = 0; i < snq->c_cnt; i++) {
         frb_gc_mark(snq->clauses[i]);
     }
+}
+
+const rb_data_type_t frb_span_near_query_t = {
+    .wrap_struct_name = "FrbSpanNearQuery",
+    .function = {
+        .dmark = frb_spannq_mark,
+        .dfree = frb_q_free,
+        .dsize = frb_span_near_query_size
+    }
+};
+
+static VALUE frb_spannq_alloc(VALUE rclass) {
+    FrtQuery *snq = frt_spannq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_near_query_t, snq);
 }
 
 /*
@@ -1951,14 +1968,12 @@ frb_spannq_mark(void *p)
  *              occur in the order they were added to the query. When slop is
  *              set to 0, this parameter will make no difference.
  */
-static VALUE
-frb_spannq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_spannq_init(int argc, VALUE *argv, VALUE self) {
     FrtQuery *q;
     VALUE roptions;
     int slop = 0;
     bool in_order = false;
-
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_near_query_t, q);
     if (rb_scan_args(argc, argv, "01", &roptions) > 0) {
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_slop))) {
@@ -1968,7 +1983,7 @@ frb_spannq_init(int argc, VALUE *argv, VALUE self)
             in_order = RTEST(v);
         }
     }
-    q = frt_spannq_new(slop, in_order);
+    frt_spannq_init(q, slop, in_order);
     if (argc > 0) {
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_clauses))) {
@@ -1981,8 +1996,6 @@ frb_spannq_init(int argc, VALUE *argv, VALUE self)
             }
         }
     }
-
-    Frt_Wrap_Struct(self, &frb_spannq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -4080,15 +4093,13 @@ static void Init_SpanFirstQuery(void) {
  *
  *  SpanNearQuery only works with other SpanQueries.
  */
-static void
-Init_SpanNearQuery(void)
-{
+static void Init_SpanNearQuery(void) {
     sym_slop = ID2SYM(rb_intern("slop"));
     sym_in_order = ID2SYM(rb_intern("in_order"));
     sym_clauses = ID2SYM(rb_intern("clauses"));
 
     cSpanNearQuery = rb_define_class_under(mSpans, "SpanNearQuery", cQuery);
-    rb_define_alloc_func(cSpanNearQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanNearQuery, frb_spannq_alloc);
 
     rb_define_method(cSpanNearQuery, "initialize", frb_spannq_init, -1);
     rb_define_method(cSpanNearQuery, "add", frb_spannq_add, 1);

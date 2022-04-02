@@ -2118,10 +2118,11 @@ static int spannq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-FrtQuery *frt_spannq_new(int slop, bool in_order)
-{
-    FrtQuery *self             = frt_q_new(FrtSpanNearQuery);
+FrtQuery *frt_spannq_alloc(void) {
+    return frt_q_new(FrtSpanNearQuery);
+}
 
+FrtQuery *frt_spannq_init(FrtQuery *self, int slop, bool in_order) {
     SpNQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpNQ(self)->c_capa      = CLAUSE_INIT_CAPA;
     SpNQ(self)->slop        = slop;
@@ -2142,6 +2143,11 @@ FrtQuery *frt_spannq_new(int slop, bool in_order)
     self->get_matchv_i      = &spanq_get_matchv_i;
 
     return self;
+}
+
+FrtQuery *frt_spannq_new(int slop, bool in_order) {
+    FrtQuery *self = frt_spannq_alloc();
+    return frt_spannq_init(self, slop, in_order);
 }
 
 FrtQuery *frt_spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
