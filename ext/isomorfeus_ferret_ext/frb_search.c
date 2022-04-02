@@ -2025,14 +2025,31 @@ frb_spannq_add(VALUE self, VALUE rclause)
  *
  ****************************************************************************/
 
-static void
-frb_spanoq_mark(void *p)
-{
+static size_t frb_span_or_query_size(const void *p) {
+    return sizeof(FrtSpanOrQuery);
+    (void)p;
+}
+
+static void frb_spanoq_mark(void *p) {
     int i;
     FrtSpanOrQuery *soq = (FrtSpanOrQuery *)p;
     for (i = 0; i < soq->c_cnt; i++) {
         frb_gc_mark(soq->clauses[i]);
     }
+}
+
+const rb_data_type_t frb_span_or_query_t = {
+    .wrap_struct_name = "FrbSpanOrQuery",
+    .function = {
+        .dmark = frb_spanoq_mark,
+        .dfree = frb_q_free,
+        .dsize = frb_span_or_query_size
+    }
+};
+
+static VALUE frb_spanoq_alloc(VALUE rclass) {
+    FrtQuery *soq = frt_spanoq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_or_query_t, soq);
 }
 
 /*
@@ -2043,13 +2060,11 @@ frb_spanoq_mark(void *p)
  *  clauses with the occur value of :should. The difference is that it can be
  *  passed to other SpanQuerys like SpanNearQuery.
  */
-static VALUE
-frb_spanoq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_spanoq_init(int argc, VALUE *argv, VALUE self) {
     FrtQuery *q;
     VALUE rclauses;
-
-    q = frt_spanoq_new();
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_or_query_t, q);
+    frt_spanoq_init(q);
     if (rb_scan_args(argc, argv, "01", &rclauses) > 0) {
         int i;
         FrtQuery *clause;
@@ -2059,7 +2074,6 @@ frb_spanoq_init(int argc, VALUE *argv, VALUE self)
             frt_spanoq_add_clause(q, clause);
         }
     }
-    Frt_Wrap_Struct(self, &frb_spanoq_mark, &frb_q_free, q);
     object_add(q, self);
     return self;
 }
@@ -4145,11 +4159,9 @@ static void Init_SpanNearQuery(void) {
  *
  *  SpanOrQuery only works with other SpanQueries.
  */
-static void
-Init_SpanOrQuery(void)
-{
+static void Init_SpanOrQuery(void) {
     cSpanOrQuery = rb_define_class_under(mSpans, "SpanOrQuery", cQuery);
-    rb_define_alloc_func(cSpanOrQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanOrQuery, frb_spanoq_alloc);
 
     rb_define_method(cSpanOrQuery, "initialize", frb_spanoq_init, -1);
     rb_define_method(cSpanOrQuery, "add", frb_spanoq_add, 1);

@@ -550,6 +550,8 @@ typedef struct FrtSpanOrQuery {
     int          c_capa;
 } FrtSpanOrQuery;
 
+extern FrtQuery *frt_spanoq_alloc(void);
+extern FrtQuery *frt_spanoq_init(FrtQuery *self);
 extern FrtQuery *frt_spanoq_new();
 extern FrtQuery *frt_spanoq_add_clause(FrtQuery *self, FrtQuery *clause);
 extern FrtQuery *frt_spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause);

@@ -1805,8 +1805,7 @@ FrtQuery *frt_spanfq_new(FrtQuery *match, int end) {
  *
  *****************************************************************************/
 
-static char *spanoq_to_s(FrtQuery *self, FrtSymbol field)
-{
+static char *spanoq_to_s(FrtQuery *self, FrtSymbol field) {
     int i;
     FrtSpanOrQuery *soq = SpOQ(self);
     char *res, *res_p;
@@ -1832,8 +1831,7 @@ static char *spanoq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanoq_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void spanoq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
     for (i = 0; i < soq->c_cnt; i++) {
@@ -1842,8 +1840,7 @@ static void spanoq_extract_terms(FrtQuery *self, FrtHashSet *terms)
     }
 }
 
-static FrtHashSet *spanoq_get_terms(FrtQuery *self)
-{
+static FrtHashSet *spanoq_get_terms(FrtQuery *self) {
     FrtSpanOrQuery *soq = SpOQ(self);
     FrtHashSet *terms = frt_hs_new_str(&free);
     int i;
@@ -1856,8 +1853,7 @@ static FrtHashSet *spanoq_get_terms(FrtQuery *self)
     return terms;
 }
 
-static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, FrtIndexReader *ir) {
     FrtSpanOrQuery *soq = SpOQ(self);
     if (soq->c_cnt == 1) {
         FrtQuery *q = soq->clauses[0];
@@ -1867,8 +1863,7 @@ static FrtSpanEnum *spanoq_get_spans(FrtQuery *self, FrtIndexReader *ir)
     return spanoe_new(self, ir);
 }
 
-static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     FrtSpanOrQuery *soq = SpOQ(self);
     int i;
 
@@ -1884,8 +1879,7 @@ static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;
 }
 
-static void spanoq_destroy_i(FrtQuery *self)
-{
+static void spanoq_destroy_i(FrtQuery *self) {
     FrtSpanOrQuery *soq = SpOQ(self);
 
     int i;
@@ -1898,8 +1892,7 @@ static void spanoq_destroy_i(FrtQuery *self)
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanoq_hash(FrtQuery *self)
-{
+static unsigned long long spanoq_hash(FrtQuery *self) {
     int i;
     unsigned long long hash = spanq_hash(self);
     FrtSpanOrQuery *soq = SpOQ(self);
@@ -1911,8 +1904,7 @@ static unsigned long long spanoq_hash(FrtQuery *self)
     return hash;
 }
 
-static int spanoq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spanoq_eq(FrtQuery *self, FrtQuery *o) {
     int i;
     FrtQuery *q1, *q2;
     FrtSpanOrQuery *soq1 = SpOQ(self);
@@ -1931,9 +1923,11 @@ static int spanoq_eq(FrtQuery *self, FrtQuery *o)
     return true;
 }
 
-FrtQuery *frt_spanoq_new()
-{
-    FrtQuery *self          = frt_q_new(FrtSpanOrQuery);
+FrtQuery *frt_spanoq_alloc(void) {
+    return frt_q_new(FrtSpanOrQuery);
+}
+
+FrtQuery *frt_spanoq_init(FrtQuery *self) {
     SpOQ(self)->clauses     = FRT_ALLOC_N(FrtQuery *, CLAUSE_INIT_CAPA);
     SpOQ(self)->c_capa      = CLAUSE_INIT_CAPA;
 
@@ -1952,6 +1946,11 @@ FrtQuery *frt_spanoq_new()
     self->get_matchv_i      = &spanq_get_matchv_i;
 
     return self;
+}
+
+FrtQuery *frt_spanoq_new() {
+    FrtQuery *self = frt_spanoq_alloc();
+    return frt_spanoq_init(self);
 }
 
 FrtQuery *frt_spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
