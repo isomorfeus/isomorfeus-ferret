@@ -462,6 +462,8 @@ extern FrtQuery *frt_fq_new(FrtQuery *query, FrtFilter *filter);
  * FrtMatchAllQuery
  ***************************************************************************/
 
+extern FrtQuery *frt_maq_alloc(void);
+extern FrtQuery *frt_maq_init(FrtQuery *self);
 extern FrtQuery *frt_maq_new();
 
 /***************************************************************************
