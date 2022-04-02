@@ -837,6 +837,8 @@ typedef struct FrtIndexSearcher {
     bool           close_ir : 1;
 } FrtIndexSearcher;
 
+extern FrtSearcher *frt_isea_alloc(void);
+extern FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir);
 extern FrtSearcher *frt_isea_new(FrtIndexReader *ir);
 extern int frt_isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term);
 

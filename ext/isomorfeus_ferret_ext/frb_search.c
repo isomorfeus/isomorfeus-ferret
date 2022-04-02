@@ -3308,12 +3308,29 @@ frb_sea_highlight(int argc, VALUE *argv, VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_sea_mark(void *p)
-{
+static size_t frb_sea_size(const void *p) {
+    return sizeof(FrtIndexSearcher);
+    (void)p;
+}
+
+static void frb_sea_mark(void *p) {
     FrtIndexSearcher *isea = (FrtIndexSearcher *)p;
     frb_gc_mark(isea->ir);
     frb_gc_mark(isea->ir->store);
+}
+
+const rb_data_type_t frb_index_searcher_t = {
+    .wrap_struct_name = "FrbIndexSearcher",
+    .function = {
+        .dmark = frb_sea_mark,
+        .dfree = frb_sea_free,
+        .dsize = frb_sea_size
+    }
+};
+
+static VALUE frb_sea_alloc(VALUE rclass) {
+    FrtSearcher *s = frt_isea_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_index_searcher_t, s);
 }
 
 #define FRT_GET_IR(rir, ir) do {\
@@ -3331,12 +3348,11 @@ frb_sea_mark(void *p)
  *  searching multiple indexes. Just open the IndexReader on multiple
  *  directories.
  */
-static VALUE
-frb_sea_init(VALUE self, VALUE obj)
-{
+static VALUE frb_sea_init(VALUE self, VALUE obj) {
     FrtStore *store = NULL;
     FrtIndexReader *ir = NULL;
     FrtSearcher *sea;
+    TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
         store = frt_open_fs_store(rs2s(obj));
@@ -3355,9 +3371,8 @@ frb_sea_init(VALUE self, VALUE obj)
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
     }
-    sea = frt_isea_new(ir);
+    frt_isea_init(sea, ir);
     ((FrtIndexSearcher *)sea)->close_ir = false;
-    Frt_Wrap_Struct(self, &frb_sea_mark, &frb_sea_free, sea);
     object_add(sea, self);
     return self;
 }
@@ -4587,7 +4602,7 @@ Init_Searcher(void)
 
     /* Searcher */
     cSearcher = rb_define_class_under(mSearch, "Searcher", rb_cObject);
-    rb_define_alloc_func(cSearcher, frb_data_alloc);
+    rb_define_alloc_func(cSearcher, frb_sea_alloc);
 
     rb_define_method(cSearcher, "initialize", frb_sea_init, 1);
     rb_define_method(cSearcher, "close", frb_sea_close, 0);

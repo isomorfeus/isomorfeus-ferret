@@ -1151,12 +1151,7 @@ static void isea_search_each(FrtSearcher *self, FrtQuery *query, FrtFilter *filt
  * Note: Unlike the offset_docnum in other search methods, this offset_docnum
  * refers to document number and not hit.
  */
-static int isea_search_unscored_w(FrtSearcher *self,
-                                  FrtWeight *weight,
-                                  int *buf,
-                                  int limit,
-                                  int offset_docnum)
-{
+static int isea_search_unscored_w(FrtSearcher *self, FrtWeight *weight, int *buf, int limit, int offset_docnum) {
     int count = 0;
     FrtScorer *scorer = weight->scorer(weight, ISEA(self)->ir);
     if (scorer) {
@@ -1170,12 +1165,7 @@ static int isea_search_unscored_w(FrtSearcher *self,
     return count;
 }
 
-static int isea_search_unscored(FrtSearcher *self,
-                                FrtQuery *query,
-                                int *buf,
-                                int limit,
-                                int offset_docnum)
-{
+static int isea_search_unscored(FrtSearcher *self, FrtQuery *query, int *buf, int limit, int offset_docnum) {
     int count;
     FrtWeight *weight = frt_q_weight(query, self);
     count = isea_search_unscored_w(self, weight, buf, limit, offset_docnum);
@@ -1183,8 +1173,7 @@ static int isea_search_unscored(FrtSearcher *self,
     return count;
 }
 
-static FrtQuery *isea_rewrite(FrtSearcher *self, FrtQuery *original)
-{
+static FrtQuery *isea_rewrite(FrtSearcher *self, FrtQuery *original) {
     int q_is_destroyed = false;
     FrtQuery *query = original;
     FrtQuery *rewritten_query = query->rewrite(query, ISEA(self)->ir);
@@ -1197,41 +1186,34 @@ static FrtQuery *isea_rewrite(FrtSearcher *self, FrtQuery *original)
     return query;
 }
 
-static FrtExplanation *isea_explain(FrtSearcher *self,
-                                 FrtQuery *query,
-                                 int doc_num)
-{
+static FrtExplanation *isea_explain(FrtSearcher *self, FrtQuery *query, int doc_num) {
     FrtWeight *weight = frt_q_weight(query, self);
     FrtExplanation *e = weight->explain(weight, ISEA(self)->ir, doc_num);
     weight->destroy(weight);
     return e;
 }
 
-static FrtExplanation *isea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
-{
+static FrtExplanation *isea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num) {
     return w->explain(w, ISEA(self)->ir, doc_num);
 }
 
-static FrtTermVector *isea_get_term_vector(FrtSearcher *self,
-                                          const int doc_num,
-                                          FrtSymbol field)
-{
+static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num, FrtSymbol field) {
     FrtIndexReader *ir = ISEA(self)->ir;
     return ir->term_vector(ir, doc_num, field);
 }
 
-static void isea_close(FrtSearcher *self)
-{
+static void isea_close(FrtSearcher *self) {
     if (ISEA(self)->ir && ISEA(self)->close_ir) {
         frt_ir_close(ISEA(self)->ir);
     }
     free(self);
 }
 
-FrtSearcher *frt_isea_new(FrtIndexReader *ir)
-{
-    FrtSearcher *self          = (FrtSearcher *)FRT_ALLOC(FrtIndexSearcher);
+FrtSearcher *frt_isea_alloc(void) {
+    return (FrtSearcher *)FRT_ALLOC(FrtIndexSearcher);
+}
 
+FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir) {
     ISEA(self)->ir          = ir;
     ISEA(self)->close_ir    = true;
 
@@ -1255,6 +1237,11 @@ FrtSearcher *frt_isea_new(FrtIndexReader *ir)
     self->close             = &isea_close;
 
     return self;
+}
+
+FrtSearcher *frt_isea_new(FrtIndexReader *ir) {
+    FrtSearcher *self = frt_isea_alloc();
+    return frt_isea_init(self, ir);
 }
 
 /***************************************************************************
