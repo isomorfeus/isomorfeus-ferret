@@ -1877,6 +1877,24 @@ static VALUE frb_spanprq_init(int argc, VALUE *argv, VALUE self) {
  *
  ****************************************************************************/
 
+static size_t frb_span_first_query_size(const void *p) {
+    return sizeof(FrtSpanFirstQuery);
+    (void)p;
+}
+
+const rb_data_type_t frb_span_first_query_t = {
+    .wrap_struct_name = "FrbSpanFirstQuery",
+    .function = {
+        .dfree = frb_q_free,
+        .dsize = frb_span_first_query_size
+    }
+};
+
+static VALUE frb_spanfq_alloc(VALUE rclass) {
+    FrtQuery *sfq = frt_spanfq_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_span_first_query_t, sfq);
+}
+
 /*
  *  call-seq:
  *     SpanFirstQuery.new(span_query, end) -> query
@@ -1885,14 +1903,12 @@ static VALUE frb_spanprq_init(int argc, VALUE *argv, VALUE self) {
  *  matches before +end+ where +end+ is a byte-offset from the start of the
  *  field
  */
-static VALUE
-frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend)
-{
+static VALUE frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend) {
     FrtQuery *q;
     FrtQuery *match;
+    TypedData_Get_Struct(self, FrtQuery, &frb_span_first_query_t, q);
     Data_Get_Struct(rmatch, FrtQuery, match);
-    q = frt_spanfq_new(match, FIX2INT(rend));
-    Frt_Wrap_Struct(self, NULL, &frb_q_free, q);
+    frt_spanfq_init(q, match, FIX2INT(rend));
     object_add(q, self);
     return self;
 }
@@ -4019,11 +4035,9 @@ static void Init_SpanPrefixQuery(void) {
  *
  *  SpanFirstQuery only works with other SpanQueries.
  */
-static void
-Init_SpanFirstQuery(void)
-{
+static void Init_SpanFirstQuery(void) {
     cSpanFirstQuery = rb_define_class_under(mSpans, "SpanFirstQuery", cQuery);
-    rb_define_alloc_func(cSpanFirstQuery, frb_data_alloc);
+    rb_define_alloc_func(cSpanFirstQuery, frb_spanfq_alloc);
 
     rb_define_method(cSpanFirstQuery, "initialize", frb_spanfq_init, 2);
 }

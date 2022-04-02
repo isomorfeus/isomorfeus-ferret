@@ -534,6 +534,8 @@ typedef struct FrtSpanFirstQuery {
     FrtQuery     *match;
 } FrtSpanFirstQuery;
 
+extern FrtQuery *frt_spanfq_alloc(void);
+extern FrtQuery *frt_spanfq_init(FrtQuery *self, FrtQuery *match, int end);
 extern FrtQuery *frt_spanfq_new(FrtQuery *match, int end);
 extern FrtQuery *frt_spanfq_new_nr(FrtQuery *match, int end);
 

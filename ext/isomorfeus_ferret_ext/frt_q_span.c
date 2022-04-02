@@ -1713,8 +1713,7 @@ void frt_spanmtq_add_term(FrtQuery *self, const char *term) {
  *
  *****************************************************************************/
 
-static char *spanfq_to_s(FrtQuery *self, FrtSymbol field)
-{
+static char *spanfq_to_s(FrtQuery *self, FrtSymbol field) {
     FrtQuery *match = SpFQ(self)->match;
     char *q_str = match->to_s(match, field);
     char *res = frt_strfmt("span_first(%s, %d)", q_str, SpFQ(self)->end);
@@ -1722,19 +1721,16 @@ static char *spanfq_to_s(FrtQuery *self, FrtSymbol field)
     return res;
 }
 
-static void spanfq_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void spanfq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     SpFQ(self)->match->extract_terms(SpFQ(self)->match, terms);
 }
 
-static FrtHashSet *spanfq_get_terms(FrtQuery *self)
-{
+static FrtHashSet *spanfq_get_terms(FrtQuery *self) {
     FrtSpanFirstQuery *sfq = SpFQ(self);
     return SpQ(sfq->match)->get_terms(sfq->match);
 }
 
-static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir)
-{
+static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     FrtQuery *q, *rq;
 
     q = SpFQ(self)->match;
@@ -1746,30 +1742,28 @@ static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;                    /* no clauses rewrote */
 }
 
-static void spanfq_destroy_i(FrtQuery *self)
-{
+static void spanfq_destroy_i(FrtQuery *self) {
     frt_q_deref(SpFQ(self)->match);
     spanq_destroy_i(self);
 }
 
-static unsigned long long spanfq_hash(FrtQuery *self)
-{
+static unsigned long long spanfq_hash(FrtQuery *self) {
     return spanq_hash(self) ^ SpFQ(self)->match->hash(SpFQ(self)->match)
         ^ SpFQ(self)->end;
 }
 
-static int spanfq_eq(FrtQuery *self, FrtQuery *o)
-{
+static int spanfq_eq(FrtQuery *self, FrtQuery *o) {
     FrtSpanFirstQuery *sfq1 = SpFQ(self);
     FrtSpanFirstQuery *sfq2 = SpFQ(o);
     return spanq_eq(self, o) && sfq1->match->eq(sfq1->match, sfq2->match)
         && (sfq1->end == sfq2->end);
 }
 
-FrtQuery *frt_spanfq_new_nr(FrtQuery *match, int end)
-{
-    FrtQuery *self = frt_q_new(FrtSpanFirstQuery);
+FrtQuery *frt_spanfq_alloc(void) {
+    return frt_q_new(FrtSpanFirstQuery);
+}
 
+FrtQuery *frt_spanfq_init_nr(FrtQuery *self, FrtQuery *match, int end) {
     SpFQ(self)->match       = match;
     SpFQ(self)->end         = end;
 
@@ -1790,8 +1784,17 @@ FrtQuery *frt_spanfq_new_nr(FrtQuery *match, int end)
     return self;
 }
 
-FrtQuery *frt_spanfq_new(FrtQuery *match, int end)
-{
+FrtQuery *frt_spanfq_new_nr(FrtQuery *match, int end) {
+    FrtQuery *self = frt_spanfq_alloc();
+    return frt_spanfq_init_nr(self, match, end);
+}
+
+FrtQuery *frt_spanfq_init(FrtQuery *self, FrtQuery *match, int end) {
+    FRT_REF(match);
+    return frt_spanfq_init_nr(self, match, end);
+}
+
+FrtQuery *frt_spanfq_new(FrtQuery *match, int end) {
     FRT_REF(match);
     return frt_spanfq_new_nr(match, end);
 }
