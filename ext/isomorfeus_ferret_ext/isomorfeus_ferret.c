@@ -86,10 +86,6 @@ void frb_gc_mark(void *key) {
         rb_gc_mark(val);
 }
 
-VALUE frb_data_alloc(VALUE klass) {
-    return Frt_Make_Struct(klass);
-}
-
 void frb_deref_free(void *p) {
     object_del(p);
 }

@@ -2,6 +2,8 @@
 #include "isomorfeus_ferret.h"
 #include <time.h>
 
+#undef rename
+
 static ID id_ref_cnt;
 VALUE cLock;
 VALUE cLockError;

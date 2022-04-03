@@ -58,7 +58,6 @@ extern void object_set2(void *key, VALUE obj, const char *file, int line);
 extern void object_del2(void *key, const char *file, int line);
 extern void frb_gc_mark(void *key);
 extern VALUE object_get(void *key);
-extern VALUE frb_data_alloc(VALUE klass);
 extern void frb_deref_free(void *p);
 extern void frb_create_dir(VALUE rpath);
 extern VALUE frb_hs_to_rb_ary(FrtHashSet *hs);
@@ -68,9 +67,6 @@ extern VALUE frb_get_term(FrtSymbol field, const char *term);
 extern char *json_concat_string(char *s, char *field);
 extern char *rs2s(VALUE rstr);
 extern char *rstrdup(VALUE rstr);
-
-#define Frt_Make_Struct(klass)\
-  rb_data_object_wrap(klass,NULL,(RUBY_DATA_FUNC)NULL,(RUBY_DATA_FUNC)NULL)
 
 #endif
 
