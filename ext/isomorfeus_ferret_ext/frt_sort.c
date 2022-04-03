@@ -138,21 +138,21 @@ FrtSortField *frt_sort_field_score_new(bool reverse) {
 }
 
 const FrtSortField FRT_SORT_FIELD_SCORE = {
-    NULL,               /* field_index_class */
-    (ID)NULL,               /* field */
-    FRT_SORT_TYPE_SCORE,    /* type */
-    false,              /* reverse */
-    &sf_score_compare,  /* compare */
-    &sf_score_get_val,  /* get_val */
+    NULL,                /* field_index_class */
+    (ID)NULL,            /* field */
+    FRT_SORT_TYPE_SCORE, /* type */
+    false,               /* reverse */
+    &sf_score_compare,   /* compare */
+    &sf_score_get_val,   /* get_val */
 };
 
 const FrtSortField FRT_SORT_FIELD_SCORE_REV = {
-    NULL,               /* field_index_class */
-    (ID)NULL,               /* field */
-    FRT_SORT_TYPE_SCORE,    /* type */
-    true,               /* reverse */
-    &sf_score_compare,  /* compare */
-    &sf_score_get_val,  /* get_val */
+    NULL,                /* field_index_class */
+    (ID)NULL,            /* field */
+    FRT_SORT_TYPE_SCORE, /* type */
+    true,                /* reverse */
+    &sf_score_compare,   /* compare */
+    &sf_score_get_val,   /* get_val */
 };
 
 /**************************************************************************

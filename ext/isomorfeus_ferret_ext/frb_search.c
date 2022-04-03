@@ -4412,9 +4412,7 @@ static void Init_QueryFilter(void) {
  *  TODO add support for user implemented Filter.
  *  TODO add example of user implemented Filter.
  */
-static void
-Init_Filter(void)
-{
+static void Init_Filter(void) {
     id_bits = rb_intern("bits");
     cFilter = rb_define_class_under(mSearch, "Filter", rb_cObject);
     frb_mark_cclass(cFilter);
@@ -4461,10 +4459,19 @@ Init_Filter(void)
  *  Note 2: When sorting by integer, integers are only 4 bytes so anything
  *  larger will cause strange sorting behaviour.
  */
+
+const rb_data_type_t frb_sort_field_const_t = {
+    .wrap_struct_name = "FrbSortField",
+    .function = {
+        .dfree = frb_deref_free,
+        .dsize = frb_sort_field_size
+    }
+};
+
 static void Init_SortField(void) {
     /* option hash keys for SortField#initialize */
-    sym_type  = ID2SYM(rb_intern("type"));
-    sym_reverse    = ID2SYM(rb_intern("reverse"));
+    sym_type = ID2SYM(rb_intern("type"));
+    sym_reverse = ID2SYM(rb_intern("reverse"));
     sym_comparator = ID2SYM(rb_intern("comparator"));
 
     /* Sort types */
@@ -4487,30 +4494,26 @@ static void Init_SortField(void) {
     rb_define_method(cSortField, "to_s", frb_sf_to_s, 0);
 
     rb_define_const(cSortField, "SCORE",
-                    Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free,
+                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_const_t,
                                      (FrtSortField *)&FRT_SORT_FIELD_SCORE));
     object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE,
                rb_const_get(cSortField, rb_intern("SCORE")));
 
     rb_define_const(cSortField, "SCORE_REV",
-                    Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free,
+                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_const_t,
                                      (FrtSortField *)&FRT_SORT_FIELD_SCORE_REV));
     object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE_REV,
                rb_const_get(cSortField, rb_intern("SCORE_REV")));
 
     rb_define_const(cSortField, "DOC_ID",
-                    Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free,
+                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_const_t,
                                      (FrtSortField *)&FRT_SORT_FIELD_DOC));
 
     oSORT_FIELD_DOC = rb_const_get(cSortField, rb_intern("DOC_ID"));
     object_add((FrtSortField *)&FRT_SORT_FIELD_DOC, oSORT_FIELD_DOC);
 
     rb_define_const(cSortField, "DOC_ID_REV",
-                    Data_Wrap_Struct(cSortField, NULL,
-                                     &frb_deref_free,
+                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_const_t,
                                      (FrtSortField *)&FRT_SORT_FIELD_DOC_REV));
     object_add((FrtSortField *)&FRT_SORT_FIELD_DOC_REV,
                rb_const_get(cSortField, rb_intern("DOC_ID_REV")));
@@ -4583,9 +4586,7 @@ Init_Sort(void)
  *        puts "#{searcher[doc_id][title] scored #{score}"
  *    end
  */
-static void
-Init_Searcher(void)
-{
+static void Init_Searcher(void) {
     /* option hash keys for Searcher#search */
     sym_offset          = ID2SYM(rb_intern("offset"));
     sym_limit           = ID2SYM(rb_intern("limit"));
