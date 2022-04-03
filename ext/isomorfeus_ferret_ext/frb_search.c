@@ -128,6 +128,7 @@ static VALUE sym_ellipsis;
 static FrtSymbol fsym_id;
 
 extern VALUE cIndexReader;
+extern const rb_data_type_t frb_index_reader_t;
 extern void frb_ir_free(void *p);
 extern void frb_ir_mark(void *p);
 
@@ -2150,7 +2151,7 @@ static VALUE frb_f_get_bits(VALUE self, VALUE rindex_reader) {
     FrtBitVector *bv;
     FrtIndexReader *ir;
     GET_F();
-    Data_Get_Struct(rindex_reader, FrtIndexReader, ir);
+    TypedData_Get_Struct(rindex_reader, FrtIndexReader, &frb_index_reader_t, ir);
     bv = frt_filt_get_bv(f, ir);
     return frb_get_bv(bv);
 }
@@ -3269,7 +3270,7 @@ static VALUE frb_sea_alloc(VALUE rclass) {
 }
 
 #define FRT_GET_IR(rir, ir) do {\
-    rir = Data_Wrap_Struct(cIndexReader, &frb_ir_mark, &frb_ir_free, ir);\
+    rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);\
     object_add(ir, rir);\
 } while (0)
 
@@ -3301,7 +3302,7 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
             ir = frt_ir_open(NULL, store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
-            Data_Get_Struct(obj, FrtIndexReader, ir);
+            TypedData_Get_Struct(obj, FrtIndexReader, &frb_index_reader_t, ir);
         } else {
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
@@ -4539,9 +4540,7 @@ static void Init_SortField(void) {
  *  Remember that the :type parameter for SortField is set to :auto be default
  *  be I strongly recommend you specify a :type value.
  */
-static void
-Init_Sort(void)
-{
+static void Init_Sort(void) {
     /* Sort */
     cSort = rb_define_class_under(mSearch, "Sort", rb_cObject);
     rb_define_alloc_func(cSort, frb_sort_alloc);
@@ -4550,10 +4549,8 @@ Init_Sort(void)
     rb_define_method(cSort, "fields", frb_sort_get_fields, 0);
     rb_define_method(cSort, "to_s", frb_sort_to_s, 0);
 
-    rb_define_const(cSort, "RELEVANCE",
-                    frb_sort_init(0, NULL, frb_sort_alloc(cSort)));
-    rb_define_const(cSort, "INDEX_ORDER",
-                    frb_sort_init(1, &oSORT_FIELD_DOC, frb_sort_alloc(cSort)));
+    rb_define_const(cSort, "RELEVANCE", frb_sort_init(0, NULL, frb_sort_alloc(cSort)));
+    rb_define_const(cSort, "INDEX_ORDER", frb_sort_init(1, &oSORT_FIELD_DOC, frb_sort_alloc(cSort)));
 }
 
 /*
