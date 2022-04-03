@@ -129,8 +129,6 @@ static FrtSymbol fsym_id;
 
 extern VALUE cIndexReader;
 extern const rb_data_type_t frb_index_reader_t;
-extern void frb_ir_free(void *p);
-extern void frb_ir_mark(void *p);
 
 extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
@@ -144,13 +142,8 @@ extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
  *
  ****************************************************************************/
 
-static VALUE
-frb_get_hit(FrtHit *hit)
-{
-    return rb_struct_new(cHit,
-                         INT2FIX(hit->doc),
-                         rb_float_new((double)hit->score),
-                         NULL);
+static VALUE frb_get_hit(FrtHit *hit) {
+    return rb_struct_new(cHit, INT2FIX(hit->doc), rb_float_new((double)hit->score), NULL);
 }
 
 /****************************************************************************
@@ -159,8 +152,7 @@ frb_get_hit(FrtHit *hit)
  *
  ****************************************************************************/
 
-static VALUE
-frb_get_td(FrtTopDocs *td, VALUE rsearcher) {
+static VALUE frb_get_td(FrtTopDocs *td, VALUE rsearcher) {
     int i;
     VALUE rtop_docs;
     VALUE hit_ary = rb_ary_new2(td->size);
@@ -169,12 +161,8 @@ frb_get_td(FrtTopDocs *td, VALUE rsearcher) {
       rb_ary_store(hit_ary, i, frb_get_hit(td->hits[i]));
     }
 
-    rtop_docs = rb_struct_new(cTopDocs,
-                              INT2FIX(td->total_hits),
-                              hit_ary,
-                              rb_float_new((double)td->max_score),
-                              rsearcher,
-                              NULL);
+    rtop_docs = rb_struct_new(cTopDocs, INT2FIX(td->total_hits), hit_ary,
+                              rb_float_new((double)td->max_score), rsearcher, NULL);
     frt_td_destroy(td);
     return rtop_docs;
 }
@@ -185,8 +173,7 @@ frb_get_td(FrtTopDocs *td, VALUE rsearcher) {
  *
  *  Returns a string representation of the top_doc in readable format.
  */
-static VALUE
-frb_td_to_s(int argc, VALUE *argv, VALUE self) {
+static VALUE frb_td_to_s(int argc, VALUE *argv, VALUE self) {
     int i;
     VALUE rhits = rb_funcall(self, id_hits, 0);
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(rb_funcall(self, id_searcher, 0));
@@ -234,9 +221,7 @@ frb_td_to_s(int argc, VALUE *argv, VALUE self) {
     return rstr;
 }
 
-static char *
-frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
-{
+static char *frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen) {
 	int i, j;
 	int diff = s - *str;
 	int len = diff, l;
@@ -284,9 +269,7 @@ frb_lzd_load_to_json(FrtLazyDoc *lzd, char **str, char *s, int *slen)
  *
  *  Returns a json representation of the top_doc.
  */
-static VALUE
-frb_td_to_json(VALUE self)
-{
+static VALUE frb_td_to_json(VALUE self) {
 	int i;
 	VALUE rhits = rb_funcall(self, id_hits, 0);
 	VALUE rhit;
@@ -332,9 +315,7 @@ frb_td_to_json(VALUE self)
  *
  *  Returns a string representation of the explanation in readable format.
  */
-static VALUE
-frb_expl_to_s(VALUE self)
-{
+static VALUE frb_expl_to_s(VALUE self) {
     GET_EXPL();
     char *str = frt_expl_to_s(expl);
     VALUE rstr = rb_str_new2(str);
@@ -348,9 +329,7 @@ frb_expl_to_s(VALUE self)
  *
  *  Returns an html representation of the explanation in readable format.
  */
-static VALUE
-frb_expl_to_html(VALUE self)
-{
+static VALUE frb_expl_to_html(VALUE self) {
     GET_EXPL();
     char *str = frt_expl_to_html(expl);
     VALUE rstr = rb_str_new2(str);
@@ -366,9 +345,7 @@ frb_expl_to_html(VALUE self)
  *  purposes mainly to check that the score returned by the explanation
  *  matches that of the score for the document in the original query.
  */
-static VALUE
-frb_expl_score(VALUE self)
-{
+static VALUE frb_expl_score(VALUE self) {
     GET_EXPL();
     return rb_float_new((double)expl->value);
 }
@@ -379,9 +356,7 @@ frb_expl_score(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_q_free(void *p)
-{
+static void frb_q_free(void *p) {
     object_del(p);
     frt_q_deref((FrtQuery *)p);
 }
@@ -396,9 +371,7 @@ frb_q_free(void *p)
  *  this string through the Query parser will give you the exact Query you
  *  began with. This can be a good way to explore how the QueryParser works.
  */
-static VALUE
-frb_q_to_s(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_q_to_s(int argc, VALUE *argv, VALUE self) {
     GET_Q();
     VALUE rstr, rfield;
     char *str;
@@ -419,9 +392,7 @@ frb_q_to_s(int argc, VALUE *argv, VALUE self)
  *  Returns the queries boost value. See the Query description for more
  *  information on Query boosts.
  */
-static VALUE
-frb_q_get_boost(VALUE self)
-{
+static VALUE frb_q_get_boost(VALUE self) {
     GET_Q();
     return rb_float_new((double)q->boost);
 }
@@ -433,9 +404,7 @@ frb_q_get_boost(VALUE self)
  *  Set the boost for a query. See the Query description for more information
  *  on Query boosts.
  */
-static VALUE
-frb_q_set_boost(VALUE self, VALUE rboost)
-{
+static VALUE frb_q_set_boost(VALUE self, VALUE rboost) {
     GET_Q();
     q->boost = (float)NUM2DBL(rboost);
     return rboost;
@@ -448,9 +417,7 @@ frb_q_set_boost(VALUE self, VALUE rboost)
  *  Return a hash value for the query. This is used for caching query results
  *  in a hash object.
  */
-static VALUE
-frb_q_hash(VALUE self)
-{
+static VALUE frb_q_hash(VALUE self) {
     GET_Q();
     return INT2FIX(q->hash(q));
 }
@@ -468,9 +435,7 @@ frb_q_hash(VALUE self)
  *  although their result sets will be identical. Most queries should match as
  *  expected however.
  */
-static VALUE
-frb_q_eql(VALUE self, VALUE other)
-{
+static VALUE frb_q_eql(VALUE self, VALUE other) {
     GET_Q();
     FrtQuery *oq;
     oq = DATA_PTR(other);
@@ -486,9 +451,7 @@ frb_q_eql(VALUE self, VALUE other)
  *  searcher so that the query can be rewritten and optimized like it would be
  *  in a real search.
  */
-static VALUE
-frb_q_get_terms(VALUE self, VALUE searcher)
-{
+static VALUE frb_q_get_terms(VALUE self, VALUE searcher) {
     VALUE rterms = rb_ary_new();
     FrtHashSet *terms = frt_hs_new((frt_hash_ft)&frt_term_hash,
                             (frt_eq_ft)&frt_term_eq,
@@ -2525,17 +2488,18 @@ frb_sf_to_s(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_sort_free(void *p)
-{
+static size_t frb_sort_size(const void *p) {
+    return sizeof(FrtSort);
+    (void)p;
+}
+
+static void frb_sort_free(void *p) {
     FrtSort *sort = (FrtSort *)p;
     object_del(sort);
     frt_sort_destroy(sort);
 }
 
-static void
-frb_sort_mark(void *p)
-{
+static void frb_sort_mark(void *p) {
     FrtSort *sort = (FrtSort *)p;
     int i;
     for (i = 0; i < sort->size; i++) {
@@ -2543,18 +2507,25 @@ frb_sort_mark(void *p)
     }
 }
 
+const rb_data_type_t frb_sort_t = {
+    .wrap_struct_name = "FrbSort",
+    .function = {
+        .dmark = frb_sort_mark,
+        .dfree = frb_sort_free,
+        .dsize = frb_sort_size
+    }
+};
+
 static VALUE frb_sort_alloc(VALUE klass) {
     VALUE self;
     FrtSort *sort = frt_sort_new();
     sort->destroy_all = false;
-    self = Data_Wrap_Struct(klass, &frb_sort_mark, &frb_sort_free, sort);
+    self = TypedData_Wrap_Struct(klass, &frb_sort_t, sort);
     object_add(sort, self);
     return self;
 }
 
-static void
-frb_parse_sort_str(FrtSort *sort, char *xsort_str)
-{
+static void frb_parse_sort_str(FrtSort *sort, char *xsort_str) {
     FrtSortField *sf;
     char *comma, *end, *e, *s;
     const int len = strlen(xsort_str);
@@ -2594,9 +2565,7 @@ frb_parse_sort_str(FrtSort *sort, char *xsort_str)
     free(sort_str);
 }
 
-static void
-frb_sort_add(FrtSort *sort, VALUE rsf, bool reverse)
-{
+static void frb_sort_add(FrtSort *sort, VALUE rsf, bool reverse) {
     FrtSortField *sf;
     switch (TYPE(rsf)) {
         case T_DATA:
@@ -2629,9 +2598,7 @@ frb_sort_add(FrtSort *sort, VALUE rsf, bool reverse)
  *  reversed so if any of them are already reversed the  will be turned back
  *  to their natural order again. By default
  */
-static VALUE
-frb_sort_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_sort_init(int argc, VALUE *argv, VALUE self) {
     int i;
     VALUE rfields, rreverse;
     bool reverse = false;
@@ -2669,9 +2636,7 @@ frb_sort_init(int argc, VALUE *argv, VALUE self)
  *
  *  Returns an array of the SortFields held by the Sort object.
  */
-static VALUE
-frb_sort_get_fields(VALUE self)
-{
+static VALUE frb_sort_get_fields(VALUE self) {
     GET_SORT();
     VALUE rfields = rb_ary_new2(sort->size);
     int i;
@@ -2688,9 +2653,7 @@ frb_sort_get_fields(VALUE self)
  *
  *  Returns a human readable string representing the sort object.
  */
-static VALUE
-frb_sort_to_s(VALUE self)
-{
+static VALUE frb_sort_to_s(VALUE self) {
     GET_SORT();
     char *str = frt_sort_to_s(sort);
     VALUE rstr = rb_str_new2(str);
@@ -2704,9 +2667,7 @@ frb_sort_to_s(VALUE self)
  *
  ****************************************************************************/
 
-static void
-frb_sea_free(void *p)
-{
+static void frb_sea_free(void *p) {
     FrtSearcher *sea = (FrtSearcher *)p;
     object_del(sea);
     sea->close(sea);
@@ -2721,9 +2682,7 @@ frb_sea_free(void *p)
  *  Close the searcher. The garbage collector will do this for you or you can
  *  call this method explicitly.
  */
-static VALUE
-frb_sea_close(VALUE self)
-{
+static VALUE frb_sea_close(VALUE self) {
     GET_SEA();
     object_del(sea);
     sea->close(sea);
@@ -2736,9 +2695,7 @@ frb_sea_close(VALUE self)
  *
  *  Return the IndexReader wrapped by this searcher.
  */
-static VALUE
-frb_sea_get_reader(VALUE self)
-{
+static VALUE frb_sea_get_reader(VALUE self) {
     GET_SEA();
     return object_get(((FrtIndexSearcher *)sea)->ir);
 }
@@ -2750,13 +2707,9 @@ frb_sea_get_reader(VALUE self)
  *  Return the number of documents in which the term +term+ appears in the
  *  field +field+.
  */
-static VALUE
-frb_sea_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_sea_doc_freq(VALUE self, VALUE rfield, VALUE rterm) {
     GET_SEA();
-    return INT2FIX(sea->doc_freq(sea,
-                                 frb_field(rfield),
-                                 StringValuePtr(rterm)));
+    return INT2FIX(sea->doc_freq(sea, frb_field(rfield), StringValuePtr(rterm)));
 }
 
 /*
@@ -2768,9 +2721,7 @@ frb_sea_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
  *  document returned. Documents are referenced internally by document ids
  *  which are returned by the Searchers search methods.
  */
-static VALUE
-frb_sea_doc(VALUE self, VALUE rdoc_id)
-{
+static VALUE frb_sea_doc(VALUE self, VALUE rdoc_id) {
     GET_SEA();
     return frb_get_lazy_doc(sea->get_lazy_doc(sea, FIX2INT(rdoc_id)));
 }
@@ -2784,16 +2735,12 @@ frb_sea_doc(VALUE self, VALUE rdoc_id)
  *  there are no deletions, this number also refers to the number of documents
  *  in the index.
  */
-static VALUE
-frb_sea_max_doc(VALUE self)
-{
+static VALUE frb_sea_max_doc(VALUE self) {
     GET_SEA();
     return INT2FIX(sea->max_doc(sea));
 }
 
-static float
-call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg)
-{
+static float call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg) {
     VALUE val = rb_funcall((VALUE)arg, id_call, 3,
                            INT2FIX(doc_id),
                            rb_float_new((double)score),
@@ -2812,31 +2759,24 @@ call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg)
     }
 }
 
-typedef struct CWrappedFilter
-{
+typedef struct CWrappedFilter {
     FrtFilter super;
     VALUE  rfilter;
 } CWrappedFilter;
 #define CWF(filt) ((CWrappedFilter *)(filt))
 
-static unsigned long long
-cwfilt_hash(FrtFilter *filt)
-{
+static unsigned long long cwfilt_hash(FrtFilter *filt) {
     return (unsigned long long)NUM2ULONG(rb_funcall(CWF(filt)->rfilter, id_hash, 0));
 }
 
-static int
-cwfilt_eq(FrtFilter *filt, FrtFilter *o)
-{
+static int cwfilt_eq(FrtFilter *filt, FrtFilter *o) {
     return RTEST(rb_funcall(CWF(filt)->rfilter, id_eql, 1, CWF(o)->rfilter));
 }
 
-static FrtBitVector *
-cwfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir)
-{
+static FrtBitVector *cwfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir) {
     VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
     FrtBitVector *bv;
-    Data_Get_Struct(rbv, FrtBitVector, bv);
+    bv = DATA_PTR(rbv);
     FRT_REF(bv);
     return bv;
 }
@@ -2856,9 +2796,7 @@ FrtFilter *frb_get_cwrapped_filter(VALUE rval) {
     return filter;
 }
 
-static FrtTopDocs *
-frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
-{
+static FrtTopDocs *frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea) {
     VALUE rval;
     int offset = 0, limit = 10;
     FrtFilter *filter = NULL;
@@ -2917,7 +2855,7 @@ frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtSearcher *sea)
             if (TYPE(rval) != T_DATA || CLASS_OF(rval) == cSortField) {
                 rval = frb_sort_init(1, &rval, frb_sort_alloc(cSort));
             }
-            Data_Get_Struct(rval, FrtSort, sort);
+            TypedData_Get_Struct(rval, FrtSort, &frb_sort_t, sort);
         }
     }
 
@@ -3145,12 +3083,30 @@ static VALUE frb_sea_scan(int argc, VALUE *argv, VALUE self) {
  *
  *    puts searcher.explain(query, doc_id).to_s
  */
+
+static size_t frb_explanation_size(const void *p) {
+    return sizeof(FrtExplanation);
+    (void)p;
+}
+
+static void frb_explanation_free(void *p) {
+    frt_expl_destroy((FrtExplanation *)p);
+}
+
+const rb_data_type_t frb_explanation_t = {
+    .wrap_struct_name = "FrbExplanation",
+    .function = {
+        .dfree = frb_explanation_free,
+        .dsize = frb_explanation_size
+    }
+};
+
 static VALUE frb_sea_explain(VALUE self, VALUE rquery, VALUE rdoc_id) {
     GET_SEA();
     FrtQuery *query = DATA_PTR(rquery);
     FrtExplanation *expl;
     expl = sea->explain(sea, query, FIX2INT(rdoc_id));
-    return Data_Wrap_Struct(cExplanation, NULL, &frt_expl_destroy, expl);
+    return TypedData_Wrap_Struct(cExplanation, &frb_explanation_t, expl);
 }
 
 /*
@@ -3298,7 +3254,7 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
     } else {
         Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
-            Data_Get_Struct(obj, FrtStore, store);
+            store = DATA_PTR(obj);
             ir = frt_ir_open(NULL, store);
             FRT_GET_IR(obj, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
@@ -3376,17 +3332,16 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
                 FRT_REALLOC_N(searchers, FrtSearcher *, capa);
                 for (j = 0; j < RARRAY_LEN(rsearcher); j++) {
                     VALUE rs = RARRAY_PTR(rsearcher)[j];
-                    Data_Get_Struct(rs, FrtSearcher, s);
+                    s = DATA_PTR(rs);
                     searchers[top++] = s;
                 }
                 break;
             case T_DATA:
-                Data_Get_Struct(rsearcher, FrtSearcher, s);
+                s = DATA_PTR(rsearcher);
                 searchers[top++] = s;
                 break;
             default:
-                rb_raise(rb_eArgError, "Can't add class %s to MultiSearcher",
-                         rb_obj_classname(rsearcher));
+                rb_raise(rb_eArgError, "Can't add class %s to MultiSearcher", rb_obj_classname(rsearcher));
                 break;
         }
     }
