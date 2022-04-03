@@ -35,7 +35,7 @@ void frb_lock_mark(void *p) {
     frb_gc_mark(lock->store);
 }
 
-const size_t frb_lock_size(const void *p) {
+static size_t frb_lock_size(const void *p) {
     return sizeof(FrtLock);
     (void)p;
 }
@@ -324,7 +324,7 @@ frb_dir_make_lock(VALUE self, VALUE rlock_name) {
 
 /*** FrbStore ****************************************************************/
 
-const size_t frb_store_size(const void *p) {
+static size_t frb_store_size(const void *p) {
     return sizeof(FrtStore);
     (void)p;
 }
