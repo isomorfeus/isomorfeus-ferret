@@ -4417,7 +4417,7 @@ static void Init_Filter(void) {
  */
 
 const rb_data_type_t frb_sort_field_const_t = {
-    .wrap_struct_name = "FrbSortField",
+    .wrap_struct_name = "FrbSortFieldConst",
     .function = {
         .dfree = frb_deref_free,
         .dsize = frb_sort_field_size
