@@ -448,9 +448,7 @@ const rb_data_type_t frb_reg_exp_token_stream_t = {
 
 static FrtToken *rets_next(FrtTokenStream *ts);
 
-static VALUE
-get_rb_token_stream(FrtTokenStream *ts)
-{
+static VALUE get_rb_token_stream(FrtTokenStream *ts) {
     VALUE rts = object_get(ts);
     if (rts == Qnil) {
         if (ts->next == &rets_next) {
@@ -472,11 +470,10 @@ get_rb_token_stream(FrtTokenStream *ts)
  *
  *      token_stream.text = File.read(file_name)
  */
-static VALUE
-frb_ts_set_text(VALUE self, VALUE rtext)
-{
+static VALUE frb_ts_set_text(VALUE self, VALUE rtext) {
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    // TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    ts = DATA_PTR(self);
     StringValue(rtext);
     ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
 
@@ -495,7 +492,8 @@ frb_ts_set_text(VALUE self, VALUE rtext)
 static VALUE frb_ts_get_text(VALUE self) {
     VALUE rtext = Qnil;
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    // TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    ts = DATA_PTR(self);
     if ((rtext = object_get(&ts->text)) == Qnil) {
         if (ts->text) {
             rtext = rb_str_new2(ts->text);
@@ -606,15 +604,13 @@ cwrts_clone_i(FrtTokenStream *orig_ts)
     return new_ts;
 }
 
-static FrtTokenStream *
-frb_get_cwrapped_rts(VALUE rts)
-{
+static FrtTokenStream *frb_get_cwrapped_rts(VALUE rts) {
     FrtTokenStream *ts;
     if (frb_is_cclass(rts) && DATA_PTR(rts)) {
-        TypedData_Get_Struct(rts, FrtTokenStream, &frb_token_stream_t, ts);
+        // TypedData_Get_Struct(rts, FrtTokenStream, &frb_token_stream_t, ts);
+        ts = DATA_PTR(rts);
         FRT_REF(ts);
-    }
-    else {
+    } else {
         ts = frt_ts_new_i(sizeof(CWrappedTokenStream));
         CWTS(ts)->rts = rts;
         ts->next = &cwrts_next;
@@ -1300,9 +1296,7 @@ VALUE get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring) {
  *  field_name:: name of the field to be tokenized
  *  input::      data from the field to be tokenized
  */
-static VALUE
-frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
-{
+static VALUE frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) {
     /* NOTE: Any changes made to this method may also need to be applied to
      * frb_re_analyzer_token_stream */
     FrtAnalyzer *a;
@@ -1320,15 +1314,15 @@ rb_scan_args(argc, argv, "01", &rlower);\
 lower = (argc ? RTEST(rlower) : dflt)
 
 static VALUE frb_analyzer_alloc(VALUE rclass) {
-    FrtAnalyzer *a = frt_analyzer_alloc();
+    FrtAnalyzer *a = frt_letter_analyzer_alloc();
     return TypedData_Wrap_Struct(rclass, &frb_analyzer_t, a);
 }
 
 static VALUE frb_analyzer_init(int argc, VALUE *argv, VALUE self) {
     FrtAnalyzer *a;
+    GET_LOWER(true);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
-    // TODO
-    // frt_analyzer_init(a, , NULL, NULL);
+    frt_letter_analyzer_init(a, lower);
     object_add(a, self);
     return self;
 }
