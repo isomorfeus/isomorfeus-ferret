@@ -182,6 +182,7 @@ static FrtTokenStream *frt_cts_alloc(void) {
 }
 
 static FrtTokenStream *frt_cts_init(FrtTokenStream *ts) {
+    frt_ts_init(ts);
     ts->reset   = &ts_reset;
     ts->clone_i = &cts_clone_i;
     ts->ref_cnt = 1;
@@ -855,6 +856,7 @@ FrtTokenStream *frt_mapping_filter_alloc(void) {
 }
 
 void frt_mapping_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts) {
+    frt_tf_init(ts, sub_ts);
     ts->next           = &mf_next;
     ts->destroy_i      = &mf_destroy_i;
     ts->clone_i        = &mf_clone_i;
