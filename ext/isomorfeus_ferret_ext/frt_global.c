@@ -292,7 +292,7 @@ void frt_print_stacktrace(void) {
         fprintf(EXCEPTION_STREAM, "Stack trace:\n%s", stack);
         free(stack);
     } else {
-        fprintf(EXCEPTION_STREAM, "Stack trace not avaialble\n");
+        fprintf(EXCEPTION_STREAM, "Stack trace not available\n");
     }
 }
 
