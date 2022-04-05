@@ -54,9 +54,7 @@ int frb_rb_hash_size(VALUE hash) {
  *
  ****************************************************************************/
 
-static char **
-get_stopwords(VALUE rstop_words)
-{
+static char **get_stopwords(VALUE rstop_words) {
     char **stop_words;
     int i, len;
     VALUE rstr;
@@ -103,9 +101,13 @@ const rb_data_type_t frb_rtoken_t = {
     .function = {
         .dmark = frb_token_mark,
         .dfree = frb_token_free,
-        .dsize = frb_token_size
+        .dsize = frb_token_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_token_alloc(VALUE klass) {
@@ -164,9 +166,7 @@ FrtToken * frb_set_token(FrtToken *tk, VALUE rt) {
  *  pos_inc::    the position increment of a token. See above.
  *  return::     a newly created and assigned Token object
  */
-static VALUE
-frb_token_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_token_init(int argc, VALUE *argv, VALUE self) {
     RToken *token;
     VALUE rtext, rstart, rend, rpos_inc;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
@@ -193,9 +193,7 @@ frb_token_init(int argc, VALUE *argv, VALUE self)
  *  pos_inc=) then, they are sorted by the end offset and then
  *  lexically by the token text.
  */
-static VALUE
-frb_token_cmp(VALUE self, VALUE rother)
-{
+static VALUE frb_token_cmp(VALUE self, VALUE rother) {
     RToken *token, *other;
     int cmp;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
@@ -222,9 +220,7 @@ frb_token_cmp(VALUE self, VALUE rother)
  *
  *  Returns the text that this token represents
  */
-static VALUE
-frb_token_get_text(VALUE self)
-{
+static VALUE frb_token_get_text(VALUE self) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return token->text;
@@ -236,9 +232,7 @@ frb_token_get_text(VALUE self)
  *
  *  Set the text for this token.
  */
-static VALUE
-frb_token_set_text(VALUE self, VALUE rtext)
-{
+static VALUE frb_token_set_text(VALUE self, VALUE rtext) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->text = rtext;
@@ -251,9 +245,7 @@ frb_token_set_text(VALUE self, VALUE rtext)
  *
  *  Start byte-position of this token
  */
-static VALUE
-frb_token_get_start_offset(VALUE self)
-{
+static VALUE frb_token_get_start_offset(VALUE self) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->start);
@@ -265,9 +257,7 @@ frb_token_get_start_offset(VALUE self)
  *
  *  End byte-position of this token
  */
-static VALUE
-frb_token_get_end_offset(VALUE self)
-{
+static VALUE frb_token_get_end_offset(VALUE self) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->end);
@@ -279,9 +269,7 @@ frb_token_get_end_offset(VALUE self)
  *
  *  Position Increment for this token
  */
-static VALUE
-frb_token_get_pos_inc(VALUE self)
-{
+static VALUE frb_token_get_pos_inc(VALUE self) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     return INT2FIX(token->pos_inc);
@@ -293,9 +281,7 @@ frb_token_get_pos_inc(VALUE self)
  *
  *  Set start byte-position of this token
  */
-static VALUE
-frb_token_set_start_offset(VALUE self, VALUE rstart)
-{
+static VALUE frb_token_set_start_offset(VALUE self, VALUE rstart) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->start = FIX2INT(rstart);
@@ -308,9 +294,7 @@ frb_token_set_start_offset(VALUE self, VALUE rstart)
  *
  *  Set end byte-position of this token
  */
-static VALUE
-frb_token_set_end_offset(VALUE self, VALUE rend)
-{
+static VALUE frb_token_set_end_offset(VALUE self, VALUE rend) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->end = FIX2INT(rend);
@@ -344,9 +328,7 @@ frb_token_set_end_offset(VALUE self, VALUE rend)
  *    when the terms occur with no intervening stop words.
  *
  */
-static VALUE
-frb_token_set_pos_inc(VALUE self, VALUE rpos_inc)
-{
+static VALUE frb_token_set_pos_inc(VALUE self, VALUE rpos_inc) {
     RToken *token;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
     token->pos_inc = FIX2INT(rpos_inc);
@@ -359,9 +341,7 @@ frb_token_set_pos_inc(VALUE self, VALUE rpos_inc)
  *
  *  Return a string representation of the token
  */
-static VALUE
-frb_token_to_s(VALUE self)
-{
+static VALUE frb_token_to_s(VALUE self) {
     RToken *token;
     char *buf;
     TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
@@ -431,9 +411,13 @@ const rb_data_type_t frb_token_stream_t = {
     .function = {
         .dmark = frb_ts_mark,
         .dfree = frb_ts_free,
-        .dsize = frb_ts_size
+        .dsize = frb_ts_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 const rb_data_type_t frb_reg_exp_token_stream_t = {
@@ -441,9 +425,13 @@ const rb_data_type_t frb_reg_exp_token_stream_t = {
     .function = {
         .dmark = frb_rets_mark,
         .dfree = frb_rets_free,
-        .dsize = frb_rets_size
+        .dsize = frb_rets_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static FrtToken *rets_next(FrtTokenStream *ts);
@@ -526,8 +514,7 @@ static VALUE frb_ts_next(VALUE self) {
 
 #define TkFilt(filter) ((FrtTokenFilter *)(filter))
 
-static void
-frb_tf_mark(void *p) {
+static void frb_tf_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
     if (TkFilt(ts)->sub_ts)
         frb_gc_mark(&TkFilt(ts)->sub_ts);
@@ -551,9 +538,13 @@ const rb_data_type_t frb_token_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_tf_size
+        .dsize = frb_tf_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 /****************************************************************************
@@ -568,9 +559,7 @@ typedef struct CWrappedTokenStream {
     VALUE rts;
 } CWrappedTokenStream;
 
-static void
-cwrts_destroy_i(FrtTokenStream *ts)
-{
+static void cwrts_destroy_i(FrtTokenStream *ts) {
     if (object_get(&ts->text) != Qnil) {
         object_del(&ts->text);
     }
@@ -578,16 +567,12 @@ cwrts_destroy_i(FrtTokenStream *ts)
     free(ts);
 }
 
-static FrtToken *
-cwrts_next(FrtTokenStream *ts)
-{
+static FrtToken *cwrts_next(FrtTokenStream *ts) {
     VALUE rtoken = rb_funcall(CWTS(ts)->rts, id_next, 0);
     return frb_set_token(&(CachedTS(ts)->token), rtoken);
 }
 
-static FrtTokenStream *
-cwrts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
-{
+static FrtTokenStream *cwrts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
     ts->t = ts->text = text;
     ts->length = strlen(text);
     ts->encoding = encoding;
@@ -595,9 +580,7 @@ cwrts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding)
     return ts;
 }
 
-static FrtTokenStream *
-cwrts_clone_i(FrtTokenStream *orig_ts)
-{
+static FrtTokenStream *cwrts_clone_i(FrtTokenStream *orig_ts) {
     FrtTokenStream *new_ts = frt_ts_clone_size(orig_ts, sizeof(CWrappedTokenStream));
     VALUE rts = CWTS(new_ts)->rts = rb_funcall(CWTS(orig_ts)->rts, id_clone, 0);
     rb_hash_aset(object_space, ((VALUE)new_ts)|1, rts);
@@ -645,9 +628,7 @@ static const char *TOKEN_RE =
     ")";
 static VALUE rtoken_re;
 
-static void
-rets_destroy_i(FrtTokenStream *ts)
-{
+static void rets_destroy_i(FrtTokenStream *ts) {
     if (object_get(&ts->text) != Qnil) {
         object_del(&ts->text);
     }
@@ -699,24 +680,19 @@ static VALUE scan_once(VALUE str, VALUE pat, long *start) {
     match = rb_backref_get();
     regs = RMATCH_REGS(match);
     if (BEG(0) == END(0)) {
-      rb_encoding *enc = STR_ENC_GET(str);
-      /*
-      * Always consume at least one character of the input string
-       */
+        rb_encoding *enc = STR_ENC_GET(str);
+        /* Always consume at least one character of the input string */
         if (RSTRING_LEN(str) > END(0))
-        *start = END(0)+rb_enc_mbclen(RSTRING_PTR(str)+END(0),
-        RSTRING_END(str), enc);
-      else
-        *start = END(0)+1;
-    }
-    else {
+            *start = END(0)+rb_enc_mbclen(RSTRING_PTR(str)+END(0), RSTRING_END(str), enc);
+        else
+            *start = END(0)+1;
+    } else {
       *start = END(0);
     }
     return rb_reg_nth_match(0, match);
   }
   return Qnil;
 }
-//
 
 static FrtToken *rets_next(FrtTokenStream *ts) {
   VALUE ret;
@@ -803,9 +779,7 @@ static VALUE frb_reg_exp_tokenizer_alloc(VALUE rclass) {
  *  input::  text to tokenizer
  *  regexp:: regular expression used to recognize tokens in the input
  */
-static VALUE
-frb_rets_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_rets_init(int argc, VALUE *argv, VALUE self) {
     VALUE rtext, regex, proc;
     rb_scan_args(argc, argv, "11&", &rtext, &regex, &proc);
     FrtTokenStream *ts;
@@ -859,9 +833,7 @@ static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
  *
  *  lower:: set to false if you don't wish to downcase tokens
  */
-static VALUE
-frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
@@ -908,8 +880,13 @@ const rb_data_type_t frb_lowercase_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_tf_size
-    }
+        .dsize = frb_tf_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_lowercase_filter_alloc(VALUE rclass) {
@@ -948,9 +925,13 @@ const rb_data_type_t frb_hyphen_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_hyphen_filter_size
+        .dsize = frb_hyphen_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_hyphen_filter_alloc(VALUE rclass) {
@@ -992,9 +973,13 @@ const rb_data_type_t frb_stop_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_stop_filter_size
+        .dsize = frb_stop_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_stop_filter_alloc(VALUE rclass) {
@@ -1107,9 +1092,13 @@ const rb_data_type_t frb_mapping_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_mapping_filter_size
+        .dsize = frb_mapping_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_mapping_filter_alloc(VALUE rclass) {
@@ -1158,9 +1147,13 @@ const rb_data_type_t frb_stem_filter_t = {
     .function = {
         .dmark = frb_tf_mark,
         .dfree = frb_tf_free,
-        .dsize = frb_stem_filter_size
+        .dsize = frb_stem_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_stem_filter_alloc(VALUE rclass) {
@@ -1228,9 +1221,13 @@ const rb_data_type_t frb_analyzer_t = {
     .function = {
         .dmark = frb_analyzer_mark,
         .dfree = frb_analyzer_free,
-        .dsize = frb_analyzer_size
+        .dsize = frb_analyzer_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static void cwa_destroy_i(FrtAnalyzer *a) {
@@ -1462,9 +1459,13 @@ const rb_data_type_t frb_per_field_analyzer_t = {
     .function = {
         .dmark = frb_pfa_mark,
         .dfree = frb_analyzer_free,
-        .dsize = frb_per_field_analyzer_size
+        .dsize = frb_per_field_analyzer_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
-    .data = NULL
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_per_field_analyzer_alloc(VALUE rclass) {
@@ -1492,9 +1493,7 @@ static VALUE frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer) {
  *  field_name:: field we wish to set the analyzer for
  *  analyzer::   analyzer to be used on +field_name+
  */
-static VALUE
-frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
-{
+static VALUE frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer) {
     FrtAnalyzer *pfa, *a;
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, pfa);
     a = frb_get_cwrapped_analyzer(ranalyzer);
@@ -1513,9 +1512,7 @@ frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer)
  *  field_name:: name of the field to be tokenized
  *  input::      data from the field to be tokenized
  */
-static VALUE
-frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
-{
+static VALUE frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) {
     FrtAnalyzer *pfa, *a;
     FrtSymbol field = frb_field(rfield);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, pfa);
@@ -1538,16 +1535,12 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 
 /*** RegExpAnalyzer ***/
 
-static void
-frb_re_analyzer_mark(void *p)
-{
+static void frb_re_analyzer_mark(void *p) {
     FrtAnalyzer *a = (FrtAnalyzer *)p;
     frb_gc_mark(a->current_ts);
 }
 
-static void
-re_analyzer_destroy_i(FrtAnalyzer *a)
-{
+static void re_analyzer_destroy_i(FrtAnalyzer *a) {
     frt_ts_deref(a->current_ts);
     free(a);
 }
@@ -1557,8 +1550,13 @@ const rb_data_type_t frb_reg_exp_analyzer_t = {
     .function = {
         .dmark = frb_re_analyzer_mark,
         .dfree = frb_analyzer_free,
-        .dsize = frb_analyzer_size
-    }
+        .dsize = frb_analyzer_size,
+        .dcompact = 0,
+        .reserved = {0},
+    },
+    .parent = 0,
+    .data = 0,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_reg_exp_analyzer_alloc(VALUE rclass) {
