@@ -1659,8 +1659,7 @@ static VALUE frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
  *          equal to @text.length(), as the term text may have been
  *          altered by a stemmer or some other filter.
  */
-static void Init_Token(void)
-{
+static void Init_Token(void) {
     cToken = rb_define_class_under(mAnalysis, "Token", rb_cObject);
     rb_define_alloc_func(cToken, frb_token_alloc);
     rb_include_module(cToken, rb_mComparable);
@@ -1691,8 +1690,7 @@ static void Init_Token(void)
  *  Tokenizer::   a TokenStream whose input is a string
  *  TokenFilter:: a TokenStream whose input is another TokenStream
  */
-static void Init_TokenStream(void)
-{
+static void Init_TokenStream(void) {
     cTokenStream = rb_define_class_under(mAnalysis, "TokenStream", rb_cObject);
     frb_mark_cclass(cTokenStream);
     rb_define_method(cTokenStream, "next", frb_ts_next, 0);
@@ -1756,8 +1754,7 @@ static void Init_WhiteSpaceTokenizer(void) {
  *    "Dave's résumé, at http://www.davebalmain.com/ 1234"
  *      => ["Dave's", "résumé", "at", "http://www.davebalmain.com", "1234"]
  */
-static void Init_StandardTokenizer(void)
-{
+static void Init_StandardTokenizer(void) {
     cStandardTokenizer = rb_define_class_under(mAnalysis, "StandardTokenizer", cTokenStream);
     frb_mark_cclass(cStandardTokenizer);
     rb_define_alloc_func(cStandardTokenizer, frb_tokenizer_alloc);
@@ -2229,9 +2226,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  offsets of 10 and 19 respectively ("Beginning".length == 9) but Token#text
  *  might be "begin" (after stemming).
  */
-void
-Init_Analysis(void)
-{
+void Init_Analysis(void) {
     mAnalysis = rb_define_module_under(mFerret, "Analysis");
 
     /* TokenStream Methods */
