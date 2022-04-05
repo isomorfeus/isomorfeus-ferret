@@ -1330,7 +1330,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
             Check_Type(roptions, T_HASH);
 
             if ((rval = rb_hash_aref(roptions, sym_dir)) != Qnil) {
-                Check_Type(rval, T_DATA);
+                // Check_Type(rval, T_DATA);
                 store = DATA_PTR(rval);
             } else if ((rval = rb_hash_aref(roptions, sym_path)) != Qnil) {
                 StringValue(rval);

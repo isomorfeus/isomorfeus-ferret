@@ -110,8 +110,8 @@ const rb_data_type_t frb_rtoken_t = {
     .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
-static VALUE frb_token_alloc(VALUE klass) {
-    return TypedData_Wrap_Struct(klass, &frb_rtoken_t, ALLOC(RToken));
+static VALUE frb_token_alloc(VALUE rclass) {
+    return TypedData_Wrap_Struct(rclass, &frb_rtoken_t, ALLOC(RToken));
 }
 
 static VALUE get_token(FrtToken *tk) {
@@ -125,7 +125,7 @@ static VALUE get_token(FrtToken *tk) {
     return TypedData_Wrap_Struct(cToken, &frb_rtoken_t, token);
 }
 
-FrtToken * frb_set_token(FrtToken *tk, VALUE rt) {
+FrtToken *frb_set_token(FrtToken *tk, VALUE rt) {
     RToken *rtk;
 
     if (rt == Qnil) return NULL;
@@ -174,7 +174,7 @@ static VALUE frb_token_init(int argc, VALUE *argv, VALUE self) {
     switch (rb_scan_args(argc, argv, "31", &rtext, &rstart, &rend, &rpos_inc)) {
         case 4: token->pos_inc = FIX2INT(rpos_inc);
     }
-    // TODO encoding, use frt_tk_set or something
+    // TODO encoding, use frt_tk_set or something, Why use RToken at all?
     token->text = rb_obj_as_string(rtext);
     token->start = FIX2INT(rstart);
     token->end = FIX2INT(rend);
@@ -359,7 +359,8 @@ static VALUE frb_token_to_s(VALUE self) {
 
 static void frb_ts_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (ts->text)   frb_gc_mark(&ts->text);
+    if (ts->text)
+        frb_gc_mark(&ts->text);
 }
 
 static void frb_ts_free(void *p) {
@@ -381,7 +382,7 @@ typedef struct RegExpTokenStream {
     VALUE rtext;
     VALUE regex;
     VALUE proc;
-    long   curr_ind;
+    long  curr_ind;
 } RegExpTokenStream;
 
 static void frb_rets_free(void *p) {

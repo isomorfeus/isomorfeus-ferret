@@ -2091,9 +2091,7 @@ static void frb_f_free(void *p) {
  *  Return a human readable string representing the Filter object that the
  *  method was called on.
  */
-static VALUE
-frb_f_to_s(VALUE self)
-{
+static VALUE frb_f_to_s(VALUE self) {
     VALUE rstr;
     char *str;
     GET_F();
@@ -3259,7 +3257,7 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
         FRT_DEREF(store);
         FRT_GET_IR(obj, ir);
     } else {
-        Check_Type(obj, T_DATA);
+        // Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
             store = DATA_PTR(obj);
             ir = frt_ir_open(NULL, store);
