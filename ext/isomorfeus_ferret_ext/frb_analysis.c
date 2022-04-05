@@ -1233,8 +1233,6 @@ const rb_data_type_t frb_analyzer_t = {
     .data = NULL
 };
 
-#define GET_A(a, self) TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a)
-
 static void cwa_destroy_i(FrtAnalyzer *a) {
     rb_hash_delete(object_space, ((VALUE)a)|1);
     free(a);
@@ -1250,7 +1248,8 @@ static FrtTokenStream *cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text, r
 FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer) {
     FrtAnalyzer *a = NULL;
     if (frb_is_cclass(ranalyzer) && DATA_PTR(ranalyzer)) {
-        TypedData_Get_Struct(ranalyzer, FrtAnalyzer, &frb_analyzer_t, a);
+        // TypedData_Get_Struct(ranalyzer, FrtAnalyzer, &frb_analyzer_t, a);
+        a = DATA_PTR(ranalyzer);
         FRT_REF(a);
     } else {
         a = (FrtAnalyzer *)frt_ecalloc(sizeof(CWrappedAnalyzer));
@@ -1300,7 +1299,7 @@ static VALUE frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) 
     /* NOTE: Any changes made to this method may also need to be applied to
      * frb_re_analyzer_token_stream */
     FrtAnalyzer *a;
-    GET_A(a, self);
+    a = DATA_PTR(self);
 
     StringValue(rstring);
 
@@ -1519,7 +1518,7 @@ frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring)
 {
     FrtAnalyzer *pfa, *a;
     FrtSymbol field = frb_field(rfield);
-    GET_A(pfa, self);
+    TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, pfa);
 
     StringValue(rstring);
     a = (FrtAnalyzer *)frt_h_get(PFA(pfa)->dict, (void *)field);
