@@ -162,9 +162,15 @@ static size_t frb_fi_size(const void *p) {
 const rb_data_type_t frb_field_info_t = {
     .wrap_struct_name = "FrbFieldInfo",
     .function = {
+        .dmark = NULL,
         .dfree = frb_fi_free,
-        .dsize = frb_fi_size
+        .dsize = frb_fi_size,
+        .dcompact = NULL,
+        .reserved = {0},
     },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_get_field_info(FrtFieldInfo *fi) {
@@ -390,8 +396,13 @@ const rb_data_type_t frb_field_infos_t = {
     .function = {
         .dmark = frb_fis_mark,
         .dfree = frb_fis_free,
-        .dsize = frb_field_infos_t_size
-    }
+        .dsize = frb_field_infos_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_get_field_infos(FrtFieldInfos *fis) {
@@ -678,9 +689,15 @@ static size_t frb_te_size(const void *p) {
 const rb_data_type_t frb_term_enum_t = {
     .wrap_struct_name = "FrbTermEnum",
     .function = {
+        .dmark = NULL,
         .dfree = frb_te_free,
-        .dsize = frb_te_size
-    }
+        .dsize = frb_te_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_te_alloc(VALUE rclass) {
@@ -909,9 +926,15 @@ static size_t frb_tde_size(const void *p) {
 const rb_data_type_t frb_term_doc_enum_t = {
     .wrap_struct_name = "FrbTermDocEnum",
     .function = {
+        .dmark = NULL,
         .dfree = frb_tde_free,
-        .dsize = frb_tde_size
-    }
+        .dsize = frb_tde_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_tde_alloc(VALUE rclass) {
@@ -1303,8 +1326,13 @@ const rb_data_type_t frb_index_writer_t = {
     .function = {
         .dmark = frb_iw_mark,
         .dfree = frb_iw_free,
-        .dsize = frb_index_writer_t_size
-    }
+        .dsize = frb_index_writer_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_iw_alloc(VALUE rclass) {
@@ -1594,8 +1622,13 @@ const rb_data_type_t frb_index_reader_t = {
     .function = {
         .dmark = frb_ir_mark,
         .dfree = frb_ir_free,
-        .dsize = frb_index_reader_t_size
-    }
+        .dsize = frb_index_reader_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 /*
@@ -1976,9 +2009,15 @@ static size_t frb_lazy_doc_size(const void *p) {
 const rb_data_type_t frb_lazy_doc_t = {
     .wrap_struct_name = "FrbLazyDoc",
     .function = {
+        .dmark = NULL,
         .dfree = frb_lzd_data_free,
-        .dsize = frb_lazy_doc_size
-    }
+        .dsize = frb_lazy_doc_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_lzd_alloc(VALUE klass) {

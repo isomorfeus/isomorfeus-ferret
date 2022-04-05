@@ -47,8 +47,13 @@ const rb_data_type_t frb_lock_t = {
     .function = {
         .dmark = frb_lock_mark,
         .dfree = frb_lock_free,
-        .dsize = frb_lock_size
-    }
+        .dsize = frb_lock_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 #define GET_LOCK(lock, self) TypedData_Get_Struct(self, FrtLock, &frb_lock_t, lock)
@@ -334,9 +339,15 @@ static size_t frb_store_size(const void *p) {
 const rb_data_type_t frb_store_t = {
     .wrap_struct_name = "FrbStore",
     .function = {
+        .dmark = NULL,
         .dfree = frb_dir_free,
-        .dsize = frb_store_size
-    }
+        .dsize = frb_store_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_store_alloc(VALUE rclass) {

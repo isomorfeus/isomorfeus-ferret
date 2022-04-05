@@ -48,8 +48,13 @@ const rb_data_type_t frb_qp_t = {
     .function = {
         .dmark = frb_qp_mark,
         .dfree = frb_qp_free,
-        .dsize = frb_qp_size
-    }
+        .dsize = frb_qp_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_qp_alloc(VALUE rclass) {

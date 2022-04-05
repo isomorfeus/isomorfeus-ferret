@@ -485,9 +485,15 @@ static size_t frb_term_query_size(const void *p) {
 const rb_data_type_t frb_term_query_t = {
     .wrap_struct_name = "FrbTermQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_term_query_size
-    }
+        .dsize = frb_term_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_tq_alloc(VALUE rclass) {
@@ -528,9 +534,15 @@ static size_t frb_multi_term_query_size(const void *p) {
 const rb_data_type_t frb_multi_term_query_t = {
     .wrap_struct_name = "FrbTermQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_multi_term_query_size
-    }
+        .dsize = frb_multi_term_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_mtq_alloc(VALUE rclass) {
@@ -676,8 +688,13 @@ const rb_data_type_t frb_boolean_clause_t = {
     .function = {
         .dmark = frb_bc_mark,
         .dfree = frb_bc_free,
-        .dsize = frb_boolean_clause_t_size
-    }
+        .dsize = frb_boolean_clause_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_bc_alloc(VALUE rclass) {
@@ -853,8 +870,13 @@ const rb_data_type_t frb_boolean_query_t = {
     .function = {
         .dmark = frb_bq_mark,
         .dfree = frb_q_free,
-        .dsize = frb_boolean_query_size
-    }
+        .dsize = frb_boolean_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_bq_alloc(VALUE rclass) {
@@ -947,9 +969,15 @@ static size_t frb_range_query_size(const void *p) {
 const rb_data_type_t frb_range_query_t = {
     .wrap_struct_name = "FrbRangeQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_range_query_size
-    }
+        .dsize = frb_range_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_rq_alloc(VALUE rclass) {
@@ -1062,9 +1090,15 @@ static size_t frb_typed_range_query_size(const void *p) {
 const rb_data_type_t frb_typed_range_query_t = {
     .wrap_struct_name = "FrbTypedRangeQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_typed_range_query_size
-    }
+        .dsize = frb_typed_range_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_trq_alloc(VALUE rclass) {
@@ -1127,9 +1161,15 @@ static size_t frb_phrase_query_size(const void *p) {
 const rb_data_type_t frb_phrase_query_t = {
     .wrap_struct_name = "FrbPhraseQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_phrase_query_size
-    }
+        .dsize = frb_phrase_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_phq_alloc(VALUE rclass) {
@@ -1256,9 +1296,15 @@ static size_t frb_prefix_query_size(const void *p) {
 const rb_data_type_t frb_prefix_query_t = {
     .wrap_struct_name = "FrbPrefixQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_prefix_query_size
-    }
+        .dsize = frb_prefix_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_prq_alloc(VALUE rclass) {
@@ -1311,9 +1357,15 @@ static size_t frb_wildcard_query_size(const void *p) {
 const rb_data_type_t frb_wilcard_query_t = {
     .wrap_struct_name = "FrbWildcardQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_wildcard_query_size
-    }
+        .dsize = frb_wildcard_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_wcq_alloc(VALUE rclass) {
@@ -1368,9 +1420,15 @@ static size_t frb_fuzzy_query_size(const void *p) {
 const rb_data_type_t frb_fuzzy_query_t = {
     .wrap_struct_name = "FrbFuzzyQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_fuzzy_query_size
-    }
+        .dsize = frb_fuzzy_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_fq_alloc(VALUE rclass) {
@@ -1564,9 +1622,15 @@ static size_t frb_match_all_query_size(const void *p) {
 const rb_data_type_t frb_match_all_query_t = {
     .wrap_struct_name = "FrbMatchAllQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_match_all_query_size
-    }
+        .dsize = frb_match_all_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_maq_alloc(VALUE rclass) {
@@ -1602,9 +1666,15 @@ static size_t frb_constant_score_query_size(const void *p) {
 const rb_data_type_t frb_constant_score_query_t = {
     .wrap_struct_name = "FrbConstantScoreQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_constant_score_query_size
-    }
+        .dsize = frb_constant_score_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_csq_alloc(VALUE rclass) {
@@ -1651,8 +1721,13 @@ const rb_data_type_t frb_filtered_query_t = {
     .function = {
         .dmark = frb_fqq_mark,
         .dfree = frb_q_free,
-        .dsize = frb_filtered_query_size
-    }
+        .dsize = frb_filtered_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_fqq_alloc(VALUE rclass) {
@@ -1692,9 +1767,15 @@ static size_t frb_span_term_query_size(const void *p) {
 const rb_data_type_t frb_span_term_query_t = {
     .wrap_struct_name = "FrbSpanTermQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_span_term_query_size
-    }
+        .dsize = frb_span_term_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spantq_alloc(VALUE rclass) {
@@ -1731,9 +1812,15 @@ static size_t frb_span_multi_term_query_size(const void *p) {
 const rb_data_type_t frb_span_multi_term_query_t = {
     .wrap_struct_name = "FrbSpanMultiTermQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_span_multi_term_query_size
-    }
+        .dsize = frb_span_multi_term_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spanmtq_alloc(VALUE rclass) {
@@ -1774,9 +1861,15 @@ static size_t frb_span_prefix_query_size(const void *p) {
 const rb_data_type_t frb_span_prefix_query_t = {
     .wrap_struct_name = "FrbSpanPrefixQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_span_prefix_query_size
-    }
+        .dsize = frb_span_prefix_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spanprq_alloc(VALUE rclass) {
@@ -1819,9 +1912,15 @@ static size_t frb_span_first_query_size(const void *p) {
 const rb_data_type_t frb_span_first_query_t = {
     .wrap_struct_name = "FrbSpanFirstQuery",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_span_first_query_size
-    }
+        .dsize = frb_span_first_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spanfq_alloc(VALUE rclass) {
@@ -1870,8 +1969,13 @@ const rb_data_type_t frb_span_near_query_t = {
     .function = {
         .dmark = frb_spannq_mark,
         .dfree = frb_q_free,
-        .dsize = frb_span_near_query_size
-    }
+        .dsize = frb_span_near_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spannq_alloc(VALUE rclass) {
@@ -1973,8 +2077,13 @@ const rb_data_type_t frb_span_or_query_t = {
     .function = {
         .dmark = frb_spanoq_mark,
         .dfree = frb_q_free,
-        .dsize = frb_span_or_query_size
-    }
+        .dsize = frb_span_or_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spanoq_alloc(VALUE rclass) {
@@ -2045,8 +2154,13 @@ const rb_data_type_t frb_span_not_query_t = {
     .function = {
         .dmark = frb_spanxq_mark,
         .dfree = frb_q_free,
-        .dsize = frb_span_not_query_size
-    }
+        .dsize = frb_span_not_query_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_spanxq_alloc(VALUE rclass) {
@@ -2133,9 +2247,15 @@ static size_t frb_range_filter_size(const void *p) {
 const rb_data_type_t frb_range_filter_t = {
     .wrap_struct_name = "FrbRangeFilter",
     .function = {
+        .dmark = NULL,
         .dfree = frb_f_free,
-        .dsize = frb_range_filter_size
-    }
+        .dsize = frb_range_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_rf_alloc(VALUE rclass) {
@@ -2204,9 +2324,15 @@ static size_t frb_typed_range_filter_size(const void *p) {
 const rb_data_type_t frb_typed_range_filter_t = {
     .wrap_struct_name = "FrbTypedRangeFilter",
     .function = {
+        .dmark = NULL,
         .dfree = frb_f_free,
-        .dsize = frb_typed_range_filter_size
-    }
+        .dsize = frb_typed_range_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_trf_alloc(VALUE rclass) {
@@ -2264,9 +2390,15 @@ static size_t frb_query_filter_size(const void *p) {
 const rb_data_type_t frb_query_filter_t = {
     .wrap_struct_name = "FrbQueryFilter",
     .function = {
+        .dmark = NULL,
         .dfree = frb_q_free,
-        .dsize = frb_query_filter_size
-    }
+        .dsize = frb_query_filter_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_qf_alloc(VALUE rclass) {
@@ -2308,9 +2440,15 @@ static void frb_sf_free(void *p) {
 const rb_data_type_t frb_sort_field_t = {
     .wrap_struct_name = "FrbSortField",
     .function = {
+        .dmark = NULL,
         .dfree = frb_sf_free,
-        .dsize = frb_sort_field_size
-    }
+        .dsize = frb_sort_field_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_sf_alloc(VALUE rclass) {
@@ -2512,8 +2650,13 @@ const rb_data_type_t frb_sort_t = {
     .function = {
         .dmark = frb_sort_mark,
         .dfree = frb_sort_free,
-        .dsize = frb_sort_size
-    }
+        .dsize = frb_sort_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_sort_alloc(VALUE klass) {
@@ -3096,9 +3239,15 @@ static void frb_explanation_free(void *p) {
 const rb_data_type_t frb_explanation_t = {
     .wrap_struct_name = "FrbExplanation",
     .function = {
+        .dmark = NULL,
         .dfree = frb_explanation_free,
-        .dsize = frb_explanation_size
-    }
+        .dsize = frb_explanation_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_expl_alloc(VALUE rclass) {
@@ -3221,8 +3370,13 @@ const rb_data_type_t frb_index_searcher_t = {
     .function = {
         .dmark = frb_sea_mark,
         .dfree = frb_sea_free,
-        .dsize = frb_index_searcher_size
-    }
+        .dsize = frb_index_searcher_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_sea_alloc(VALUE rclass) {
@@ -3306,8 +3460,13 @@ const rb_data_type_t frb_multi_searcher_t = {
     .function = {
         .dmark = frb_ms_mark,
         .dfree = frb_ms_free,
-        .dsize = frb_multi_searcher_size
-    }
+        .dsize = frb_multi_searcher_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_ms_alloc(VALUE rclass) {

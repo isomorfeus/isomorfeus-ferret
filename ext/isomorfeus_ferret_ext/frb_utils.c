@@ -21,9 +21,15 @@ static size_t frb_bv_size(const void *p) {
 const rb_data_type_t frb_bv_t = {
     .wrap_struct_name = "FrbBitVector",
     .function = {
+        .dmark = NULL,
         .dfree = frb_bv_free,
-        .dsize = frb_bv_size
-    }
+        .dsize = frb_bv_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_bv_alloc(VALUE klass) {
@@ -537,9 +543,15 @@ static size_t frb_mulmap_size(const void *p) {
 const rb_data_type_t frb_mulmap_t = {
     .wrap_struct_name = "FrbMultiMapper",
     .function = {
+        .dmark = NULL,
         .dfree = frb_mulmap_free,
-        .dsize = frb_mulmap_size
-    }
+        .dsize = frb_mulmap_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_mulmap_alloc(VALUE klass) {
@@ -772,8 +784,13 @@ const rb_data_type_t frb_pq_t = {
     .function = {
         .dmark = frb_pq_mark,
         .dfree = frb_pq_free,
-        .dsize = frb_pq_t_size
-    }
+        .dsize = frb_pq_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static VALUE frb_pq_alloc(VALUE klass) {
