@@ -1496,7 +1496,7 @@ static VALUE frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer) {
  */
 static VALUE frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ranalyzer) {
     FrtAnalyzer *pfa, *a;
-    TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, pfa);
+    TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, pfa);
     a = frb_get_cwrapped_analyzer(ranalyzer);
 
     frt_pfa_add_field(pfa, frb_field(rfield), a);
@@ -1528,8 +1528,7 @@ static VALUE frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstri
         rb_enc_associate(rstr, rb_enc_get(rstring));
         return rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2,
                           rb_str_new_cstr(rb_id2name(field)), rstr);
-    }
-    else {
+    } else {
         return get_rb_ts_from_a(a, rfield, rstring);
     }
 }
