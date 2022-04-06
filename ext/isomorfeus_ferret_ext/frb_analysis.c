@@ -819,11 +819,6 @@ VALUE rlower, rstr;\
 rb_scan_args(argc, argv, "11", &rstr, &rlower);\
 lower = (argc ? RTEST(rlower) : dflt)
 
-static VALUE frb_tokenizer_alloc(VALUE rclass) {
-    FrtTokenStream *ts;
-    return TypedData_Make_Struct(rclass, FrtTokenStream, &frb_token_stream_t, ts);
-}
-
 /*
  *  call-seq:
  *     LetterTokenizer.new(lower = true) -> tokenizer
@@ -1241,11 +1236,6 @@ static void frb_analyzer_free(void *p) {
     frt_a_deref(a);
 }
 
-static void frb_analyzer_mark(void *p) {
-    CWrappedAnalyzer *a = (CWrappedAnalyzer *)p;
-    rb_gc_mark(a->ranalyzer);
-}
-
 static size_t frb_analyzer_size(const void *p) {
     return sizeof(CWrappedAnalyzer);
     (void)p;
@@ -1254,7 +1244,7 @@ static size_t frb_analyzer_size(const void *p) {
 const rb_data_type_t frb_analyzer_t = {
     .wrap_struct_name = "FrbAnalyzer",
     .function = {
-        .dmark = frb_analyzer_mark,
+        .dmark = NULL,
         .dfree = frb_analyzer_free,
         .dsize = frb_analyzer_size,
         .dcompact = NULL,
