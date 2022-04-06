@@ -377,6 +377,11 @@ static size_t frb_ts_size(const void *p) {
     (void)p;
 }
 
+static size_t frb_cts_size(const void *p) {
+    return sizeof(FrtCachedTokenStream);
+    (void)p;
+}
+
 typedef struct RegExpTokenStream {
     FrtCachedTokenStream super;
     VALUE rtext;
@@ -421,6 +426,20 @@ const rb_data_type_t frb_token_stream_t = {
     .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
+const rb_data_type_t frb_cached_token_stream_t = {
+    .wrap_struct_name = "FrbCachedTokenStream",
+    .function = {
+        .dmark = frb_ts_mark,
+        .dfree = frb_ts_free,
+        .dsize = frb_cts_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = &frb_token_stream_t,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 const rb_data_type_t frb_reg_exp_token_stream_t = {
     .wrap_struct_name = "FrbRegExpTokenStream",
     .function = {
@@ -430,7 +449,7 @@ const rb_data_type_t frb_reg_exp_token_stream_t = {
         .dcompact = NULL,
         .reserved = {0},
     },
-    .parent = NULL,
+    .parent = &frb_cached_token_stream_t,
     .data = NULL,
     .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
@@ -814,10 +833,15 @@ static VALUE frb_tokenizer_alloc(VALUE rclass) {
  *
  *  lower:: set to false if you don't wish to downcase tokens
  */
+static VALUE frb_letter_tokenizer_alloc(VALUE rclass) {
+    FrtTokenStream *ts = frt_letter_tokenizer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_cached_token_stream_t, ts);
+}
+
 static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_letter_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
@@ -834,10 +858,15 @@ static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
  *
  *  lower:: set to false if you don't wish to downcase tokens
  */
+static VALUE frb_whitespace_tokenizer_alloc(VALUE rclass) {
+    FrtTokenStream *ts = frt_whitespace_tokenizer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_cached_token_stream_t, ts);
+}
+
 static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_whitespace_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
@@ -854,10 +883,15 @@ static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
  *
  *  lower:: set to false if you don't wish to downcase tokens
  */
+static VALUE frb_standard_tokenizer_alloc(VALUE rclass) {
+    FrtTokenStream *ts = frt_standard_tokenizer_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_cached_token_stream_t, ts);
+}
+
 static VALUE frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
-    TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_standard_tokenizer_init(ts, lower);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
@@ -1716,7 +1750,7 @@ static void Init_TokenStream(void) {
 static void Init_LetterTokenizer(void) {
     cLetterTokenizer = rb_define_class_under(mAnalysis, "LetterTokenizer", cTokenStream);
     frb_mark_cclass(cLetterTokenizer);
-    rb_define_alloc_func(cLetterTokenizer, frb_tokenizer_alloc);
+    rb_define_alloc_func(cLetterTokenizer, frb_letter_tokenizer_alloc);
     rb_define_method(cLetterTokenizer, "initialize", frb_letter_tokenizer_init, -1);
 }
 
@@ -1736,7 +1770,7 @@ static void Init_LetterTokenizer(void) {
 static void Init_WhiteSpaceTokenizer(void) {
     cWhiteSpaceTokenizer = rb_define_class_under(mAnalysis, "WhiteSpaceTokenizer", cTokenStream);
     frb_mark_cclass(cWhiteSpaceTokenizer);
-    rb_define_alloc_func(cWhiteSpaceTokenizer, frb_tokenizer_alloc);
+    rb_define_alloc_func(cWhiteSpaceTokenizer, frb_whitespace_tokenizer_alloc);
     rb_define_method(cWhiteSpaceTokenizer, "initialize", frb_whitespace_tokenizer_init, -1);
 }
 
@@ -1757,7 +1791,7 @@ static void Init_WhiteSpaceTokenizer(void) {
 static void Init_StandardTokenizer(void) {
     cStandardTokenizer = rb_define_class_under(mAnalysis, "StandardTokenizer", cTokenStream);
     frb_mark_cclass(cStandardTokenizer);
-    rb_define_alloc_func(cStandardTokenizer, frb_tokenizer_alloc);
+    rb_define_alloc_func(cStandardTokenizer, frb_standard_tokenizer_alloc);
     rb_define_method(cStandardTokenizer, "initialize", frb_standard_tokenizer_init, -1);
 }
 
