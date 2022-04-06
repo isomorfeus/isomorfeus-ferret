@@ -65,7 +65,7 @@ VALUE object_get(void *key) {
 
 void object_add2(void *key, VALUE obj, const char *file, int line) {
     if (frt_h_get(object_map, key))
-        printf("failed adding %lx to %lld; already contains %llx. %s:%d\n",
+        printf("failed adding object %lx to %lld; already contains %llx. %s:%d\n",
                (long)obj, (long long)key, (long long)frt_h_get(object_map, key), file, line);
     frt_h_set(object_map, key, (void *)obj);
 }
@@ -76,7 +76,7 @@ void object_set2(void *key, VALUE obj, const char *file, int line) {
 
 void object_del2(void *key, const char *file, int line) {
     if (object_get(key) == Qnil)
-        printf("failed deleting %lld. %s:%d\n", (long long)key, file, line);
+        printf("failed deleting object %lld. %s:%d\n", (long long)key, file, line);
     frt_h_del(object_map, key);
 }
 
