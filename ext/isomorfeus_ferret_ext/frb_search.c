@@ -2298,7 +2298,7 @@ static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
     FRT_TRY
         f = frt_rfilt_init(f, frb_field(rfield), lterm, uterm, include_lower, include_upper);
         break;
-    default:
+    FRT_XCATCHALL
         ex_code = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
@@ -3008,7 +3008,7 @@ static FrtTopDocs *frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtS
     FRT_TRY
         td = sea->search(sea, query, offset, limit, filter, sort, post_filter, 0);
         if (filter) frt_filt_deref(filter);
-    default:
+    FRT_XCATCHALL
         ex_code = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();

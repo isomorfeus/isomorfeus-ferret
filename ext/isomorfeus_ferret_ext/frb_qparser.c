@@ -267,7 +267,7 @@ frb_qp_parse(VALUE self, VALUE rstr)
         q = qp_parse(qp, rs2s(rstr), rb_enc_get(rstr));
         rq = frb_get_q(q);
         break;
-    default:
+    FRT_XCATCHALL
         msg = xcontext.msg;
         FRT_HANDLED();
     FRT_XENDTRY
@@ -635,4 +635,3 @@ Init_QueryParser(void)
 
     Init_QueryParseException();
 }
-

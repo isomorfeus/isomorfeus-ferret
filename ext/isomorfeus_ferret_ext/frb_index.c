@@ -1369,12 +1369,6 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
                 store = frt_open_fs_store(rs2s(rval));
                 FRT_DEREF(store);
             }
-
-            /* Let ruby's garbage collector handle the closing of the store
-            if (!close_dir) {
-            close_dir = RTEST(rb_hash_aref(roptions, sym_close_dir));
-            }
-            */
             /* use_compound_file defaults to true */
             config.use_compound_file =
                 (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse)
@@ -1420,14 +1414,18 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
 
         TypedData_Get_Struct(self, FrtIndexWriter, &frb_index_writer_t, iw);
         iw = frt_iw_open(iw, store, analyzer, &config);
-
-    default:
+    FRT_XCATCHALL
         ex_code = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
     FRT_XENDTRY
 
-    if (ex_code && msg) { frb_raise(ex_code, msg); }
+    if (ex_code && msg) {
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        frb_raise(ex_code, msg);
+    }
 
     if (rb_block_given_p()) {
         rb_yield(self);
@@ -2221,7 +2219,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
             TypedData_Get_Struct(self, FrtIndexReader, &frb_index_reader_t, ir);
             ir = frt_ir_open(ir, store);
         }
-    default:
+    FRT_XCATCHALL
         ex_code = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
