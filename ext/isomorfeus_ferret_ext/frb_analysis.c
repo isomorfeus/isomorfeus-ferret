@@ -883,7 +883,7 @@ static VALUE frb_standard_tokenizer_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_cached_token_stream_t, ts);
 }
 
-static VALUE frb_standard_tokenizer_init(VALUE argc, VALUE *argv, VALUE self) {
+static VALUE frb_standard_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TS_ARGS(false);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
