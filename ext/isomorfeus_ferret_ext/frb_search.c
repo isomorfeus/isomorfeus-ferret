@@ -3403,7 +3403,6 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
     FrtStore *store = NULL;
     FrtIndexReader *ir = NULL;
     FrtSearcher *sea;
-    TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
     if (TYPE(obj) == T_STRING) {
         frb_create_dir(obj);
         store = frt_open_fs_store(rs2s(obj));
@@ -3422,6 +3421,7 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
     }
+    TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
     frt_isea_init(sea, ir);
     ((FrtIndexSearcher *)sea)->close_ir = false;
     object_add(sea, self);
@@ -3487,7 +3487,6 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
     VALUE rsearcher;
     FrtSearcher **searchers = FRT_ALLOC_N(FrtSearcher *, capa);
     FrtSearcher *s;
-    TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, s);
     for (i = 0; i < argc; i++) {
         rsearcher = argv[i];
         switch (TYPE(rsearcher)) {
@@ -3509,6 +3508,7 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
                 break;
         }
     }
+    TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, s);
     frt_msea_init(s, searchers, top, false);
     object_add(s, self);
     return self;
