@@ -2828,6 +2828,9 @@ static void frb_sea_free(void *p) {
 static VALUE frb_sea_close(VALUE self) {
     GET_SEA();
     object_del(sea);
+    ((struct RData *)(self))->data = NULL;
+    ((struct RData *)(self))->dmark = NULL;
+    ((struct RData *)(self))->dfree = NULL;
     sea->close(sea);
     return Qnil;
 }

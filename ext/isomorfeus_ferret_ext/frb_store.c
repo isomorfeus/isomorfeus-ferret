@@ -22,6 +22,9 @@ void frb_unwrap_locks(FrtStore *store) {
         VALUE rlock = object_get(lock);
         if (rlock != Qnil) {
             object_del(lock);
+            ((struct RData *)(rlock))->data = NULL;
+            ((struct RData *)(rlock))->dmark = NULL;
+            ((struct RData *)(rlock))->dfree = NULL;
         }
     }
 }
@@ -215,6 +218,9 @@ frb_dir_close(VALUE self)
     rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
     if (ref_cnt < 0) {
         object_del(store);
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
         frb_unwrap_locks(store);
         frt_store_deref(store);
     }

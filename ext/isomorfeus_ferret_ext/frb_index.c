@@ -1288,6 +1288,9 @@ void frb_iw_mark(void *p) {
  */
 static VALUE frb_iw_close(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
+    ((struct RData *)(self))->data = NULL;
+    ((struct RData *)(self))->dmark = NULL;
+    ((struct RData *)(self))->dfree = NULL;
     frt_iw_close(iw);
     return Qnil;
 }
@@ -2332,6 +2335,9 @@ frb_ir_close(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     object_del(ir);
+    ((struct RData *)(self))->data = NULL;
+    ((struct RData *)(self))->dmark = NULL;
+    ((struct RData *)(self))->dfree = NULL;
     frt_ir_close(ir);
     return self;
 }
