@@ -813,20 +813,11 @@ static VALUE frb_rets_init(int argc, VALUE *argv, VALUE self) {
  * Tokenizers
  ****************************************************************************/
 
-#define TS_ARGS(dflt) \
-    bool lower;\
-VALUE rlower, rstr;\
-rb_scan_args(argc, argv, "11", &rstr, &rlower);\
-lower = (argc ? RTEST(rlower) : dflt)
-
 /*
  *  call-seq:
- *     LetterTokenizer.new(lower = true) -> tokenizer
+ *     LetterTokenizer.new() -> tokenizer
  *
- *  Create a new LetterTokenizer which optionally downcases tokens. Downcasing
- *  is done according the current locale.
- *
- *  lower:: set to false if you don't wish to downcase tokens
+ *  Create a new LetterTokenizer.
  */
 static VALUE frb_letter_tokenizer_alloc(VALUE rclass) {
     FrtTokenStream *ts = frt_letter_tokenizer_alloc();
@@ -834,10 +825,11 @@ static VALUE frb_letter_tokenizer_alloc(VALUE rclass) {
 }
 
 static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
-    TS_ARGS(false);
+    VALUE rstr;
+    rb_scan_args(argc, argv, "1", &rstr);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
-    ts = frt_letter_tokenizer_init(ts, lower);
+    ts = frt_letter_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -846,12 +838,9 @@ static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
 
 /*
  *  call-seq:
- *     WhiteSpaceTokenizer.new(lower = true) -> tokenizer
+ *     WhiteSpaceTokenizer.new -> tokenizer
  *
- *  Create a new WhiteSpaceTokenizer which optionally downcases tokens.
- *  Downcasing is done according the current locale.
- *
- *  lower:: set to false if you don't wish to downcase tokens
+ *  Create a new WhiteSpaceTokenizer.
  */
 static VALUE frb_whitespace_tokenizer_alloc(VALUE rclass) {
     FrtTokenStream *ts = frt_whitespace_tokenizer_alloc();
@@ -859,10 +848,11 @@ static VALUE frb_whitespace_tokenizer_alloc(VALUE rclass) {
 }
 
 static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
-    TS_ARGS(false);
+    VALUE rstr;
+    rb_scan_args(argc, argv, "1", &rstr);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
-    ts = frt_whitespace_tokenizer_init(ts, lower);
+    ts = frt_whitespace_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -871,12 +861,9 @@ static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
 
 /*
  *  call-seq:
- *     StandardTokenizer.new(lower = true) -> tokenizer
+ *     StandardTokenizer.new -> tokenizer
  *
- *  Create a new StandardTokenizer which optionally downcases tokens.
- *  Downcasing is done according the current locale.
- *
- *  lower:: set to false if you don't wish to downcase tokens
+ *  Create a new StandardTokenizer.
  */
 static VALUE frb_standard_tokenizer_alloc(VALUE rclass) {
     FrtTokenStream *ts = frt_standard_tokenizer_alloc();
@@ -884,10 +871,11 @@ static VALUE frb_standard_tokenizer_alloc(VALUE rclass) {
 }
 
 static VALUE frb_standard_tokenizer_init(int argc, VALUE *argv, VALUE self) {
-    TS_ARGS(false);
+    VALUE rstr;
+    rb_scan_args(argc, argv, "1", &rstr);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
-    ts = frt_standard_tokenizer_init(ts, lower);
+    ts = frt_standard_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
     object_add(&ts->text, rstr);
     object_add(ts, self);
@@ -1397,7 +1385,6 @@ static VALUE frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self) {
     FrtAnalyzer *a;
     GET_LOWER(true);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
-
     frt_letter_analyzer_init(a, lower);
     object_add(a, self);
     return self;

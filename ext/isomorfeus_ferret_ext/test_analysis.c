@@ -143,7 +143,7 @@ static void test_non_analyzer(TestCase *tc, void *data)
 static void test_whitespace_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_whitespace_tokenizer_new(false);
+    FrtTokenStream *ts = frt_whitespace_tokenizer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
@@ -168,7 +168,7 @@ static void test_whitespace_tokenizer(TestCase *tc, void *data)
 static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_whitespace_tokenizer_new(false);
+    FrtTokenStream *ts = frt_whitespace_tokenizer_new();
     char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
     rb_encoding *enc = utf8_encoding;
     (void)data;
@@ -196,7 +196,8 @@ static void test_mb_whitespace_tokenizer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "áägç®êëì¯úøã¬öîí", 55, 86, enc);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_whitespace_tokenizer_new(true);
+    ts = frt_whitespace_tokenizer_new();
+    ts = frt_lowercase_filter_new(ts);
     ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän@gmail.com", 0, 18, enc);
     test_token(frt_ts_next(ts), "is", 19, 21, enc);
@@ -287,7 +288,7 @@ static void test_mb_whitespace_analyzer(TestCase *tc, void *data)
 static void test_letter_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_letter_tokenizer_new(false);
+    FrtTokenStream *ts = frt_letter_tokenizer_new();
     char text[100] = "DBalmain@gmail.com is My e-mail 52   #$ address. 23#!$";
     (void)data;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
@@ -312,7 +313,7 @@ static void test_letter_tokenizer(TestCase *tc, void *data)
 static void test_mb_letter_tokenizer(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_letter_tokenizer_new(false);
+    FrtTokenStream *ts = frt_letter_tokenizer_new();
     char text[100] = "DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ";
     (void)data;
     rb_encoding *enc = utf8_encoding;
@@ -346,7 +347,8 @@ static void test_mb_letter_tokenizer(TestCase *tc, void *data)
     test_token(frt_ts_next(ts), "öîí", 80, 86, enc);
     Assert(frt_ts_next(ts) == NULL, "Should be no more tokens");
     frt_ts_deref(ts);
-    ts = frt_letter_tokenizer_new(true);
+    ts = frt_letter_tokenizer_new();
+    ts = frt_lowercase_filter_new(ts);
     ts->reset(ts, text, enc);
     test_token(frt_ts_next(ts), "dbalmän", 0, 8, enc);
     test_token(frt_ts_next(ts), "gmail", 9, 14, enc);
@@ -488,7 +490,7 @@ static void do_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
 
 static void test_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_standard_tokenizer_new(false);
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
     (void)data;
     do_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -496,7 +498,7 @@ static void test_standard_tokenizer(TestCase *tc, void *data)
 
 static void test_legacy_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_standard_tokenizer_new(false);
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
     (void)data;
     do_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -579,7 +581,7 @@ static void do_mb_standard_tokenizer(TestCase *tc, FrtTokenStream *ts)
 
 static void test_mb_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_standard_tokenizer_new(false);
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
     (void)data;
     do_mb_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -587,7 +589,7 @@ static void test_mb_standard_tokenizer(TestCase *tc, void *data)
 
 static void test_mb_legacy_standard_tokenizer(TestCase *tc, void *data)
 {
-    FrtTokenStream *ts = frt_standard_tokenizer_new(false);
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
     (void)data;
     do_mb_standard_tokenizer(tc, ts);
     frt_ts_deref(ts);
@@ -890,7 +892,8 @@ static void test_long_word(TestCase *tc, void *data)
 static void test_lowercase_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_standard_tokenizer_new(true);
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
+    ts = frt_lowercase_filter_new(ts);
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234";
     (void)data;
@@ -918,7 +921,9 @@ static void test_lowercase_filter(TestCase *tc, void *data)
 static void test_hyphen_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_hyphen_filter_new(frt_standard_tokenizer_new(true));
+    FrtTokenStream *ts = frt_standard_tokenizer_new();
+    ts = frt_lowercase_filter_new(ts);
+    ts = frt_hyphen_filter_new(ts);
     char text[200] =
         "DBalmain@gmail.com is My e-mail 52   #$ Address. -23!$ http://www.google.com/results/ T.N.T. 123-1235-ASD-1234 long-hyph-en-at-ed-word";
     (void)data;
@@ -957,7 +962,7 @@ static void test_stop_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
     FrtTokenStream *ts =
-        frt_stop_filter_new_with_words(frt_letter_tokenizer_new(false), words);
+        frt_stop_filter_new_with_words(frt_letter_tokenizer_new(), words);
     char text[200] =
         "one, two, three, four, five, six, seven, eight, nine, ten.";
     (void)data;
@@ -982,7 +987,7 @@ static void test_stop_filter(TestCase *tc, void *data)
 static void test_mapping_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_mapping_filter_new(frt_letter_tokenizer_new(false));
+    FrtTokenStream *ts = frt_mapping_filter_new(frt_letter_tokenizer_new());
     char text[200] =
         "one, two, three, four, five, six, seven, eight, nine, ten.";
     char long_word[301] =
@@ -1056,7 +1061,9 @@ static void test_stemmer(TestCase *tc, void *data)
 static void test_stem_filter(TestCase *tc, void *data)
 {
     FrtToken *tk = frt_tk_new();
-    FrtTokenStream *ts = frt_stem_filter_new(frt_letter_tokenizer_new(true), "english");
+    FrtTokenStream *ts = frt_letter_tokenizer_new();
+    ts = frt_lowercase_filter_new(ts);
+    ts = frt_stem_filter_new(ts, "english");
     FrtTokenStream *ts2;
     char text[200] = "debate debates debated debating debater";
     char text2[200] = "dêbate dêbates dêbated dêbating dêbater";

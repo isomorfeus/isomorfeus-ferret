@@ -29,6 +29,7 @@ class AsciiLetterTokenizerTest < Test::Unit::TestCase
 
   def test_letter_tokenizer
     input = 'DBalmain@gmail.com is My e-mail 523@#$ ADDRESS. 23#!$'
+    input.encode!("ASCII-8BIT")
     t = LetterTokenizer.new(input)
     assert_equal(Token.new("DBalmain", 0, 8), t.next)
     assert_equal(Token.new("gmail", 9, 14), t.next)
@@ -39,7 +40,7 @@ class AsciiLetterTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("mail", 27, 31), t.next)
     assert_equal(Token.new("ADDRESS", 39, 46), t.next)
     assert(! t.next)
-    t.text = "one_two three"
+    t.text = "one_two three".encode!("ASCII-8BIT")
     assert_equal(Token.new("one", 0, 3), t.next)
     assert_equal(Token.new("two", 4, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
@@ -62,6 +63,7 @@ class LetterTokenizerTest < Test::Unit::TestCase
 
   def test_letter_tokenizer
     input = 'DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ'
+    input.encode!("ASCII-8BIT")
     t = LetterTokenizer.new(input)
     assert_equal(Token.new('DBalmän', 0, 8), t.next)
     assert_equal(Token.new('gmail', 9, 14), t.next)
@@ -76,26 +78,12 @@ class LetterTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('ÚØÃ', 72, 78), t.next)
     assert_equal(Token.new('ÖÎÍ', 80, 86), t.next)
     assert(! t.next)
-    t.text = "one_two three"
+    t.text = "one_two three".encode!("ASCII-8BIT")
     assert_equal(Token.new("one", 0, 3), t.next)
     assert_equal(Token.new("two", 4, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
     t = LowerCaseFilter.new(LetterTokenizer.new(input))
-    assert_equal(Token.new('dbalmän', 0, 8), t.next)
-    assert_equal(Token.new('gmail', 9, 14), t.next)
-    assert_equal(Token.new('com', 15, 18), t.next)
-    assert_equal(Token.new('is', 19, 21), t.next)
-    assert_equal(Token.new('my', 22, 24), t.next)
-    assert_equal(Token.new('e', 25, 26), t.next)
-    assert_equal(Token.new('mail', 27, 31), t.next)
-    assert_equal(Token.new('address', 40, 47), t.next)
-    assert_equal(Token.new('áägç', 55, 62), t.next)
-    assert_equal(Token.new('êëì', 64, 70), t.next)
-    assert_equal(Token.new('úøã', 72, 78), t.next)
-    assert_equal(Token.new('öîí', 80, 86), t.next)
-    assert(! t.next)
-    t = LetterTokenizer.new(input, true)
     assert_equal(Token.new('dbalmän', 0, 8), t.next)
     assert_equal(Token.new('gmail', 9, 14), t.next)
     assert_equal(Token.new('com', 15, 18), t.next)
@@ -117,6 +105,7 @@ class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
 
   def test_whitespace_tokenizer
     input = 'DBalmain@gmail.com is My e-mail 52   #$ ADDRESS. 23#!$'
+    input.encode!("ASCII-8BIT")
     t = WhiteSpaceTokenizer.new(input)
     assert_equal(Token.new('DBalmain@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
@@ -127,7 +116,7 @@ class AsciiWhiteSpaceTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('ADDRESS.', 40, 48), t.next)
     assert_equal(Token.new('23#!$', 49, 54), t.next)
     assert(! t.next)
-    t.text = "one_two three"
+    t.text = "one_two three".encode!("ASCII-8BIT")
     assert_equal(Token.new("one_two", 0, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
@@ -165,17 +154,6 @@ class WhiteSpaceTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new("three", 8, 13), t.next)
     assert(! t.next)
     t = LowerCaseFilter.new(WhiteSpaceTokenizer.new(input))
-    assert_equal(Token.new('dbalmän@gmail.com', 0, 18), t.next)
-    assert_equal(Token.new('is', 19, 21), t.next)
-    assert_equal(Token.new('my', 22, 24), t.next)
-    assert_equal(Token.new('e-mail', 25, 31), t.next)
-    assert_equal(Token.new('52', 32, 34), t.next)
-    assert_equal(Token.new('#$', 37, 39), t.next)
-    assert_equal(Token.new('address.', 40, 48), t.next)
-    assert_equal(Token.new('23#!$', 49, 54), t.next)
-    assert_equal(Token.new('áägç®êëì¯úøã¬öîí', 55, 86), t.next)
-    assert(! t.next)
-    t = WhiteSpaceTokenizer.new(input, true)
     assert_equal(Token.new('dbalmän@gmail.com', 0, 18), t.next)
     assert_equal(Token.new('is', 19, 21), t.next)
     assert_equal(Token.new('my', 22, 24), t.next)

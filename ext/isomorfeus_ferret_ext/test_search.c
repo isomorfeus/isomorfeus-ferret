@@ -147,7 +147,7 @@ static FrtTokenStream *dbl_tf_new(FrtTokenStream *sub_ts)
 
 FrtAnalyzer *dbl_analyzer_new(void) {
     FrtTokenStream *ts;
-    ts = dbl_tf_new(frt_whitespace_tokenizer_new(false));
+    ts = dbl_tf_new(frt_whitespace_tokenizer_new());
     return frt_analyzer_new(ts, NULL, NULL);
 }
 
@@ -1873,4 +1873,3 @@ TestSuite *ts_multi_search(TestSuite *suite)
     frt_searcher_close(searcher);
     return suite;
 }
-

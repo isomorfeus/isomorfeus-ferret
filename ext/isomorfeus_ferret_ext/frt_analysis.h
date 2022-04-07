@@ -75,25 +75,25 @@ extern FrtTokenStream *frt_non_tokenizer_new();
 /*** FrtWhiteSpaceTokenizer **************************************************/
 /*****************************************************************************/
 
-extern FrtTokenStream *frt_whitespace_tokenizer_alloc();
-extern FrtTokenStream *frt_whitespace_tokenizer_init(FrtTokenStream *ts, bool lowercase);
-extern FrtTokenStream *frt_whitespace_tokenizer_new(bool lowercase);
+extern FrtTokenStream *frt_whitespace_tokenizer_alloc(void);
+extern FrtTokenStream *frt_whitespace_tokenizer_init(FrtTokenStream *ts);
+extern FrtTokenStream *frt_whitespace_tokenizer_new(void);
 
 /*****************************************************************************/
 /*** FrtLetterTokenizer ******************************************************/
 /*****************************************************************************/
 
-extern FrtTokenStream *frt_letter_tokenizer_alloc();
-extern FrtTokenStream *frt_letter_tokenizer_init(FrtTokenStream *ts, bool lowercase);
-extern FrtTokenStream *frt_letter_tokenizer_new(bool lowercase);
+extern FrtTokenStream *frt_letter_tokenizer_alloc(void);
+extern FrtTokenStream *frt_letter_tokenizer_init(FrtTokenStream *ts);
+extern FrtTokenStream *frt_letter_tokenizer_new(void);
 
 /*****************************************************************************/
 /*** FrtStandardTokenizer ****************************************************/
 /*****************************************************************************/
 
-extern FrtTokenStream *frt_standard_tokenizer_alloc();
-extern FrtTokenStream *frt_standard_tokenizer_init(FrtTokenStream *ts, bool lowercase);
-extern FrtTokenStream *frt_standard_tokenizer_new(bool lowercase);
+extern FrtTokenStream *frt_standard_tokenizer_alloc(void);
+extern FrtTokenStream *frt_standard_tokenizer_init(FrtTokenStream *ts);
+extern FrtTokenStream *frt_standard_tokenizer_new(void);
 
 /*****************************************************************************/
 /*** FrtHyphenFilter *********************************************************/
@@ -108,7 +108,7 @@ typedef struct FrtHyphenFilter {
     FrtToken       *tk;
 } FrtHyphenFilter;
 
-extern FrtTokenStream *frt_hyphen_filter_alloc();
+extern FrtTokenStream *frt_hyphen_filter_alloc(void);
 extern FrtTokenStream *frt_hyphen_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts);
 
@@ -116,7 +116,7 @@ extern FrtTokenStream *frt_hyphen_filter_new(FrtTokenStream *sub_ts);
 /*** FrtLowercaseFilter ******************************************************/
 /*****************************************************************************/
 
-extern FrtTokenStream *frt_lowercase_filter_alloc();
+extern FrtTokenStream *frt_lowercase_filter_alloc(void);
 extern void            frt_lowercase_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_lowercase_filter_new(FrtTokenStream *sub_ts);
 
@@ -145,7 +145,7 @@ typedef struct FrtStopFilter {
     FrtHash        *words;
 } FrtStopFilter;
 
-extern FrtTokenStream *frt_stop_filter_alloc();
+extern FrtTokenStream *frt_stop_filter_alloc(void);
 extern FrtTokenStream *frt_stop_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
 extern void            frt_stop_filter_set_words(FrtTokenStream *ts, const char **words);
 extern void            frt_stop_filter_set_words_len(FrtTokenStream *ts, const char **words, int len);
@@ -164,7 +164,7 @@ typedef struct FrtStemFilter {
     char               *charenc;
 } FrtStemFilter;
 
-extern FrtTokenStream *frt_stem_filter_alloc();
+extern FrtTokenStream *frt_stem_filter_alloc(void);
 extern void            frt_stem_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts, const char *algorithm);
 extern FrtTokenStream *frt_stem_filter_new(FrtTokenStream *sub_ts, const char *algorithm);
 
@@ -177,7 +177,7 @@ typedef struct FrtMappingFilter {
     FrtMultiMapper *mapper;
 } FrtMappingFilter;
 
-extern FrtTokenStream *frt_mapping_filter_alloc();
+extern FrtTokenStream *frt_mapping_filter_alloc(void);
 extern void            frt_mapping_filter_init(FrtTokenStream *ts, FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_mapping_filter_new(FrtTokenStream *sub_ts);
 extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pattern, const char *replacement);
@@ -197,7 +197,7 @@ extern void frt_a_deref(FrtAnalyzer *a);
 
 #define frt_a_get_ts(ma, field, text, encoding) ma->get_ts(ma, field, text, encoding)
 
-extern FrtAnalyzer *frt_analyzer_alloc();
+extern FrtAnalyzer *frt_analyzer_alloc(void);
 extern void         frt_analyzer_init(FrtAnalyzer *a, FrtTokenStream *ts, void (*destroy)(FrtAnalyzer *a),
                                     FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding));
 extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts, void (*destroy)(FrtAnalyzer *a),
@@ -207,7 +207,7 @@ extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts, void (*destroy)(FrtAnal
 /*** FrtNonAnalyzer **********************************************************/
 /*****************************************************************************/
 
-extern FrtAnalyzer *frt_non_analyzer_new();
+extern FrtAnalyzer *frt_non_analyzer_new(void);
 
 extern void frt_a_standard_destroy(FrtAnalyzer *a);
 
@@ -215,7 +215,7 @@ extern void frt_a_standard_destroy(FrtAnalyzer *a);
 /*** FrtWhiteSpaceAnalyzer ***************************************************/
 /*****************************************************************************/
 
-extern FrtAnalyzer *frt_whitespace_analyzer_alloc();
+extern FrtAnalyzer *frt_whitespace_analyzer_alloc(void);
 extern void         frt_whitespace_analyzer_init(FrtAnalyzer *a, bool lowercase);
 extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
 
@@ -223,7 +223,7 @@ extern FrtAnalyzer *frt_whitespace_analyzer_new(bool lowercase);
 /*** FrtLetterAnalyzer *******************************************************/
 /*****************************************************************************/
 
-extern FrtAnalyzer *frt_letter_analyzer_alloc();
+extern FrtAnalyzer *frt_letter_analyzer_alloc(void);
 extern void         frt_letter_analyzer_init(FrtAnalyzer *a, bool lowercase);
 extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
 
@@ -231,7 +231,7 @@ extern FrtAnalyzer *frt_letter_analyzer_new(bool lowercase);
 /*** FrtStandardAnalyzer *****************************************************/
 /*****************************************************************************/
 
-extern FrtAnalyzer *frt_standard_analyzer_alloc();
+extern FrtAnalyzer *frt_standard_analyzer_alloc(void);
 extern void         frt_standard_analyzer_init(FrtAnalyzer *a, bool lowercase, const char **words);
 extern FrtAnalyzer *frt_standard_analyzer_new(bool lowercase);
 extern FrtAnalyzer *frt_standard_analyzer_new_with_words(bool lowercase, const char **words);
@@ -248,7 +248,7 @@ typedef struct FrtPerFieldAnalyzer {
     FrtAnalyzer *default_a;
 } FrtPerFieldAnalyzer;
 
-extern FrtAnalyzer *frt_per_field_analyzer_alloc();
+extern FrtAnalyzer *frt_per_field_analyzer_alloc(void);
 extern void         frt_per_field_analyzer_init(FrtAnalyzer *a, FrtAnalyzer *default_a);
 extern FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *default_a);
 extern void         frt_pfa_add_field(FrtAnalyzer *self, FrtSymbol field, FrtAnalyzer *analyzer);

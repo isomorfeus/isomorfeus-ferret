@@ -95,9 +95,7 @@ static FrtHashSet *frb_get_fields(VALUE rfields, FrtHashSet *other_fields) {
     return fields;
 }
 
-static void
-hs_safe_merge(FrtHashSet *merger, FrtHashSet *mergee)
-{
+static void hs_safe_merge(FrtHashSet *merger, FrtHashSet *mergee) {
     FrtHashSetEntry *entry = mergee->first;
     for (; entry != NULL; entry = entry->next) {
         frt_hs_add_safe(merger, entry->elem);
@@ -255,9 +253,7 @@ static VALUE frb_qp_init(int argc, VALUE *argv, VALUE self) {
  *  Parse a query string returning a Query object if parsing was successful.
  *  Will raise a QueryParseException if unsuccessful.
  */
-static VALUE
-frb_qp_parse(VALUE self, VALUE rstr)
-{
+static VALUE frb_qp_parse(VALUE self, VALUE rstr) {
     const char *volatile msg = NULL;
     volatile VALUE rq;
     GET_QP;
@@ -283,9 +279,7 @@ frb_qp_parse(VALUE self, VALUE rstr)
  *
  *  Returns the list of all fields that the QueryParser knows about.
  */
-static VALUE
-frb_qp_get_fields(VALUE self)
-{
+static VALUE frb_qp_get_fields(VALUE self) {
     GET_QP;
     FrtHashSet *fields = qp->all_fields;
     FrtHashSetEntry *hse;
@@ -341,9 +335,7 @@ static VALUE frb_qp_set_fields(VALUE self, VALUE rfields) {
  *
  *  Returns the list of all tokenized_fields that the QueryParser knows about.
  */
-static VALUE
-frb_qp_get_tkz_fields(VALUE self)
-{
+static VALUE frb_qp_get_tkz_fields(VALUE self) {
     GET_QP;
     FrtHashSet *fields = qp->tokenized_fields;
     if (fields) {
@@ -355,8 +347,7 @@ frb_qp_get_tkz_fields(VALUE self)
         }
 
         return rfields;
-    }
-    else {
+    } else {
         return Qnil;
     }
 }
@@ -368,9 +359,7 @@ frb_qp_get_tkz_fields(VALUE self)
  *  Set the list of tokenized_fields. These tokenized_fields are tokenized in
  *  the queries. If this is set to Qnil then all fields will be tokenized.
  */
-static VALUE
-frb_qp_set_tkz_fields(VALUE self, VALUE rfields)
-{
+static VALUE frb_qp_set_tkz_fields(VALUE self, VALUE rfields) {
     GET_QP;
     if (qp->tokenized_fields != qp->all_fields) {
         frt_hs_destroy(qp->tokenized_fields);
@@ -398,12 +387,8 @@ extern VALUE cQueryParser = rb_define_module_under(mFerret, "QueryParser");
  *  Exception raised when there is an error parsing the query string passed to
  *  QueryParser.
  */
-void
-Init_QueryParseException(void)
-{
-    cQueryParseException = rb_define_class_under(cQueryParser,
-                                                 "QueryParseException",
-                                                 rb_eStandardError);
+void Init_QueryParseException(void) {
+    cQueryParseException = rb_define_class_under(cQueryParser, "QueryParseException", rb_eStandardError);
 }
 
 /*
@@ -602,9 +587,7 @@ Init_QueryParseException(void)
  *  will iterate over.
  *
  */
-void
-Init_QueryParser(void)
-{
+void Init_QueryParser(void) {
     /* hash keys */
     sym_wild_card_downcase = ID2SYM(rb_intern("wild_card_downcase"));
     sym_fields = ID2SYM(rb_intern("fields"));
@@ -628,10 +611,8 @@ Init_QueryParser(void)
     rb_define_method(cQueryParser, "parse", frb_qp_parse, 1);
     rb_define_method(cQueryParser, "fields", frb_qp_get_fields, 0);
     rb_define_method(cQueryParser, "fields=", frb_qp_set_fields, 1);
-    rb_define_method(cQueryParser, "tokenized_fields",
-                     frb_qp_get_tkz_fields, 0);
-    rb_define_method(cQueryParser, "tokenized_fields=",
-                     frb_qp_set_tkz_fields, 1);
+    rb_define_method(cQueryParser, "tokenized_fields", frb_qp_get_tkz_fields, 0);
+    rb_define_method(cQueryParser, "tokenized_fields=", frb_qp_set_tkz_fields, 1);
 
     Init_QueryParseException();
 }
