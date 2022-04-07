@@ -902,7 +902,7 @@ static VALUE frb_bq_init(int argc, VALUE *argv, VALUE self) {
     if (rb_scan_args(argc, argv, "01", &rcoord_disabled)) {
         coord_disabled = RTEST(rcoord_disabled);
     }
-    q = frt_bq_init(q, coord_disabled);
+    frt_bq_init(q, coord_disabled);
     object_add(q, self);
     return self;
 }
@@ -985,59 +985,78 @@ static VALUE frb_rq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_range_query_t, rq);
 }
 
-static void get_range_params(VALUE roptions, char **lterm, char **uterm, bool *include_lower, bool *include_upper) {
+struct grp_args {
+    VALUE roptions;
+    VALUE self;
+    void  *f;
+    char  *lterm;
+    char  *uterm;
+    bool  include_lower;
+    bool  include_upper;
+};
+
+VALUE get_range_params(VALUE args) {
+    struct grp_args *a = (struct grp_args *)args;
     VALUE v;
-    Check_Type(roptions, T_HASH);
-    if (Qnil != (v = rb_hash_aref(roptions, sym_lower))) {
-        *lterm = rs2s(rb_obj_as_string(v));
-        *include_lower = true;
+    Check_Type(a->roptions, T_HASH);
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_lower))) {
+        a->lterm = rs2s(rb_obj_as_string(v));
+        a->include_lower = true;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_upper))) {
-        *uterm = rs2s(rb_obj_as_string(v));
-        *include_upper = true;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_upper))) {
+        a->uterm = rs2s(rb_obj_as_string(v));
+        a->include_upper = true;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_lower_exclusive))) {
-        *lterm = rs2s(rb_obj_as_string(v));
-        *include_lower = false;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_lower_exclusive))) {
+        a->lterm = rs2s(rb_obj_as_string(v));
+        a->include_lower = false;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_upper_exclusive))) {
-        *uterm = rs2s(rb_obj_as_string(v));
-        *include_upper = false;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_upper_exclusive))) {
+        a->uterm = rs2s(rb_obj_as_string(v));
+        a->include_upper = false;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_include_lower))) {
-        *include_lower = RTEST(v);
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_include_lower))) {
+        a->include_lower = RTEST(v);
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_include_upper))) {
-        *include_upper = RTEST(v);
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_include_upper))) {
+        a->include_upper = RTEST(v);
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_greater_than))) {
-        *lterm = rs2s(rb_obj_as_string(v));
-        *include_lower = false;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_greater_than))) {
+        a->lterm = rs2s(rb_obj_as_string(v));
+        a->include_lower = false;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_greater_than_or_equal_to))) {
-        *lterm = rs2s(rb_obj_as_string(v));
-        *include_lower = true;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_greater_than_or_equal_to))) {
+        a->lterm = rs2s(rb_obj_as_string(v));
+        a->include_lower = true;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_less_than))) {
-        *uterm = rs2s(rb_obj_as_string(v));
-        *include_upper = false;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_less_than))) {
+        a->uterm = rs2s(rb_obj_as_string(v));
+        a->include_upper = false;
     }
-    if (Qnil != (v = rb_hash_aref(roptions, sym_less_than_or_equal_to))) {
-        *uterm = rs2s(rb_obj_as_string(v));
-        *include_upper = true;
+    if (Qnil != (v = rb_hash_aref(a->roptions, sym_less_than_or_equal_to))) {
+        a->uterm = rs2s(rb_obj_as_string(v));
+        a->include_upper = true;
     }
-    if (!*lterm && !*uterm) {
-        rb_raise(rb_eArgError,
-                 "The bounds of a range should not both be nil");
+    if (!a->lterm && !a->uterm) {
+        rb_raise(rb_eArgError, "The bounds of a range should not both be nil");
     }
-    if (*include_lower && !*lterm) {
-        rb_raise(rb_eArgError,
-                 "The lower bound should not be nil if it is inclusive");
+    if (a->include_lower && !a->lterm) {
+        rb_raise(rb_eArgError, "The lower bound should not be nil if it is inclusive");
     }
-    if (*include_upper && !*uterm) {
-        rb_raise(rb_eArgError,
-                 "The upper bound should not be nil if it is inclusive");
+    if (a->include_upper && !a->uterm) {
+        rb_raise(rb_eArgError, "The upper bound should not be nil if it is inclusive");
     }
+    return Qnil;
+}
+
+VALUE rescue_grp(VALUE args, VALUE exception) {
+    struct grp_args *a = (struct grp_args *)args;
+    ((struct RData *)(a->self))->data = NULL;
+    ((struct RData *)(a->self))->dmark = NULL;
+    ((struct RData *)(a->self))->dfree = NULL;
+    free(a->f);
+    rb_exc_raise(exception);
+    return Qnil;
 }
 
 /*
@@ -1065,13 +1084,14 @@ static void get_range_params(VALUE roptions, char **lterm, char **uterm, bool *i
  */
 static VALUE frb_rq_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtQuery *q;
-    char *lterm = NULL;
-    char *uterm = NULL;
-    bool include_lower = false;
-    bool include_upper = false;
     TypedData_Get_Struct(self, FrtQuery, &frb_range_query_t, q);
-    get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    frt_rq_init(q, frb_field(rfield), lterm, uterm, include_lower, include_upper);
+    struct grp_args a = {
+        .roptions = roptions,
+        .self = self,
+        .f = (void *)q
+    };
+    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
+    frt_rq_init(q, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
     object_add(q, self);
     return self;
 }
@@ -1136,13 +1156,14 @@ static VALUE frb_trq_alloc(VALUE rclass) {
  */
 static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtQuery *q;
-    char *lterm = NULL;
-    char *uterm = NULL;
-    bool include_lower = false;
-    bool include_upper = false;
     TypedData_Get_Struct(self, FrtQuery, &frb_typed_range_query_t, q);
-    get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    q = frt_trq_init(q, frb_field(rfield), lterm, uterm, include_lower, include_upper);
+    struct grp_args a = {
+        .roptions = roptions,
+        .self = self,
+        .f = (void *)q
+    };
+    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
+    q = frt_trq_init(q, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
     object_add(q, self);
     return self;
 }
@@ -2287,18 +2308,23 @@ static VALUE frb_rf_alloc(VALUE rclass) {
  */
 static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtFilter *f;
-    char *lterm = NULL;
-    char *uterm = NULL;
-    bool include_lower = false;
-    bool include_upper = false;
     int ex_code = 0;
     const char *msg = NULL;
     TypedData_Get_Struct(self, FrtFilter, &frb_range_filter_t, f);
-    get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
+    struct grp_args a = {
+        .roptions = roptions,
+        .self = self,
+        .f = (void *)f
+    };
+    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
     FRT_TRY
-        f = frt_rfilt_init(f, frb_field(rfield), lterm, uterm, include_lower, include_upper);
-        break;
+        frt_rfilt_init(f, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
+        object_add(f, self);
     FRT_XCATCHALL
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        free(f);
         ex_code = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
@@ -2306,7 +2332,6 @@ static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
 
     if (ex_code && msg) { frb_raise(ex_code, msg); }
 
-    object_add(f, self);
     return self;
 }
 
@@ -2365,14 +2390,30 @@ static VALUE frb_trf_alloc(VALUE rclass) {
  */
 static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
     FrtFilter *f;
-    char *lterm = NULL;
-    char *uterm = NULL;
-    bool include_lower = false;
-    bool include_upper = false;
+    int ex_code = 0;
+    const char *msg = NULL;
     TypedData_Get_Struct(self, FrtFilter, &frb_typed_range_filter_t, f);
-    get_range_params(roptions, &lterm, &uterm, &include_lower, &include_upper);
-    frt_trfilt_init(f, frb_field(rfield), lterm, uterm, include_lower, include_upper);
-    object_add(f, self);
+    struct grp_args a = {
+        .roptions = roptions,
+        .self = self,
+        .f = (void *)f
+    };
+    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
+    FRT_TRY
+        frt_trfilt_init(f, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
+        object_add(f, self);
+    FRT_XCATCHALL
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        free(f);
+        ex_code = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+
+    if (ex_code && msg) { frb_raise(ex_code, msg); }
+
     return self;
 }
 
