@@ -63,7 +63,6 @@ class LetterTokenizerTest < Test::Unit::TestCase
 
   def test_letter_tokenizer
     input = 'DBalmän@gmail.com is My e-mail 52   #$ address. 23#!$ ÁÄGÇ®ÊËÌ¯ÚØÃ¬ÖÎÍ'
-    input.encode!("ASCII-8BIT")
     t = LetterTokenizer.new(input)
     assert_equal(Token.new('DBalmän', 0, 8), t.next)
     assert_equal(Token.new('gmail', 9, 14), t.next)
@@ -78,7 +77,7 @@ class LetterTokenizerTest < Test::Unit::TestCase
     assert_equal(Token.new('ÚØÃ', 72, 78), t.next)
     assert_equal(Token.new('ÖÎÍ', 80, 86), t.next)
     assert(! t.next)
-    t.text = "one_two three".encode!("ASCII-8BIT")
+    t.text = "one_two three"
     assert_equal(Token.new("one", 0, 3), t.next)
     assert_equal(Token.new("two", 4, 7), t.next)
     assert_equal(Token.new("three", 8, 13), t.next)
