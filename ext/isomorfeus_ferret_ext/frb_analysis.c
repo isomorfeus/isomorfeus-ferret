@@ -116,7 +116,6 @@ static VALUE frb_token_alloc(VALUE rclass) {
 
 static VALUE get_token(FrtToken *tk) {
     RToken *token = ALLOC(RToken);
-
     token->text = rb_str_new2(tk->text);
     rb_enc_associate(token->text, utf8_encoding);
     token->start = tk->start;
@@ -127,9 +126,8 @@ static VALUE get_token(FrtToken *tk) {
 
 FrtToken *frb_set_token(FrtToken *tk, VALUE rt) {
     RToken *rtk;
-
-    if (rt == Qnil) return NULL;
-
+    if (rt == Qnil)
+        return NULL;
     TypedData_Get_Struct(rt, RToken, &frb_rtoken_t, rtk);
     frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text), rtk->start, rtk->end, rtk->pos_inc, rb_enc_get(rtk->text));
     return tk;
@@ -357,18 +355,8 @@ static VALUE frb_token_to_s(VALUE self) {
  *
  ****************************************************************************/
 
-static void frb_ts_mark(void *p) {
-    FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (ts->text)
-        frb_gc_mark(&ts->text);
-}
-
 static void frb_ts_free(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (object_get(&ts->text) != Qnil) {
-        object_del(&ts->text);
-    }
-    object_del(ts);
     frt_ts_deref(ts);
 }
 
@@ -395,7 +383,6 @@ static void frb_rets_free(void *p) {
     if (object_get(&ts->super.super.text) != Qnil) {
         object_del(&ts->super.super.text);
     }
-    object_del(ts);
     frt_ts_deref((FrtTokenStream *)ts);
 }
 
@@ -415,7 +402,7 @@ static size_t frb_rets_size(const void *p) {
 const rb_data_type_t frb_token_stream_t = {
     .wrap_struct_name = "FrbTokenStream",
     .function = {
-        .dmark = frb_ts_mark,
+        .dmark = NULL,
         .dfree = frb_ts_free,
         .dsize = frb_ts_size,
         .dcompact = NULL,
@@ -429,7 +416,7 @@ const rb_data_type_t frb_token_stream_t = {
 const rb_data_type_t frb_cached_token_stream_t = {
     .wrap_struct_name = "FrbCachedTokenStream",
     .function = {
-        .dmark = frb_ts_mark,
+        .dmark = NULL,
         .dfree = frb_ts_free,
         .dsize = frb_cts_size,
         .dcompact = NULL,
@@ -457,14 +444,15 @@ const rb_data_type_t frb_reg_exp_token_stream_t = {
 static FrtToken *rets_next(FrtTokenStream *ts);
 
 static VALUE get_rb_token_stream(FrtTokenStream *ts) {
-    VALUE rts = object_get(ts);
-    if (rts == Qnil) {
+    VALUE rts = ts->rts;
+
+    if (rts == 0 || rts == Qnil) {
         if (ts->next == &rets_next) {
             rts = TypedData_Wrap_Struct(cTokenStream, &frb_reg_exp_token_stream_t, ts);
         } else {
             rts = TypedData_Wrap_Struct(cTokenStream, &frb_token_stream_t, ts);
         }
-        object_add(ts, rts);
+        ts->rts = rts;
     }
     return rts;
 }
@@ -484,10 +472,6 @@ static VALUE frb_ts_set_text(VALUE self, VALUE rtext) {
     ts = DATA_PTR(self);
     StringValue(rtext);
     ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
-
-    /* prevent garbage collection */
-    rb_ivar_set(self, id_text, rtext);
-
     return rtext;
 }
 
@@ -502,11 +486,9 @@ static VALUE frb_ts_get_text(VALUE self) {
     FrtTokenStream *ts;
     // TypedData_Get_Struct(self, FrtTokenStream, &frb_token_stream_t, ts);
     ts = DATA_PTR(self);
-    if ((rtext = object_get(&ts->text)) == Qnil) {
-        if (ts->text) {
-            rtext = rb_str_new2(ts->text);
-            object_set(&ts->text, rtext);
-        }
+    if (ts->text) {
+        rtext = rb_str_new2(ts->text);
+        rb_enc_associate(rtext, ts->encoding);
     }
     return rtext;
 }
@@ -544,7 +526,6 @@ static void frb_tf_free(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
     if (TkFilt(ts)->sub_ts && (object_get(&TkFilt(ts)->sub_ts) != Qnil))
         object_del(&TkFilt(ts)->sub_ts);
-    object_del(ts);
     frt_ts_deref(ts);
 }
 
@@ -568,16 +549,10 @@ const rb_data_type_t frb_token_filter_t = {
 };
 
 /****************************************************************************
- * CWrappedTokenStream
+ * FrtCachedTokenStream
  ****************************************************************************/
 
 #define CachedTS(token_stream) ((FrtCachedTokenStream *)(token_stream))
-#define CWTS(token_stream) ((CWrappedTokenStream *)(token_stream))
-
-typedef struct CWrappedTokenStream {
-    FrtCachedTokenStream super;
-    VALUE rts;
-} CWrappedTokenStream;
 
 static void cwrts_destroy_i(FrtTokenStream *ts) {
     if (object_get(&ts->text) != Qnil) {
@@ -588,7 +563,7 @@ static void cwrts_destroy_i(FrtTokenStream *ts) {
 }
 
 static FrtToken *cwrts_next(FrtTokenStream *ts) {
-    VALUE rtoken = rb_funcall(CWTS(ts)->rts, id_next, 0);
+    VALUE rtoken = rb_funcall(ts->rts, id_next, 0);
     return frb_set_token(&(CachedTS(ts)->token), rtoken);
 }
 
@@ -596,13 +571,13 @@ static FrtTokenStream *cwrts_reset(FrtTokenStream *ts, char *text, rb_encoding *
     ts->t = ts->text = text;
     ts->length = strlen(text);
     ts->encoding = encoding;
-    rb_funcall(CWTS(ts)->rts, id_reset, 1, rb_str_new2(text));
+    rb_funcall(ts->rts, id_reset, 1, rb_str_new2(text));
     return ts;
 }
 
 static FrtTokenStream *cwrts_clone_i(FrtTokenStream *orig_ts) {
-    FrtTokenStream *new_ts = frt_ts_clone_size(orig_ts, sizeof(CWrappedTokenStream));
-    VALUE rts = CWTS(new_ts)->rts = rb_funcall(CWTS(orig_ts)->rts, id_clone, 0);
+    FrtTokenStream *new_ts = frt_ts_clone_size(orig_ts, sizeof(FrtCachedTokenStream));
+    VALUE rts = new_ts->rts = rb_funcall(orig_ts->rts, id_clone, 0);
     rb_hash_aset(object_space, ((VALUE)new_ts)|1, rts);
     return new_ts;
 }
@@ -614,8 +589,8 @@ static FrtTokenStream *frb_get_cwrapped_rts(VALUE rts) {
         ts = DATA_PTR(rts);
         FRT_REF(ts);
     } else {
-        ts = frt_ts_new_i(sizeof(CWrappedTokenStream));
-        CWTS(ts)->rts = rts;
+        ts = frt_ts_new_i(sizeof(FrtCachedTokenStream));
+        ts->rts = rts;
         ts->next = &cwrts_next;
         ts->reset = &cwrts_reset;
         ts->clone_i = &cwrts_clone_i;
@@ -666,12 +641,10 @@ static void rets_destroy_i(FrtTokenStream *ts) {
 static VALUE frb_rets_set_text(VALUE self, VALUE rtext) {
     RegExpTokenStream *ts;
     TypedData_Get_Struct(self, RegExpTokenStream, &frb_reg_exp_token_stream_t, ts);
-
     rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
     StringValue(rtext);
     ts->rtext = rtext;
     ts->curr_ind = 0;
-
     return rtext;
 }
 
@@ -692,55 +665,53 @@ static VALUE frb_rets_get_text(VALUE self) {
 #define BEG(no) regs->beg[no]
 #define END(no) regs->end[no]
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
-static VALUE scan_once(VALUE str, VALUE pat, long *start) {
-  VALUE match;
-  struct re_registers *regs;
-
-  if (rb_reg_search(pat, str, *start, 0) >= 0) {
-    match = rb_backref_get();
-    regs = RMATCH_REGS(match);
-    if (BEG(0) == END(0)) {
-        rb_encoding *enc = STR_ENC_GET(str);
-        /* Always consume at least one character of the input string */
-        if (RSTRING_LEN(str) > END(0))
-            *start = END(0)+rb_enc_mbclen(RSTRING_PTR(str)+END(0), RSTRING_END(str), enc);
-        else
-            *start = END(0)+1;
-    } else {
-      *start = END(0);
+static VALUE scan_once(VALUE rstr, VALUE pat, long *start) {
+    VALUE match;
+    struct re_registers *regs;
+    if (rb_reg_search(pat, rstr, *start, 0) >= 0) {
+        match = rb_backref_get();
+        regs = RMATCH_REGS(match);
+        if (BEG(0) == END(0)) {
+            rb_encoding *enc = STR_ENC_GET(rstr);
+            /* Always consume at least one character of the input string */
+            if (RSTRING_LEN(rstr) > END(0))
+                *start = END(0)+rb_enc_mbclen(RSTRING_PTR(rstr)+END(0), RSTRING_END(rstr), enc);
+            else
+                *start = END(0)+1;
+        } else {
+            *start = END(0);
+        }
+        return rb_reg_nth_match(0, match);
     }
-    return rb_reg_nth_match(0, match);
-  }
   return Qnil;
 }
 
 static FrtToken *rets_next(FrtTokenStream *ts) {
-  VALUE ret;
-  long rtok_len;
-  int beg, end;
-  Check_Type(RETS(ts)->regex, T_REGEXP);
-  ret = scan_once(RETS(ts)->rtext, RETS(ts)->regex, &(RETS(ts)->curr_ind));
-  if (NIL_P(ret)) return NULL;
+    VALUE ret;
+    long rtok_len;
+    int beg, end;
+    Check_Type(RETS(ts)->regex, T_REGEXP);
+    ret = scan_once(RETS(ts)->rtext, RETS(ts)->regex, &(RETS(ts)->curr_ind));
+    if (NIL_P(ret))
+        return NULL;
 
-  Check_Type(ret, T_STRING);
-  rtok_len = RSTRING_LEN(ret);
-  beg = RETS(ts)->curr_ind - rtok_len;
-  end = RETS(ts)->curr_ind;
+    Check_Type(ret, T_STRING);
+    rtok_len = RSTRING_LEN(ret);
+    beg = RETS(ts)->curr_ind - rtok_len;
+    end = RETS(ts)->curr_ind;
 
-  if (NIL_P(RETS(ts)->proc)) {
-    return frt_tk_set(&(CachedTS(ts)->token), rs2s(ret), rtok_len,
-      beg, end, 1, rb_enc_get(ret));
-  } else {
-    VALUE rtok;
-    rtok = rb_funcall(RETS(ts)->proc, id_call, 1, ret);
-    return frt_tk_set(&(CachedTS(ts)->token), rs2s(rtok),
-      RSTRING_LEN(rtok), beg, end, 1, rb_enc_get(rtok));
-  }
+    if (NIL_P(RETS(ts)->proc)) {
+        return frt_tk_set(&(CachedTS(ts)->token), rs2s(ret), rtok_len, beg, end, 1, rb_enc_get(ret));
+    } else {
+        VALUE rtok;
+        rtok = rb_funcall(RETS(ts)->proc, id_call, 1, ret);
+        return frt_tk_set(&(CachedTS(ts)->token), rs2s(rtok), RSTRING_LEN(rtok), beg, end, 1, rb_enc_get(rtok));
+    }
 }
 
 static FrtTokenStream *rets_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
-    // TODO encoding
     RETS(ts)->rtext = rb_str_new2(text);
+    rb_enc_associate(RETS(ts)->rtext, encoding);
     RETS(ts)->curr_ind = 0;
     return ts;
 }
@@ -804,8 +775,8 @@ static VALUE frb_rets_init(int argc, VALUE *argv, VALUE self) {
     rb_scan_args(argc, argv, "11&", &rtext, &regex, &proc);
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
-    ts = rets_init(ts, rtext, regex, proc);
-    object_add(ts, self);
+    rets_init(ts, rtext, regex, proc);
+    ts->rts = self;
     return self;
 }
 
@@ -831,8 +802,7 @@ static VALUE frb_letter_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_letter_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
-    object_add(&ts->text, rstr);
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -854,8 +824,7 @@ static VALUE frb_whitespace_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_whitespace_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
-    object_add(&ts->text, rstr);
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -877,8 +846,7 @@ static VALUE frb_standard_tokenizer_init(int argc, VALUE *argv, VALUE self) {
     TypedData_Get_Struct(self, FrtTokenStream, &frb_cached_token_stream_t, ts);
     ts = frt_standard_tokenizer_init(ts);
     ts->reset(ts, rs2s(rstr), rb_enc_get(rstr));
-    object_add(&ts->text, rstr);
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -918,7 +886,7 @@ static VALUE frb_lowercase_filter_init(VALUE self, VALUE rsub_ts) {
     TypedData_Get_Struct(self, FrtTokenStream, &frb_lowercase_filter_t, ts);
     frt_lowercase_filter_init(ts, sub_ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -963,7 +931,7 @@ static VALUE frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) {
     TypedData_Get_Struct(self, FrtTokenStream, &frb_hyphen_filter_t, ts);
     frt_hyphen_filter_init(ts, sub_ts);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -1023,7 +991,7 @@ static VALUE frb_stop_filter_init(int argc, VALUE *argv, VALUE self) {
     }
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -1135,7 +1103,7 @@ static VALUE frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) {
     frt_mulmap_compile(((FrtMappingFilter *)ts)->mapper);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    object_add(ts, self);
+    ts->rts = self;
     return self;
 }
 
@@ -1194,7 +1162,7 @@ static VALUE frb_stem_filter_init(int argc, VALUE *argv, VALUE self) {
     frt_stem_filter_init(ts, sub_ts, algorithm);
     object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
 
-    object_add(ts, self);
+    ts->rts = self;
     if (((FrtStemFilter *)ts)->stemmer == NULL) {
         rb_raise(rb_eArgError, "No stemmer could be found for the %s language.", algorithm);
     }
@@ -1288,7 +1256,6 @@ VALUE frb_get_analyzer(FrtAnalyzer *a) {
 
 VALUE get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring) {
     FrtTokenStream *ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rstring), rb_enc_get(rstring));
-
     /* Make sure that there is no entry already */
     object_set(&ts->text, rstring);
     return get_rb_token_stream(ts);
@@ -1308,11 +1275,8 @@ VALUE get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring) {
 static VALUE frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) {
     /* NOTE: Any changes made to this method may also need to be applied to
      * frb_re_analyzer_token_stream */
-    FrtAnalyzer *a;
-    a = DATA_PTR(self);
-
+    FrtAnalyzer *a = DATA_PTR(self);
     StringValue(rstring);
-
     return get_rb_ts_from_a(a, rfield, rstring);
 }
 
@@ -1593,11 +1557,12 @@ static VALUE frb_re_analyzer_init(int argc, VALUE *argv, VALUE self) {
 
     ts = rets_new(Qnil, regex, proc);
     rets = TypedData_Wrap_Struct(cRegExpTokenizer, &frb_reg_exp_token_stream_t, ts);
-    object_add(ts, rets);
+    ts->rts = rets;
 
     if (lower != Qfalse) {
         rets = frb_lowercase_filter_init(frb_lowercase_filter_alloc(cLowerCaseFilter), rets);
         ts = DATA_PTR(rets);
+        ts->rts = rets;
     }
     FRT_REF(ts);
 
@@ -1630,8 +1595,7 @@ static VALUE frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
     if (ts->next == &rets_next) {
         RETS(ts)->rtext = rtext;
         rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
-    }
-    else {
+    } else {
         RETS(((FrtTokenFilter*)ts)->sub_ts)->rtext = rtext;
         rb_hash_aset(object_space, ((VALUE)((FrtTokenFilter*)ts)->sub_ts)|1, rtext);
     }

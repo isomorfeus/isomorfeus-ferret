@@ -148,6 +148,7 @@ FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size) {
     FrtTokenStream *ts = (FrtTokenStream *)frt_ecalloc(size);
     memcpy(ts, orig_ts, size);
     ts->ref_cnt = 1;
+    ts->rts = 0;
     return ts;
 }
 

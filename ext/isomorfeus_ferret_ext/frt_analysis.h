@@ -40,6 +40,7 @@ struct FrtTokenStream {
     FrtTokenStream  *(*clone_i)(FrtTokenStream *ts);
     void            (*destroy_i)(FrtTokenStream *ts);
     int              ref_cnt;
+    VALUE            rts;
 };
 
 extern FrtTokenStream *frt_ts_new_i(size_t size);
