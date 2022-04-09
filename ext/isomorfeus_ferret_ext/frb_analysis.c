@@ -380,15 +380,11 @@ typedef struct RegExpTokenStream {
 
 static void frb_rets_free(void *p) {
     RegExpTokenStream *ts = (RegExpTokenStream *)p;
-    if (object_get(&ts->super.super.text) != Qnil) {
-        object_del(&ts->super.super.text);
-    }
     frt_ts_deref((FrtTokenStream *)ts);
 }
 
 static void frb_rets_mark(void *p) {
     RegExpTokenStream *ts = (RegExpTokenStream *)p;
-    if (ts->super.super.text)   frb_gc_mark(&ts->super.super.text);
     rb_gc_mark(ts->rtext);
     rb_gc_mark(ts->regex);
     rb_gc_mark(ts->proc);
@@ -518,14 +514,12 @@ static VALUE frb_ts_next(VALUE self) {
 
 static void frb_tf_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (TkFilt(ts)->sub_ts)
-        frb_gc_mark(&TkFilt(ts)->sub_ts);
+    if (TkFilt(ts)->sub_ts->rts)
+        rb_gc_mark(TkFilt(ts)->sub_ts->rts);
 }
 
 static void frb_tf_free(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (TkFilt(ts)->sub_ts && (object_get(&TkFilt(ts)->sub_ts) != Qnil))
-        object_del(&TkFilt(ts)->sub_ts);
     frt_ts_deref(ts);
 }
 
@@ -555,9 +549,6 @@ const rb_data_type_t frb_token_filter_t = {
 #define CachedTS(token_stream) ((FrtCachedTokenStream *)(token_stream))
 
 static void cwrts_destroy_i(FrtTokenStream *ts) {
-    if (object_get(&ts->text) != Qnil) {
-        object_del(&ts->text);
-    }
     rb_hash_delete(object_space, ((VALUE)ts)|1);
     free(ts);
 }
@@ -624,9 +615,6 @@ static const char *TOKEN_RE =
 static VALUE rtoken_re;
 
 static void rets_destroy_i(FrtTokenStream *ts) {
-    if (object_get(&ts->text) != Qnil) {
-        object_del(&ts->text);
-    }
     rb_hash_delete(object_space, ((VALUE)ts)|1);
     free(ts);
 }
@@ -885,7 +873,7 @@ static VALUE frb_lowercase_filter_init(VALUE self, VALUE rsub_ts) {
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_lowercase_filter_t, ts);
     frt_lowercase_filter_init(ts, sub_ts);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
+    TkFilt(ts)->sub_ts->rts = rsub_ts;
     ts->rts = self;
     return self;
 }
@@ -930,7 +918,7 @@ static VALUE frb_hyphen_filter_init(VALUE self, VALUE rsub_ts) {
     FrtTokenStream *ts;
     TypedData_Get_Struct(self, FrtTokenStream, &frb_hyphen_filter_t, ts);
     frt_hyphen_filter_init(ts, sub_ts);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
+    TkFilt(ts)->sub_ts->rts = rsub_ts;
     ts->rts = self;
     return self;
 }
@@ -989,7 +977,7 @@ static VALUE frb_stop_filter_init(int argc, VALUE *argv, VALUE self) {
     } else {
         frt_stop_filter_init(ts, sub_ts);
     }
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
+    TkFilt(ts)->sub_ts->rts = rsub_ts;
 
     ts->rts = self;
     return self;
@@ -1095,14 +1083,11 @@ static VALUE frb_mapping_filter_alloc(VALUE rclass) {
 static VALUE frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) {
     FrtTokenStream *ts;
     FrtTokenStream *sub_ts = frb_get_cwrapped_rts(rsub_ts);
-
     TypedData_Get_Struct(self, FrtTokenStream, &frb_mapping_filter_t, ts);
     frt_mapping_filter_init(ts, sub_ts);
-
     rb_hash_foreach(mapping, frb_add_mappings_i, (VALUE)ts);
     frt_mulmap_compile(((FrtMappingFilter *)ts)->mapper);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-
+    TkFilt(ts)->sub_ts->rts = rsub_ts;
     ts->rts = self;
     return self;
 }
@@ -1160,8 +1145,7 @@ static VALUE frb_stem_filter_init(int argc, VALUE *argv, VALUE self) {
         algorithm = rs2s(rb_obj_as_string(ralgorithm));
 
     frt_stem_filter_init(ts, sub_ts, algorithm);
-    object_add(&(TkFilt(ts)->sub_ts), rsub_ts);
-
+    TkFilt(ts)->sub_ts->rts = rsub_ts;
     ts->rts = self;
     if (((FrtStemFilter *)ts)->stemmer == NULL) {
         rb_raise(rb_eArgError, "No stemmer could be found for the %s language.", algorithm);
@@ -1188,7 +1172,6 @@ typedef struct CWrappedAnalyzer {
 
 static void frb_analyzer_free(void *p) {
     FrtAnalyzer *a = (FrtAnalyzer *)p;
-    object_del(a);
     frt_a_deref(a);
 }
 
@@ -1244,11 +1227,11 @@ FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer) {
 VALUE frb_get_analyzer(FrtAnalyzer *a) {
     VALUE self = Qnil;
     if (a) {
-        self = object_get(a);
-        if (self == Qnil) {
+        self = a->ranalyzer;
+        if (self == 0 || self == Qnil) {
             self = TypedData_Wrap_Struct(cAnalyzer, &frb_analyzer_t, a);
             FRT_REF(a);
-            object_add(a, self);
+            a->ranalyzer = self;
         }
     }
     return self;
@@ -1257,7 +1240,6 @@ VALUE frb_get_analyzer(FrtAnalyzer *a) {
 VALUE get_rb_ts_from_a(FrtAnalyzer *a, VALUE rfield, VALUE rstring) {
     FrtTokenStream *ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rstring), rb_enc_get(rstring));
     /* Make sure that there is no entry already */
-    object_set(&ts->text, rstring);
     return get_rb_token_stream(ts);
 }
 
@@ -1296,7 +1278,7 @@ static VALUE frb_analyzer_init(int argc, VALUE *argv, VALUE self) {
     GET_LOWER(true);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
     frt_letter_analyzer_init(a, lower);
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1325,7 +1307,7 @@ static VALUE frb_whitespace_analyzer_init(int argc, VALUE *argv, VALUE self) {
     GET_LOWER(false);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
     frt_whitespace_analyzer_init(a, lower);
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1350,7 +1332,7 @@ static VALUE frb_letter_analyzer_init(int argc, VALUE *argv, VALUE self) {
     GET_LOWER(true);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_analyzer_t, a);
     frt_letter_analyzer_init(a, lower);
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1399,7 +1381,7 @@ static VALUE frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self) {
     } else {
         frt_standard_analyzer_init(a, lower, FRT_FULL_ENGLISH_STOP_WORDS);
     }
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1454,7 +1436,7 @@ static VALUE frb_per_field_analyzer_init(VALUE self, VALUE ranalyzer) {
     FrtAnalyzer *a;
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, a);
     frt_per_field_analyzer_init(a, def);
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1568,7 +1550,7 @@ static VALUE frb_re_analyzer_init(int argc, VALUE *argv, VALUE self) {
 
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_reg_exp_analyzer_t, a);
     frt_analyzer_init(a, ts, &re_analyzer_destroy_i, NULL);
-    object_add(a, self);
+    a->ranalyzer = self;
     return self;
 }
 
@@ -1590,8 +1572,6 @@ static VALUE frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
 
     ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rtext), rb_enc_get(rtext));
 
-    /* Make sure that there is no entry already */
-    object_set(&ts->text, rtext);
     if (ts->next == &rets_next) {
         RETS(ts)->rtext = rtext;
         rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
@@ -2216,36 +2196,21 @@ void Init_Analysis(void) {
     object_space = rb_hash_new();
     rb_define_const(mFerret, "OBJECT_SPACE", object_space);
 
-    rb_define_const(mAnalysis, "ENGLISH_STOP_WORDS",
-                    get_rstopwords(FRT_ENGLISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_ENGLISH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_ENGLISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "EXTENDED_ENGLISH_STOP_WORDS",
-                    get_rstopwords(FRT_EXTENDED_ENGLISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_FRENCH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_FRENCH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_SPANISH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_SPANISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_PORTUGUESE_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_PORTUGUESE_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_ITALIAN_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_ITALIAN_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_GERMAN_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_GERMAN_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_DUTCH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_DUTCH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_SWEDISH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_SWEDISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_NORWEGIAN_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_NORWEGIAN_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_DANISH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_DANISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_RUSSIAN_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_RUSSIAN_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_FINNISH_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_FINNISH_STOP_WORDS));
-    rb_define_const(mAnalysis, "FULL_HUNGARIAN_STOP_WORDS",
-                    get_rstopwords(FRT_FULL_HUNGARIAN_STOP_WORDS));
+    rb_define_const(mAnalysis, "ENGLISH_STOP_WORDS", get_rstopwords(FRT_ENGLISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_ENGLISH_STOP_WORDS", get_rstopwords(FRT_FULL_ENGLISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "EXTENDED_ENGLISH_STOP_WORDS", get_rstopwords(FRT_EXTENDED_ENGLISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_FRENCH_STOP_WORDS", get_rstopwords(FRT_FULL_FRENCH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_SPANISH_STOP_WORDS", get_rstopwords(FRT_FULL_SPANISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_PORTUGUESE_STOP_WORDS", get_rstopwords(FRT_FULL_PORTUGUESE_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_ITALIAN_STOP_WORDS", get_rstopwords(FRT_FULL_ITALIAN_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_GERMAN_STOP_WORDS", get_rstopwords(FRT_FULL_GERMAN_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_DUTCH_STOP_WORDS", get_rstopwords(FRT_FULL_DUTCH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_SWEDISH_STOP_WORDS", get_rstopwords(FRT_FULL_SWEDISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_NORWEGIAN_STOP_WORDS", get_rstopwords(FRT_FULL_NORWEGIAN_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_DANISH_STOP_WORDS", get_rstopwords(FRT_FULL_DANISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_RUSSIAN_STOP_WORDS", get_rstopwords(FRT_FULL_RUSSIAN_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_FINNISH_STOP_WORDS", get_rstopwords(FRT_FULL_FINNISH_STOP_WORDS));
+    rb_define_const(mAnalysis, "FULL_HUNGARIAN_STOP_WORDS", get_rstopwords(FRT_FULL_HUNGARIAN_STOP_WORDS));
 
     Init_Token();
     Init_TokenStream();

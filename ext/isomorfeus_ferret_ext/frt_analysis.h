@@ -191,7 +191,8 @@ typedef struct FrtAnalyzer {
     FrtTokenStream *current_ts;
     FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding);
     void           (*destroy_i)(struct FrtAnalyzer *a);
-    int             ref_cnt;
+    int            ref_cnt;
+    VALUE          ranalyzer;
 } FrtAnalyzer;
 
 extern void frt_a_deref(FrtAnalyzer *a);
