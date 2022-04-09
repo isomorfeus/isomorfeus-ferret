@@ -137,7 +137,7 @@ void frt_ts_deref(FrtTokenStream *ts) {
         ts->destroy_i(ts);
 }
 
-static FrtTokenStream *ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
+FrtTokenStream *frt_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
     ts->t = ts->text = text;
     ts->length = strlen(text);
     ts->encoding = encoding;
@@ -158,7 +158,7 @@ FrtTokenStream *frt_ts_alloc_i(size_t size) {
 
 FrtTokenStream *frt_ts_init(FrtTokenStream *ts) {
     ts->destroy_i = (void (*)(FrtTokenStream *))&free;
-    ts->reset = &ts_reset;
+    ts->reset = &frt_ts_reset;
     ts->ref_cnt = 1;
     return ts;
 }
@@ -184,7 +184,7 @@ static FrtTokenStream *frt_cts_alloc(void) {
 
 static FrtTokenStream *frt_cts_init(FrtTokenStream *ts) {
     frt_ts_init(ts);
-    ts->reset   = &ts_reset;
+    ts->reset   = &frt_ts_reset;
     ts->clone_i = &cts_clone_i;
     ts->ref_cnt = 1;
     return ts;

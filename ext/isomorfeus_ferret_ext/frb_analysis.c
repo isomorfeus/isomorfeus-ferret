@@ -75,31 +75,19 @@ static char **get_stopwords(VALUE rstop_words) {
  *
  ****************************************************************************/
 
-typedef struct RToken {
-    VALUE text;
-    int start;
-    int end;
-    int pos_inc;
-} RToken;
-
 static void frb_token_free(void *p) {
     free(p);
 }
 
-static void frb_token_mark(void *p) {
-    RToken *token = (RToken *)p;
-    rb_gc_mark(token->text);
-}
-
 static size_t frb_token_size(const void *p) {
-    return sizeof(RToken);
+    return sizeof(FrtToken);
     (void)p;
 }
 
-const rb_data_type_t frb_rtoken_t = {
+const rb_data_type_t frb_token_t = {
     .wrap_struct_name = "FrbToken",
     .function = {
-        .dmark = frb_token_mark,
+        .dmark = NULL,
         .dfree = frb_token_free,
         .dsize = frb_token_size,
         .dcompact = NULL,
@@ -111,25 +99,20 @@ const rb_data_type_t frb_rtoken_t = {
 };
 
 static VALUE frb_token_alloc(VALUE rclass) {
-    return TypedData_Wrap_Struct(rclass, &frb_rtoken_t, ALLOC(RToken));
+    FrtToken *tk = frt_tk_new();
+    return TypedData_Wrap_Struct(rclass, &frb_token_t, tk);
 }
 
 static VALUE get_token(FrtToken *tk) {
-    RToken *token = ALLOC(RToken);
-    token->text = rb_str_new2(tk->text);
-    rb_enc_associate(token->text, utf8_encoding);
-    token->start = tk->start;
-    token->end = tk->end;
-    token->pos_inc = tk->pos_inc;
-    return TypedData_Wrap_Struct(cToken, &frb_rtoken_t, token);
+    return TypedData_Wrap_Struct(cToken, &frb_token_t, tk);
 }
 
 FrtToken *frb_set_token(FrtToken *tk, VALUE rt) {
-    RToken *rtk;
+    FrtToken *rtk;
     if (rt == Qnil)
         return NULL;
-    TypedData_Get_Struct(rt, RToken, &frb_rtoken_t, rtk);
-    frt_tk_set(tk, rs2s(rtk->text), RSTRING_LEN(rtk->text), rtk->start, rtk->end, rtk->pos_inc, rb_enc_get(rtk->text));
+    TypedData_Get_Struct(rt, FrtToken, &frb_token_t, rtk);
+    frt_tk_set(tk, rtk->text, rtk->len, rtk->start, rtk->end, rtk->pos_inc, utf8_encoding);
     return tk;
 }
 
@@ -165,17 +148,16 @@ FrtToken *frb_set_token(FrtToken *tk, VALUE rt) {
  *  return::     a newly created and assigned Token object
  */
 static VALUE frb_token_init(int argc, VALUE *argv, VALUE self) {
-    RToken *token;
+    FrtToken *tk;
+    char *text;
+    int pos_inc = 1;
     VALUE rtext, rstart, rend, rpos_inc;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    token->pos_inc = 1;
     switch (rb_scan_args(argc, argv, "31", &rtext, &rstart, &rend, &rpos_inc)) {
-        case 4: token->pos_inc = FIX2INT(rpos_inc);
+        case 4: pos_inc = FIX2INT(rpos_inc);
     }
-    // TODO encoding, use frt_tk_set or something, Why use RToken at all?
-    token->text = rb_obj_as_string(rtext);
-    token->start = FIX2INT(rstart);
-    token->end = FIX2INT(rend);
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    text = rs2s(rtext);
+    frt_tk_set(tk, text, strlen(text), FIX2INT(rstart), FIX2INT(rend), pos_inc, rb_enc_get(rtext));
     return self;
 }
 
@@ -192,24 +174,10 @@ static VALUE frb_token_init(int argc, VALUE *argv, VALUE self) {
  *  lexically by the token text.
  */
 static VALUE frb_token_cmp(VALUE self, VALUE rother) {
-    RToken *token, *other;
-    int cmp;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    TypedData_Get_Struct(rother, RToken, &frb_rtoken_t, other);
-    if (token->start > other->start) {
-        cmp = 1;
-    } else if (token->start < other->start) {
-        cmp = -1;
-    } else {
-        if (token->end > other->end) {
-            cmp = 1;
-        } else if (token->end < other->end) {
-            cmp = -1;
-        } else {
-            cmp = strcmp(rs2s(token->text), rs2s(other->text));
-        }
-    }
-    return INT2FIX(cmp);
+    FrtToken *tk, *other;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    TypedData_Get_Struct(rother, FrtToken, &frb_token_t, other);
+    return INT2FIX(frt_tk_cmp(tk, other));
 }
 
 /*
@@ -219,9 +187,11 @@ static VALUE frb_token_cmp(VALUE self, VALUE rother) {
  *  Returns the text that this token represents
  */
 static VALUE frb_token_get_text(VALUE self) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    return token->text;
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    VALUE rtext = rb_str_new2(tk->text);
+    rb_enc_associate(rtext, utf8_encoding);
+    return rtext;
 }
 
 /*
@@ -231,10 +201,11 @@ static VALUE frb_token_get_text(VALUE self) {
  *  Set the text for this token.
  */
 static VALUE frb_token_set_text(VALUE self, VALUE rtext) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    token->text = rtext;
-    return rtext;
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    char *text = rs2s(rtext);
+    frt_tk_set(tk, text, strlen(text), tk->start, tk->end, tk->pos_inc, rb_enc_get(rtext));
+    return frb_token_get_text(self);
 }
 
 /*
@@ -244,9 +215,9 @@ static VALUE frb_token_set_text(VALUE self, VALUE rtext) {
  *  Start byte-position of this token
  */
 static VALUE frb_token_get_start_offset(VALUE self) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    return INT2FIX(token->start);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    return INT2FIX(tk->start);
 }
 
 /*
@@ -256,9 +227,9 @@ static VALUE frb_token_get_start_offset(VALUE self) {
  *  End byte-position of this token
  */
 static VALUE frb_token_get_end_offset(VALUE self) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    return INT2FIX(token->end);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    return INT2FIX(tk->end);
 }
 
 /*
@@ -268,9 +239,9 @@ static VALUE frb_token_get_end_offset(VALUE self) {
  *  Position Increment for this token
  */
 static VALUE frb_token_get_pos_inc(VALUE self) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    return INT2FIX(token->pos_inc);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    return INT2FIX(tk->pos_inc);
 }
 
 /*
@@ -280,9 +251,9 @@ static VALUE frb_token_get_pos_inc(VALUE self) {
  *  Set start byte-position of this token
  */
 static VALUE frb_token_set_start_offset(VALUE self, VALUE rstart) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    token->start = FIX2INT(rstart);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    tk->start = FIX2INT(rstart);
     return rstart;
 }
 
@@ -293,9 +264,9 @@ static VALUE frb_token_set_start_offset(VALUE self, VALUE rstart) {
  *  Set end byte-position of this token
  */
 static VALUE frb_token_set_end_offset(VALUE self, VALUE rend) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    token->end = FIX2INT(rend);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    tk->end = FIX2INT(rend);
     return rend;
 }
 
@@ -327,9 +298,9 @@ static VALUE frb_token_set_end_offset(VALUE self, VALUE rend) {
  *
  */
 static VALUE frb_token_set_pos_inc(VALUE self, VALUE rpos_inc) {
-    RToken *token;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    token->pos_inc = FIX2INT(rpos_inc);
+    FrtToken *tk;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    tk->pos_inc = FIX2INT(rpos_inc);
     return rpos_inc;
 }
 
@@ -340,13 +311,15 @@ static VALUE frb_token_set_pos_inc(VALUE self, VALUE rpos_inc) {
  *  Return a string representation of the token
  */
 static VALUE frb_token_to_s(VALUE self) {
-    RToken *token;
+    FrtToken *tk;
     char *buf;
-    TypedData_Get_Struct(self, RToken, &frb_rtoken_t, token);
-    buf = alloca(RSTRING_LEN(token->text) + 80);
-    sprintf(buf, "token[\"%s\":%d:%d:%d]", rs2s(token->text),
-            token->start, token->end, token->pos_inc);
-    return rb_str_new2(buf);
+    VALUE rstr;
+    TypedData_Get_Struct(self, FrtToken, &frb_token_t, tk);
+    buf = alloca(strlen(tk->text) + 80);
+    sprintf(buf, "token[\"%s\":%li:%li:%d]", tk->text, tk->start, tk->end, tk->pos_inc);
+    rstr = rb_str_new2(buf);
+    rb_enc_associate(rstr, utf8_encoding);
+    return rstr;
 }
 
 /****************************************************************************
@@ -372,20 +345,13 @@ static size_t frb_cts_size(const void *p) {
 
 typedef struct RegExpTokenStream {
     FrtCachedTokenStream super;
-    VALUE rtext;
     VALUE regex;
     VALUE proc;
     long  curr_ind;
 } RegExpTokenStream;
 
-static void frb_rets_free(void *p) {
-    RegExpTokenStream *ts = (RegExpTokenStream *)p;
-    frt_ts_deref((FrtTokenStream *)ts);
-}
-
 static void frb_rets_mark(void *p) {
     RegExpTokenStream *ts = (RegExpTokenStream *)p;
-    rb_gc_mark(ts->rtext);
     rb_gc_mark(ts->regex);
     rb_gc_mark(ts->proc);
 }
@@ -427,7 +393,7 @@ const rb_data_type_t frb_reg_exp_token_stream_t = {
     .wrap_struct_name = "FrbRegExpTokenStream",
     .function = {
         .dmark = frb_rets_mark,
-        .dfree = frb_rets_free,
+        .dfree = frb_ts_free,
         .dsize = frb_rets_size,
         .dcompact = NULL,
         .reserved = {0},
@@ -627,12 +593,10 @@ static void rets_destroy_i(FrtTokenStream *ts) {
  *  tokenize the text from the beginning.
  */
 static VALUE frb_rets_set_text(VALUE self, VALUE rtext) {
-    RegExpTokenStream *ts;
-    TypedData_Get_Struct(self, RegExpTokenStream, &frb_reg_exp_token_stream_t, ts);
-    rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
+    FrtTokenStream *ts;
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
     StringValue(rtext);
-    ts->rtext = rtext;
-    ts->curr_ind = 0;
+    ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
     return rtext;
 }
 
@@ -643,9 +607,11 @@ static VALUE frb_rets_set_text(VALUE self, VALUE rtext) {
  *  Get the text being tokenized by the tokenizer.
  */
 static VALUE frb_rets_get_text(VALUE self) {
-    RegExpTokenStream *ts;
-    TypedData_Get_Struct(self, RegExpTokenStream, &frb_reg_exp_token_stream_t, ts);
-    return ts->rtext;
+    FrtTokenStream *ts;
+    TypedData_Get_Struct(self, FrtTokenStream, &frb_reg_exp_token_stream_t, ts);
+    VALUE rstr = rb_str_new2(ts->text);
+    rb_enc_associate(rstr, ts->encoding);
+    return rstr;
 }
 
 // partly lifted from ruby 1.9 string.c
@@ -679,7 +645,12 @@ static FrtToken *rets_next(FrtTokenStream *ts) {
     long rtok_len;
     int beg, end;
     Check_Type(RETS(ts)->regex, T_REGEXP);
-    ret = scan_once(RETS(ts)->rtext, RETS(ts)->regex, &(RETS(ts)->curr_ind));
+
+    VALUE rstr = rb_str_new_static(ts->text, ts->length);
+    rb_enc_associate(rstr, ts->encoding);
+
+    ret = scan_once(rstr, RETS(ts)->regex, &(RETS(ts)->curr_ind));
+
     if (NIL_P(ret))
         return NULL;
 
@@ -698,8 +669,7 @@ static FrtToken *rets_next(FrtTokenStream *ts) {
 }
 
 static FrtTokenStream *rets_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding) {
-    RETS(ts)->rtext = rb_str_new2(text);
-    rb_enc_associate(RETS(ts)->rtext, encoding);
+    frt_ts_reset(ts, text, encoding);
     RETS(ts)->curr_ind = 0;
     return ts;
 }
@@ -722,11 +692,11 @@ FrtTokenStream *rets_init(FrtTokenStream *ts, VALUE rtext, VALUE regex, VALUE pr
 
     if (rtext != Qnil) {
         rtext = StringValue(rtext);
-        rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
+        ts->reset(ts, rs2s(rtext), rb_enc_get(rtext));
+    } else {
+        RETS(ts)->curr_ind = 0;
     }
 
-    RETS(ts)->curr_ind = 0;
-    RETS(ts)->rtext = rtext;
     RETS(ts)->proc = proc;
 
     if (NIL_P(regex)) {
@@ -1572,13 +1542,6 @@ static VALUE frb_re_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rtext)
 
     ts = frt_a_get_ts(a, frb_field(rfield), rs2s(rtext), rb_enc_get(rtext));
 
-    if (ts->next == &rets_next) {
-        RETS(ts)->rtext = rtext;
-        rb_hash_aset(object_space, ((VALUE)ts)|1, rtext);
-    } else {
-        RETS(((FrtTokenFilter*)ts)->sub_ts)->rtext = rtext;
-        rb_hash_aset(object_space, ((VALUE)((FrtTokenFilter*)ts)->sub_ts)|1, rtext);
-    }
     return get_rb_token_stream(ts);
 }
 
