@@ -1,5 +1,6 @@
 #include "frt_global.h"
 #include "frt_hash.h"
+#include "frt_search.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -395,6 +396,38 @@ void frt_init(int argc, const char *const argv[]) {
     cp_ampersand = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
     p = ":";
     cp_colon = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
+
+    FRT_SORT_FIELD_SCORE = frt_sort_field_alloc();
+    FRT_SORT_FIELD_SCORE->field_index_class = NULL;               /* field_index_class */
+    FRT_SORT_FIELD_SCORE->field = (ID)NULL;                       /* field */
+    FRT_SORT_FIELD_SCORE->type = FRT_SORT_TYPE_SCORE;             /* type */
+    FRT_SORT_FIELD_SCORE->reverse = false;                        /* reverse */
+    FRT_SORT_FIELD_SCORE->compare = frt_sort_field_score_compare; /* compare */
+    FRT_SORT_FIELD_SCORE->get_val = frt_sort_field_score_get_val; /* get_val */
+
+    FRT_SORT_FIELD_SCORE_REV = frt_sort_field_alloc();
+    FRT_SORT_FIELD_SCORE_REV->field_index_class = NULL;               /* field_index_class */
+    FRT_SORT_FIELD_SCORE_REV->field = (ID)NULL;                       /* field */
+    FRT_SORT_FIELD_SCORE_REV->type = FRT_SORT_TYPE_SCORE;             /* type */
+    FRT_SORT_FIELD_SCORE_REV->reverse = true;                         /* reverse */
+    FRT_SORT_FIELD_SCORE_REV->compare = frt_sort_field_score_compare; /* compare */
+    FRT_SORT_FIELD_SCORE_REV->get_val = frt_sort_field_score_get_val; /* get_val */
+
+    FRT_SORT_FIELD_DOC = frt_sort_field_alloc();
+    FRT_SORT_FIELD_DOC->field_index_class = NULL;             /* field_index_class */
+    FRT_SORT_FIELD_DOC->field = (ID)NULL;                     /* field */
+    FRT_SORT_FIELD_DOC->type = FRT_SORT_TYPE_DOC;             /* type */
+    FRT_SORT_FIELD_DOC->reverse = false;                      /* reverse */
+    FRT_SORT_FIELD_DOC->compare = frt_sort_field_doc_compare; /* compare */
+    FRT_SORT_FIELD_DOC->get_val = frt_sort_field_doc_get_val; /* get_val */
+
+    FRT_SORT_FIELD_DOC_REV = frt_sort_field_alloc();
+    FRT_SORT_FIELD_DOC_REV->field_index_class = NULL;             /* field_index_class */
+    FRT_SORT_FIELD_DOC_REV->field = (ID)NULL;                     /* field */
+    FRT_SORT_FIELD_DOC_REV->type = FRT_SORT_TYPE_DOC;             /* type */
+    FRT_SORT_FIELD_DOC_REV->reverse = true;                       /* reverse */
+    FRT_SORT_FIELD_DOC_REV->compare = frt_sort_field_doc_compare; /* compare */
+    FRT_SORT_FIELD_DOC_REV->get_val = frt_sort_field_doc_get_val; /* get_val */
 }
 
 /**

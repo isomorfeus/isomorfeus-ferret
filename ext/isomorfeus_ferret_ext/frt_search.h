@@ -702,6 +702,7 @@ typedef struct FrtSortField {
     bool      reverse : 1;
     int       (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
     void      (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable);
+    VALUE     rfield;
 } FrtSortField;
 
 extern FrtSortField *frt_sort_field_alloc(void);
@@ -709,8 +710,12 @@ extern FrtSortField *frt_sort_field_init(FrtSortField *self, FrtSymbol field, So
 extern FrtSortField *frt_sort_field_new(FrtSymbol field, SortType type, bool reverse);
 extern FrtSortField *frt_sort_field_score_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_score_new(bool reverse);
+extern void frt_sort_field_score_get_val(void *index, FrtHit *hit, FrtComparable *comparable);
+extern int frt_sort_field_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1);
 extern FrtSortField *frt_sort_field_doc_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_doc_new(bool reverse);
+extern void frt_sort_field_doc_get_val(void *index, FrtHit *hit, FrtComparable *comparable);
+extern int frt_sort_field_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
 extern FrtSortField *frt_sort_field_int_init(FrtSortField *self, FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_int_new(FrtSymbol field, bool reverse);
 extern FrtSortField *frt_sort_field_byte_init(FrtSortField *self, FrtSymbol field, bool reverse);
@@ -724,10 +729,10 @@ extern FrtSortField *frt_sort_field_auto_new(FrtSymbol field, bool reverse);
 extern void frt_sort_field_destroy(void *p);
 extern char *frt_sort_field_to_s(FrtSortField *self);
 
-extern const FrtSortField FRT_SORT_FIELD_SCORE;
-extern const FrtSortField FRT_SORT_FIELD_SCORE_REV;
-extern const FrtSortField FRT_SORT_FIELD_DOC;
-extern const FrtSortField FRT_SORT_FIELD_DOC_REV;
+extern FrtSortField *FRT_SORT_FIELD_SCORE;
+extern FrtSortField *FRT_SORT_FIELD_SCORE_REV;
+extern FrtSortField *FRT_SORT_FIELD_DOC;
+extern FrtSortField *FRT_SORT_FIELD_DOC_REV;
 
 /***************************************************************************
  * FrtSort

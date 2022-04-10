@@ -116,12 +116,12 @@ char *frt_sort_field_to_s(FrtSortField *self) {
  * ScoreSortField
  ***************************************************************************/
 
-static void sf_score_get_val(void *index, FrtHit *hit, FrtComparable *comparable) {
+void frt_sort_field_score_get_val(void *index, FrtHit *hit, FrtComparable *comparable) {
     (void)index;
     comparable->val.f = hit->score;
 }
 
-static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1) {
+int frt_sort_field_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1) {
     float val1 = hit1->score;
     float val2 = hit2->score;
     (void)index_ptr;
@@ -132,41 +132,26 @@ static int sf_score_compare(void *index_ptr, FrtHit *hit2, FrtHit *hit1) {
 }
 
 FrtSortField *frt_sort_field_score_init(FrtSortField *self, bool reverse) {
-    return sort_field_init(self, (ID)NULL, FRT_SORT_TYPE_SCORE, reverse, &sf_score_compare, &sf_score_get_val, NULL);
+    return sort_field_init(self, (ID)NULL, FRT_SORT_TYPE_SCORE, reverse, &frt_sort_field_score_compare, &frt_sort_field_score_get_val, NULL);
 }
 
 FrtSortField *frt_sort_field_score_new(bool reverse) {
-    return sort_field_new((ID)NULL, FRT_SORT_TYPE_SCORE, reverse, &sf_score_compare, &sf_score_get_val, NULL);
+    return sort_field_new((ID)NULL, FRT_SORT_TYPE_SCORE, reverse, &frt_sort_field_score_compare, &frt_sort_field_score_get_val, NULL);
 }
 
-const FrtSortField FRT_SORT_FIELD_SCORE = {
-    NULL,                /* field_index_class */
-    (ID)NULL,            /* field */
-    FRT_SORT_TYPE_SCORE, /* type */
-    false,               /* reverse */
-    &sf_score_compare,   /* compare */
-    &sf_score_get_val,   /* get_val */
-};
-
-const FrtSortField FRT_SORT_FIELD_SCORE_REV = {
-    NULL,                /* field_index_class */
-    (ID)NULL,            /* field */
-    FRT_SORT_TYPE_SCORE, /* type */
-    true,                /* reverse */
-    &sf_score_compare,   /* compare */
-    &sf_score_get_val,   /* get_val */
-};
+FrtSortField *FRT_SORT_FIELD_SCORE;
+FrtSortField *FRT_SORT_FIELD_SCORE_REV;
 
 /**************************************************************************
  * DocSortField
  ***************************************************************************/
 
-static void sf_doc_get_val(void *index, FrtHit *hit, FrtComparable *comparable) {
+void frt_sort_field_doc_get_val(void *index, FrtHit *hit, FrtComparable *comparable) {
     (void)index;
     comparable->val.l = hit->doc;
 }
 
-static int sf_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2) {
+int frt_sort_field_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2) {
     int val1 = hit1->doc;
     int val2 = hit2->doc;
     (void)index_ptr;
@@ -177,30 +162,15 @@ static int sf_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2) {
 }
 
 FrtSortField *frt_sort_field_doc_init(FrtSortField *self, bool reverse) {
-    return sort_field_init(self, (ID)NULL, FRT_SORT_TYPE_DOC, reverse, &sf_doc_compare, &sf_doc_get_val, NULL);
+    return sort_field_init(self, (ID)NULL, FRT_SORT_TYPE_DOC, reverse, &frt_sort_field_doc_compare, &frt_sort_field_doc_get_val, NULL);
 }
 
 FrtSortField *frt_sort_field_doc_new(bool reverse) {
-    return sort_field_new((ID)NULL, FRT_SORT_TYPE_DOC, reverse, &sf_doc_compare, &sf_doc_get_val, NULL);
+    return sort_field_new((ID)NULL, FRT_SORT_TYPE_DOC, reverse, &frt_sort_field_doc_compare, &frt_sort_field_doc_get_val, NULL);
 }
 
-const FrtSortField FRT_SORT_FIELD_DOC = {
-    NULL,               /* field_index_class */
-    (ID)NULL,               /* field */
-    FRT_SORT_TYPE_DOC,      /* type */
-    false,              /* reverse */
-    &sf_doc_compare,    /* compare */
-    &sf_doc_get_val,    /* get_val */
-};
-
-const FrtSortField FRT_SORT_FIELD_DOC_REV = {
-    NULL,               /* field_index_class */
-    (ID)NULL,               /* field */
-    FRT_SORT_TYPE_DOC,      /* type */
-    true,               /* reverse */
-    &sf_doc_compare,    /* compare */
-    &sf_doc_get_val,    /* get_val */
-};
+FrtSortField *FRT_SORT_FIELD_DOC;
+FrtSortField *FRT_SORT_FIELD_DOC_REV;
 
 /***************************************************************************
  * ByteSortField

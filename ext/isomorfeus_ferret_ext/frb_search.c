@@ -2645,7 +2645,6 @@ static size_t frb_sort_field_size(const void *p) {
 }
 
 static void frb_sf_free(void *p) {
-    object_del(p);
     frt_sort_field_destroy((FrtSortField *)p);
 }
 
@@ -2669,12 +2668,10 @@ static VALUE frb_sf_alloc(VALUE rclass) {
 }
 
 static VALUE frb_get_sf(FrtSortField *sf) {
-    VALUE self = object_get(sf);
-    if (self == Qnil) {
-        self = TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, sf);
-        object_add(sf, self);
+    if (sf->rfield == 0 || sf->rfield == Qnil) {
+        sf->rfield = TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, sf);
     }
-    return self;
+    return sf->rfield;
 }
 
 static int get_sort_type(VALUE rtype) {
@@ -2747,8 +2744,7 @@ static VALUE frb_sf_init(int argc, VALUE *argv, VALUE self) {
     if (sf->field == (FrtSymbol)NULL) {
         sf->field = field;
     }
-
-    object_add(sf, self);
+    sf->rfield = self;
     return self;
 }
 
@@ -2961,15 +2957,15 @@ static VALUE frb_sort_init(int argc, VALUE *argv, VALUE self) {
                     frb_sort_add(sort, rfields, reverse);
                 }
                 for (i = 0; i < sort->size; i++) {
-                    if (sort->sort_fields[i] == &FRT_SORT_FIELD_DOC) has_sfd = true;
+                    if (sort->sort_fields[i] == FRT_SORT_FIELD_DOC) has_sfd = true;
                 }
                 if (!has_sfd) {
-                    frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
+                    frt_sort_add_sort_field(sort, FRT_SORT_FIELD_DOC);
                 }
                 break;
         case 0:
-                frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_SCORE);
-                frt_sort_add_sort_field(sort, (FrtSortField *)&FRT_SORT_FIELD_DOC);
+                frt_sort_add_sort_field(sort, FRT_SORT_FIELD_SCORE);
+                frt_sort_add_sort_field(sort, FRT_SORT_FIELD_DOC);
     }
 
     return self;
@@ -4807,30 +4803,18 @@ static void Init_SortField(void) {
     rb_define_method(cSortField, "comparator", frb_sf_get_comparator, 0);
     rb_define_method(cSortField, "to_s", frb_sf_to_s, 0);
 
-    rb_define_const(cSortField, "SCORE",
-                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_t,
-                                     (FrtSortField *)&FRT_SORT_FIELD_SCORE));
-    object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE,
-               rb_const_get(cSortField, rb_intern("SCORE")));
+    rb_define_const(cSortField, "SCORE", TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, FRT_SORT_FIELD_SCORE));
+    FRT_SORT_FIELD_SCORE->rfield = rb_const_get(cSortField, rb_intern("SCORE"));
 
-    rb_define_const(cSortField, "SCORE_REV",
-                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_t,
-                                     (FrtSortField *)&FRT_SORT_FIELD_SCORE_REV));
-    object_add((FrtSortField *)&FRT_SORT_FIELD_SCORE_REV,
-               rb_const_get(cSortField, rb_intern("SCORE_REV")));
+    rb_define_const(cSortField, "SCORE_REV", TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, FRT_SORT_FIELD_SCORE_REV));
+    FRT_SORT_FIELD_SCORE_REV->rfield = rb_const_get(cSortField, rb_intern("SCORE_REV"));
 
-    rb_define_const(cSortField, "DOC_ID",
-                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_t,
-                                     (FrtSortField *)&FRT_SORT_FIELD_DOC));
-
+    rb_define_const(cSortField, "DOC_ID", TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, FRT_SORT_FIELD_DOC));
     oSORT_FIELD_DOC = rb_const_get(cSortField, rb_intern("DOC_ID"));
-    object_add((FrtSortField *)&FRT_SORT_FIELD_DOC, oSORT_FIELD_DOC);
+    FRT_SORT_FIELD_DOC->rfield = oSORT_FIELD_DOC;
 
-    rb_define_const(cSortField, "DOC_ID_REV",
-                    TypedData_Wrap_Struct(cSortField, &frb_sort_field_t,
-                                     (FrtSortField *)&FRT_SORT_FIELD_DOC_REV));
-    object_add((FrtSortField *)&FRT_SORT_FIELD_DOC_REV,
-               rb_const_get(cSortField, rb_intern("DOC_ID_REV")));
+    rb_define_const(cSortField, "DOC_ID_REV", TypedData_Wrap_Struct(cSortField, &frb_sort_field_t, FRT_SORT_FIELD_DOC_REV));
+    FRT_SORT_FIELD_DOC_REV->rfield = rb_const_get(cSortField, rb_intern("DOC_ID_REV"));
 }
 
 /*
