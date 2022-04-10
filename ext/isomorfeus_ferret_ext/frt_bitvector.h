@@ -5,8 +5,7 @@
 
 #define FRT_BV_INIT_CAPA 256
 
-typedef struct FrtBitVector
-{
+typedef struct FrtBitVector {
     /** The bits are held in an array of 32-bit integers */
     frt_u32 *bits;
 
@@ -26,6 +25,7 @@ typedef struct FrtBitVector
 
     bool extends_as_ones : 1;
     int ref_cnt;
+    VALUE rbv;
 } FrtBitVector;
 
 /**
@@ -74,9 +74,7 @@ extern void frt_bv_destroy(FrtBitVector *bv);
  * cause any bugs in this code but could cause problems if users are relying
  * on the fact that size is accurate.
  */
-static FRT_ATTR_ALWAYS_INLINE
-void frt_bv_set_value(FrtBitVector *bv, int bit, bool value)
-{
+static FRT_ATTR_ALWAYS_INLINE void frt_bv_set_value(FrtBitVector *bv, int bit, bool value) {
     frt_u32 *word_p;
     int word = bit >> 5;
     frt_u32 bitmask = 1 << (bit & 31);
@@ -120,9 +118,7 @@ void frt_bv_set_value(FrtBitVector *bv, int bit, bool value)
  * @param bv the FrtBitVector to set the bit in
  * @param index the index of the bit to set
  */
-static FRT_ATTR_ALWAYS_INLINE
-void frt_bv_set(FrtBitVector *bv, int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE void frt_bv_set(FrtBitVector *bv, int bit) {
     frt_bv_set_value(bv, bit, 1);
 }
 
@@ -153,9 +149,7 @@ void frt_bv_set(FrtBitVector *bv, int bit)
  * @param bv the FrtBitVector to set the bit in
  * @param index the index of the bit to set
  */
-static FRT_ATTR_ALWAYS_INLINE
-void frt_bv_set_fast(FrtBitVector *bv, int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE void frt_bv_set_fast(FrtBitVector *bv, int bit) {
     bv->count++;
     bv->size = bit + 1;
     bv->bits[bit >> 5] |= (1 << (bit & 31));
@@ -170,9 +164,7 @@ void frt_bv_set_fast(FrtBitVector *bv, int bit)
  * @param index the index of the bit to check
  * @return 1 if the bit was set, 0 otherwise
  */
-static FRT_ATTR_ALWAYS_INLINE
-int frt_bv_get(FrtBitVector *bv, int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE int frt_bv_get(FrtBitVector *bv, int bit) {
     /* out of range so return 0 because it can't have been set */
     if (unlikely(bit >= bv->size)) {
         return bv->extends_as_ones;
@@ -188,9 +180,7 @@ int frt_bv_get(FrtBitVector *bv, int bit)
  * @param bv the FrtBitVector to unset the bit in
  * @param index the index of the bit to unset
  */
-static FRT_ATTR_ALWAYS_INLINE
-void frt_bv_unset(FrtBitVector *bv, int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE void frt_bv_unset(FrtBitVector *bv, int bit) {
     frt_bv_set_value(bv, bit, 0);
 }
 
@@ -213,9 +203,7 @@ extern void frt_bv_clear(FrtBitVector *bv);
  * @return the number of set bits in the FrtBitVector. FrtBitVector.count is also
  *   set
  */
-static FRT_ATTR_ALWAYS_INLINE
-int frt_bv_recount(FrtBitVector *bv)
-{
+static FRT_ATTR_ALWAYS_INLINE int frt_bv_recount(FrtBitVector *bv) {
     unsigned int extra = ((bv->size & 31) >> 3) + 1;
     unsigned int len   = bv->size >> 5;
     unsigned int idx, count = 0;
@@ -230,8 +218,7 @@ int frt_bv_recount(FrtBitVector *bv)
             case 2: count += frt_count_zeros(bv->bits[idx] | 0xffff00ff);
             case 1: count += frt_count_zeros(bv->bits[idx] | 0xffffff00);
         }
-    }
-    else {
+    } else {
         for (idx = 0; idx < len; ++idx) {
             count += frt_count_ones(bv->bits[idx]);
         }
@@ -263,9 +250,7 @@ extern void frt_bv_scan_reset(FrtBitVector *bv);
  * @param bv the FrtBitVector to scan
  * @return the next set bit's index or -1 if no more bits are set
  */
-static FRT_ATTR_ALWAYS_INLINE
-int frt_bv_scan_next_from(FrtBitVector *bv, const int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE int frt_bv_scan_next_from(FrtBitVector *bv, const int bit) {
     frt_u32 pos  = bit >> 5;
     frt_u32 word = bv->bits[pos];
 
@@ -276,8 +261,7 @@ int frt_bv_scan_next_from(FrtBitVector *bv, const int bit)
     word &= (frt_u32)~0 << (bit & 31);
     if (word) {
         goto done;
-    }
-    else {
+    } else {
         frt_u32 word_size = FRT_TO_WORD(bv->size);
         for (pos++; pos < word_size; ++pos)
         {
@@ -286,7 +270,7 @@ int frt_bv_scan_next_from(FrtBitVector *bv, const int bit)
         }
     }
         return -1;
- done:
+done:
     return bv->curr_bit = (pos << 5) + frt_count_trailing_zeros(word);
 }
 
@@ -313,9 +297,7 @@ int frt_bv_scan_next(FrtBitVector *bv)
  * @param bv the FrtBitVector to scan
  * @return the next unset bit's index or -1 if no more bits are unset
  */
-static FRT_ATTR_ALWAYS_INLINE
-int frt_bv_scan_next_unset_from(FrtBitVector *bv, const int bit)
-{
+static FRT_ATTR_ALWAYS_INLINE int frt_bv_scan_next_unset_from(FrtBitVector *bv, const int bit) {
     frt_u32 pos  = bit >> 5;
     frt_u32 word = bv->bits[pos];
 
@@ -326,8 +308,7 @@ int frt_bv_scan_next_unset_from(FrtBitVector *bv, const int bit)
     word |= (1 << (bit & 31)) - 1;
     if (~word) {
         goto done;
-    }
-    else {
+    } else {
         frt_u32 word_size = FRT_TO_WORD(bv->size);
         for (pos++; pos < word_size; ++pos)
         {
@@ -336,7 +317,7 @@ int frt_bv_scan_next_unset_from(FrtBitVector *bv, const int bit)
         }
     }
     return -1;
- done:
+done:
     return bv->curr_bit = (pos << 5) + frt_count_trailing_ones(word);
 }
 
@@ -372,12 +353,9 @@ extern int frt_bv_eq(FrtBitVector *bv1, FrtBitVector *bv2);
  */
 extern unsigned long long frt_bv_hash(FrtBitVector *bv);
 
-static FRT_ATTR_ALWAYS_INLINE
-void frt_bv_capa(FrtBitVector *bv, int capa, int size)
-{
+static FRT_ATTR_ALWAYS_INLINE void frt_bv_capa(FrtBitVector *bv, int capa, int size) {
     int word_size = FRT_TO_WORD(size);
-    if (bv->capa < capa)
-    {
+    if (bv->capa < capa) {
         FRT_REALLOC_N(bv->bits, frt_u32, capa);
         bv->capa = capa;
         memset(bv->bits + word_size, (bv->extends_as_ones ? 0xFF : 0),
@@ -408,11 +386,11 @@ void frt_bv_capa(FrtBitVector *bv, int capa, int size)
     int i;                                                            \
     int a_wsz = FRT_TO_WORD(a->size);                                 \
     int b_wsz = FRT_TO_WORD(b->size);                                 \
-    int max_size = FRT_MAX(a->size, b->size);                        \
-    int min_size = FRT_MIN(a->size, b->size);                        \
+    int max_size = FRT_MAX(a->size, b->size);                         \
+    int min_size = FRT_MIN(a->size, b->size);                         \
     int max_word_size = FRT_TO_WORD(max_size);                        \
     int min_word_size = FRT_TO_WORD(min_size);                        \
-    int capa = FRT_MAX(frt_round2(max_word_size), 4);                \
+    int capa = FRT_MAX(frt_round2(max_word_size), 4);                 \
                                                                       \
     bv->extends_as_ones = (a->extends_as_ones op b->extends_as_ones); \
     frt_bv_capa(bv, capa, max_size);                                  \
@@ -432,33 +410,22 @@ void frt_bv_capa(FrtBitVector *bv, int capa, int size)
     frt_bv_recount(bv);                                               \
 } while(0)
 
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_and_i(FrtBitVector *bv,
-                           FrtBitVector *a, FrtBitVector *b)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_and_i(FrtBitVector *bv, FrtBitVector *a, FrtBitVector *b) {
     FRT_BV_OP(bv, a, b, &, frt_bv_and_ext);
     return bv;
 }
 
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_or_i(FrtBitVector *bv,
-                          FrtBitVector *a, FrtBitVector *b)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_or_i(FrtBitVector *bv, FrtBitVector *a, FrtBitVector *b) {
     FRT_BV_OP(bv, a, b, |, frt_bv_or_ext);
     return bv;
 }
 
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_xor_i(FrtBitVector *bv,
-                           FrtBitVector *a, FrtBitVector *b)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_xor_i(FrtBitVector *bv, FrtBitVector *a, FrtBitVector *b) {
     FRT_BV_OP(bv, a, b, ^, frt_bv_xor_ext);
     return bv;
 }
 
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_not_i(FrtBitVector *bv, FrtBitVector *bv1)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_not_i(FrtBitVector *bv, FrtBitVector *bv1) {
     int i;
     int word_size = FRT_TO_WORD(bv1->size);
     int capa = FRT_MAX(frt_round2(word_size), 4);
@@ -484,9 +451,7 @@ FrtBitVector *frt_bv_not_i(FrtBitVector *bv, FrtBitVector *bv1)
  * @param bv2 second FrtBitVector to AND
  * @return A FrtBitVector with all bits set that are set in both bv1 and bv2
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_and(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_and(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_and_i(frt_bv_new(), bv1, bv2);
 }
 
@@ -498,9 +463,7 @@ FrtBitVector *frt_bv_and(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv2 second FrtBitVector to OR
  * @return A FrtBitVector with all bits set that are set in both bv1 and bv2
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_or(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_or(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_or_i(frt_bv_new(), bv1, bv2);
 }
 
@@ -513,9 +476,7 @@ FrtBitVector *frt_bv_or(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv2 second FrtBitVector to XOR
  * @return A FrtBitVector with all bits set that are equal in bv1 and bv2
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_xor(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_xor(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_xor_i(frt_bv_new(), bv1, bv2);
 }
 
@@ -525,9 +486,7 @@ FrtBitVector *frt_bv_xor(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv FrtBitVector to flip
  * @return A FrtBitVector with all bits set that are set in both bv1 and bv2
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_not(FrtBitVector *bv)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_not(FrtBitVector *bv) {
     return frt_bv_not_i(frt_bv_new(), bv);
 }
 
@@ -539,9 +498,7 @@ FrtBitVector *frt_bv_not(FrtBitVector *bv)
  * @return A FrtBitVector
  * @return bv1 with all bits set that where set in both bv1 and bv2
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_and_x(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_and_x(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_and_i(bv1, bv1, bv2);
 }
 
@@ -552,9 +509,7 @@ FrtBitVector *frt_bv_and_x(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv2 second FrtBitVector to OR
  * @return bv1
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_or_x(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_or_x(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_or_i(bv1, bv1, bv2);
 }
 
@@ -565,9 +520,7 @@ FrtBitVector *frt_bv_or_x(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv2 second FrtBitVector to XOR
  * @return bv1
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_xor_x(FrtBitVector *bv1, FrtBitVector *bv2)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_xor_x(FrtBitVector *bv1, FrtBitVector *bv2) {
     return frt_bv_xor_i(bv1, bv1, bv2);
 }
 
@@ -577,9 +530,7 @@ FrtBitVector *frt_bv_xor_x(FrtBitVector *bv1, FrtBitVector *bv2)
  * @param bv FrtBitVector to flip
  * @return A +bv+ with all it's bits flipped
  */
-static FRT_ATTR_ALWAYS_INLINE
-FrtBitVector *frt_bv_not_x(FrtBitVector *bv)
-{
+static FRT_ATTR_ALWAYS_INLINE FrtBitVector *frt_bv_not_x(FrtBitVector *bv) {
     return frt_bv_not_i(bv, bv);
 }
 

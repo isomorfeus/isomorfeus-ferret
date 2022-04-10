@@ -9,7 +9,6 @@
 static VALUE cBitVector;
 
 static void frb_bv_free(void *p) {
-    object_del(p);
     frt_bv_destroy((FrtBitVector *)p);
 }
 
@@ -34,21 +33,18 @@ const rb_data_type_t frb_bv_t = {
 
 static VALUE frb_bv_alloc(VALUE klass) {
     FrtBitVector *bv = frt_bv_new();
-    VALUE rbv = TypedData_Wrap_Struct(klass, &frb_bv_t, bv);
-    object_add(bv, rbv);
-    return rbv;
+    bv->rbv = TypedData_Wrap_Struct(klass, &frb_bv_t, bv);
+    return bv->rbv;
 }
 
 #define GET_BV(bv, self) TypedData_Get_Struct(self, FrtBitVector, &frb_bv_t, bv)
 
 VALUE frb_get_bv(FrtBitVector *bv) {
-    VALUE rbv;
-    if ((rbv = object_get(bv)) == Qnil) {
-        rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv);
+    if (bv->rbv == 0 || bv->rbv == Qnil) {
+        bv->rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv);
         FRT_REF(bv);
-        object_add(bv, rbv);
     }
-    return rbv;
+    return bv->rbv;
 }
 
 /*
@@ -77,8 +73,7 @@ VALUE frb_bv_set(VALUE self, VALUE rindex, VALUE rstate) {
     }
     if (RTEST(rstate)) {
         frt_bv_set(bv, index);
-    }
-    else {
+    } else {
         frt_bv_unset(bv, index);
     }
 
@@ -192,10 +187,12 @@ VALUE frb_bv_hash(VALUE self) {
  *  +bv2+
  */
 VALUE frb_bv_and(VALUE self, VALUE other) {
-    FrtBitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2, *bv3;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return TypedData_Wrap_Struct(cBitVector, &frb_bv_t, frt_bv_and(bv1, bv2));
+    bv3 = frt_bv_and(bv1, bv2);
+    bv3->rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv3);
+    return bv3->rbv;
 }
 
 /*
@@ -222,10 +219,12 @@ VALUE frb_bv_and_x(VALUE self, VALUE other) {
  *  +bv2+
  */
 VALUE frb_bv_or(VALUE self, VALUE other) {
-    FrtBitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2, *bv3;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return TypedData_Wrap_Struct(cBitVector, &frb_bv_t, frt_bv_or(bv1, bv2));
+    bv3 = frt_bv_or(bv1, bv2);
+    bv3->rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv3);
+    return bv3->rbv;
 }
 
 /*
@@ -252,10 +251,12 @@ VALUE frb_bv_or_x(VALUE self, VALUE other) {
  *  +bv2+
  */
 VALUE frb_bv_xor(VALUE self, VALUE other) {
-    FrtBitVector *bv1, *bv2;
+    FrtBitVector *bv1, *bv2, *bv3;
     GET_BV(bv1, self);
     GET_BV(bv2, other);
-    return TypedData_Wrap_Struct(cBitVector, &frb_bv_t, frt_bv_xor(bv1, bv2));
+    bv3 = frt_bv_xor(bv1, bv2);
+    bv3->rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv3);
+    return bv3->rbv;
 }
 
 /*
@@ -281,9 +282,11 @@ VALUE frb_bv_xor_x(VALUE self, VALUE other) {
  *  Perform a boolean _not_ operation on +bv+
  *  */
 VALUE frb_bv_not(VALUE self) {
-    FrtBitVector *bv;
+    FrtBitVector *bv, *bv3;
     GET_BV(bv, self);
-    return TypedData_Wrap_Struct(cBitVector, &frb_bv_t, frt_bv_not(bv));
+    bv3 = frt_bv_not(bv);
+    bv3->rbv = TypedData_Wrap_Struct(cBitVector, &frb_bv_t, bv3);
+    return bv3->rbv;
 }
 
 /*
@@ -431,8 +434,7 @@ VALUE frb_bv_to_a(VALUE self) {
         while ((bit = frt_bv_scan_next_unset(bv)) >= 0) {
             rb_ary_push(ary, INT2FIX(bit));
         }
-    }
-    else {
+    } else {
         while ((bit = frt_bv_scan_next(bv)) >= 0) {
             rb_ary_push(ary, INT2FIX(bit));
         }
@@ -531,7 +533,6 @@ static void Init_BitVector(void) {
 static VALUE cMultiMapper;
 
 static void frb_mulmap_free(void *p) {
-    object_del(p);
     frt_mulmap_destroy((FrtMultiMapper *)p);
 }
 
@@ -557,7 +558,6 @@ const rb_data_type_t frb_mulmap_t = {
 static VALUE frb_mulmap_alloc(VALUE klass) {
     FrtMultiMapper *mulmap = frt_mulmap_new();
     VALUE rmulmap = TypedData_Wrap_Struct(klass, &frb_mulmap_t, mulmap);
-    object_add(mulmap, rmulmap);
     return rmulmap;
 }
 
