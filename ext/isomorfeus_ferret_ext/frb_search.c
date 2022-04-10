@@ -359,11 +359,8 @@ static VALUE frb_expl_score(VALUE self) {
  ****************************************************************************/
 
 static void frb_q_free(void *p) {
-    object_del(p);
     frt_q_deref((FrtQuery *)p);
 }
-
-#define GET_Q() FrtQuery *q = (FrtQuery *)DATA_PTR(self)
 
 /*
  *  call-seq:
@@ -374,7 +371,7 @@ static void frb_q_free(void *p) {
  *  began with. This can be a good way to explore how the QueryParser works.
  */
 static VALUE frb_q_to_s(int argc, VALUE *argv, VALUE self) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     VALUE rstr, rfield;
     char *str;
     FrtSymbol field = (FrtSymbol)NULL;
@@ -395,7 +392,7 @@ static VALUE frb_q_to_s(int argc, VALUE *argv, VALUE self) {
  *  information on Query boosts.
  */
 static VALUE frb_q_get_boost(VALUE self) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     return rb_float_new((double)q->boost);
 }
 
@@ -407,7 +404,7 @@ static VALUE frb_q_get_boost(VALUE self) {
  *  on Query boosts.
  */
 static VALUE frb_q_set_boost(VALUE self, VALUE rboost) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     q->boost = (float)NUM2DBL(rboost);
     return rboost;
 }
@@ -420,7 +417,7 @@ static VALUE frb_q_set_boost(VALUE self, VALUE rboost) {
  *  in a hash object.
  */
 static VALUE frb_q_hash(VALUE self) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     return INT2FIX(q->hash(q));
 }
 
@@ -438,7 +435,7 @@ static VALUE frb_q_hash(VALUE self) {
  *  expected however.
  */
 static VALUE frb_q_eql(VALUE self, VALUE other) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     FrtQuery *oq;
     oq = DATA_PTR(other);
     return q->eq(q, oq) ? Qtrue : Qfalse;
@@ -459,7 +456,7 @@ static VALUE frb_q_get_terms(VALUE self, VALUE searcher) {
                             (frt_eq_ft)&frt_term_eq,
                             (frt_free_ft)frt_term_destroy);
     FrtHashSetEntry *hse;
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     FrtSearcher *sea = (FrtSearcher *)DATA_PTR(searcher);
     FrtQuery *rq = sea->rewrite(sea, q);
     rq->extract_terms(rq, terms);
@@ -501,6 +498,31 @@ static VALUE frb_tq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_term_query_t, tq);
 }
 
+typedef struct frb_tq_args {
+    VALUE self;
+    VALUE rfield;
+    VALUE rterm;
+    char *term;
+    FrtSymbol field;
+} frb_tq_args;
+
+VALUE frb_tq_init_2(VALUE args) {
+    frb_tq_args *a = (frb_tq_args *)args;
+    a->field = frb_field(a->rfield);
+    a->term = rs2s(rb_obj_as_string(a->rterm));
+    return Qnil;
+}
+
+VALUE frb_q_init_r(VALUE args, VALUE exception) {
+    frb_tq_args *a = (frb_tq_args *)args;
+    free(((struct RData *)(a->self))->data);
+    ((struct RData *)(a->self))->data = NULL;
+    ((struct RData *)(a->self))->dmark = NULL;
+    ((struct RData *)(a->self))->dfree = NULL;
+    rb_exc_raise(exception);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     TermQuery.new(field, term) -> term_query
@@ -511,12 +533,12 @@ static VALUE frb_tq_alloc(VALUE rclass) {
  *  Note: As usual, field should be a symbol
  */
 static VALUE frb_tq_init(VALUE self, VALUE rfield, VALUE rterm) {
-    FrtSymbol field = frb_field(rfield);
-    char *term = rs2s(rb_obj_as_string(rterm));
+    frb_tq_args args = { .self = self, .rfield = rfield, .rterm = rterm, .field = 0, .term = NULL };
+    rb_rescue(frb_tq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_term_query_t, q);
-    frt_tq_init(q, field, term);
-    object_add(q, self);
+    frt_tq_init(q, args.field, args.term);
+    q->rquery = self;
     return self;
 }
 
@@ -571,11 +593,37 @@ static VALUE frb_mtq_get_dmt(VALUE self) {
 static VALUE frb_mtq_set_dmt(VALUE self, VALUE rnum_terms) {
     int max_terms = FIX2INT(rnum_terms);
     if (max_terms <= 0) {
-        rb_raise(rb_eArgError,
-                 "%d <= 0. @@max_terms must be > 0", max_terms);
+        rb_raise(rb_eArgError, "%d <= 0. @@max_terms must be > 0", max_terms);
     }
     rb_cvar_set(cMultiTermQuery, id_default_max_terms, rnum_terms);
     return rnum_terms;
+}
+
+typedef struct frb_mtq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    float min_score;
+    int max_terms;
+    FrtSymbol field;
+} frb_mtq_args;
+
+VALUE frb_mtq_init_2(VALUE args) {
+    frb_mtq_args *a = (frb_mtq_args *)args;
+    VALUE rfield, roptions;
+    a->min_score = 0.0f;
+    a->max_terms = FIX2INT(frb_mtq_get_dmt(a->self));
+    if (rb_scan_args(a->argc, a->argv, "11", &rfield, &roptions) == 2) {
+        VALUE v;
+        if (Qnil != (v = rb_hash_aref(roptions, sym_max_terms))) {
+            a->max_terms = FIX2INT(v);
+        }
+        if (Qnil != (v = rb_hash_aref(roptions, sym_min_score))) {
+            a->min_score = (float)NUM2DBL(v);
+        }
+    }
+    a->field = frb_field(rfield);
+    return Qnil;
 }
 
 /*
@@ -603,22 +651,12 @@ static VALUE frb_mtq_set_dmt(VALUE self, VALUE rnum_terms) {
  *               FuzzyQuery in particular makes use of this parameter.
  */
 static VALUE frb_mtq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rfield, roptions;
-    float min_score = 0.0f;
-    int max_terms = FIX2INT(frb_mtq_get_dmt(self));
+    frb_mtq_args args = { .self = self, .argc = argc, .argv = argv, .field = 0 };
+    rb_rescue(frb_mtq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_multi_term_query_t, q);
-    if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
-        VALUE v;
-        if (Qnil != (v = rb_hash_aref(roptions, sym_max_terms))) {
-            max_terms = FIX2INT(v);
-        }
-        if (Qnil != (v = rb_hash_aref(roptions, sym_min_score))) {
-            min_score = (float)NUM2DBL(v);
-        }
-    }
-    frt_multi_tq_init_conf(q, frb_field(rfield), max_terms, min_score);
-    object_add(q, self);
+    frt_multi_tq_init_conf(q, args.field, args.max_terms, args.min_score);
+    q->rquery = self;
     return self;
 }
 
@@ -631,7 +669,7 @@ static VALUE frb_mtq_init(int argc, VALUE *argv, VALUE self) {
  *  otherwise.
  */
 static VALUE frb_mtq_add_term(int argc, VALUE *argv, VALUE self) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     VALUE rterm, rboost;
     float boost = 1.0f;
     char *term = NULL;
@@ -675,11 +713,10 @@ static size_t frb_boolean_clause_t_size(const void *p) {
 }
 
 static void frb_bc_mark(void *p) {
-    frb_gc_mark(((FrtBooleanClause *)p)->query);
+    rb_gc_mark(((FrtBooleanClause *)p)->query->rquery);
 }
 
 static void frb_bc_free(void *p) {
-    object_del(p);
     frt_bc_deref((FrtBooleanClause *)p);
 }
 
@@ -704,8 +741,8 @@ static VALUE frb_bc_alloc(VALUE rclass) {
 
 static VALUE frb_bc_wrap(FrtBooleanClause *bc) {
     VALUE self = TypedData_Wrap_Struct(cBooleanClause, &frb_boolean_clause_t, bc);
+    bc->rbc = self;
     FRT_REF(bc);
-    object_add(bc, self);
     return self;
 }
 
@@ -743,11 +780,10 @@ static VALUE frb_bc_init(int argc, VALUE *argv, VALUE self) {
     sub_q = DATA_PTR(rquery);
     FRT_REF(sub_q);
     frt_bc_init(bc, sub_q, occur);
-    object_add(bc, self);
+    bc->rbc = self;
     return self;
 }
 
-#define GET_BC() FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self)
 /*
  *  call-seq:
  *     clause.query -> query
@@ -755,8 +791,10 @@ static VALUE frb_bc_init(int argc, VALUE *argv, VALUE self) {
  *  Return the query object wrapped by this BooleanClause.
  */
 static VALUE frb_bc_get_query(VALUE self) {
-    GET_BC();
-    return object_get(bc->query);
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
+    if (bc->query->rquery)
+        return bc->query->rquery;
+    return Qnil;
 }
 
 /*
@@ -766,7 +804,7 @@ static VALUE frb_bc_get_query(VALUE self) {
  *  Set the query wrapped by this BooleanClause.
  */
 static VALUE frb_bc_set_query(VALUE self, VALUE rquery) {
-    GET_BC();
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
     bc->query = DATA_PTR(rquery);
     return rquery;
 }
@@ -779,7 +817,7 @@ static VALUE frb_bc_set_query(VALUE self, VALUE rquery) {
  *  equal to +:must+.
  */
 static VALUE frb_bc_is_required(VALUE self) {
-    GET_BC();
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
     return bc->is_required ? Qtrue : Qfalse;
 }
 
@@ -791,7 +829,7 @@ static VALUE frb_bc_is_required(VALUE self) {
  *  equal to +:must_not+.
  */
 static VALUE frb_bc_is_prohibited(VALUE self) {
-    GET_BC();
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
     return bc->is_prohibited ? Qtrue : Qfalse;
 }
 
@@ -803,7 +841,7 @@ static VALUE frb_bc_is_prohibited(VALUE self) {
  *  +:must+, +:should+ or +:must_not+.
  */
 static VALUE frb_bc_set_occur(VALUE self, VALUE roccur) {
-    GET_BC();
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
     FrtBCType occur = frb_get_occur(roccur);
     frt_bc_set_occur(bc, occur);
 
@@ -823,7 +861,7 @@ static VALUE frb_bc_to_s(VALUE self) {
     char *qstr, *str;
     const char *ostr = "";
     int len;
-    GET_BC();
+    FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
     qstr = bc->query->to_s(bc->query, (FrtSymbol)NULL);
     switch (bc->occur) {
         case FRT_BC_SHOULD:
@@ -884,6 +922,23 @@ static VALUE frb_bq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_boolean_query_t, bq);
 }
 
+typedef struct frb_bq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    bool coord_disabled;
+} frb_bq_args;
+
+VALUE frb_bq_init_2(VALUE args) {
+    frb_bq_args *a = (frb_bq_args *)args;
+    VALUE rcoord_disabled;
+    a->coord_disabled = false;
+    if (rb_scan_args(a->argc, a->argv, "01", &rcoord_disabled)) {
+        a->coord_disabled = RTEST(rcoord_disabled);
+    }
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     BooleanQuery.new(coord_disable = false)
@@ -895,15 +950,12 @@ static VALUE frb_bq_alloc(VALUE rclass) {
  *  should leave this parameter as is.
  */
 static VALUE frb_bq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rcoord_disabled;
-    bool coord_disabled = false;
+    frb_bq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_bq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_boolean_query_t, q);
-    if (rb_scan_args(argc, argv, "01", &rcoord_disabled)) {
-        coord_disabled = RTEST(rcoord_disabled);
-    }
-    frt_bq_init(q, coord_disabled);
-    object_add(q, self);
+    frt_bq_init(q, args.coord_disabled);
+    q->rquery = self;
     return self;
 }
 
@@ -929,7 +981,7 @@ static VALUE frb_bq_init(int argc, VALUE *argv, VALUE self) {
  *  returns:: BooleanClause which was added
  */
 static VALUE frb_bq_add_query(int argc, VALUE *argv, VALUE self) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     VALUE rquery, roccur;
     FrtBCType occur = FRT_BC_SHOULD;
     FrtQuery *sub_q;
@@ -985,18 +1037,19 @@ static VALUE frb_rq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_range_query_t, rq);
 }
 
-struct grp_args {
-    VALUE roptions;
+typedef struct frb_rq_args {
     VALUE self;
-    void  *f;
+    VALUE rfield;
+    VALUE roptions;
+    FrtSymbol field;
     char  *lterm;
     char  *uterm;
     bool  include_lower;
     bool  include_upper;
-};
+} frb_rq_args;
 
-VALUE get_range_params(VALUE args) {
-    struct grp_args *a = (struct grp_args *)args;
+VALUE frb_rq_init_2(VALUE args) {
+    frb_rq_args *a = (frb_rq_args *)args;
     VALUE v;
     Check_Type(a->roptions, T_HASH);
     if (Qnil != (v = rb_hash_aref(a->roptions, sym_lower))) {
@@ -1046,16 +1099,7 @@ VALUE get_range_params(VALUE args) {
     if (a->include_upper && !a->uterm) {
         rb_raise(rb_eArgError, "The upper bound should not be nil if it is inclusive");
     }
-    return Qnil;
-}
-
-VALUE rescue_grp(VALUE args, VALUE exception) {
-    struct grp_args *a = (struct grp_args *)args;
-    ((struct RData *)(a->self))->data = NULL;
-    ((struct RData *)(a->self))->dmark = NULL;
-    ((struct RData *)(a->self))->dfree = NULL;
-    free(a->f);
-    rb_exc_raise(exception);
+    a->field = frb_field(a->rfield);
     return Qnil;
 }
 
@@ -1083,16 +1127,12 @@ VALUE rescue_grp(VALUE args, VALUE exception) {
  *
  */
 static VALUE frb_rq_init(VALUE self, VALUE rfield, VALUE roptions) {
+    frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
+    rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_range_query_t, q);
-    struct grp_args a = {
-        .roptions = roptions,
-        .self = self,
-        .f = (void *)q
-    };
-    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
-    frt_rq_init(q, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
-    object_add(q, self);
+    frt_rq_init(q, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
+    q->rquery = self;
     return self;
 }
 
@@ -1155,16 +1195,12 @@ static VALUE frb_trq_alloc(VALUE rclass) {
  *    q = TypedRangeQuery.new(:date, :>= => "-12.32", :<= => 0.21)
  */
 static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
+    frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
+    rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_typed_range_query_t, q);
-    struct grp_args a = {
-        .roptions = roptions,
-        .self = self,
-        .f = (void *)q
-    };
-    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
-    q = frt_trq_init(q, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
-    object_add(q, self);
+    q = frt_trq_init(q, a.rfield, a.lterm, a.uterm, a.include_lower, a.include_upper);
+    q->rquery = self;
     return self;
 }
 
@@ -1198,6 +1234,25 @@ static VALUE frb_phq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_phrase_query_t, phq);
 }
 
+typedef struct frb_phq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    FrtSymbol field;
+    int slop;
+} frb_phq_args;
+
+VALUE frb_phq_init_2(VALUE args) {
+    frb_phq_args *a = (frb_phq_args *)args;
+    VALUE rfield, rslop;
+    rb_scan_args(a->argc, a->argv, "11", &rfield, &rslop);
+    a->field = frb_field(rfield);
+    if (rslop != Qnil) {
+        a->slop = FIX2INT(rslop);
+    }
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     PhraseQuery.new(field, slop = 0) -> phrase_query
@@ -1206,15 +1261,15 @@ static VALUE frb_phq_alloc(VALUE rclass) {
  *  the query it will do anything of value. See PhraseQuery#add_term.
  */
 static VALUE frb_phq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rfield, rslop;
+    frb_phq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_phq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_phrase_query_t, q);
-    rb_scan_args(argc, argv, "11", &rfield, &rslop);
-    frt_phq_init(q, frb_field(rfield));
+    frt_phq_init(q, args.field);
     if (argc == 2) {
-        ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
+        ((FrtPhraseQuery *)q)->slop = args.slop;
     }
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -1239,7 +1294,7 @@ frb_phq_add(int argc, VALUE *argv, VALUE self)
 {
     VALUE rterm, rpos_inc;
     int pos_inc = 1;
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     if (rb_scan_args(argc, argv, "11", &rterm, &rpos_inc) == 2) {
         pos_inc = FIX2INT(rpos_inc);
     }
@@ -1282,9 +1337,8 @@ frb_phq_add(int argc, VALUE *argv, VALUE self)
  *  description for more information on slop
  */
 static VALUE
-frb_phq_get_slop(VALUE self)
-{
-    GET_Q();
+frb_phq_get_slop(VALUE self) {
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     return INT2FIX(((FrtPhraseQuery *)q)->slop);
 }
 
@@ -1296,9 +1350,8 @@ frb_phq_get_slop(VALUE self)
  *  for more information on slop
  */
 static VALUE
-frb_phq_set_slop(VALUE self, VALUE rslop)
-{
-    GET_Q();
+frb_phq_set_slop(VALUE self, VALUE rslop) {
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     ((FrtPhraseQuery *)q)->slop = FIX2INT(rslop);
     return self;
 }
@@ -1333,6 +1386,27 @@ static VALUE frb_prq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_prefix_query_t, pq);
 }
 
+typedef struct frb_prq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    FrtSymbol field;
+    char *term;
+    int max_terms;
+} frb_prq_args;
+
+VALUE frb_prq_init_2(VALUE args) {
+    frb_prq_args *a = (frb_prq_args *)args;
+    VALUE rfield, rterm, rmax_terms;
+    a->max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    if (rb_scan_args(a->argc, a->argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
+        a->max_terms = get_max_terms(rmax_terms, a->max_terms);
+    }
+    a->field = frb_field(rfield);
+    a->term = StringValuePtr(rterm);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     PrefixQuery.new(field, prefix, options = {}) -> prefix-query
@@ -1350,17 +1424,13 @@ static VALUE frb_prq_alloc(VALUE rclass) {
  *  By default it is set to 512.
  */
 static VALUE frb_prq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rfield, rterm, rmax_terms;
-    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    frb_prq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_prq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_prefix_query_t, q);
-    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
-        max_terms = get_max_terms(rmax_terms, max_terms);
-    }
-
-    frt_prefixq_init(q, frb_field(rfield), StringValuePtr(rterm));
-    FrtMTQMaxTerms(q) = max_terms;
-    object_add(q, self);
+    frt_prefixq_init(q, args.field, args.term);
+    FrtMTQMaxTerms(q) = args.max_terms;
+    q->rquery = self;
     return self;
 }
 
@@ -1394,6 +1464,27 @@ static VALUE frb_wcq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_wilcard_query_t, wq);
 }
 
+typedef struct frb_wcq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    FrtSymbol field;
+    char *term;
+    int max_terms;
+} frb_wcq_args;
+
+VALUE frb_wcq_init_2(VALUE args) {
+    frb_wcq_args *a = (frb_wcq_args *)args;
+    VALUE rfield, rterm, rmax_terms;
+    a->max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    if (rb_scan_args(a->argc, a->argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
+        a->max_terms = get_max_terms(rmax_terms, a->max_terms);
+    }
+    a->field = frb_field(rfield);
+    a->term = StringValuePtr(rterm);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     WildcardQuery.new(field, pattern, options = {}) -> wild-card-query
@@ -1413,17 +1504,13 @@ static VALUE frb_wcq_alloc(VALUE rclass) {
  *  query.  By default it is set to 512.
  */
 static VALUE frb_wcq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rfield, rterm, rmax_terms;
-    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+    frb_wcq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_wcq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_wilcard_query_t, q);
-    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &rmax_terms) == 3) {
-        max_terms = get_max_terms(rmax_terms, max_terms);
-    }
-
-    frt_wcq_init(q, frb_field(rfield), StringValuePtr(rterm));
-    FrtMTQMaxTerms(q) = max_terms;
-    object_add(q, self);
+    frt_wcq_init(q, args.field, args.term);
+    FrtMTQMaxTerms(q) = args.max_terms;
+    q->rquery = self;
     return self;
 }
 
@@ -1455,6 +1542,55 @@ const rb_data_type_t frb_fuzzy_query_t = {
 static VALUE frb_fq_alloc(VALUE rclass) {
     FrtQuery *fq = frt_fuzq_alloc();
     return TypedData_Wrap_Struct(rclass, &frb_fuzzy_query_t, fq);
+}
+
+typedef struct frb_fq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    FrtSymbol field;
+    char *term;
+    float min_sim;
+    int max_terms;
+    int pre_len;
+} frb_fq_args;
+
+VALUE frb_fq_init_2(VALUE args) {
+    frb_fq_args *a = (frb_fq_args *)args;
+    VALUE rfield, rterm, roptions;
+    a->min_sim = (float)NUM2DBL(rb_cvar_get(cFuzzyQuery, id_default_min_similarity));
+    a->pre_len = FIX2INT(rb_cvar_get(cFuzzyQuery, id_default_prefix_length));
+    a->max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
+
+    if (rb_scan_args(a->argc, a->argv, "21", &rfield, &rterm, &roptions) >= 3) {
+        VALUE v;
+        Check_Type(roptions, T_HASH);
+        if (Qnil != (v = rb_hash_aref(roptions, sym_prefix_length))) {
+            a->pre_len = FIX2INT(v);
+        }
+        if (Qnil != (v = rb_hash_aref(roptions, sym_min_similarity))) {
+            a->min_sim = (float)NUM2DBL(v);
+        }
+        if (Qnil != (v = rb_hash_aref(roptions, sym_max_terms))) {
+            a->max_terms = FIX2INT(v);
+        }
+    }
+
+    if (a->min_sim >= 1.0f) {
+        rb_raise(rb_eArgError, "%f >= 1.0. :min_similarity must be < 1.0", a->min_sim);
+    } else if (a->min_sim < 0.0f) {
+        rb_raise(rb_eArgError, "%f < 0.0. :min_similarity must be > 0.0", a->min_sim);
+    }
+    if (a->pre_len < 0) {
+        rb_raise(rb_eArgError, "%d < 0. :prefix_length must be >= 0", a->pre_len);
+    }
+    if (a->max_terms < 0) {
+        rb_raise(rb_eArgError, "%d < 0. :max_terms must be >= 0", a->max_terms);
+    }
+
+    a->field = frb_field(rfield);
+    a->term = StringValuePtr(rterm);
+    return Qnil;
 }
 
 /*
@@ -1498,40 +1634,12 @@ static VALUE frb_fq_alloc(VALUE rclass) {
  *                    +:min_similarity+ to a very low value.
  */
 static VALUE frb_fq_init(int argc, VALUE *argv, VALUE self) {
+    frb_fq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_fq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
-    VALUE rfield, rterm, roptions;
-    float min_sim = (float)NUM2DBL(rb_cvar_get(cFuzzyQuery, id_default_min_similarity));
-    int pre_len = FIX2INT(rb_cvar_get(cFuzzyQuery, id_default_prefix_length));
-    int max_terms = FIX2INT(rb_cvar_get(cMultiTermQuery, id_default_max_terms));
-
-    if (rb_scan_args(argc, argv, "21", &rfield, &rterm, &roptions) >= 3) {
-        VALUE v;
-        Check_Type(roptions, T_HASH);
-        if (Qnil != (v = rb_hash_aref(roptions, sym_prefix_length))) {
-            pre_len = FIX2INT(v);
-        }
-        if (Qnil != (v = rb_hash_aref(roptions, sym_min_similarity))) {
-            min_sim = (float)NUM2DBL(v);
-        }
-        if (Qnil != (v = rb_hash_aref(roptions, sym_max_terms))) {
-            max_terms = FIX2INT(v);
-        }
-    }
-
-    if (min_sim >= 1.0f) {
-        rb_raise(rb_eArgError, "%f >= 1.0. :min_similarity must be < 1.0", min_sim);
-    } else if (min_sim < 0.0f) {
-        rb_raise(rb_eArgError, "%f < 0.0. :min_similarity must be > 0.0", min_sim);
-    }
-    if (pre_len < 0) {
-        rb_raise(rb_eArgError, "%d < 0. :prefix_length must be >= 0", pre_len);
-    }
-    if (max_terms < 0) {
-        rb_raise(rb_eArgError, "%d < 0. :max_terms must be >= 0", max_terms);
-    }
     TypedData_Get_Struct(self, FrtQuery, &frb_fuzzy_query_t, q);
-    frt_fuzq_init_conf(q, frb_field(rfield), StringValuePtr(rterm), min_sim, pre_len, max_terms);
-    object_add(q, self);
+    frt_fuzq_init_conf(q, args.field, args.term, args.min_sim, args.pre_len, args.max_terms);
+    q->rquery = self;
     return self;
 }
 
@@ -1542,9 +1650,8 @@ static VALUE frb_fq_init(int argc, VALUE *argv, VALUE self) {
  *  Get the +:prefix_length+ for the query.
  */
 static VALUE
-frb_fq_pre_len(VALUE self)
-{
-    GET_Q();
+frb_fq_pre_len(VALUE self) {
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     return INT2FIX(((FrtFuzzyQuery *)q)->pre_len);
 }
 
@@ -1555,9 +1662,8 @@ frb_fq_pre_len(VALUE self)
  *  Get the +:min_similarity+ for the query.
  */
 static VALUE
-frb_fq_min_sim(VALUE self)
-{
-    GET_Q();
+frb_fq_min_sim(VALUE self) {
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     return rb_float_new((double)((FrtFuzzyQuery *)q)->min_sim);
 }
 
@@ -1568,8 +1674,7 @@ frb_fq_min_sim(VALUE self)
  *  Get the default value for +:min_similarity+
  */
 static VALUE
-frb_fq_get_dms(VALUE self)
-{
+frb_fq_get_dms(VALUE self) {
     return rb_cvar_get(cFuzzyQuery, id_default_min_similarity);
 }
 
@@ -1655,7 +1760,7 @@ const rb_data_type_t frb_match_all_query_t = {
 };
 
 static VALUE frb_maq_alloc(VALUE rclass) {
-    FrtQuery *q = frt_maq_alloc();
+    FrtQuery *q = frt_maq_new();
     return TypedData_Wrap_Struct(rclass, &frb_match_all_query_t, q);
 }
 
@@ -1668,8 +1773,7 @@ static VALUE frb_maq_alloc(VALUE rclass) {
 static VALUE frb_maq_init(VALUE self) {
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_match_all_query_t, q);
-    frt_maq_init(q);
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -1715,8 +1819,7 @@ static VALUE frb_csq_init(VALUE self, VALUE rfilter) {
     FrtFilter *filter = DATA_PTR(rfilter);
     TypedData_Get_Struct(self, FrtQuery, &frb_constant_score_query_t, q);
     frt_csq_init(q, filter);
-
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -1770,7 +1873,7 @@ static VALUE frb_fqq_init(VALUE self, VALUE rquery, VALUE rfilter) {
     frt_fq_init(q, sq, f);
     FRT_REF(sq);
     FRT_REF(f);
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -1804,6 +1907,21 @@ static VALUE frb_spantq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_span_term_query_t, stq);
 }
 
+typedef struct frb_spantq_args {
+    VALUE self;
+    VALUE rfield;
+    VALUE rterm;
+    FrtSymbol field;
+    char *term;
+} frb_spantq_args;
+
+VALUE frb_spantq_init_2(VALUE args) {
+    frb_spantq_args *a = (frb_spantq_args *)args;
+    a->field = frb_field(a->rfield);
+    a->term = StringValuePtr(a->rterm);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     SpanTermQuery.new(field, term) -> query
@@ -1812,10 +1930,12 @@ static VALUE frb_spantq_alloc(VALUE rclass) {
  *  +term+ in the field +field+.
  */
 static VALUE frb_spantq_init(VALUE self, VALUE rfield, VALUE rterm) {
+    frb_spantq_args args = { .self = self, .rfield = rfield, .rterm = rterm };
+    rb_rescue(frb_spantq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_span_term_query_t, q);
-    frt_spantq_init(q, frb_field(rfield), StringValuePtr(rterm));
-    object_add(q, self);
+    frt_spantq_init(q, args.field, args.term);
+    q->rquery = self;
     return self;
 }
 
@@ -1849,6 +1969,18 @@ static VALUE frb_spanmtq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_span_multi_term_query_t, smtq);
 }
 
+typedef struct frb_spanmtq_args {
+    VALUE self;
+    VALUE rfield;
+    FrtSymbol field;
+} frb_spanmtq_args;
+
+VALUE frb_spanmtq_init_2(VALUE args) {
+    frb_spanmtq_args *a = (frb_spanmtq_args *)args;
+    a->field = frb_field(a->rfield);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     SpanMultiTermQuery.new(field, terms) -> query
@@ -1857,14 +1989,16 @@ static VALUE frb_spanmtq_alloc(VALUE rclass) {
  *  +terms+ in the field +field+. +terms+ should be an array of Strings.
  */
 static VALUE frb_spanmtq_init(VALUE self, VALUE rfield, VALUE rterms) {
+    frb_spanmtq_args args = { .self = self, .rfield = rfield };
+    rb_rescue(frb_spanmtq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_span_multi_term_query_t, q);
-    frt_spanmtq_init(q, frb_field(rfield));
+    frt_spanmtq_init(q, args.field);
     int i;
     for (i = RARRAY_LEN(rterms) - 1; i >= 0; i--) {
         frt_spanmtq_add_term(q, StringValuePtr(RARRAY_PTR(rterms)[i]));
     }
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -1898,6 +2032,27 @@ static VALUE frb_spanprq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_span_prefix_query_t, spq);
 }
 
+typedef struct frb_spanprq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    FrtSymbol field;
+    char *prefix;
+    int max_terms;
+} frb_spanprq_args;
+
+VALUE frb_spanprq_init_2(VALUE args) {
+    frb_spanprq_args *a = (frb_spanprq_args *)args;
+    VALUE rfield, rprefix, rmax_terms;
+    a->max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
+    if (rb_scan_args(a->argc, a->argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
+        a->max_terms = FIX2INT(rmax_terms);
+    }
+    a->field = frb_field(rfield);
+    a->prefix = StringValuePtr(rprefix);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     SpanPrefixQuery.new(field, prefix, max_terms = 256) -> query
@@ -1906,16 +2061,13 @@ static VALUE frb_spanprq_alloc(VALUE rclass) {
  *  +prefix+ in the field +field+.
  */
 static VALUE frb_spanprq_init(int argc, VALUE *argv, VALUE self) {
-    VALUE rfield, rprefix, rmax_terms;
-    int max_terms = FRT_SPAN_PREFIX_QUERY_MAX_TERMS;
+    frb_spanprq_args args = { .self = self, .argc = argc, .argv = argv };
+    rb_rescue(frb_spanprq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_span_prefix_query_t, q);
-    if (rb_scan_args(argc, argv, "21", &rfield, &rprefix, &rmax_terms) == 3) {
-        max_terms = FIX2INT(rmax_terms);
-    }
-    frt_spanprq_init(q, frb_field(rfield), StringValuePtr(rprefix));
-    ((FrtSpanPrefixQuery *)q)->max_terms = max_terms;
-    object_add(q, self);
+    frt_spanprq_init(q, args.field, args.prefix);
+    ((FrtSpanPrefixQuery *)q)->max_terms = args.max_terms;
+    q->rquery = self;
     return self;
 }
 
@@ -1949,6 +2101,18 @@ static VALUE frb_spanfq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_span_first_query_t, sfq);
 }
 
+typedef struct frb_spanfq_args {
+    VALUE self;
+    VALUE rend;
+    int end;
+} frb_spanfq_args;
+
+VALUE frb_spanfq_init_2(VALUE args) {
+    frb_spanfq_args *a = (frb_spanfq_args *)args;
+    a->end = FIX2INT(a->rend);
+    return Qnil;
+}
+
 /*
  *  call-seq:
  *     SpanFirstQuery.new(span_query, end) -> query
@@ -1958,11 +2122,13 @@ static VALUE frb_spanfq_alloc(VALUE rclass) {
  *  field
  */
 static VALUE frb_spanfq_init(VALUE self, VALUE rmatch, VALUE rend) {
+    frb_spanfq_args args = { .self = self, .rend = rend };
+    rb_rescue(frb_spanfq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
     FrtQuery *match = DATA_PTR(rmatch);
     TypedData_Get_Struct(self, FrtQuery, &frb_span_first_query_t, q);
-    frt_spanfq_init(q, match, FIX2INT(rend));
-    object_add(q, self);
+    frt_spanfq_init(q, match, args.end);
+    q->rquery = self;
     return self;
 }
 
@@ -2004,6 +2170,31 @@ static VALUE frb_spannq_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_span_near_query_t, snq);
 }
 
+typedef struct frb_spannq_args {
+    VALUE self;
+    VALUE argc;
+    VALUE *argv;
+    int slop;
+    bool in_order;
+} frb_spannq_args;
+
+VALUE frb_spannq_init_2(VALUE args) {
+    frb_spannq_args *a = (frb_spannq_args *)args;
+    VALUE roptions = Qnil;
+    a->slop = 0;
+    a->in_order = false;
+    if (rb_scan_args(a->argc, a->argv, "01", &roptions) > 0) {
+        VALUE v;
+        if (Qnil != (v = rb_hash_aref(roptions, sym_slop))) {
+            a->slop = FIX2INT(v);
+        }
+        if (Qnil != (v = rb_hash_aref(roptions, sym_in_order))) {
+            a->in_order = RTEST(v);
+        }
+    }
+    return roptions;
+}
+
 /*
  *  call-seq:
  *     SpanNearQuery.new(options = {}) -> query
@@ -2027,21 +2218,11 @@ static VALUE frb_spannq_alloc(VALUE rclass) {
  *              set to 0, this parameter will make no difference.
  */
 static VALUE frb_spannq_init(int argc, VALUE *argv, VALUE self) {
+    frb_spannq_args args = { .self = self, .argc = argc, .argv = argv };
+    VALUE roptions = rb_rescue(frb_spannq_init_2, (VALUE)&args, frb_q_init_r, (VALUE)&args);
     FrtQuery *q;
-    VALUE roptions;
-    int slop = 0;
-    bool in_order = false;
     TypedData_Get_Struct(self, FrtQuery, &frb_span_near_query_t, q);
-    if (rb_scan_args(argc, argv, "01", &roptions) > 0) {
-        VALUE v;
-        if (Qnil != (v = rb_hash_aref(roptions, sym_slop))) {
-            slop = FIX2INT(v);
-        }
-        if (Qnil != (v = rb_hash_aref(roptions, sym_in_order))) {
-            in_order = RTEST(v);
-        }
-    }
-    frt_spannq_init(q, slop, in_order);
+    frt_spannq_init(q, args.slop, args.in_order);
     if (argc > 0) {
         VALUE v;
         if (Qnil != (v = rb_hash_aref(roptions, sym_clauses))) {
@@ -2054,7 +2235,7 @@ static VALUE frb_spannq_init(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -2068,7 +2249,7 @@ static VALUE frb_spannq_init(int argc, VALUE *argv, VALUE self) {
  *  must be SpanQueries, not other types of query.
  */
 static VALUE frb_spannq_add(VALUE self, VALUE rclause) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     FrtQuery *clause = DATA_PTR(rclause);
     frt_spannq_add_clause(q, clause);
     return self;
@@ -2108,7 +2289,7 @@ const rb_data_type_t frb_span_or_query_t = {
 };
 
 static VALUE frb_spanoq_alloc(VALUE rclass) {
-    FrtQuery *soq = frt_spanoq_alloc();
+    FrtQuery *soq = frt_spanoq_new();
     return TypedData_Wrap_Struct(rclass, &frb_span_or_query_t, soq);
 }
 
@@ -2124,7 +2305,6 @@ static VALUE frb_spanoq_init(int argc, VALUE *argv, VALUE self) {
     FrtQuery *q;
     VALUE rclauses;
     TypedData_Get_Struct(self, FrtQuery, &frb_span_or_query_t, q);
-    frt_spanoq_init(q);
     if (rb_scan_args(argc, argv, "01", &rclauses) > 0) {
         int i;
         FrtQuery *clause;
@@ -2134,7 +2314,7 @@ static VALUE frb_spanoq_init(int argc, VALUE *argv, VALUE self) {
             frt_spanoq_add_clause(q, clause);
         }
     }
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -2147,7 +2327,7 @@ static VALUE frb_spanoq_init(int argc, VALUE *argv, VALUE self) {
  *  not other types of query.
  */
 static VALUE frb_spanoq_add(VALUE self, VALUE rclause) {
-    GET_Q();
+    FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     FrtQuery *clause = DATA_PTR(rclause);
     frt_spanoq_add_clause(q, clause);
     return self;
@@ -2202,7 +2382,7 @@ static VALUE frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc) {
     Check_Type(rexc, T_DATA);
     TypedData_Get_Struct(self, FrtQuery, &frb_span_not_query_t, q);
     frt_spanxq_init(q, DATA_PTR(rinc), DATA_PTR(rexc));
-    object_add(q, self);
+    q->rquery = self;
     return self;
 }
 
@@ -2213,7 +2393,6 @@ static VALUE frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc) {
  ****************************************************************************/
 
 static void frb_f_free(void *p) {
-    object_del(p);
     frt_filt_deref((FrtFilter *)p);
 }
 
@@ -2307,19 +2486,15 @@ static VALUE frb_rf_alloc(VALUE rclass) {
  *    f = RangeFilter.new(:date, :>= => "200501", :<= => 200502)
  */
 static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
-    FrtFilter *f;
     int ex_code = 0;
     const char *msg = NULL;
+    frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
+    rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
+    FrtFilter *f;
     TypedData_Get_Struct(self, FrtFilter, &frb_range_filter_t, f);
-    struct grp_args a = {
-        .roptions = roptions,
-        .self = self,
-        .f = (void *)f
-    };
-    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
     FRT_TRY
-        frt_rfilt_init(f, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
-        object_add(f, self);
+        frt_rfilt_init(f, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
+        f->rfilter = self;
     FRT_XCATCHALL
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
@@ -2389,19 +2564,15 @@ static VALUE frb_trf_alloc(VALUE rclass) {
  *    f = TypedRangeFilter.new(:date, :>= => "-132.2", :<= => -1.4)
  */
 static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
-    FrtFilter *f;
     int ex_code = 0;
     const char *msg = NULL;
+    frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
+    rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
+    FrtFilter *f;
     TypedData_Get_Struct(self, FrtFilter, &frb_typed_range_filter_t, f);
-    struct grp_args a = {
-        .roptions = roptions,
-        .self = self,
-        .f = (void *)f
-    };
-    rb_rescue(get_range_params, (VALUE)&a, rescue_grp, (VALUE)&a);
     FRT_TRY
-        frt_trfilt_init(f, frb_field(rfield), a.lterm, a.uterm, a.include_lower, a.include_upper);
-        object_add(f, self);
+        frt_trfilt_init(f, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
+        f->rfilter = self;
     FRT_XCATCHALL
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
@@ -2458,7 +2629,7 @@ static VALUE frb_qf_init(VALUE self, VALUE rquery) {
     FrtFilter *f;
     TypedData_Get_Struct(self, FrtFilter, &frb_query_filter_t, f);
     frt_qfilt_init(f, q);
-    object_add(f, self);
+    f->rfilter = self;
     return self;
 }
 
@@ -2590,9 +2761,7 @@ static VALUE frb_sf_init(int argc, VALUE *argv, VALUE self) {
  *  Return true if the field is to be reverse sorted. This attribute is set
  *  when you create the sort_field.
  */
-static VALUE
-frb_sf_is_reverse(VALUE self)
-{
+static VALUE frb_sf_is_reverse(VALUE self) {
     GET_SF();
     return sf->reverse ? Qtrue : Qfalse;
 }
@@ -2603,9 +2772,7 @@ frb_sf_is_reverse(VALUE self)
  *
  *  Returns the name of the field to be sorted.
  */
-static VALUE
-frb_sf_get_name(VALUE self)
-{
+static VALUE frb_sf_get_name(VALUE self) {
     GET_SF();
     return sf->field ? ID2SYM(sf->field) : Qnil;
 }
@@ -2617,9 +2784,7 @@ frb_sf_get_name(VALUE self)
  *  Return the type of sort. Should be one of; +:auto+, +:integer+, +:float+,
  *  +:string+, +:byte+, +:doc_id+ or +:score+.
  */
-static VALUE
-frb_sf_get_type(VALUE self)
-{
+static VALUE frb_sf_get_type(VALUE self) {
     GET_SF();
     switch (sf->type) {
         case FRT_SORT_TYPE_BYTE:    return sym_byte;
@@ -2639,9 +2804,7 @@ frb_sf_get_type(VALUE self)
  *
  *  TODO: currently unsupported
  */
-static VALUE
-frb_sf_get_comparator(VALUE self)
-{
+static VALUE frb_sf_get_comparator(VALUE self) {
     return Qnil;
 }
 
@@ -2651,9 +2814,7 @@ frb_sf_get_comparator(VALUE self)
  *
  *  Return a human readable string describing this +sort_field+.
  */
-static VALUE
-frb_sf_to_s(VALUE self)
-{
+static VALUE frb_sf_to_s(VALUE self) {
     GET_SF();
     char *str = frt_sort_field_to_s(sf);
     VALUE rstr = rb_str_new2(str);
@@ -2928,10 +3089,7 @@ static VALUE frb_sea_max_doc(VALUE self) {
 }
 
 static float call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg) {
-    VALUE val = rb_funcall((VALUE)arg, id_call, 3,
-                           INT2FIX(doc_id),
-                           rb_float_new((double)score),
-                           object_get(self));
+    VALUE val = rb_funcall((VALUE)arg, id_call, 3, INT2FIX(doc_id), rb_float_new((double)score), object_get(self));
     switch (TYPE(val)) {
         case T_NIL:
         case T_FALSE:
@@ -3559,9 +3717,9 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE frb_get_q(FrtQuery *q) {
-    VALUE self = object_get(q);
+    VALUE self = q->rquery;
 
-    if (self == Qnil) {
+    if (self == 0 || self == Qnil) {
         switch (q->type) {
             case TERM_QUERY:
                 self = TypedData_Wrap_Struct(cTermQuery, &frb_term_query_t, q);
@@ -3624,7 +3782,7 @@ VALUE frb_get_q(FrtQuery *q) {
                 rb_raise(rb_eArgError, "Unknown query type");
                 break;
         }
-        object_add(q, self);
+        q->rquery = self;
     }
     return self;
 }

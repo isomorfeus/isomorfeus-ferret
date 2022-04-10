@@ -307,29 +307,24 @@ static FrtQuery *q_rewrite(FrtQuery *self, FrtIndexReader *ir)
     return self;
 }
 
-static void q_extract_terms(FrtQuery *self, FrtHashSet *terms)
-{
+static void q_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     /* do nothing by default */
     (void)self;
     (void)terms;
 }
 
-FrtSimilarity *frt_q_get_similarity_i(FrtQuery *self, FrtSearcher *searcher)
-{
+FrtSimilarity *frt_q_get_similarity_i(FrtQuery *self, FrtSearcher *searcher) {
     (void)self;
     return searcher->get_similarity(searcher);
 }
 
-void frt_q_destroy_i(FrtQuery *self)
-{
+void frt_q_destroy_i(FrtQuery *self) {
     free(self);
 }
 
-void frt_q_deref(FrtQuery *self)
-{
-    if (--(self->ref_cnt) == 0) {
+void frt_q_deref(FrtQuery *self) {
+    if (--(self->ref_cnt) == 0)
         self->destroy_i(self);
-    }
 }
 
 FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher)
@@ -449,8 +444,7 @@ FrtQuery *frt_q_create(size_t size)
  *
  ***************************************************************************/
 
-void frt_scorer_destroy_i(FrtScorer *scorer)
-{
+void frt_scorer_destroy_i(FrtScorer *scorer) {
     free(scorer);
 }
 

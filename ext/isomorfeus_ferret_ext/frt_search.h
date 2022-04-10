@@ -104,6 +104,7 @@ typedef struct FrtFilter {
     int           (*eq)(struct FrtFilter *self, struct FrtFilter *o);
     void          (*destroy_i)(struct FrtFilter *self);
     int           ref_cnt;
+    VALUE         rfilter;
 } FrtFilter;
 
 #define filt_new(type) frt_filt_create(sizeof(type), rb_intern(#type))
@@ -240,6 +241,7 @@ struct FrtQuery {
     FrtWeight          *(*create_weight_i)(FrtQuery *self, FrtSearcher *searcher);
     FrtMatchVector     *(*get_matchv_i)(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv);
     FrtQueryType       type;
+    VALUE              rquery;
 };
 
 /* Internal FrtQuery Functions */
@@ -286,6 +288,7 @@ typedef struct FrtBooleanClause {
     FrtBCType occur;
     bool      is_prohibited : 1;
     bool      is_required : 1;
+    VALUE     rbc;
 } FrtBooleanClause;
 
 extern FrtBooleanClause *frt_bc_alloc(void);

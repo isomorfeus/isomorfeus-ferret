@@ -18,8 +18,8 @@ typedef struct LetterState
     int val;
     char *mapping;
 } LetterState;
-#define LSt(state) ((LetterState *)(state))
 
+#define LSt(state) ((LetterState *)(state))
 
 static int lstate_next(LetterState *self, int c, int *states)
 {
@@ -84,8 +84,7 @@ static void ndstate_add(NonDeterministicState *self, int c, int state)
     self->states[c][self->size[c]++] = state;
 }
 
-static void ndstate_destroy_i(NonDeterministicState *self)
-{
+static void ndstate_destroy_i(NonDeterministicState *self) {
     int i;
     for (i = 0; i < 256; i++) {
         free(self->states[i]);

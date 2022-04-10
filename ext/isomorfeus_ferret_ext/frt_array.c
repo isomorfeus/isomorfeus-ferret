@@ -109,13 +109,11 @@ void *frt_ary_remove_i(void **ary, int index)
     }
 }
 
-void frt_ary_delete_i(void **ary, int index, void (*free_elem)(void *p))
-{
+void frt_ary_delete_i(void **ary, int index, void (*free_elem)(void *p)) {
     free_elem(frt_ary_remove(ary, index));
 }
 
-void frt_ary_destroy_i(void **ary, void (*free_elem)(void *p))
-{
+void frt_ary_destroy_i(void **ary, void (*free_elem)(void *p)) {
     int i;
     for (i = frt_ary_sz(ary) - 1; i >= 0; i--) {
         free_elem(ary[i]);

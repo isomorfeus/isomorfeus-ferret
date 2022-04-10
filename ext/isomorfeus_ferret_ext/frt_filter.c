@@ -8,8 +8,7 @@
  *
  ***************************************************************************/
 
-void frt_filt_destroy_i(FrtFilter *filt)
-{
+void frt_filt_destroy_i(FrtFilter *filt) {
     frt_h_destroy(filt->cache);
     free(filt);
 }

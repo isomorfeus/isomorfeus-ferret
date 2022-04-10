@@ -183,8 +183,7 @@ static FrtRange *trange_new(FrtSymbol field, const char *lower_term,
 
 #define RF(filt) ((FrtRangeFilter *)(filt))
 
-static void frt_rfilt_destroy_i(FrtFilter *filt)
-{
+static void frt_rfilt_destroy_i(FrtFilter *filt) {
     range_destroy(RF(filt)->range);
     frt_filt_destroy_i(filt);
 }

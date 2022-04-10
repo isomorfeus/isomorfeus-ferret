@@ -26,8 +26,7 @@ static int spanq_eq(FrtQuery *self, FrtQuery *o)
     return SpQ(self)->field == SpQ(o)->field;
 }
 
-static void spanq_destroy_i(FrtQuery *self)
-{
+static void spanq_destroy_i(FrtQuery *self) {
     frt_q_destroy_i(self);
 }
 

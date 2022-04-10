@@ -30,7 +30,6 @@ extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
  ****************************************************************************/
 
 static void frb_qp_free(void *p) {
-    object_del(p);
     frt_qp_destroy((FrtQParser *)p);
 }
 
@@ -241,7 +240,6 @@ static VALUE frb_qp_init(int argc, VALUE *argv, VALUE self) {
             qp->use_typed_range_query = RTEST(rval);
         }
     }
-    object_add(qp, self);
     return self;
 }
 
