@@ -320,8 +320,6 @@ FrtTokenStream *frt_letter_tokenizer_new(void) {
 /*** FrtStandardTokenizer ****************************************************/
 /*****************************************************************************/
 
-#define STDTS(token_stream) ((FrtStandardTokenizer *)(token_stream))
-
 static int std_get_alnum(FrtTokenStream *ts, char *token, OnigCodePoint cp, int *cp_len_p, OnigCodePoint *cp_out_p, rb_encoding *enc) {
     char *end = ts->text + ts->length;
     char *t = ts->t;
@@ -657,11 +655,11 @@ static FrtToken *std_next(FrtTokenStream *ts) {
 }
 
 static FrtTokenStream *std_ts_clone_i(FrtTokenStream *orig_ts) {
-    return frt_ts_clone_size(orig_ts, sizeof(FrtStandardTokenizer));
+    return frt_ts_clone_size(orig_ts, sizeof(FrtTokenStream));
 }
 
 FrtTokenStream *frt_standard_tokenizer_alloc(void) {
-    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtStandardTokenizer));
+    return (FrtTokenStream *)frt_ecalloc(sizeof(FrtTokenStream));
 }
 
 FrtTokenStream *frt_standard_tokenizer_init(FrtTokenStream *ts) {

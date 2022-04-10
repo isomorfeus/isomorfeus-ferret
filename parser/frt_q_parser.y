@@ -1119,7 +1119,7 @@ void frt_qp_destroy(FrtQParser *self)
     assert(NULL == self->fields_top);
 
     frt_h_destroy(self->ts_cache);
-    frt_tk_destroy(self->non_tokenizer);
+    frt_ts_deref(self->non_tokenizer);
     frt_a_deref(self->analyzer);
     free(self);
 }

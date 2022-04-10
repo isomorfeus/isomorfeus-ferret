@@ -49,10 +49,6 @@ extern FrtTokenStream *frt_ts_init(FrtTokenStream *ts);
 extern FrtTokenStream *frt_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding);
 extern FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size);
 
-typedef struct FrtStandardTokenizer {
-    FrtTokenStream super;
-} FrtStandardTokenizer;
-
 typedef struct FrtTokenFilter {
     FrtTokenStream super;
     FrtTokenStream *sub_ts;
