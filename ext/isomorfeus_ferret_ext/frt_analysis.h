@@ -31,16 +31,17 @@ extern int       frt_tk_cmp(FrtToken *tk1, FrtToken *tk2);
 
 typedef struct FrtTokenStream FrtTokenStream;
 struct FrtTokenStream {
-    char            *t;             /* ptr used to scan text */
-    char            *text;
-    int              length;
-    rb_encoding     *encoding;
-    FrtToken        *(*next)(FrtTokenStream *ts);
-    FrtTokenStream  *(*reset)(FrtTokenStream *ts, char *text, rb_encoding *encoding);
-    FrtTokenStream  *(*clone_i)(FrtTokenStream *ts);
-    void            (*destroy_i)(FrtTokenStream *ts);
-    int              ref_cnt;
-    VALUE            rts;
+    char           *t;             /* ptr used to scan text */
+    char           *text;
+    int             length;
+    rb_encoding    *encoding;
+    FrtToken       *(*next)(FrtTokenStream *ts);
+    FrtTokenStream *(*reset)(FrtTokenStream *ts, char *text, rb_encoding *encoding);
+    FrtTokenStream *(*clone_i)(FrtTokenStream *ts);
+    void           (*destroy_i)(FrtTokenStream *ts);
+    int             ref_cnt;
+    VALUE           rts;
+    FrtToken        token;
 };
 
 extern FrtTokenStream *frt_ts_new_i(size_t size);
@@ -48,13 +49,8 @@ extern FrtTokenStream *frt_ts_init(FrtTokenStream *ts);
 extern FrtTokenStream *frt_ts_reset(FrtTokenStream *ts, char *text, rb_encoding *encoding);
 extern FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size);
 
-typedef struct FrtCachedTokenStream {
-    FrtTokenStream super;
-    FrtToken       token;
-} FrtCachedTokenStream;
-
 typedef struct FrtStandardTokenizer {
-    FrtCachedTokenStream super;
+    FrtTokenStream super;
 } FrtStandardTokenizer;
 
 typedef struct FrtTokenFilter {
