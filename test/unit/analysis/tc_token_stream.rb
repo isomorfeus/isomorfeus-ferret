@@ -1,7 +1,6 @@
 # encoding: utf-8
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_helper.rb"))
 
-puts "Loading once"
 class TokenTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
   def test_token
