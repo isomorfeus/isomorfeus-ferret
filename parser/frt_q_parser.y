@@ -136,9 +136,9 @@ static void bca_destroy(FrtBCArray *bca);
 
 static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur);
 
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding);
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop, rb_encoding *encoding);
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding);
+static FrtQuery *get_term_q(FrtQParser *qp, ID field, char *word, rb_encoding *encoding);
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, ID field, char *word, char *slop, rb_encoding *encoding);
+static FrtQuery *get_wild_q(FrtQParser *qp, ID field, char *pattern, rb_encoding *encoding);
 
 static FrtHashSet *first_field(FrtQParser *qp, const char *field_name);
 static FrtHashSet *add_field(FrtQParser *qp, const char *field_name);
@@ -150,7 +150,7 @@ static Phrase *ph_add_word(Phrase *self, char *word);
 static Phrase *ph_add_multi_word(Phrase *self, char *word);
 static void ph_destroy(Phrase *self);
 
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding);
+static FrtQuery *get_r_q(FrtQParser *qp, ID field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding);
 
 static void qp_push_fields(FrtQParser *self, FrtHashSet *fields, bool destroy);
 static void qp_pop_fields(FrtQParser *self);
@@ -164,17 +164,17 @@ static void qp_pop_fields(FrtQParser *self);
  */
 #define FLDS(q, func) do {\
     FRT_TRY {\
-        FrtSymbol field;\
+        ID field;\
         if (qp->fields->size == 0) {\
             q = NULL;\
         } else if (qp->fields->size == 1) {\
-            field = (FrtSymbol)qp->fields->first->elem;\
+            field = (ID)qp->fields->first->elem;\
             q = func;\
         } else {\
             FrtQuery *volatile sq; FrtHashSetEntry *volatile hse;\
             q = frt_bq_new_max(false, qp->max_clauses);\
             for (hse = qp->fields->first; hse; hse = hse->next) {\
-                field = (FrtSymbol)hse->elem;\
+                field = (ID)hse->elem;\
                 sq = func;\
                 FRT_TRY\
                   if (sq) frt_bq_add_query_nr(q, sq, FRT_BC_SHOULD);\
@@ -478,8 +478,7 @@ static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg)
  * This method returns the query parser for a particular field and sets it up
  * with the text to be tokenized.
  */
-static FrtTokenStream *get_cached_ts(FrtQParser *qp, FrtSymbol field, char *text, rb_encoding *encoding)
-{
+static FrtTokenStream *get_cached_ts(FrtQParser *qp, ID field, char *text, rb_encoding *encoding) {
     FrtTokenStream *ts;
     if (frt_hs_exists(qp->tokenized_fields, (void *)field)) {
         ts = (FrtTokenStream *)frt_h_get(qp->ts_cache, (void *)field);
@@ -650,8 +649,7 @@ static FrtBooleanClause *get_bool_cls(FrtQuery *q, FrtBCType occur)
  * what we want as it will match any documents containing the same email
  * address and tokenized with the same tokenizer.
  */
-static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_encoding *encoding)
-{
+static FrtQuery *get_term_q(FrtQParser *qp, ID field, char *word, rb_encoding *encoding) {
     FrtQuery *q;
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
@@ -688,8 +686,7 @@ static FrtQuery *get_term_q(FrtQParser *qp, FrtSymbol field, char *word, rb_enco
  * will be used. If there are any more tokens after tokenization, they will be
  * ignored.
  */
-static FrtQuery *get_fuzzy_q(FrtQParser *qp, FrtSymbol field, char *word, char *slop_str, rb_encoding *encoding)
-{
+static FrtQuery *get_fuzzy_q(FrtQParser *qp, ID field, char *word, char *slop_str, rb_encoding *encoding) {
     FrtQuery *q;
     FrtToken *token;
     FrtTokenStream *stream = get_cached_ts(qp, field, word, encoding);
@@ -736,7 +733,7 @@ static char *lower_str(char *str, int len, rb_encoding *enc) {
  * optimized to a MatchAllQuery if the pattern is '*' or a PrefixQuery if the
  * only wild char (*, ?) in the pattern is a '*' at the end of the pattern.
  */
-static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_encoding *encoding) {
+static FrtQuery *get_wild_q(FrtQParser *qp, ID field, char *pattern, rb_encoding *encoding) {
     FrtQuery *q;
     bool is_prefix = false;
     char *p;
@@ -779,9 +776,8 @@ static FrtQuery *get_wild_q(FrtQParser *qp, FrtSymbol field, char *pattern, rb_e
 /**
  * Adds another field to the top of the FieldStack.
  */
-static FrtHashSet *add_field(FrtQParser *qp, const char *field_name)
-{
-    FrtSymbol field = rb_intern(field_name);
+static FrtHashSet *add_field(FrtQParser *qp, const char *field_name) {
+    ID field = rb_intern(field_name);
     if (qp->allow_any_fields || frt_hs_exists(qp->all_fields, (void *)field)) {
         frt_hs_add(qp->fields, (void *)field);
     }
@@ -907,8 +903,7 @@ static Phrase *ph_add_multi_word(Phrase *self, char *word)
  * This problem can easily be solved by using the StandardTokenizer or any
  * custom tokenizer which will leave dbalmain@gmail.com as a single token.
  */
-static FrtQuery *get_phrase_query(FrtQParser *qp, FrtSymbol field, Phrase *phrase, char *slop_str, rb_encoding *encoding)
-{
+static FrtQuery *get_phrase_query(FrtQParser *qp, ID field, Phrase *phrase, char *slop_str, rb_encoding *encoding) {
     const int pos_cnt = phrase->size;
     FrtQuery *q = NULL;
 
@@ -1032,7 +1027,7 @@ static FrtQuery *get_phrase_q(FrtQParser *qp, Phrase *phrase, char *slop_str, rb
  * Just like with WildCardQuery, RangeQuery needs to downcase its terms if the
  * tokenizer also downcased its terms.
  */
-static FrtQuery *get_r_q(FrtQParser *qp, FrtSymbol field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding) {
+static FrtQuery *get_r_q(FrtQParser *qp, ID field, char *from, char *to, bool inc_lower, bool inc_upper, rb_encoding *encoding) {
     FrtQuery *rq;
     if (qp->wild_lower
         && (!qp->tokenized_fields || frt_hs_exists(qp->tokenized_fields, (void *)field))) {
@@ -1167,8 +1162,7 @@ FrtQParser *frt_qp_new(FrtAnalyzer *analyzer) {
     return frt_qp_init(self, analyzer);
 }
 
-void frt_qp_add_field(FrtQParser *self, FrtSymbol field, bool is_default, bool is_tokenized)
-{
+void frt_qp_add_field(FrtQParser *self, ID field, bool is_default, bool is_tokenized) {
     frt_hs_add(self->all_fields, (void *)field);
     if (is_default) {
         frt_hs_add(self->def_fields, (void *)field);
