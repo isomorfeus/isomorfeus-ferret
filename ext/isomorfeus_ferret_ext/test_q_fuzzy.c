@@ -5,7 +5,7 @@
 
 #define ARRAY_SIZE 20
 
-static FrtSymbol field;
+static ID field;
 
 static void add_doc(const char *text, FrtIndexWriter *iw)
 {
@@ -16,7 +16,7 @@ static void add_doc(const char *text, FrtIndexWriter *iw)
     frt_doc_destroy(doc);
 }
 
-void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, const char *q_str);
+void check_to_s(TestCase *tc, FrtQuery *query, ID field, const char *q_str);
 
 static void do_prefix_test(TestCase *tc, FrtSearcher *searcher, const char *qstr, const char *expected_hits, int pre_len, float min_sim)
 {

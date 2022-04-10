@@ -150,7 +150,7 @@ static FrtExplanation *tw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_n
     frt_uchar *field_norms;
     float field_norm;
     FrtExplanation *field_norm_expl;
-    char *query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
+    char *query_str = self->query->to_s(self->query, (ID)NULL);
     FrtTermQuery *tq = TQ(self->query);
     char *term = tq->term;
     FrtExplanation *expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
@@ -224,7 +224,7 @@ static void tq_destroy(FrtQuery *self) {
     frt_q_destroy_i(self);
 }
 
-static char *tq_to_s(FrtQuery *self, FrtSymbol default_field) {
+static char *tq_to_s(FrtQuery *self, ID default_field) {
     const char *field_name = rb_id2name(TQ(self)->field);
     size_t flen = strlen(field_name);
     const char *term = TQ(self)->term;
@@ -276,7 +276,7 @@ FrtQuery *frt_tq_alloc(void) {
     return frt_q_new(FrtTermQuery);
 }
 
-FrtQuery *frt_tq_init(FrtQuery *self, FrtSymbol field, const char *term) {
+FrtQuery *frt_tq_init(FrtQuery *self, ID field, const char *term) {
     TQ(self)->field         = field;
     TQ(self)->term          = frt_estrdup(term);
     self->type              = TERM_QUERY;
@@ -292,7 +292,7 @@ FrtQuery *frt_tq_init(FrtQuery *self, FrtSymbol field, const char *term) {
     return self;
 }
 
-FrtQuery *frt_tq_new(FrtSymbol field, const char *term) {
+FrtQuery *frt_tq_new(ID field, const char *term) {
     FrtQuery *self          = frt_tq_alloc();
     return frt_tq_init(self, field, term);
 }

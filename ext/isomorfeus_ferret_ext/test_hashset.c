@@ -61,7 +61,7 @@ static void test_hs(TestCase *tc, void *data)
 static void test_hs_ptr(TestCase *tc, void *data)
 {
     FrtHashSet *hs = frt_hs_new_ptr(NULL);
-    FrtSymbol word1 = rb_intern("one"), word2 = rb_intern("two");
+    ID word1 = rb_intern("one"), word2 = rb_intern("two");
     char *word_one = frt_estrdup("one");
     (void)data; /* suppress unused argument warning */
 

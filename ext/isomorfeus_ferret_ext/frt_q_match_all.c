@@ -45,14 +45,11 @@ static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
     return frt_expl_new(1.0, "MatchAllScorer");
 }
 
-static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir)
-{
+static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir) {
     FrtScorer *self        = frt_scorer_new(MatchAllScorer, weight->similarity);
-
     MASc(self)->ir      = ir;
     MASc(self)->max_doc = ir->max_doc(ir);
     MASc(self)->score   = weight->value;
-
     self->doc           = -1;
     self->score         = &masc_score;
     self->next          = &masc_next;
@@ -88,16 +85,13 @@ static FrtExplanation *maw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
     return expl;
 }
 
-static FrtWeight *maw_new(FrtQuery *query, FrtSearcher *searcher)
-{
-    FrtWeight *self        = w_new(FrtWeight, query);
-
-    self->scorer        = &masc_new;
-    self->explain       = &maw_explain;
-    self->to_s          = &maw_to_s;
-
-    self->similarity    = query->get_similarity(query, searcher);
-    self->idf           = 1.0f;
+static FrtWeight *maw_new(FrtQuery *query, FrtSearcher *searcher) {
+    FrtWeight *self  = w_new(FrtWeight, query);
+    self->scorer     = &masc_new;
+    self->explain    = &maw_explain;
+    self->to_s       = &maw_to_s;
+    self->similarity = query->get_similarity(query, searcher);
+    self->idf        = 1.0f;
 
     return self;
 }
@@ -108,8 +102,7 @@ static FrtWeight *maw_new(FrtQuery *query, FrtSearcher *searcher)
  *
  ***************************************************************************/
 
-static char *maq_to_s(FrtQuery *self, FrtSymbol default_field)
-{
+static char *maq_to_s(FrtQuery *self, ID default_field) {
     (void)default_field;
     if (self->boost == 1.0) {
         return frt_estrdup("*");

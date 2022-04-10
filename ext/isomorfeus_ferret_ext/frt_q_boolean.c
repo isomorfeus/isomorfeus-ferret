@@ -15,23 +15,20 @@
  * Coordinator
  ***************************************************************************/
 
-typedef struct Coordinator
-{
+typedef struct Coordinator {
     int max_coord;
     float *coord_factors;
     FrtSimilarity *similarity;
     int num_matches;
 } Coordinator;
 
-static Coordinator *coord_new(FrtSimilarity *similarity)
-{
+static Coordinator *coord_new(FrtSimilarity *similarity) {
     Coordinator *self = FRT_ALLOC_AND_ZERO(Coordinator);
     self->similarity = similarity;
     return self;
 }
 
-static Coordinator *coord_init(Coordinator *self)
-{
+static Coordinator *coord_init(Coordinator *self) {
     int i;
     self->coord_factors = FRT_ALLOC_N(float, self->max_coord + 1);
 
@@ -49,8 +46,7 @@ static Coordinator *coord_init(Coordinator *self)
 
 #define DSSc(scorer) ((DisjunctionSumScorer *)(scorer))
 
-typedef struct DisjunctionSumScorer
-{
+typedef struct DisjunctionSumScorer {
     FrtScorer          super;
     float           cum_score;
     int             num_matches;
@@ -61,13 +57,11 @@ typedef struct DisjunctionSumScorer
     Coordinator    *coordinator;
 } DisjunctionSumScorer;
 
-static float dssc_score(FrtScorer *self)
-{
+static float dssc_score(FrtScorer *self) {
     return DSSc(self)->cum_score;
 }
 
-static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc)
-{
+static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc) {
     int i;
     FrtScorer *sub_scorer;
     FrtPriorityQueue *pq = dssc->scorer_queue
@@ -81,8 +75,7 @@ static void dssc_init_scorer_queue(DisjunctionSumScorer *dssc)
     }
 }
 
-static bool dssc_advance_after_current(FrtScorer *self)
-{
+static bool dssc_advance_after_current(FrtScorer *self) {
     DisjunctionSumScorer *dssc = DSSc(self);
     FrtPriorityQueue *scorer_queue = dssc->scorer_queue;
 
@@ -130,8 +123,7 @@ static bool dssc_advance_after_current(FrtScorer *self)
     }
 }
 
-static bool dssc_next(FrtScorer *self)
-{
+static bool dssc_next(FrtScorer *self) {
     if (DSSc(self)->scorer_queue == NULL) {
         dssc_init_scorer_queue(DSSc(self));
     }
@@ -144,8 +136,7 @@ static bool dssc_next(FrtScorer *self)
     }
 }
 
-static bool dssc_skip_to(FrtScorer *self, int doc_num)
-{
+static bool dssc_skip_to(FrtScorer *self, int doc_num) {
     DisjunctionSumScorer *dssc = DSSc(self);
     FrtPriorityQueue *scorer_queue = dssc->scorer_queue;
 
@@ -1398,7 +1389,7 @@ static void bq_extract_terms(FrtQuery *self, FrtHashSet *terms) {
     }
 }
 
-static char *bq_to_s(FrtQuery *self, FrtSymbol field) {
+static char *bq_to_s(FrtQuery *self, ID field) {
     int i;
     FrtBooleanClause *clause;
     FrtQuery *sub_query;

@@ -278,7 +278,7 @@ FrtFieldInfo *frt_fi_alloc(void) {
     return FRT_ALLOC(FrtFieldInfo);
 }
 
-FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
     assert(NULL != name);
     fi_check_params(store, index, term_vector);
     fi->name = name;
@@ -291,7 +291,7 @@ FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, FrtSymbol name, FrtStoreValue store,
     return fi;
 }
 
-FrtFieldInfo *frt_fi_new(FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
     FrtFieldInfo *fi = frt_fi_alloc();
     return frt_fi_init(fi, name, store, index, term_vector);
 }
@@ -369,20 +369,17 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
     return fi;
 }
 
-FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name)
-{
+FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, ID name) {
     return (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
 }
 
-int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name)
-{
+int frt_fis_get_field_num(FrtFieldInfos *fis, ID name) {
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (fi) { return fi->number; }
     else { return -1; }
 }
 
-FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name)
-{
+FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, ID name) {
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (!fi) {
         fi = (FrtFieldInfo*)frt_fi_new(name, fis->store, fis->index, fis->term_vector);
@@ -1156,8 +1153,7 @@ frt_u64 frt_sis_read_current_version(FrtStore *store)
  *
  ****************************************************************************/
 
-static FrtLazyDocField *lazy_df_new(FrtSymbol name, const int size, bool is_compressed)
-{
+static FrtLazyDocField *lazy_df_new(ID name, const int size, bool is_compressed) {
     FrtLazyDocField *self = FRT_ALLOC(FrtLazyDocField);
     self->name = name;
     self->size = size;
@@ -1331,7 +1327,7 @@ static void lazy_doc_add_field(FrtLazyDoc *self, FrtLazyDocField *lazy_df, int i
     lazy_df->doc = self;
 }
 
-FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, FrtSymbol field) {
+FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, ID field) {
     return (FrtLazyDocField *)frt_h_get(self->field_dictionary, (void *)field);
 }
 
@@ -1377,8 +1373,7 @@ void frt_fr_close(FrtFieldsReader *fr) {
     free(fr);
 }
 
-static FrtDocField *frt_fr_df_new(FrtSymbol name, int size, bool is_compressed)
-{
+static FrtDocField *frt_fr_df_new(ID name, int size, bool is_compressed) {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
     df->capa = df->size = size;
@@ -3655,8 +3650,7 @@ static FrtIndexReader *ir_setup(FrtIndexReader *ir, FrtStore *store, FrtSegmentI
     return ir;
 }
 
-int frt_ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term)
-{
+int frt_ir_doc_freq(FrtIndexReader *ir, ID field, const char *term) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         return ir->doc_freq(ir, field_num, term);
@@ -3666,8 +3660,7 @@ int frt_ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term)
     }
 }
 
-static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val)
-{
+static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val) {
     frt_mutex_lock(&ir->mutex);
     ir->acquire_write_lock(ir);
     ir->set_norm_i(ir, doc_num, field_num, val);
@@ -3675,8 +3668,7 @@ static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uc
     frt_mutex_unlock(&ir->mutex);
 }
 
-void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, frt_uchar val)
-{
+void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, ID field, frt_uchar val) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         ir_set_norm_i(ir, doc_num, field_num, val);
@@ -3698,14 +3690,12 @@ frt_uchar *frt_ir_get_norms_i(FrtIndexReader *ir, int field_num)
     return norms;
 }
 
-frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, FrtSymbol field)
-{
+frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, ID field) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     return frt_ir_get_norms_i(ir, field_num);
 }
 
-frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf)
-{
+frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, ID field, frt_uchar *buf) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
         ir->get_norms_into(ir, field_num, buf);
@@ -3736,7 +3726,7 @@ void frt_ir_delete_doc(FrtIndexReader *ir, int doc_num)
     }
 }
 
-FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, FrtSymbol field, const char *term) {
+FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, ID field, const char *term) {
     FrtTermDocEnum *tde = ir_term_docs_for(ir, field, term);
     FrtDocument *doc = NULL;
 
@@ -3749,8 +3739,7 @@ FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, FrtSymbol field, const
     return doc;
 }
 
-FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, FrtSymbol field)
-{
+FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, ID field) {
     FrtTermEnum *te = NULL;
     int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
@@ -3759,9 +3748,7 @@ FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, FrtSymbol field)
     return te;
 }
 
-FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
-                           const char *term)
-{
+FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, ID field, const char *term) {
     FrtTermEnum *te = NULL;
     int field_num = frt_fis_get_field_num(ir->fis, field);
     if (field_num >= 0) {
@@ -3770,9 +3757,7 @@ FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, FrtSymbol field,
     return te;
 }
 
-FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, FrtSymbol field,
-                              const char *term)
-{
+FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, ID field, const char *term) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     FrtTermDocEnum *tde = ir->term_docs(ir);
     if (field_num >= 0) {
@@ -3781,9 +3766,7 @@ FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, FrtSymbol field,
     return tde;
 }
 
-FrtTermDocEnum *frt_ir_term_positions_for(FrtIndexReader *ir, FrtSymbol field,
-                                   const char *term)
-{
+FrtTermDocEnum *frt_ir_term_positions_for(FrtIndexReader *ir, ID field, const char *term) {
     int field_num = frt_fis_get_field_num(ir->fis, field);
     FrtTermDocEnum *tde = ir->term_positions(ir);
     if (field_num >= 0) {
@@ -4226,9 +4209,7 @@ static FrtTermDocEnum *sr_term_positions(FrtIndexReader *ir)
                     STE(sr->tir->orig_te)->skip_interval);
 }
 
-static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num,
-                                  FrtSymbol field)
-{
+static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num, ID field) {
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(ir->fis->field_dict, (void *)field);
     FrtFieldsReader *fr;
 
@@ -4532,9 +4513,7 @@ static FrtTermDocEnum *mr_term_positions(FrtIndexReader *ir)
     return mtpe_new(MR(ir));
 }
 
-static FrtTermVector *mr_term_vector(FrtIndexReader *ir, int doc_num,
-                                  FrtSymbol field)
-{
+static FrtTermVector *mr_term_vector(FrtIndexReader *ir, int doc_num, ID field) {
     GET_READER();
     return reader->term_vector(reader, doc_num - MR(ir)->starts[i], field);
 }
@@ -5998,8 +5977,7 @@ void frt_iw_commit(FrtIndexWriter *iw)
     frt_mutex_unlock(&iw->mutex);
 }
 
-void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
-{
+void frt_iw_delete_term(FrtIndexWriter *iw, ID field, const char *term) {
     int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;
@@ -6032,7 +6010,7 @@ void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term)
     }
 }
 
-void frt_iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field, char **terms, const int term_cnt) {
+void frt_iw_delete_terms(FrtIndexWriter *iw, ID field, char **terms, const int term_cnt) {
     int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;

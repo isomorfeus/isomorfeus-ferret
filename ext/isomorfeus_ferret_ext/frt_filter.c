@@ -53,9 +53,8 @@ static int frt_filt_eq_default(FrtFilter *filt, FrtFilter *o)
     return false;
 }
 
-FrtFilter *frt_filt_create(size_t size, FrtSymbol name)
-{
-    FrtFilter *filt    = (FrtFilter *)frt_emalloc(size);
+FrtFilter *frt_filt_create(size_t size, ID name) {
+    FrtFilter *filt = (FrtFilter *)frt_emalloc(size);
     filt->cache     = frt_co_hash_create();
     filt->name      = name;
     filt->to_s      = &filt_to_s_i;
@@ -71,12 +70,8 @@ unsigned long long frt_filt_hash(FrtFilter *filt)
     return frt_str_hash(rb_id2name(filt->name)) ^ filt->hash(filt);
 }
 
-int frt_filt_eq(FrtFilter *filt, FrtFilter *o)
-{
-    return ((filt == o)
-            || ((filt->name == o->name)
-                && (filt->eq == o->eq)
-                && (filt->eq(filt, o))));
+int frt_filt_eq(FrtFilter *filt, FrtFilter *o) {
+    return ((filt == o) || ((filt->name == o->name) && (filt->eq == o->eq) && (filt->eq(filt, o))));
 }
 
 /***************************************************************************
@@ -89,7 +84,7 @@ int frt_filt_eq(FrtFilter *filt, FrtFilter *o)
 
 static char *qfilt_to_s(FrtFilter *filt) {
     FrtQuery *query = QF(filt)->query;
-    char *query_str = query->to_s(query, (FrtSymbol)NULL);
+    char *query_str = query->to_s(query, (ID)NULL);
     char *filter_str = frt_strfmt("QueryFilter< %s >", query_str);
     free(query_str);
     return filter_str;

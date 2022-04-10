@@ -589,7 +589,7 @@ static FrtExplanation *phw_explain(FrtWeight *self, FrtIndexReader *ir, int doc_
         return frt_expl_new(0.0, "field \"%s\" does not exist in the index", field_name);
     }
 
-    query_str = self->query->to_s(self->query, (FrtSymbol)NULL);
+    query_str = self->query->to_s(self->query, (ID)NULL);
 
     expl = frt_expl_new(0.0, "weight(%s in %d), product of:", query_str, doc_num);
 
@@ -930,8 +930,7 @@ static void phq_extract_terms(FrtQuery *self, FrtHashSet *term_set)
     }
 }
 
-static char *phq_to_s(FrtQuery *self, FrtSymbol default_field)
-{
+static char *phq_to_s(FrtQuery *self, ID default_field) {
     FrtPhraseQuery *phq = PhQ(self);
     const int pos_cnt = phq->pos_cnt;
     FrtPhrasePosition *positions = phq->positions;
@@ -1113,7 +1112,7 @@ FrtQuery *frt_phq_alloc(void) {
     return frt_q_new(FrtPhraseQuery);
 }
 
-FrtQuery *frt_phq_init(FrtQuery *self, FrtSymbol field) {
+FrtQuery *frt_phq_init(FrtQuery *self, ID field) {
     PhQ(self)->field        = field;
     PhQ(self)->pos_cnt      = 0;
     PhQ(self)->pos_capa     = PhQ_INIT_CAPA;
@@ -1131,7 +1130,7 @@ FrtQuery *frt_phq_init(FrtQuery *self, FrtSymbol field) {
     return self;
 }
 
-FrtQuery *frt_phq_new(FrtSymbol field) {
+FrtQuery *frt_phq_new(ID field) {
     FrtQuery *self = frt_phq_alloc();
     return frt_phq_init(self, field);
 }

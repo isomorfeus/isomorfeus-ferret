@@ -127,7 +127,7 @@ static VALUE sym_pre_tag;
 static VALUE sym_post_tag;
 static VALUE sym_ellipsis;
 
-static FrtSymbol fsym_id;
+static ID fsym_id;
 
 extern VALUE cIndexReader;
 extern const rb_data_type_t frb_index_reader_t;
@@ -183,7 +183,7 @@ static VALUE frb_td_to_s(int argc, VALUE *argv, VALUE self) {
     unsigned int capa = len * 64 + 100;
     int p = 0;
     char *str = FRT_ALLOC_N(char, len * 64 + 100);
-    FrtSymbol field = fsym_id;
+    ID field = fsym_id;
     VALUE rstr;
 
     if (argc) {
@@ -374,7 +374,7 @@ static VALUE frb_q_to_s(int argc, VALUE *argv, VALUE self) {
     FrtQuery *q = (FrtQuery *)DATA_PTR(self);
     VALUE rstr, rfield;
     char *str;
-    FrtSymbol field = (FrtSymbol)NULL;
+    ID field = (ID)NULL;
     if (rb_scan_args(argc, argv, "01", &rfield)) {
         field = frb_field(rfield);
     }
@@ -502,8 +502,8 @@ typedef struct frb_tq_args {
     VALUE self;
     VALUE rfield;
     VALUE rterm;
-    char *term;
-    FrtSymbol field;
+    char  *term;
+    ID    field;
 } frb_tq_args;
 
 VALUE frb_tq_init_2(VALUE args) {
@@ -604,8 +604,8 @@ typedef struct frb_mtq_args {
     VALUE argc;
     VALUE *argv;
     float min_score;
-    int max_terms;
-    FrtSymbol field;
+    int   max_terms;
+    ID    field;
 } frb_mtq_args;
 
 VALUE frb_mtq_init_2(VALUE args) {
@@ -682,7 +682,7 @@ static VALUE frb_mtq_add_term(int argc, VALUE *argv, VALUE self) {
     return self;
 }
 
-typedef FrtQuery *(*mtq_maker_ft)(FrtSymbol field, const char *term);
+typedef FrtQuery *(*mtq_maker_ft)(ID field, const char *term);
 
 static int get_max_terms(VALUE rmax_terms, int max_terms) {
     VALUE v;
@@ -862,7 +862,7 @@ static VALUE frb_bc_to_s(VALUE self) {
     const char *ostr = "";
     int len;
     FrtBooleanClause *bc = (FrtBooleanClause *)DATA_PTR(self);
-    qstr = bc->query->to_s(bc->query, (FrtSymbol)NULL);
+    qstr = bc->query->to_s(bc->query, (ID)NULL);
     switch (bc->occur) {
         case FRT_BC_SHOULD:
             ostr = "Should";
@@ -1041,7 +1041,7 @@ typedef struct frb_rq_args {
     VALUE self;
     VALUE rfield;
     VALUE roptions;
-    FrtSymbol field;
+    ID    field;
     char  *lterm;
     char  *uterm;
     bool  include_lower;
@@ -1238,8 +1238,8 @@ typedef struct frb_phq_args {
     VALUE self;
     VALUE argc;
     VALUE *argv;
-    FrtSymbol field;
-    int slop;
+    ID    field;
+    int   slop;
 } frb_phq_args;
 
 VALUE frb_phq_init_2(VALUE args) {
@@ -1390,9 +1390,9 @@ typedef struct frb_prq_args {
     VALUE self;
     VALUE argc;
     VALUE *argv;
-    FrtSymbol field;
-    char *term;
-    int max_terms;
+    ID    field;
+    char  *term;
+    int   max_terms;
 } frb_prq_args;
 
 VALUE frb_prq_init_2(VALUE args) {
@@ -1468,9 +1468,9 @@ typedef struct frb_wcq_args {
     VALUE self;
     VALUE argc;
     VALUE *argv;
-    FrtSymbol field;
-    char *term;
-    int max_terms;
+    ID    field;
+    char  *term;
+    int   max_terms;
 } frb_wcq_args;
 
 VALUE frb_wcq_init_2(VALUE args) {
@@ -1548,11 +1548,11 @@ typedef struct frb_fq_args {
     VALUE self;
     VALUE argc;
     VALUE *argv;
-    FrtSymbol field;
-    char *term;
+    ID    field;
+    char  *term;
     float min_sim;
-    int max_terms;
-    int pre_len;
+    int   max_terms;
+    int   pre_len;
 } frb_fq_args;
 
 VALUE frb_fq_init_2(VALUE args) {
@@ -1911,8 +1911,8 @@ typedef struct frb_spantq_args {
     VALUE self;
     VALUE rfield;
     VALUE rterm;
-    FrtSymbol field;
-    char *term;
+    ID    field;
+    char  *term;
 } frb_spantq_args;
 
 VALUE frb_spantq_init_2(VALUE args) {
@@ -1972,7 +1972,7 @@ static VALUE frb_spanmtq_alloc(VALUE rclass) {
 typedef struct frb_spanmtq_args {
     VALUE self;
     VALUE rfield;
-    FrtSymbol field;
+    ID    field;
 } frb_spanmtq_args;
 
 VALUE frb_spanmtq_init_2(VALUE args) {
@@ -2036,9 +2036,9 @@ typedef struct frb_spanprq_args {
     VALUE self;
     VALUE argc;
     VALUE *argv;
-    FrtSymbol field;
-    char *prefix;
-    int max_terms;
+    ID    field;
+    char  *prefix;
+    int   max_terms;
 } frb_spanprq_args;
 
 VALUE frb_spanprq_init_2(VALUE args) {
@@ -2724,7 +2724,7 @@ static VALUE frb_sf_init(int argc, VALUE *argv, VALUE self) {
     VALUE rval;
     int type = FRT_SORT_TYPE_AUTO;
     int is_reverse = false;
-    FrtSymbol field;
+    ID field;
     TypedData_Get_Struct(self, FrtSortField, &frb_sort_field_t, sf);
     if (rb_scan_args(argc, argv, "11", &rfield, &roptions) == 2) {
         if (Qnil != (rval = rb_hash_aref(roptions, sym_type))) {
@@ -2741,7 +2741,7 @@ static VALUE frb_sf_init(int argc, VALUE *argv, VALUE self) {
     field = frb_field(rfield);
 
     frt_sort_field_init(sf, field, type, is_reverse);
-    if (sf->field == (FrtSymbol)NULL) {
+    if (sf->field == (ID)NULL) {
         sf->field = field;
     }
     sf->rfield = self;
@@ -2987,7 +2987,6 @@ static VALUE frb_sort_get_fields(VALUE self) {
     return rfields;
 }
 
-
 /*
  *  call-seq:
  *     sort.to_s -> string
@@ -3104,6 +3103,7 @@ typedef struct CWrappedFilter {
     FrtFilter super;
     VALUE  rfilter;
 } CWrappedFilter;
+
 #define CWF(filt) ((CWrappedFilter *)(filt))
 
 static unsigned long long cwfilt_hash(FrtFilter *filt) {
@@ -3483,9 +3483,7 @@ static VALUE frb_sea_explain(VALUE self, VALUE rquery, VALUE rdoc_id) {
  *                      hits the start or end of the field. You'll probably
  *                      want to change this so a Unicode ellipsis character.
  */
-static VALUE
-frb_sea_highlight(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_sea_highlight(int argc, VALUE *argv, VALUE self) {
     GET_SEA();
     VALUE rquery, rdoc_id, rfield, roptions, v;
     int excerpt_length = 150;

@@ -13,7 +13,7 @@
 void field_prop_test(TestCase *tc,
                      int line_num,
                      FrtFieldInfo *fi,
-                     FrtSymbol name,
+                     ID name,
                      float boost,
                      bool is_stored,
                      bool is_compressed,

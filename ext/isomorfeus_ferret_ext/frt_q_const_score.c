@@ -94,7 +94,7 @@ static FrtWeight *csw_new(FrtQuery *query, FrtSearcher *searcher) {
  *
  ***************************************************************************/
 
-static char *csq_to_s(FrtQuery *self, FrtSymbol default_field) {
+static char *csq_to_s(FrtQuery *self, ID default_field) {
     FrtFilter *filter = CScQ(self)->filter;
     char *filter_str = filter->to_s(filter);
     char *buffer;

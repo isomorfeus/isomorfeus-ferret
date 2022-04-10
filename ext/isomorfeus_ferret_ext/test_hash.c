@@ -199,8 +199,8 @@ static void test_hash_int(TestCase *tc, void *data)
 static void test_hash_ptr(TestCase *tc, void *data)
 {
     FrtHash *h = frt_h_new_ptr(&free);
-    FrtSymbol word1 = rb_intern("one");
-    FrtSymbol word2 = rb_intern("two");
+    ID word1 = rb_intern("one");
+    ID word2 = rb_intern("two");
     char *word_one = frt_estrdup("one");
     int i;
     char buf[100];

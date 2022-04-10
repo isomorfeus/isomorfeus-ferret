@@ -3,7 +3,7 @@
 
 #undef close
 
-static FrtSymbol num, flipflop;
+static ID num, flipflop;
 
 extern void prepare_filter_index(FrtStore *store);
 

@@ -54,7 +54,7 @@ static VALUE sym_with_positions;
 static VALUE sym_with_offsets;
 static VALUE sym_with_positions_offsets;
 
-static FrtSymbol fsym_content;
+static ID fsym_content;
 
 static ID id_term;
 static ID id_fields;
@@ -1457,7 +1457,7 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
         return ST_CONTINUE;
     } else {
         FrtDocument *doc = (FrtDocument *)arg;
-        FrtSymbol field = frb_field(key);
+        ID field = frb_field(key);
         VALUE val;
         FrtDocField *df;
         if (NULL == (df = frt_doc_get_field(doc, field))) {
@@ -2058,7 +2058,7 @@ static VALUE frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df) 
  */
 static VALUE frb_lzd_default(VALUE self, VALUE rkey) {
     FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
-    FrtSymbol field = frb_field(rkey);
+    ID field = frb_field(rkey);
     VALUE rfield = ID2SYM(field);
 
     return frb_lazy_df_load(self, rfield, frt_lazy_doc_get(lazy_doc, field));
@@ -2535,7 +2535,7 @@ frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
 static void
 frb_add_each_tv(void *key, void *value, void *rtvs)
 {
-    rb_hash_aset((VALUE)rtvs, ID2SYM((FrtSymbol)key), frb_get_tv(value));
+    rb_hash_aset((VALUE)rtvs, ID2SYM((ID)key), frb_get_tv(value));
 }
 
 /*

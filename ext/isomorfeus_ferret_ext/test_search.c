@@ -9,7 +9,7 @@
 
 #define ARRAY_SIZE 40
 
-static FrtSymbol date, field, cat, number;
+static ID date, field, cat, number;
 
 static void test_byte_float_conversion(TestCase *tc, void *data)
 {
@@ -21,9 +21,7 @@ static void test_byte_float_conversion(TestCase *tc, void *data)
     }
 }
 
-static int my_doc_freq(FrtSearcher *searcher, FrtSymbol field,
-                       const char *term)
-{
+static int my_doc_freq(FrtSearcher *searcher, ID field, const char *term) {
     (void)searcher; (void)field; (void)term;
     return 9;
 }
@@ -254,7 +252,7 @@ static void test_get_doc(TestCase *tc, void *data)
    frt_doc_destroy(doc);
 }
 
-void check_to_s(TestCase *tc, FrtQuery *query, FrtSymbol field, const char *q_str)
+void check_to_s(TestCase *tc, FrtQuery *query, ID field, const char *q_str)
 {
     char *q_res = query->to_s(query, field);
     Asequal(q_str, q_res);
@@ -320,7 +318,7 @@ void tst_check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const 
 }
 
 void check_match_vector(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,
-                        int doc, FrtSymbol field, const char *ranges)
+                        int doc, ID field, const char *ranges)
 {
     static int range_array[ARRAY_SIZE];
     FrtMatchVector *mv = frt_searcher_get_match_vector(searcher, query, doc, field);
@@ -344,11 +342,11 @@ static void test_term_query(TestCase *tc, void *data)
     char *t, e[100];
     FrtQuery *tq = frt_tq_new(field, "word2");
     check_to_s(tc, tq, field, "word2");
-    check_to_s(tc, tq, (FrtSymbol)NULL, "field:word2");
+    check_to_s(tc, tq, (ID)NULL, "field:word2");
     tq->boost = 100;
     tst_check_hits(tc, searcher, tq, "4, 8, 1", -1);
     check_to_s(tc, tq, field, "word2^100.0");
-    check_to_s(tc, tq, (FrtSymbol)NULL, "field:word2^100.0");
+    check_to_s(tc, tq, (ID)NULL, "field:word2^100.0");
 
     /* test TermWeight.to_s */
     w = searcher->create_weight(searcher, tq);
@@ -556,13 +554,13 @@ static void test_phrase_query(TestCase *tc, void *data)
     FrtWeight *w;
     char *t, e[100];
     check_to_s(tc, phq, field, "\"\"");
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"\"");
 
     frt_phq_add_term(phq, "quick", 1);
     frt_phq_add_term(phq, "brown", 1);
     frt_phq_add_term(phq, "fox", 1);
     check_to_s(tc, phq, field, "\"quick brown fox\"");
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick brown fox\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick brown fox\"");
     tst_check_hits(tc, searcher, phq, "1", 1);
 
     frt_phq_set_slop(phq, 4);
@@ -583,7 +581,7 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "quick", 1);
     frt_phq_add_term(phq, "fox", 2);
     check_to_s(tc, phq, field, "\"quick <> fox\"");
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick <> fox\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick <> fox\"");
     tst_check_hits(tc, searcher, phq, "1, 11, 14", 14);
 
     frt_phq_set_slop(phq, 1);
@@ -592,19 +590,19 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_set_slop(phq, 4);
     tst_check_hits(tc, searcher, phq, "1, 11, 14, 16, 17", 14);
     frt_phq_add_term(phq, "red", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick red fox\"~4");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick red fox\"~4");
     tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "RED", 0);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick red RED&fox\"~4");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick red RED&fox\"~4");
     tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "QUICK", -1);
     frt_phq_add_term(phq, "red", 0);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick QUICK&red&red RED&fox\"~4");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick QUICK&red&red RED&fox\"~4");
     tst_check_hits(tc, searcher, phq, "11", 11);
     frt_phq_add_term(phq, "green", 0);
     frt_phq_add_term(phq, "yellow", 0);
     frt_phq_add_term(phq, "sentinel", 1);
-    check_to_s(tc, phq, (FrtSymbol)NULL,
+    check_to_s(tc, phq, (ID)NULL,
                "field:\"quick QUICK&red&red RED&fox&green&yellow sentinel\"~4");
     tst_check_hits(tc, searcher, phq, "", -1);
     frt_q_deref(phq);
@@ -617,7 +615,7 @@ static void test_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "quick", 0);
     frt_phq_add_term(phq, "QUICK", 1);
     tst_check_hits(tc, searcher, phq, "11, 14", 14);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3&the THE&quick QUICK\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"WORD3&the THE&quick QUICK\"");
     frt_q_deref(phq);
 
     /* test repeating terms check */
@@ -742,30 +740,30 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_append_multi_term(phq, "fast");
     tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, phq, field, "\"quick|fast\"");
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick|fast\"");
 
     frt_phq_add_term(phq, "brown", 1);
     frt_phq_append_multi_term(phq, "red");
     frt_phq_append_multi_term(phq, "hairy");
     frt_phq_add_term(phq, "fox", 1);
     check_to_s(tc, phq, field, "\"quick|fast brown|red|hairy fox\"");
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast brown|red|hairy fox\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick|fast brown|red|hairy fox\"");
     tst_check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
 
     frt_phq_set_slop(phq, 4);
     tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"quick|fast brown|red|hairy fox\"~4");
+    check_to_s(tc, phq, (ID)NULL, "field:\"quick|fast brown|red|hairy fox\"~4");
 
     frt_phq_add_term(phq, "QUICK", -1);
     frt_phq_append_multi_term(phq, "FAST");
     tst_check_hits(tc, searcher, phq, "1, 8, 11, 14, 16, 17", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL,
+    check_to_s(tc, phq, (ID)NULL,
                "field:\"quick|fast QUICK|FAST&brown|red|hairy fox\"~4");
 
     frt_phq_add_term(phq, "WORD3", -3);
     frt_phq_append_multi_term(phq, "WORD2");
     tst_check_hits(tc, searcher, phq, "1, 8, 11, 14", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|WORD2 quick|fast "
+    check_to_s(tc, phq, (ID)NULL, "field:\"WORD3|WORD2 quick|fast "
                "QUICK|FAST&brown|red|hairy fox\"~4");
 
     frt_q_deref(phq);
@@ -778,11 +776,11 @@ static void test_multi_phrase_query(TestCase *tc, void *data)
     frt_phq_add_term(phq, "two", 1);
     frt_phq_add_term(phq, "one", 1);
     tst_check_hits(tc, searcher, phq, "2", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|x&one two one\"");
+    check_to_s(tc, phq, (ID)NULL, "field:\"WORD3|x&one two one\"");
 
     frt_phq_set_slop(phq, 4);
     tst_check_hits(tc, searcher, phq, "2", -1);
-    check_to_s(tc, phq, (FrtSymbol)NULL, "field:\"WORD3|x&one two one\"~4");
+    check_to_s(tc, phq, (ID)NULL, "field:\"WORD3|x&one two one\"~4");
     frt_q_deref(phq);
 
     /* test phrase query on non-existing field doesn't break anything */
@@ -902,40 +900,40 @@ static void test_multi_term_query(TestCase *tc, void *data)
     mtq = frt_multi_tq_new_conf(field, 4, 0.5);
     tst_check_hits(tc, searcher, mtq, "", -1);
     check_to_s(tc, mtq, field, "\"\"");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"\"");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"\"");
 
     frt_multi_tq_add_term(mtq, "brown");
     tst_check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"brown\"");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown\"");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"brown\"");
 
 
     /* 0.4f boost is below the 0.5 threshold so term is ignored */
     frt_multi_tq_add_term_boost(mtq, "fox", 0.4f);
     tst_check_hits(tc, searcher, mtq, "1, 8, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"brown\"");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown\"");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"brown\"");
 
     /* 0.6f boost is above the 0.5 threshold so term is included */
     frt_multi_tq_add_term_boost(mtq, "fox", 0.6f);
     tst_check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", -1);
     check_to_s(tc, mtq, field, "\"fox^0.6|brown\"");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown\"");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"fox^0.6|brown\"");
 
     frt_multi_tq_add_term_boost(mtq, "fast", 50.0f);
     tst_check_hits(tc, searcher, mtq, "1, 8, 11, 14, 16, 17", 8);
     check_to_s(tc, mtq, field, "\"fox^0.6|brown|fast^50.0\"");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown|fast^50.0\"");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"fox^0.6|brown|fast^50.0\"");
 
 
     mtq->boost = 80.1f;
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown|fast^50.0\"^80.1");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"fox^0.6|brown|fast^50.0\"^80.1");
     frt_multi_tq_add_term(mtq, "word1");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"fox^0.6|brown|word1|fast^50.0\"^80.1");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"fox^0.6|brown|word1|fast^50.0\"^80.1");
     frt_multi_tq_add_term(mtq, "word2");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown|word1|word2|fast^50.0\"^80.1");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"brown|word1|word2|fast^50.0\"^80.1");
     frt_multi_tq_add_term(mtq, "word3");
-    check_to_s(tc, mtq, (FrtSymbol)NULL, "field:\"brown|word1|word2|fast^50.0\"^80.1");
+    check_to_s(tc, mtq, (ID)NULL, "field:\"brown|word1|word2|fast^50.0\"^80.1");
 
     /* test MultiTermWeight.to_s */
     w = searcher->create_weight(searcher, mtq);
@@ -958,7 +956,7 @@ static void test_multi_term_query(TestCase *tc, void *data)
     frt_bq_add_query(bq, mtq, FRT_BC_MUST);
     tst_check_hits(tc, searcher, bq, "1, 11, 14, 16, 17", -1);
     check_to_s(tc, bq, field, "+quick +\"fox^0.6|brown|word1\"");
-    check_to_s(tc, bq, (FrtSymbol)NULL, "+field:quick +field:\"fox^0.6|brown|word1\"");
+    check_to_s(tc, bq, (ID)NULL, "+field:quick +field:\"fox^0.6|brown|word1\"");
     frt_q_deref(bq);
     frt_q_deref(mtq);
 
@@ -980,7 +978,7 @@ static void test_multi_term_query_hash(TestCase *tc, void *data)
     (void)data;
 
 
-    check_to_s(tc, q1, (FrtSymbol)NULL, "field:\"\"");
+    check_to_s(tc, q1, (ID)NULL, "field:\"\"");
     Assert(frt_q_hash(q1) == frt_q_hash(q2), "Queries should be equal");
     Assert(frt_q_eq(q1, q1), "Same queries should be equal");
     Assert(frt_q_eq(q1, q2), "Queries should be equal");

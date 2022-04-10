@@ -7,7 +7,7 @@
 
 #define ARRAY_SIZE 20
 
-static FrtSymbol search, string, integer, flt;
+static ID search, string, integer, flt;
 
 typedef struct SortTestData {
     const char *search;

@@ -96,7 +96,7 @@ extern char *frt_td_to_s(FrtTopDocs *td);
  ***************************************************************************/
 
 typedef struct FrtFilter {
-    FrtSymbol     name;
+    ID     name;
     FrtHash       *cache;
     FrtBitVector  *(*get_bv_i)(struct FrtFilter *self, FrtIndexReader *ir);
     char          *(*to_s)(struct FrtFilter *self);
@@ -108,7 +108,7 @@ typedef struct FrtFilter {
 } FrtFilter;
 
 #define filt_new(type) frt_filt_create(sizeof(type), rb_intern(#type))
-extern FrtFilter *frt_filt_create(size_t size, FrtSymbol name);
+extern FrtFilter *frt_filt_create(size_t size, ID name);
 extern FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir);
 extern void frt_filt_destroy_i(FrtFilter *filt);
 extern void frt_filt_deref(FrtFilter *filt);
@@ -122,7 +122,7 @@ extern int frt_filt_eq(FrtFilter *filt, FrtFilter *o);
  ***************************************************************************/
 
 typedef struct FrtRange {
-    FrtSymbol field;
+    ID field;
     char      *lower_term;
     char      *upper_term;
     bool      include_lower : 1;
@@ -135,9 +135,9 @@ typedef struct FrtRangeFilter {
 } FrtRangeFilter;
 
 extern FrtFilter *frt_rfilt_alloc(void);
-extern FrtFilter *frt_rfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+extern FrtFilter *frt_rfilt_init(FrtFilter *filt, ID field, const char *lower_term, const char *upper_term,
                          bool include_lower, bool include_upper);
-extern FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
+extern FrtFilter *frt_rfilt_new(ID field, const char *lower_term, const char *upper_term,
                          bool include_lower, bool include_upper);
 
 /***************************************************************************
@@ -147,9 +147,9 @@ extern FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const c
  ***************************************************************************/
 
 extern FrtFilter *frt_trfilt_alloc(void);
-extern FrtFilter *frt_trfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
+extern FrtFilter *frt_trfilt_init(FrtFilter *filt, ID field, const char *lower_term, const char *upper_term,
                           bool include_lower, bool include_upper);
-extern FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
+extern FrtFilter *frt_trfilt_new(ID field, const char *lower_term, const char *upper_term,
                           bool include_lower, bool include_upper);
 
 /***************************************************************************
@@ -234,7 +234,7 @@ struct FrtQuery {
     FrtQuery           *(*rewrite)(FrtQuery *self, FrtIndexReader *ir);
     void               (*extract_terms)(FrtQuery *self, FrtHashSet *terms);
     FrtSimilarity      *(*get_similarity)(FrtQuery *self, FrtSearcher *searcher);
-    char               *(*to_s)(FrtQuery *self, FrtSymbol field);
+    char               *(*to_s)(FrtQuery *self, ID field);
     unsigned long long (*hash)(FrtQuery *self);
     int                (*eq)(FrtQuery *self, FrtQuery *o);
     void               (*destroy_i)(FrtQuery *self);
@@ -264,13 +264,13 @@ extern FrtQuery *frt_q_create(size_t size);
 
 typedef struct FrtTermQuery {
     FrtQuery  super;
-    FrtSymbol field;
+    ID field;
     char      *term;
 } FrtTermQuery;
 
 FrtQuery *frt_tq_alloc(void);
-FrtQuery *frt_tq_init(FrtQuery *self, FrtSymbol field, const char *term);
-FrtQuery *frt_tq_new(FrtSymbol field, const char *term);
+FrtQuery *frt_tq_init(FrtQuery *self, ID field, const char *term);
+FrtQuery *frt_tq_new(ID field, const char *term);
 
 /***************************************************************************
  * FrtBooleanQuery
@@ -330,15 +330,15 @@ extern FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *
 typedef struct FrtPhraseQuery {
     FrtQuery          super;
     int               slop;
-    FrtSymbol         field;
+    ID         field;
     FrtPhrasePosition *positions;
     int               pos_cnt;
     int               pos_capa;
 } FrtPhraseQuery;
 
 extern FrtQuery *frt_phq_alloc(void);
-extern FrtQuery *frt_phq_init(FrtQuery *self, FrtSymbol field);
-extern FrtQuery *frt_phq_new(FrtSymbol field);
+extern FrtQuery *frt_phq_init(FrtQuery *self, ID field);
+extern FrtQuery *frt_phq_new(ID field);
 extern void frt_phq_add_term(FrtQuery *self, const char *term, int pos_inc);
 extern void frt_phq_add_term_abs(FrtQuery *self, const char *term, int position);
 extern void frt_phq_append_multi_term(FrtQuery *self, const char *term);
@@ -351,7 +351,7 @@ extern void frt_phq_set_slop(FrtQuery *self, int slop);
 #define MULTI_TERM_QUERY_MAX_TERMS 256
 typedef struct FrtMultiTermQuery {
     FrtQuery         super;
-    FrtSymbol        field;
+    ID        field;
     FrtPriorityQueue *boosted_terms;
     float            min_boost;
 } FrtMultiTermQuery;
@@ -359,9 +359,9 @@ typedef struct FrtMultiTermQuery {
 extern void frt_multi_tq_add_term(FrtQuery *self, const char *term);
 extern void frt_multi_tq_add_term_boost(FrtQuery *self, const char *term, float boost);
 extern FrtQuery *frt_multi_tq_alloc(void);
-extern FrtQuery *frt_multi_tq_new(FrtSymbol field);
-extern FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, FrtSymbol field, int max_terms, float min_boost);
-extern FrtQuery *frt_multi_tq_new_conf(FrtSymbol field, int max_terms, float min_boost);
+extern FrtQuery *frt_multi_tq_new(ID field);
+extern FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, ID field, int max_terms, float min_boost);
+extern FrtQuery *frt_multi_tq_new_conf(ID field, int max_terms, float min_boost);
 
 #define FrtMTQMaxTerms(query) (((FrtMTQSubQuery *)(query))->max_terms)
 typedef struct FrtMTQSubQuery {
@@ -377,13 +377,13 @@ typedef struct FrtMTQSubQuery {
 
 typedef struct FrtPrefixQuery {
     FrtMTQSubQuery super;
-    FrtSymbol      field;
+    ID      field;
     char           *prefix;
 } FrtPrefixQuery;
 
 extern FrtQuery *frt_prefixq_alloc(void);
-extern FrtQuery *frt_prefixq_init(FrtQuery *self, FrtSymbol field, const char *prefix);
-extern FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix);
+extern FrtQuery *frt_prefixq_init(FrtQuery *self, ID field, const char *prefix);
+extern FrtQuery *frt_prefixq_new(ID field, const char *prefix);
 
 /***************************************************************************
  * FrtWildCardQuery
@@ -395,13 +395,13 @@ extern FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix);
 
 typedef struct FrtWildCardQuery {
     FrtMTQSubQuery super;
-    FrtSymbol      field;
+    ID      field;
     char           *pattern;
 } FrtWildCardQuery;
 
 extern FrtQuery *frt_wcq_alloc(void);
-extern FrtQuery *frt_wcq_init(FrtQuery *self, FrtSymbol field, const char *pattern);
-extern FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern);
+extern FrtQuery *frt_wcq_init(FrtQuery *self, ID field, const char *pattern);
+extern FrtQuery *frt_wcq_new(ID field, const char *pattern);
 extern bool frt_wc_match(const char *pattern, const char *text);
 
 /***************************************************************************
@@ -415,7 +415,7 @@ extern bool frt_wc_match(const char *pattern, const char *text);
 
 typedef struct FrtFuzzyQuery {
     FrtMTQSubQuery super;
-    FrtSymbol      field;
+    ID      field;
     char           *term;
     const char     *text; /* term text after prefix */
     int            text_len;
@@ -427,9 +427,9 @@ typedef struct FrtFuzzyQuery {
 } FrtFuzzyQuery;
 
 extern FrtQuery *frt_fuzq_alloc(void);
-extern FrtQuery *frt_fuzq_new(FrtSymbol field, const char *term);
-extern FrtQuery *frt_fuzq_init_conf(FrtQuery *self, FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms);
-extern FrtQuery *frt_fuzq_new_conf(FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms);
+extern FrtQuery *frt_fuzq_new(ID field, const char *term);
+extern FrtQuery *frt_fuzq_init_conf(FrtQuery *self, ID field, const char *term, float min_sim, int pre_len, int max_terms);
+extern FrtQuery *frt_fuzq_new_conf(ID field, const char *term, float min_sim, int pre_len, int max_terms);
 extern float frt_fuzq_score(FrtFuzzyQuery *fuzq, const char *target);
 
 /***************************************************************************
@@ -479,20 +479,20 @@ typedef struct FrtRangeQuery {
 } FrtRangeQuery;
 
 extern FrtQuery *frt_rq_alloc(void);
-extern FrtQuery *frt_rq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
-extern FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
-extern FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term, bool include_upper);
-extern FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_lower);
+extern FrtQuery *frt_rq_init(FrtQuery *self, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
+extern FrtQuery *frt_rq_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
+extern FrtQuery *frt_rq_new_less(ID field, const char *upper_term, bool include_upper);
+extern FrtQuery *frt_rq_new_more(ID field, const char *lower_term, bool include_lower);
 
 /***************************************************************************
  * FrtTypedRangeQuery
  ***************************************************************************/
 
 extern FrtQuery *frt_trq_alloc(void);
-extern FrtQuery *frt_trq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
-extern FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
-extern FrtQuery *frt_trq_new_less(FrtSymbol field, const char *upper_term, bool include_upper);
-extern FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term, bool include_lower);
+extern FrtQuery *frt_trq_init(FrtQuery *self, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
+extern FrtQuery *frt_trq_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper);
+extern FrtQuery *frt_trq_new_less(ID field, const char *upper_term, bool include_upper);
+extern FrtQuery *frt_trq_new_more(ID field, const char *lower_term, bool include_lower);
 
 /***************************************************************************
  * FrtSpanQuery
@@ -514,7 +514,7 @@ struct FrtSpanEnum {
 /* ** FrtSpanQuery ** */
 typedef struct FrtSpanQuery {
     FrtQuery    super;
-    FrtSymbol   field;
+    ID   field;
     FrtSpanEnum *(*get_spans)(FrtQuery *self, FrtIndexReader *ir);
     FrtHashSet  *(*get_terms)(FrtQuery *self);
 } FrtSpanQuery;
@@ -529,8 +529,8 @@ typedef struct FrtSpanTermQuery {
 } FrtSpanTermQuery;
 
 extern FrtQuery *frt_spantq_alloc(void);
-extern FrtQuery *frt_spantq_init(FrtQuery *self, FrtSymbol field, const char *term);
-extern FrtQuery *frt_spantq_new(FrtSymbol field, const char *term);
+extern FrtQuery *frt_spantq_init(FrtQuery *self, ID field, const char *term);
+extern FrtQuery *frt_spantq_new(ID field, const char *term);
 
 /***************************************************************************
  * FrtSpanMultiTermQuery
@@ -545,9 +545,9 @@ typedef struct FrtSpanMultiTermQuery {
 } FrtSpanMultiTermQuery;
 
 extern FrtQuery *frt_spanmtq_alloc(void);
-extern FrtQuery *frt_spanmtq_init(FrtQuery *self, FrtSymbol field);
-extern FrtQuery *frt_spanmtq_new(FrtSymbol field);
-extern FrtQuery *frt_spanmtq_new_conf(FrtSymbol field, int max_size);
+extern FrtQuery *frt_spanmtq_init(FrtQuery *self, ID field);
+extern FrtQuery *frt_spanmtq_new(ID field);
+extern FrtQuery *frt_spanmtq_new_conf(ID field, int max_size);
 extern void frt_spanmtq_add_term(FrtQuery *self, const char *term);
 
 /***************************************************************************
@@ -629,8 +629,8 @@ typedef struct FrtSpanPrefixQuery {
 } FrtSpanPrefixQuery;
 
 extern FrtQuery *frt_spanprq_alloc(void);
-extern FrtQuery *frt_spanprq_init(FrtQuery *self, FrtSymbol field, const char *prefix);
-extern FrtQuery *frt_spanprq_new(FrtSymbol field, const char *prefix);
+extern FrtQuery *frt_spanprq_init(FrtQuery *self, ID field, const char *prefix);
+extern FrtQuery *frt_spanprq_new(ID field, const char *prefix);
 
 /***************************************************************************
  *
@@ -697,17 +697,17 @@ typedef enum {
 
 typedef struct FrtSortField {
     const FrtFieldIndexClass *field_index_class;
-    FrtSymbol field;
-    SortType  type;
-    bool      reverse : 1;
-    int       (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
-    void      (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable);
-    VALUE     rfield;
+    ID       field;
+    SortType type;
+    bool     reverse : 1;
+    int      (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
+    void     (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable);
+    VALUE    rfield;
 } FrtSortField;
 
 extern FrtSortField *frt_sort_field_alloc(void);
-extern FrtSortField *frt_sort_field_init(FrtSortField *self, FrtSymbol field, SortType type, bool reverse);
-extern FrtSortField *frt_sort_field_new(FrtSymbol field, SortType type, bool reverse);
+extern FrtSortField *frt_sort_field_init(FrtSortField *self, ID field, SortType type, bool reverse);
+extern FrtSortField *frt_sort_field_new(ID field, SortType type, bool reverse);
 extern FrtSortField *frt_sort_field_score_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_score_new(bool reverse);
 extern void frt_sort_field_score_get_val(void *index, FrtHit *hit, FrtComparable *comparable);
@@ -716,16 +716,16 @@ extern FrtSortField *frt_sort_field_doc_init(FrtSortField *self, bool reverse);
 extern FrtSortField *frt_sort_field_doc_new(bool reverse);
 extern void frt_sort_field_doc_get_val(void *index, FrtHit *hit, FrtComparable *comparable);
 extern int frt_sort_field_doc_compare(void *index_ptr, FrtHit *hit1, FrtHit *hit2);
-extern FrtSortField *frt_sort_field_int_init(FrtSortField *self, FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_int_new(FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_byte_init(FrtSortField *self, FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_byte_new(FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_float_init(FrtSortField *self, FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_float_new(FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_string_init(FrtSortField *self, FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_string_new(FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_auto_init(FrtSortField *self, FrtSymbol field, bool reverse);
-extern FrtSortField *frt_sort_field_auto_new(FrtSymbol field, bool reverse);
+extern FrtSortField *frt_sort_field_int_init(FrtSortField *self, ID field, bool reverse);
+extern FrtSortField *frt_sort_field_int_new(ID field, bool reverse);
+extern FrtSortField *frt_sort_field_byte_init(FrtSortField *self, ID field, bool reverse);
+extern FrtSortField *frt_sort_field_byte_new(ID field, bool reverse);
+extern FrtSortField *frt_sort_field_float_init(FrtSortField *self, ID field, bool reverse);
+extern FrtSortField *frt_sort_field_float_new(ID field, bool reverse);
+extern FrtSortField *frt_sort_field_string_init(FrtSortField *self, ID field, bool reverse);
+extern FrtSortField *frt_sort_field_string_new(ID field, bool reverse);
+extern FrtSortField *frt_sort_field_auto_init(FrtSortField *self, ID field, bool reverse);
+extern FrtSortField *frt_sort_field_auto_new(ID field, bool reverse);
 extern void frt_sort_field_destroy(void *p);
 extern char *frt_sort_field_to_s(FrtSortField *self);
 
@@ -791,7 +791,7 @@ typedef struct FrtPostFilter {
 
 struct FrtSearcher {
     FrtSimilarity  *similarity;
-    int            (*doc_freq)(FrtSearcher *self, FrtSymbol field, const char *term);
+    int            (*doc_freq)(FrtSearcher *self, ID field, const char *term);
     FrtDocument    *(*get_doc)(FrtSearcher *self, int doc_num);
     FrtLazyDoc     *(*get_lazy_doc)(FrtSearcher *self, int doc_num);
     int            (*max_doc)(FrtSearcher *self);
@@ -813,7 +813,7 @@ struct FrtSearcher {
     FrtQuery       *(*rewrite)(FrtSearcher *self, FrtQuery *original);
     FrtExplanation *(*explain)(FrtSearcher *self, FrtQuery *query, int doc_num);
     FrtExplanation *(*explain_w)(FrtSearcher *self, FrtWeight *weight, int doc_num);
-    FrtTermVector  *(*get_term_vector)(FrtSearcher *self, const int doc_num, FrtSymbol field);
+    FrtTermVector  *(*get_term_vector)(FrtSearcher *self, const int doc_num, ID field);
     FrtSimilarity  *(*get_similarity)(FrtSearcher *self);
     void           (*close)(FrtSearcher *self);
 };
@@ -828,11 +828,11 @@ struct FrtSearcher {
 #define frt_searcher_search_each(s, q, filt, ff, fn, arg)   s->search_each(s, q, filt, ff, fn, arg)
 #define frt_searcher_search_unscored(s, q, buf, limit, offset_docnum)   s->search_unscored(s, q, buf, limit, offset_docnum)
 
-extern FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self, FrtQuery *query, const int doc_num, FrtSymbol field);
+extern FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self, FrtQuery *query, const int doc_num, ID field);
 extern char **frt_searcher_highlight(FrtSearcher *self,
                                  FrtQuery *query,
                                  const int doc_num,
-                                 FrtSymbol field,
+                                 ID field,
                                  const int excerpt_len,
                                  const int num_excerpts,
                                  const char *pre_tag,
@@ -854,7 +854,7 @@ typedef struct FrtIndexSearcher {
 extern FrtSearcher *frt_isea_alloc(void);
 extern FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir);
 extern FrtSearcher *frt_isea_new(FrtIndexReader *ir);
-extern int frt_isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term);
+extern int frt_isea_doc_freq(FrtSearcher *self, ID field, const char *term);
 
 /***************************************************************************
  *
@@ -923,7 +923,7 @@ typedef FrtQueryParser FrtQParser; /* FrtQParser is an alias for FrtQueryParser 
 extern FrtQParser *frt_qp_alloc(void);
 extern FrtQParser *frt_qp_init(FrtQParser *, FrtAnalyzer *analyzer);
 extern FrtQParser *frt_qp_new(FrtAnalyzer *analyzer);
-extern void frt_qp_add_field(FrtQParser *self, FrtSymbol field, bool is_default, bool is_tokenized);
+extern void frt_qp_add_field(FrtQParser *self, ID field, bool is_default, bool is_tokenized);
 extern void frt_qp_destroy(FrtQParser *self);
 extern FrtQuery *qp_parse(FrtQParser *self, char *qstr, rb_encoding *encoding);
 extern char *frt_qp_clean_str(char *str);

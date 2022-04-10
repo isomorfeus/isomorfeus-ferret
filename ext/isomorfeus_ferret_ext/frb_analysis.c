@@ -1035,7 +1035,6 @@ static VALUE frb_mapping_filter_init(VALUE self, VALUE rsub_ts, VALUE mapping) {
 }
 
 /*
- * TODO: encoding here is passed to libstemmer
  *  call-seq:
  *     StemFilter.new(token_stream) -> token_stream
  *     StemFilter.new(token_stream,
@@ -1140,7 +1139,7 @@ static void cwa_destroy_i(FrtAnalyzer *a) {
     free(a);
 }
 
-static FrtTokenStream *cwa_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding) {
+static FrtTokenStream *cwa_get_ts(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding) {
     VALUE rstr = rb_str_new_cstr(text);
     rb_enc_associate(rstr, encoding);
     VALUE rts = rb_funcall(CWA(a)->ranalyzer, id_token_stream, 2, rb_str_new_cstr(rb_id2name(field)), rstr);
@@ -1413,7 +1412,7 @@ static VALUE frb_per_field_analyzer_add_field(VALUE self, VALUE rfield, VALUE ra
  */
 static VALUE frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) {
     FrtAnalyzer *pfa, *a;
-    FrtSymbol field = frb_field(rfield);
+    ID field = frb_field(rfield);
     TypedData_Get_Struct(self, FrtAnalyzer, &frb_per_field_analyzer_t, pfa);
 
     StringValue(rstring);

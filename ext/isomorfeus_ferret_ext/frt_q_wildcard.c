@@ -12,7 +12,7 @@
 
 #define WCQ(query) ((FrtWildCardQuery *)(query))
 
-static char *wcq_to_s(FrtQuery *self, FrtSymbol default_field) {
+static char *wcq_to_s(FrtQuery *self, ID default_field) {
     char *buffer, *bptr;
     const char *field_name = rb_id2name(WCQ(self)->field);
     const char *pattern = WCQ(self)->pattern;
@@ -146,7 +146,7 @@ FrtQuery *frt_wcq_alloc(void) {
     return frt_q_new(FrtWildCardQuery);
 }
 
-FrtQuery *frt_wcq_init(FrtQuery *self, FrtSymbol field, const char *pattern) {
+FrtQuery *frt_wcq_init(FrtQuery *self, ID field, const char *pattern) {
     WCQ(self)->field        = field;
     WCQ(self)->pattern      = frt_estrdup(pattern);
     FrtMTQMaxTerms(self)    = FRT_WILD_CARD_QUERY_MAX_TERMS;
@@ -162,7 +162,7 @@ FrtQuery *frt_wcq_init(FrtQuery *self, FrtSymbol field, const char *pattern) {
     return self;
 }
 
-FrtQuery *frt_wcq_new(FrtSymbol field, const char *pattern) {
+FrtQuery *frt_wcq_new(ID field, const char *pattern) {
     FrtQuery *self = frt_wcq_alloc();
     return frt_wcq_init(self, field, pattern);
 }

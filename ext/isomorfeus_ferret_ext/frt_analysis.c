@@ -1097,7 +1097,7 @@ static void frt_a_standard_destroy_i(FrtAnalyzer *a) {
     free(a);
 }
 
-static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding) {
+static FrtTokenStream *a_standard_get_ts(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding) {
     FrtTokenStream *ts;
     (void)field;
     ts = frt_ts_clone(a->current_ts);
@@ -1109,7 +1109,7 @@ FrtAnalyzer *frt_analyzer_alloc(void) {
 }
 
 void frt_analyzer_init(FrtAnalyzer *a, FrtTokenStream *ts, void (*destroy_i)(FrtAnalyzer *a),
-                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding)) {
+                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding)) {
     a->current_ts = ts;
     a->destroy_i = (destroy_i ? destroy_i : &frt_a_standard_destroy_i);
     a->get_ts = (get_ts ? get_ts : &a_standard_get_ts);
@@ -1117,7 +1117,7 @@ void frt_analyzer_init(FrtAnalyzer *a, FrtTokenStream *ts, void (*destroy_i)(Frt
 }
 
 FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts, void (*destroy_i)(FrtAnalyzer *a),
-                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding)) {
+                       FrtTokenStream *(*get_ts)(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding)) {
     FrtAnalyzer *a = frt_analyzer_alloc();
     frt_analyzer_init(a, ts, destroy_i, get_ts);
     return a;
@@ -1210,7 +1210,7 @@ static void pfa_destroy_i(FrtAnalyzer *self) {
     free(self);
 }
 
-static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self, FrtSymbol field, char *text, rb_encoding *encoding) {
+static FrtTokenStream *pfa_get_ts(FrtAnalyzer *self, ID field, char *text, rb_encoding *encoding) {
     FrtAnalyzer *a = (FrtAnalyzer *)frt_h_get(PFA(self)->dict, (void *)field);
     if (a == NULL)
         a = PFA(self)->default_a;
@@ -1222,7 +1222,7 @@ static void pfa_sub_a_destroy_i(void *p) {
     frt_a_deref(a);
 }
 
-void frt_pfa_add_field(FrtAnalyzer *self, FrtSymbol field, FrtAnalyzer *analyzer) {
+void frt_pfa_add_field(FrtAnalyzer *self, ID field, FrtAnalyzer *analyzer) {
     frt_h_set(PFA(self)->dict, (void *)field, analyzer);
 }
 

@@ -12,7 +12,7 @@
 
 #define PfxQ(query) ((FrtPrefixQuery *)(query))
 
-static char *prq_to_s(FrtQuery *self, FrtSymbol default_field) {
+static char *prq_to_s(FrtQuery *self, ID default_field) {
     char *buffer, *bptr;
     const char *prefix = PfxQ(self)->prefix;
     size_t plen = strlen(prefix);
@@ -79,7 +79,7 @@ FrtQuery *frt_prefixq_alloc(void) {
     return frt_q_new(FrtPrefixQuery);
 }
 
-FrtQuery *frt_prefixq_init(FrtQuery *self, FrtSymbol field, const char *prefix) {
+FrtQuery *frt_prefixq_init(FrtQuery *self, ID field, const char *prefix) {
     PfxQ(self)->field       = field;
     PfxQ(self)->prefix      = frt_estrdup(prefix);
     FrtMTQMaxTerms(self)    = PREFIX_QUERY_MAX_TERMS;
@@ -95,7 +95,7 @@ FrtQuery *frt_prefixq_init(FrtQuery *self, FrtSymbol field, const char *prefix) 
     return self;
 }
 
-FrtQuery *frt_prefixq_new(FrtSymbol field, const char *prefix) {
+FrtQuery *frt_prefixq_new(ID field, const char *prefix) {
     FrtQuery *self = frt_prefixq_alloc();
     return frt_prefixq_init(self, field, prefix);
 }

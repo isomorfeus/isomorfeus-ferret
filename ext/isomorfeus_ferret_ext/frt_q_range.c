@@ -10,7 +10,7 @@
  *
  *****************************************************************************/
 
-static char *range_to_s(FrtRange *range, FrtSymbol default_field, float boost) {
+static char *range_to_s(FrtRange *range, ID default_field, float boost) {
     char *buffer, *b;
     size_t flen, llen, ulen;
     const char *field_name = rb_id2name(range->field);
@@ -86,10 +86,7 @@ static int range_eq(FrtRange *filt, FrtRange *o)
             && (filt->include_upper == o->include_upper));
 }
 
-static FrtRange *range_new(FrtSymbol field, const char *lower_term,
-                 const char *upper_term, bool include_lower,
-                 bool include_upper)
-{
+static FrtRange *range_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtRange *range;
 
     if (!lower_term && !upper_term) {
@@ -121,10 +118,7 @@ static FrtRange *range_new(FrtSymbol field, const char *lower_term,
     return range;
 }
 
-static FrtRange *trange_new(FrtSymbol field, const char *lower_term,
-                  const char *upper_term, bool include_lower,
-                  bool include_upper)
-{
+static FrtRange *trange_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtRange *range;
     int len;
     double upper_num, lower_num;
@@ -190,7 +184,7 @@ static void frt_rfilt_destroy_i(FrtFilter *filt) {
 
 static char *frt_rfilt_to_s(FrtFilter *filt)
 {
-    char *rstr = range_to_s(RF(filt)->range, (FrtSymbol)NULL, 1.0);
+    char *rstr = range_to_s(RF(filt)->range, (ID)NULL, 1.0);
     char *rfstr = frt_strfmt("RangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
@@ -267,8 +261,7 @@ FrtFilter *frt_rfilt_alloc(void) {
     return filt_new(FrtRangeFilter);
 }
 
-FrtFilter *frt_rfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
-                  bool include_lower, bool include_upper) {
+FrtFilter *frt_rfilt_init(FrtFilter *filt, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     RF(filt)->range = range_new(field, lower_term, upper_term, include_lower, include_upper);
     filt->get_bv_i  = &frt_rfilt_get_bv_i;
     filt->hash      = &frt_rfilt_hash;
@@ -278,8 +271,7 @@ FrtFilter *frt_rfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_te
     return filt;
 }
 
-FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
-                  bool include_lower, bool include_upper) {
+FrtFilter *frt_rfilt_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtFilter *filt = frt_rfilt_alloc();
     return frt_rfilt_init(filt, field, lower_term, upper_term, include_lower, include_upper);
 }
@@ -291,7 +283,7 @@ FrtFilter *frt_rfilt_new(FrtSymbol field, const char *lower_term, const char *up
  ***************************************************************************/
 
 static char *frt_trfilt_to_s(FrtFilter *filt) {
-    char *rstr = range_to_s(RF(filt)->range, (FrtSymbol)NULL, 1.0);
+    char *rstr = range_to_s(RF(filt)->range, (ID)NULL, 1.0);
     char *rfstr = frt_strfmt("TypedRangeFilter< %s >", rstr);
     free(rstr);
     return rfstr;
@@ -405,8 +397,7 @@ FrtFilter *frt_trfilt_alloc(void) {
     return filt_new(FrtRangeFilter);
 }
 
-FrtFilter *frt_trfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_term, const char *upper_term,
-                   bool include_lower, bool include_upper) {
+FrtFilter *frt_trfilt_init(FrtFilter *filt, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     RF(filt)->range = trange_new(field, lower_term, upper_term, include_lower, include_upper);
 
     filt->get_bv_i  = &frt_trfilt_get_bv_i;
@@ -417,8 +408,7 @@ FrtFilter *frt_trfilt_init(FrtFilter *filt, FrtSymbol field, const char *lower_t
     return filt;
 }
 
-FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const char *upper_term,
-                   bool include_lower, bool include_upper) {
+FrtFilter *frt_trfilt_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtFilter *filt = frt_trfilt_alloc();
     return frt_trfilt_init(filt, field, lower_term, upper_term, include_lower, include_upper);
 }
@@ -431,7 +421,7 @@ FrtFilter *frt_trfilt_new(FrtSymbol field, const char *lower_term, const char *u
 
 #define RQ(query) ((FrtRangeQuery *)(query))
 
-static char *frt_rq_to_s(FrtQuery *self, FrtSymbol field) {
+static char *frt_rq_to_s(FrtQuery *self, ID field) {
     return range_to_s(RQ(self)->range, field, self->boost);
 }
 
@@ -490,11 +480,11 @@ static int frt_rq_eq(FrtQuery *self, FrtQuery *o) {
     return range_eq(RQ(self)->range, RQ(o)->range);
 }
 
-FrtQuery *frt_rq_new_less(FrtSymbol field, const char *upper_term, bool include_upper) {
+FrtQuery *frt_rq_new_less(ID field, const char *upper_term, bool include_upper) {
     return frt_rq_new(field, NULL, upper_term, false, include_upper);
 }
 
-FrtQuery *frt_rq_new_more(FrtSymbol field, const char *lower_term, bool include_lower) {
+FrtQuery *frt_rq_new_more(ID field, const char *lower_term, bool include_lower) {
     return frt_rq_new(field, lower_term, NULL, include_lower, false);
 }
 
@@ -502,21 +492,20 @@ FrtQuery *frt_rq_alloc(void) {
     return frt_q_new(FrtRangeQuery);
 }
 
-FrtQuery *frt_rq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
-    FrtRange *range            = range_new(field, lower_term, upper_term, include_lower, include_upper);
-    RQ(self)->range         = range;
-
-    self->type              = RANGE_QUERY;
-    self->rewrite           = &frt_rq_rewrite;
-    self->to_s              = &frt_rq_to_s;
-    self->hash              = &frt_rq_hash;
-    self->eq                = &frt_rq_eq;
-    self->destroy_i         = &frt_rq_destroy;
-    self->create_weight_i   = &frt_q_create_weight_unsup;
+FrtQuery *frt_rq_init(FrtQuery *self, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+    FrtRange *range       = range_new(field, lower_term, upper_term, include_lower, include_upper);
+    RQ(self)->range       = range;
+    self->type            = RANGE_QUERY;
+    self->rewrite         = &frt_rq_rewrite;
+    self->to_s            = &frt_rq_to_s;
+    self->hash            = &frt_rq_hash;
+    self->eq              = &frt_rq_eq;
+    self->destroy_i       = &frt_rq_destroy;
+    self->create_weight_i = &frt_q_create_weight_unsup;
     return self;
 }
 
-FrtQuery *frt_rq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+FrtQuery *frt_rq_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtQuery *self = frt_rq_alloc();
     return frt_rq_init(self, field, lower_term, upper_term, include_lower, include_upper);
 }
@@ -616,11 +605,11 @@ static FrtQuery *frt_trq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     return (FrtQuery *)csq;
 }
 
-FrtQuery *frt_trq_new_less(FrtSymbol field, const char *upper_term, bool include_upper) {
+FrtQuery *frt_trq_new_less(ID field, const char *upper_term, bool include_upper) {
     return frt_trq_new(field, NULL, upper_term, false, include_upper);
 }
 
-FrtQuery *frt_trq_new_more(FrtSymbol field, const char *lower_term, bool include_lower) {
+FrtQuery *frt_trq_new_more(ID field, const char *lower_term, bool include_lower) {
     return frt_trq_new(field, lower_term, NULL, include_lower, false);
 }
 
@@ -628,21 +617,20 @@ FrtQuery *frt_trq_alloc(void) {
     return frt_q_new(FrtRangeQuery);
 }
 
-FrtQuery *frt_trq_init(FrtQuery *self, FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
-    FrtRange *range         = trange_new(field, lower_term, upper_term, include_lower, include_upper);
-    RQ(self)->range         = range;
-
-    self->type              = TYPED_RANGE_QUERY;
-    self->rewrite           = &frt_trq_rewrite;
-    self->to_s              = &frt_rq_to_s;
-    self->hash              = &frt_rq_hash;
-    self->eq                = &frt_rq_eq;
-    self->destroy_i         = &frt_rq_destroy;
-    self->create_weight_i   = &frt_q_create_weight_unsup;
+FrtQuery *frt_trq_init(FrtQuery *self, ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+    FrtRange *range       = trange_new(field, lower_term, upper_term, include_lower, include_upper);
+    RQ(self)->range       = range;
+    self->type            = TYPED_RANGE_QUERY;
+    self->rewrite         = &frt_trq_rewrite;
+    self->to_s            = &frt_rq_to_s;
+    self->hash            = &frt_rq_hash;
+    self->eq              = &frt_rq_eq;
+    self->destroy_i       = &frt_rq_destroy;
+    self->create_weight_i = &frt_q_create_weight_unsup;
     return self;
 }
 
-FrtQuery *frt_trq_new(FrtSymbol field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
+FrtQuery *frt_trq_new(ID field, const char *lower_term, const char *upper_term, bool include_lower, bool include_upper) {
     FrtQuery *self = frt_trq_alloc();
     return frt_trq_init(self, field, lower_term, upper_term, include_lower, include_upper);
 }

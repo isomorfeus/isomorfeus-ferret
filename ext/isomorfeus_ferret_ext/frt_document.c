@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-FrtDocField *frt_df_new(FrtSymbol name) {
+FrtDocField *frt_df_new(ID name) {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
     df->size = 0;
@@ -118,7 +118,7 @@ FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df) {
     return df;
 }
 
-FrtDocField *frt_doc_get_field(FrtDocument *doc, FrtSymbol name) {
+FrtDocField *frt_doc_get_field(FrtDocument *doc, ID name) {
     return (FrtDocField *)frt_h_get(doc->field_dict, (void *)name);
 }
 
@@ -127,4 +127,3 @@ void frt_doc_destroy(FrtDocument *doc) {
     free(doc->fields);
     free(doc);
 }
-

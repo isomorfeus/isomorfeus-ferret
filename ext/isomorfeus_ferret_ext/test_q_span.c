@@ -12,7 +12,7 @@
     free(__tmp);                                                       \
 } while(0)
 
-static FrtSymbol field;
+static ID field;
 
 static void add_doc(const char *text, FrtIndexWriter *iw)
 {

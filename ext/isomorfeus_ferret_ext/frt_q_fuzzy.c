@@ -143,10 +143,10 @@ float frt_fuzq_score(FrtFuzzyQuery *fuzq, const char *target) {
 
 #define FzQ(query) ((FrtFuzzyQuery *)(query))
 
-static char *fuzq_to_s(FrtQuery *self, FrtSymbol curr_field) {
+static char *fuzq_to_s(FrtQuery *self, ID curr_field) {
     char *buffer, *bptr;
     char *term = FzQ(self)->term;
-    FrtSymbol field = FzQ(self)->field;
+    ID field = FzQ(self)->field;
     const char *field_name = rb_id2name(field);
     bptr = buffer = FRT_ALLOC_N(char, strlen(term) + strlen(field_name) + 70);
 
@@ -245,7 +245,7 @@ FrtQuery *frt_fuzq_alloc(void) {
     return frt_q_new(FrtFuzzyQuery);
 }
 
-FrtQuery *frt_fuzq_init_conf(FrtQuery *self, FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms) {
+FrtQuery *frt_fuzq_init_conf(FrtQuery *self, ID field, const char *term, float min_sim, int pre_len, int max_terms) {
     FzQ(self)->field      = field;
     FzQ(self)->term       = frt_estrdup(term);
     FzQ(self)->pre_len    = pre_len ? pre_len : FRT_DEF_PRE_LEN;
@@ -264,11 +264,11 @@ FrtQuery *frt_fuzq_init_conf(FrtQuery *self, FrtSymbol field, const char *term, 
     return self;
 }
 
-FrtQuery *frt_fuzq_new_conf(FrtSymbol field, const char *term, float min_sim, int pre_len, int max_terms) {
+FrtQuery *frt_fuzq_new_conf(ID field, const char *term, float min_sim, int pre_len, int max_terms) {
     FrtQuery *self = frt_fuzq_alloc();
     return frt_fuzq_init_conf(self, field, term, min_sim, pre_len, max_terms);
 }
 
-FrtQuery *frt_fuzq_new(FrtSymbol field, const char *term) {
+FrtQuery *frt_fuzq_new(ID field, const char *term) {
     return frt_fuzq_new_conf(field, term, 0.0f, 0, 0);
 }

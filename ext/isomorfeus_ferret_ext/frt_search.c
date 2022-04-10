@@ -592,11 +592,7 @@ void frt_matchv_destroy(FrtMatchVector *self)
  *
  ***************************************************************************/
 
-FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
-                                       FrtQuery *query,
-                                       const int doc_num,
-                                       FrtSymbol field)
-{
+FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self, FrtQuery *query, const int doc_num, ID field) {
     FrtMatchVector *mv = frt_matchv_new();
     bool rewrite = query->get_matchv_i == q_get_matchv_i;
     FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
@@ -613,8 +609,7 @@ FrtMatchVector *frt_searcher_get_match_vector(FrtSearcher *self,
     return mv;
 }
 
-typedef struct Excerpt
-{
+typedef struct Excerpt {
     int start;
     int end;
     int start_pos;
@@ -807,13 +802,12 @@ static char *highlight_field(FrtMatchVector *mv,
 char **frt_searcher_highlight(FrtSearcher *self,
                           FrtQuery *query,
                           const int doc_num,
-                          FrtSymbol field,
+                          ID field,
                           const int excerpt_len,
                           const int num_excerpts,
                           const char *pre_tag,
                           const char *post_tag,
-                          const char *ellipsis)
-{
+                          const char *ellipsis) {
     char **excerpt_strs = NULL;
     FrtTermVector *tv = self->get_term_vector(self, doc_num, field);
     FrtLazyDoc *lazy_doc = self->get_lazy_doc(self, doc_num);
@@ -965,8 +959,7 @@ static FrtSimilarity *sea_get_similarity(FrtSearcher *self)
 
 #define ISEA(searcher) ((FrtIndexSearcher *)(searcher))
 
-int frt_isea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
-{
+int frt_isea_doc_freq(FrtSearcher *self, ID field, const char *term) {
     return frt_ir_doc_freq(ISEA(self)->ir, field, term);
 }
 
@@ -1192,7 +1185,7 @@ static FrtExplanation *isea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_n
     return w->explain(w, ISEA(self)->ir, doc_num);
 }
 
-static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num, FrtSymbol field) {
+static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num, ID field) {
     FrtIndexReader *ir = ISEA(self)->ir;
     return ir->term_vector(ir, doc_num, field);
 }
@@ -1253,8 +1246,7 @@ typedef struct CachedDFSearcher
     int      max_doc;
 } CachedDFSearcher;
 
-static int cdfsea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *text)
-{
+static int cdfsea_doc_freq(FrtSearcher *self, ID field, const char *text) {
     FrtTerm term;
     int *df;
     term.field = field;
@@ -1340,9 +1332,7 @@ static FrtExplanation *cdfsea_explain_w(FrtSearcher *self, FrtWeight *w, int doc
     return NULL;
 }
 
-static FrtTermVector *cdfsea_get_term_vector(FrtSearcher *self, const int doc_num,
-                                          FrtSymbol field)
-{
+static FrtTermVector *cdfsea_get_term_vector(FrtSearcher *self, const int doc_num, ID field) {
     (void)self; (void)doc_num; (void)field;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
@@ -1418,8 +1408,7 @@ static int msea_get_searcher_index(FrtSearcher *self, int n)
     return hi;
 }
 
-static int msea_doc_freq(FrtSearcher *self, FrtSymbol field, const char *term)
-{
+static int msea_doc_freq(FrtSearcher *self, ID field, const char *term) {
     int i;
     int doc_freq = 0;
     FrtMultiSearcher *msea = MSEA(self);
@@ -1731,7 +1720,7 @@ static FrtExplanation *msea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_n
     return e;
 }
 
-static FrtTermVector *msea_get_term_vector(FrtSearcher *self, const int doc_num, FrtSymbol field) {
+static FrtTermVector *msea_get_term_vector(FrtSearcher *self, const int doc_num, ID field) {
     FrtMultiSearcher *msea = MSEA(self);
     int i = msea_get_searcher_index(self, doc_num);
     FrtSearcher *s = msea->searchers[i];

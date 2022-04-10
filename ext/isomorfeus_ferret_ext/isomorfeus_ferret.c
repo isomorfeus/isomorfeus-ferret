@@ -147,7 +147,7 @@ char *rstrdup(VALUE rstr) {
     return frt_estrdup(old);
 }
 
-FrtSymbol frb_field(VALUE rfield) {
+ID frb_field(VALUE rfield) {
     switch (TYPE(rfield)) {
         case T_SYMBOL:
             return rb_to_id(rfield);
@@ -246,11 +246,8 @@ void FRT_EXIT(const char *err_type, const char *fmt, ...)
 static ID id_field;
 static ID id_text;
 
-VALUE frb_get_term(FrtSymbol field, const char *text) {
-    return rb_struct_new(cTerm,
-                         ID2SYM(field),
-                         rb_str_new_cstr(text),
-                         NULL);
+VALUE frb_get_term(ID field, const char *text) {
+    return rb_struct_new(cTerm, ID2SYM(field), rb_str_new_cstr(text), NULL);
 }
 
 static VALUE frb_term_to_s(VALUE self) {

@@ -5,7 +5,7 @@
 #undef close
 #undef read
 
-static FrtSymbol body, title, text, author, year, changing_field, compressed_field, tag;
+static ID body, title, text, author, year, changing_field, compressed_field, tag;
 
 static FrtFieldInfos *prep_all_fis(void) {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
@@ -2184,7 +2184,7 @@ TestSuite *ts_index(TestSuite *suite)
     ReaderTestEnvironment *rte = NULL;
     /* FrtStore *store = frt_open_fs_store(TEST_DIR); */
 
-    /* initialize FrtSymbols */
+    /* initialize IDs */
     body             = rb_intern("body");
     title            = rb_intern("title");
     text             = rb_intern("text");

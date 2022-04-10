@@ -182,7 +182,7 @@ extern FrtTokenStream *frt_mapping_filter_add(FrtTokenStream *ts, const char *pa
 
 typedef struct FrtAnalyzer {
     FrtTokenStream *current_ts;
-    FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding);
+    FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding);
     void           (*destroy_i)(struct FrtAnalyzer *a);
     int            ref_cnt;
     VALUE          ranalyzer;
@@ -194,9 +194,9 @@ extern void frt_a_deref(FrtAnalyzer *a);
 
 extern FrtAnalyzer *frt_analyzer_alloc(void);
 extern void         frt_analyzer_init(FrtAnalyzer *a, FrtTokenStream *ts, void (*destroy)(FrtAnalyzer *a),
-                                    FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding));
+                                    FrtTokenStream *(*get_ts)(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding));
 extern FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts, void (*destroy)(FrtAnalyzer *a),
-                                    FrtTokenStream *(*get_ts)(FrtAnalyzer *a, FrtSymbol field, char *text, rb_encoding *encoding));
+                                    FrtTokenStream *(*get_ts)(FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding));
 
 /*****************************************************************************/
 /*** FrtNonAnalyzer **********************************************************/
@@ -246,6 +246,6 @@ typedef struct FrtPerFieldAnalyzer {
 extern FrtAnalyzer *frt_per_field_analyzer_alloc(void);
 extern void         frt_per_field_analyzer_init(FrtAnalyzer *a, FrtAnalyzer *default_a);
 extern FrtAnalyzer *frt_per_field_analyzer_new(FrtAnalyzer *default_a);
-extern void         frt_pfa_add_field(FrtAnalyzer *self, FrtSymbol field, FrtAnalyzer *analyzer);
+extern void         frt_pfa_add_field(FrtAnalyzer *self, ID field, FrtAnalyzer *analyzer);
 
 #endif

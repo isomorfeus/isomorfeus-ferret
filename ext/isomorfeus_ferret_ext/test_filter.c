@@ -13,7 +13,7 @@ struct FilterData {
     const char *flipflop;
 };
 
-static FrtSymbol num, date, flipflop;
+static ID num, date, flipflop;
 
 void prepare_filter_index(FrtStore *store)
 {

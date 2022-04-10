@@ -15,9 +15,7 @@ FrtSortField *frt_sort_field_alloc(void) {
     return FRT_ALLOC(FrtSortField);
 }
 
-static FrtSortField *sort_field_init(FrtSortField *self, FrtSymbol field,
-    SortType type,
-    bool reverse,
+static FrtSortField *sort_field_init(FrtSortField *self, ID field, SortType type, bool reverse,
     int (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2),
     void (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable),
     const FrtFieldIndexClass *field_index_class) {
@@ -30,9 +28,7 @@ static FrtSortField *sort_field_init(FrtSortField *self, FrtSymbol field,
     return self;
 }
 
-static FrtSortField *sort_field_new(FrtSymbol field,
-    SortType type,
-    bool reverse,
+static FrtSortField *sort_field_new(ID field, SortType type, bool reverse,
     int (*compare)(void *index_ptr, FrtHit *hit1, FrtHit *hit2),
     void (*get_val)(void *index_ptr, FrtHit *hit1, FrtComparable *comparable),
     const FrtFieldIndexClass *field_index_class) {
@@ -40,7 +36,7 @@ static FrtSortField *sort_field_new(FrtSymbol field,
     return sort_field_init(self, field, type, reverse, compare, get_val, field_index_class);
 }
 
-FrtSortField *frt_sort_field_init(FrtSortField *sf, FrtSymbol field, SortType type, bool reverse) {
+FrtSortField *frt_sort_field_init(FrtSortField *sf, ID field, SortType type, bool reverse) {
     switch (type) {
         case FRT_SORT_TYPE_SCORE:
             sf = frt_sort_field_score_init(sf, reverse);
@@ -188,11 +184,11 @@ static int sf_byte_compare(void *index, FrtHit *hit1, FrtHit *hit2) {
     else return 0;
 }
 
-FrtSortField *frt_sort_field_byte_init(FrtSortField *self, FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_byte_init(FrtSortField *self, ID field, bool reverse) {
     return sort_field_init(self, field, FRT_SORT_TYPE_BYTE, reverse, &sf_byte_compare, &sf_byte_get_val, &FRT_BYTE_FIELD_INDEX_CLASS);
 }
 
-FrtSortField *frt_sort_field_byte_new(FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_byte_new(ID field, bool reverse) {
     return sort_field_new(field, FRT_SORT_TYPE_BYTE, reverse, &sf_byte_compare, &sf_byte_get_val, &FRT_BYTE_FIELD_INDEX_CLASS);
 }
 
@@ -212,11 +208,11 @@ static int sf_int_compare(void *index, FrtHit *hit1, FrtHit *hit2) {
     else return 0;
 }
 
-FrtSortField *frt_sort_field_int_init(FrtSortField *self, FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_int_init(FrtSortField *self, ID field, bool reverse) {
     return sort_field_init(self, field, FRT_SORT_TYPE_INTEGER, reverse, &sf_int_compare, &sf_int_get_val, &FRT_INTEGER_FIELD_INDEX_CLASS);
 }
 
-FrtSortField *frt_sort_field_int_new(FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_int_new(ID field, bool reverse) {
     return sort_field_new(field, FRT_SORT_TYPE_INTEGER, reverse, &sf_int_compare, &sf_int_get_val, &FRT_INTEGER_FIELD_INDEX_CLASS);
 }
 
@@ -236,11 +232,11 @@ static int sf_float_compare(void *index, FrtHit *hit1, FrtHit *hit2) {
     else return 0;
 }
 
-FrtSortField *frt_sort_field_float_init(FrtSortField *self, FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_float_init(FrtSortField *self, ID field, bool reverse) {
     return sort_field_init(self, field, FRT_SORT_TYPE_FLOAT, reverse, &sf_float_compare, &sf_float_get_val, &FRT_FLOAT_FIELD_INDEX_CLASS);
 }
 
-FrtSortField *frt_sort_field_float_new(FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_float_new(ID field, bool reverse) {
     return sort_field_new(field, FRT_SORT_TYPE_FLOAT, reverse, &sf_float_compare, &sf_float_get_val, &FRT_FLOAT_FIELD_INDEX_CLASS);
 }
 
@@ -280,11 +276,11 @@ static int sf_string_compare(void *index, FrtHit *hit1, FrtHit *hit2) {
     */
 }
 
-FrtSortField *frt_sort_field_string_init(FrtSortField *self, FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_string_init(FrtSortField *self, ID field, bool reverse) {
     return sort_field_init(self, field, FRT_SORT_TYPE_STRING, reverse, &sf_string_compare, &sf_string_get_val, &FRT_STRING_FIELD_INDEX_CLASS);
 }
 
-FrtSortField *frt_sort_field_string_new(FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_string_new(ID field, bool reverse) {
     return sort_field_new(field, FRT_SORT_TYPE_STRING, reverse, &sf_string_compare, &sf_string_get_val, &FRT_STRING_FIELD_INDEX_CLASS);
 }
 
@@ -292,11 +288,11 @@ FrtSortField *frt_sort_field_string_new(FrtSymbol field, bool reverse) {
  * AutoSortField
  ***************************************************************************/
 
-FrtSortField *frt_sort_field_auto_init(FrtSortField *self, FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_auto_init(FrtSortField *self, ID field, bool reverse) {
     return sort_field_init(self, field, FRT_SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
 }
 
-FrtSortField *frt_sort_field_auto_new(FrtSymbol field, bool reverse) {
+FrtSortField *frt_sort_field_auto_new(ID field, bool reverse) {
     return sort_field_new(field, FRT_SORT_TYPE_AUTO, reverse, NULL, NULL, NULL);
 }
 

@@ -71,7 +71,7 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
     FRT_REF(self->analyzer);
     self->qp = frt_qp_new(self->analyzer);
     for (hse = def_fields->first; hse; hse = hse->next) {
-        frt_qp_add_field(self->qp, (FrtSymbol)hse->elem, true, true);
+        frt_qp_add_field(self->qp, (ID)hse->elem, true, true);
     }
     /* Index is a convenience class so set qp convenience options */
     self->qp->allow_any_fields = true;
@@ -174,7 +174,7 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
     FrtHashSetEntry *hse;
 
     if (key->size == 1) {
-        FrtSymbol field = (FrtSymbol)key->first->elem;
+        ID field = (ID)key->first->elem;
         frt_ensure_writer_open(self);
         df = frt_doc_get_field(doc, field);
         if (df) {
@@ -187,7 +187,7 @@ static void index_del_doc_with_key_i(FrtIndex *self, FrtDocument *doc,
     frt_ensure_searcher_open(self);
 
     for (hse = key->first; hse; hse = hse->next) {
-        FrtSymbol field = (FrtSymbol)hse->elem;
+        ID field = (ID)hse->elem;
         df = frt_doc_get_field(doc, field);
         if (!df) continue;
         frt_bq_add_query(q, frt_tq_new(field, df->data[0]), FRT_BC_MUST);
@@ -266,9 +266,7 @@ FrtDocument *frt_index_get_doc_ts(FrtIndex *self, int doc_num)
     return doc;
 }
 
-FrtDocument *frt_index_get_doc_term(FrtIndex *self, FrtSymbol field,
-                             const char *term)
-{
+FrtDocument *frt_index_get_doc_term(FrtIndex *self, ID field, const char *term) {
     FrtDocument *doc = NULL;
     FrtTermDocEnum *tde;
     frt_mutex_lock(&self->mutex);
@@ -300,8 +298,7 @@ void frt_index_delete(FrtIndex *self, int doc_num)
     frt_mutex_unlock(&self->mutex);
 }
 
-void frt_index_delete_term(FrtIndex *self, FrtSymbol field, const char *term)
-{
+void frt_index_delete_term(FrtIndex *self, ID field, const char *term) {
     FrtTermDocEnum *tde;
     frt_mutex_lock(&self->mutex);
     {

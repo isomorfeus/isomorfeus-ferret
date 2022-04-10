@@ -10,11 +10,11 @@
  ***************************************************************************/
 
 typedef struct FrtStringIndex {
-    int size;
+    int  size;
     long *index;
     char **values;
-    int v_size;
-    int v_capa;
+    int  v_size;
+    int  v_capa;
 } FrtStringIndex;
 
 typedef struct FrtFieldIndexClass FrtFieldIndexClass;
@@ -26,9 +26,9 @@ struct FrtFieldIndexClass {
 };
 
 typedef struct FrtFieldIndex {
-    FrtSymbol field;
+    ID    field;
     const FrtFieldIndexClass *klass;
-    void *index;
+    void  *index;
 } FrtFieldIndex;
 
 extern const FrtFieldIndexClass FRT_INTEGER_FIELD_INDEX_CLASS;
@@ -36,7 +36,6 @@ extern const FrtFieldIndexClass   FRT_FLOAT_FIELD_INDEX_CLASS;
 extern const FrtFieldIndexClass  FRT_STRING_FIELD_INDEX_CLASS;
 extern const FrtFieldIndexClass    FRT_BYTE_FIELD_INDEX_CLASS;
 
-extern FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, FrtSymbol field,
-                                   const FrtFieldIndexClass *klass);
+extern FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, ID field, const FrtFieldIndexClass *klass);
 
 #endif

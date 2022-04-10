@@ -13,8 +13,7 @@
  *
  ****************************************************************************/
 
-FrtTerm *frt_term_new(FrtSymbol field, const char *text)
-{
+FrtTerm *frt_term_new(ID field, const char *text) {
     FrtTerm *t = FRT_ALLOC(FrtTerm);
     t->field = field;
     t->text = frt_estrdup(text);
@@ -44,8 +43,7 @@ unsigned long long frt_term_hash(const void *t)
  *
  ****************************************************************************/
 
-static float simdef_length_norm(FrtSimilarity *s, FrtSymbol field, int num_terms)
-{
+static float simdef_length_norm(FrtSimilarity *s, ID field, int num_terms) {
     (void)s;
     (void)field;
     return (float)(1.0 / sqrt(num_terms));
@@ -69,17 +67,12 @@ static float simdef_sloppy_freq(struct FrtSimilarity *s, int distance)
     return (float)(1.0 / (double)(distance + 1));
 }
 
-static float simdef_idf_term(struct FrtSimilarity *s, FrtSymbol field, char *term,
-                      FrtSearcher *searcher)
-{
+static float simdef_idf_term(struct FrtSimilarity *s, ID field, char *term, FrtSearcher *searcher) {
     return s->idf(s, searcher->doc_freq(searcher, field, term),
                   searcher->max_doc(searcher));
 }
 
-static float simdef_idf_phrase(struct FrtSimilarity *s, FrtSymbol field,
-                        FrtPhrasePosition *positions,
-                        int pp_cnt, FrtSearcher *searcher)
-{
+static float simdef_idf_phrase(struct FrtSimilarity *s, ID field, FrtPhrasePosition *positions, int pp_cnt, FrtSearcher *searcher) {
     float idf = 0.0f;
     int i, j;
     for (i = 0; i < pp_cnt; i++) {

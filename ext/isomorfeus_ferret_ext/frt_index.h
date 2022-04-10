@@ -94,7 +94,7 @@ typedef enum {
 #define FRT_FI_STORE_OFFSETS_BM     0x080
 
 typedef struct FrtFieldInfo {
-    FrtSymbol    name;
+    ID           name;
     float        boost;
     unsigned int bits;
     int          number;
@@ -102,8 +102,8 @@ typedef struct FrtFieldInfo {
 } FrtFieldInfo;
 
 extern FrtFieldInfo *frt_fi_alloc();
-extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
-extern FrtFieldInfo *frt_fi_new(FrtSymbol name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern char *frt_fi_to_s(FrtFieldInfo *fi);
 extern void frt_fi_deref(FrtFieldInfo *fi);
 
@@ -141,9 +141,9 @@ FrtFieldInfos *frt_fis_alloc();
 FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
 FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi);
-extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, FrtSymbol name);
-extern int frt_fis_get_field_num(FrtFieldInfos *fis, FrtSymbol name);
-extern FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, FrtSymbol name);
+extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, ID name);
+extern int frt_fis_get_field_num(FrtFieldInfos *fis, ID name);
+extern FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, ID name);
 extern void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os);
 extern FrtFieldInfos *frt_fis_read(FrtInStream *is);
 extern char *frt_fis_to_s(FrtFieldInfos *fis);
@@ -501,7 +501,7 @@ typedef struct FrtTVTerm {
 #define FRT_TV_FIELD_INIT_CAPA 8
 typedef struct FrtTermVector {
     int       field_num;
-    FrtSymbol field;
+    ID        field;
     int       term_cnt;
     FrtTVTerm *terms;
     int       offset_cnt;
@@ -529,7 +529,7 @@ typedef struct FrtLazyDocFieldData {
 
 typedef struct FrtLazyDoc FrtLazyDoc;
 typedef struct FrtLazyDocField {
-    FrtSymbol           name;
+    ID                  name;
     FrtLazyDocFieldData *data;
     FrtLazyDoc          *doc;
     int                 size; /* number of data elements */
@@ -549,7 +549,7 @@ struct FrtLazyDoc {
 };
 
 extern void frt_lazy_doc_close(FrtLazyDoc *self);
-extern FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, FrtSymbol field);
+extern FrtLazyDocField *frt_lazy_doc_get(FrtLazyDoc *self, ID field);
 
 /****************************************************************************
  *
@@ -649,7 +649,7 @@ struct FrtIndexReader {
     int             (*doc_freq)(FrtIndexReader *ir, int field_num, const char *term);
     FrtTermDocEnum  *(*term_docs)(FrtIndexReader *ir);
     FrtTermDocEnum  *(*term_positions)(FrtIndexReader *ir);
-    FrtTermVector   *(*term_vector)(FrtIndexReader *ir, int doc_num, FrtSymbol field);
+    FrtTermVector   *(*term_vector)(FrtIndexReader *ir, int doc_num, ID field);
     FrtHash         *(*term_vectors)(FrtIndexReader *ir, int doc_num);
     bool            (*is_deleted)(FrtIndexReader *ir, int doc_num);
     bool            (*has_deletions)(FrtIndexReader *ir);
@@ -682,16 +682,16 @@ extern void frt_ir_close(FrtIndexReader *ir);
 extern void frt_ir_commit(FrtIndexReader *ir);
 extern void frt_ir_delete_doc(FrtIndexReader *ir, int doc_num);
 extern void frt_ir_undelete_all(FrtIndexReader *ir);
-extern int frt_ir_doc_freq(FrtIndexReader *ir, FrtSymbol field, const char *term);
-extern void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, FrtSymbol field, frt_uchar val);
+extern int frt_ir_doc_freq(FrtIndexReader *ir, ID field, const char *term);
+extern void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, ID field, frt_uchar val);
 extern frt_uchar *frt_ir_get_norms_i(FrtIndexReader *ir, int field_num);
-extern frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, FrtSymbol field);
-extern frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, FrtSymbol field, frt_uchar *buf);
-extern FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, FrtSymbol field, const char *term);
-extern FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, FrtSymbol field);
-extern FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, FrtSymbol field, const char *t);
-extern FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, FrtSymbol field, const char *term);
-extern FrtTermDocEnum *frt_ir_term_positions_for(FrtIndexReader *ir, FrtSymbol field, const char *t);
+extern frt_uchar *frt_ir_get_norms(FrtIndexReader *ir, ID field);
+extern frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, ID field, frt_uchar *buf);
+extern FrtDocument *frt_ir_get_doc_with_term(FrtIndexReader *ir, ID field, const char *term);
+extern FrtTermEnum *frt_ir_terms(FrtIndexReader *ir, ID field);
+extern FrtTermEnum *frt_ir_terms_from(FrtIndexReader *ir, ID field, const char *t);
+extern FrtTermDocEnum *ir_term_docs_for(FrtIndexReader *ir, ID field, const char *term);
+extern FrtTermDocEnum *frt_ir_term_positions_for(FrtIndexReader *ir, ID field, const char *t);
 extern void frt_ir_add_cache(FrtIndexReader *ir);
 extern bool frt_ir_is_latest(FrtIndexReader *ir);
 
@@ -817,8 +817,8 @@ extern void frt_index_create(FrtStore *store, FrtFieldInfos *fis);
 extern bool frt_index_is_locked(FrtStore *store);
 extern FrtIndexWriter *frt_iw_alloc();
 extern FrtIndexWriter *frt_iw_open(FrtIndexWriter *, FrtStore *store, FrtAnalyzer *analyzer, const FrtConfig *config);
-extern void frt_iw_delete_term(FrtIndexWriter *iw, FrtSymbol field, const char *term);
-extern void frt_iw_delete_terms(FrtIndexWriter *iw, FrtSymbol field, char **terms, const int term_cnt);
+extern void frt_iw_delete_term(FrtIndexWriter *iw, ID field, const char *term);
+extern void frt_iw_delete_terms(FrtIndexWriter *iw, ID field, char **terms, const int term_cnt);
 extern void frt_iw_close(FrtIndexWriter *iw);
 extern void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc);
 extern int frt_iw_doc_count(FrtIndexWriter *iw);
