@@ -2378,8 +2378,8 @@ static VALUE frb_spanxq_alloc(VALUE rclass) {
  */
 static VALUE frb_spanxq_init(VALUE self, VALUE rinc, VALUE rexc) {
     FrtQuery *q;
-    Check_Type(rinc, T_DATA);
-    Check_Type(rexc, T_DATA);
+    //Check_Type(rinc, T_DATA);
+    //Check_Type(rexc, T_DATA);
     TypedData_Get_Struct(self, FrtQuery, &frb_span_not_query_t, q);
     frt_spanxq_init(q, DATA_PTR(rinc), DATA_PTR(rexc));
     q->rquery = self;

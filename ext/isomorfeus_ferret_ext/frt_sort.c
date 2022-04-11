@@ -25,6 +25,7 @@ static FrtSortField *sort_field_init(FrtSortField *self, ID field, SortType type
     self->field_index_class = field_index_class;
     self->compare           = compare;
     self->get_val           = get_val;
+    self->rfield            = Qnil;
     return self;
 }
 
