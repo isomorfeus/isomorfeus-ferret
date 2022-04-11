@@ -1199,7 +1199,7 @@ static VALUE frb_trq_init(VALUE self, VALUE rfield, VALUE roptions) {
     rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
     FrtQuery *q;
     TypedData_Get_Struct(self, FrtQuery, &frb_typed_range_query_t, q);
-    q = frt_trq_init(q, a.rfield, a.lterm, a.uterm, a.include_lower, a.include_upper);
+    q = frt_trq_init(q, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
     q->rquery = self;
     return self;
 }
@@ -2830,9 +2830,7 @@ static size_t frb_sort_size(const void *p) {
 }
 
 static void frb_sort_free(void *p) {
-    FrtSort *sort = (FrtSort *)p;
-    object_del(sort);
-    frt_sort_destroy(sort);
+    frt_sort_destroy((FrtSort *)p);
 }
 
 static void frb_sort_mark(void *p) {
@@ -2862,7 +2860,6 @@ static VALUE frb_sort_alloc(VALUE klass) {
     FrtSort *sort = frt_sort_new();
     sort->destroy_all = false;
     self = TypedData_Wrap_Struct(klass, &frb_sort_t, sort);
-    object_add(sort, self);
     return self;
 }
 
@@ -2982,7 +2979,7 @@ static VALUE frb_sort_get_fields(VALUE self) {
     VALUE rfields = rb_ary_new2(sort->size);
     int i;
     for (i = 0; i < sort->size; i++) {
-        rb_ary_store(rfields, i, object_get(sort->sort_fields[i]));
+        rb_ary_store(rfields, i, sort->sort_fields[i]->rfield);
     }
     return rfields;
 }
@@ -3009,7 +3006,6 @@ static VALUE frb_sort_to_s(VALUE self) {
 
 static void frb_sea_free(void *p) {
     FrtSearcher *sea = (FrtSearcher *)p;
-    object_del(sea);
     sea->close(sea);
 }
 
@@ -3024,7 +3020,6 @@ static void frb_sea_free(void *p) {
  */
 static VALUE frb_sea_close(VALUE self) {
     GET_SEA();
-    object_del(sea);
     ((struct RData *)(self))->data = NULL;
     ((struct RData *)(self))->dmark = NULL;
     ((struct RData *)(self))->dfree = NULL;
@@ -3040,7 +3035,7 @@ static VALUE frb_sea_close(VALUE self) {
  */
 static VALUE frb_sea_get_reader(VALUE self) {
     GET_SEA();
-    return object_get(((FrtIndexSearcher *)sea)->ir);
+    return ((FrtIndexSearcher *)sea)->ir->rir;
 }
 
 /*
@@ -3083,8 +3078,8 @@ static VALUE frb_sea_max_doc(VALUE self) {
     return INT2FIX(sea->max_doc(sea));
 }
 
-static float call_filter_proc(int doc_id, float score, FrtSearcher *self, void *arg) {
-    VALUE val = rb_funcall((VALUE)arg, id_call, 3, INT2FIX(doc_id), rb_float_new((double)score), object_get(self));
+static float call_filter_proc(int doc_id, float score, FrtSearcher *sea, void *arg) {
+    VALUE val = rb_funcall((VALUE)arg, id_call, 3, INT2FIX(doc_id), rb_float_new((double)score), sea->rsea);
     switch (TYPE(val)) {
         case T_NIL:
         case T_FALSE:
@@ -3115,7 +3110,7 @@ static int cwfilt_eq(FrtFilter *filt, FrtFilter *o) {
 }
 
 static FrtBitVector *cwfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir) {
-    VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, object_get(ir));
+    VALUE rbv = rb_funcall(CWF(filt)->rfilter, id_bits, 1, ir->rir);
     FrtBitVector *bv;
     bv = DATA_PTR(rbv);
     FRT_REF(bv);
@@ -3162,11 +3157,9 @@ static FrtTopDocs *frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtS
                 if (limit <= 0) {
                     rb_raise(rb_eArgError, ":limit must be > 0");
                 }
-            }
-            else if (rval == sym_all) {
+            } else if (rval == sym_all) {
                 limit = INT_MAX;
-            }
-            else {
+            } else {
                 rb_raise(rb_eArgError, "%s is not a sensible :limit value "
                          "Please use a positive integer or :all",
                          rs2s(rb_obj_as_string(rval)));
@@ -3580,11 +3573,6 @@ static VALUE frb_sea_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_index_searcher_t, s);
 }
 
-#define FRT_GET_IR(rir, ir) do {\
-    rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);\
-    object_add(ir, rir);\
-} while (0)
-
 /*
  *  call-seq:
  *     Searcher.new(obj) -> Searcher
@@ -3604,15 +3592,16 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
         store = frt_open_fs_store(rs2s(obj));
         ir = frt_ir_open(NULL, store);
         FRT_DEREF(store);
-        FRT_GET_IR(obj, ir);
+        ir->rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);
     } else {
         // Check_Type(obj, T_DATA);
         if (rb_obj_is_kind_of(obj, cDirectory) == Qtrue) {
             store = DATA_PTR(obj);
             ir = frt_ir_open(NULL, store);
-            FRT_GET_IR(obj, ir);
+            ir->rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
             TypedData_Get_Struct(obj, FrtIndexReader, &frb_index_reader_t, ir);
+            ir->rir = obj;
         } else {
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
@@ -3620,7 +3609,7 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
     TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
     frt_isea_init(sea, ir);
     ((FrtIndexSearcher *)sea)->close_ir = false;
-    object_add(sea, self);
+    sea->rsea = self;
     return self;
 }
 
@@ -3639,7 +3628,6 @@ static void frb_ms_free(void *p) {
     FrtSearcher *sea = (FrtSearcher *)p;
     FrtMultiSearcher *msea = (FrtMultiSearcher *)sea;
     free(msea->searchers);
-    object_del(sea);
     frt_searcher_close(sea);
 }
 
@@ -3682,7 +3670,7 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
 
     VALUE rsearcher;
     FrtSearcher **searchers = FRT_ALLOC_N(FrtSearcher *, capa);
-    FrtSearcher *s;
+    FrtSearcher *sea;
     for (i = 0; i < argc; i++) {
         rsearcher = argv[i];
         switch (TYPE(rsearcher)) {
@@ -3691,22 +3679,22 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
                 FRT_REALLOC_N(searchers, FrtSearcher *, capa);
                 for (j = 0; j < RARRAY_LEN(rsearcher); j++) {
                     VALUE rs = RARRAY_PTR(rsearcher)[j];
-                    s = DATA_PTR(rs);
-                    searchers[top++] = s;
+                    sea = DATA_PTR(rs);
+                    searchers[top++] = sea;
                 }
                 break;
             case T_DATA:
-                s = DATA_PTR(rsearcher);
-                searchers[top++] = s;
+                sea = DATA_PTR(rsearcher);
+                searchers[top++] = sea;
                 break;
             default:
                 rb_raise(rb_eArgError, "Can't add class %s to MultiSearcher", rb_obj_classname(rsearcher));
                 break;
         }
     }
-    TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, s);
-    frt_msea_init(s, searchers, top, false);
-    object_add(s, self);
+    TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, sea);
+    frt_msea_init(sea, searchers, top, false);
+    sea->rsea = self;
     return self;
 }
 

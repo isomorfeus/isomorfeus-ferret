@@ -675,6 +675,7 @@ struct FrtIndexReader {
     bool            has_changes : 1;
     bool            is_stale    : 1;
     bool            is_owner    : 1;
+    VALUE           rir;
 };
 
 extern FrtIndexReader *frt_ir_open(FrtIndexReader *ir, FrtStore *store);

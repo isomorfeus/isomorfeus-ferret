@@ -1595,7 +1595,6 @@ frb_iw_commit(VALUE self)
 static VALUE frb_ir_close(VALUE self);
 
 void frb_ir_free(void *p) {
-    object_del(p);
     frt_ir_close((FrtIndexReader *)p);
 }
 
@@ -2227,14 +2226,12 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
 
     if (ex_code && msg) { frb_raise(ex_code, msg); }
 
-    object_add(ir, self);
+    ir->rir = self;
 
     fis = ir->fis;
     for (i = 0; i < fis->size; i++) {
         FrtFieldInfo *fi = fis->fields[i];
-        rb_hash_aset(rfield_num_map,
-                     ID2SYM(fi->name),
-                     INT2FIX(fi->number));
+        rb_hash_aset(rfield_num_map, ID2SYM(fi->name), INT2FIX(fi->number));
     }
     rb_ivar_set(self, id_fld_num_map, rfield_num_map);
 
@@ -2332,7 +2329,6 @@ static VALUE
 frb_ir_close(VALUE self)
 {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    object_del(ir);
     ((struct RData *)(self))->data = NULL;
     ((struct RData *)(self))->dmark = NULL;
     ((struct RData *)(self))->dfree = NULL;

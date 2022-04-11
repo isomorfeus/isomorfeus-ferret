@@ -327,22 +327,19 @@ void frt_q_deref(FrtQuery *self) {
         self->destroy_i(self);
 }
 
-FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher)
-{
+FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher) {
     (void)self;
     (void)searcher;
-    FRT_RAISE(FRT_UNSUPPORTED_ERROR,
-          "Create weight is unsupported for this type of query");
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "Create weight is unsupported for this type of query");
     return NULL;
 }
 
-FrtWeight *frt_q_weight(FrtQuery *self, FrtSearcher *searcher)
-{
-    FrtQuery      *query   = searcher->rewrite(searcher, self);
-    FrtWeight     *weight  = query->create_weight_i(query, searcher);
-    float       sum     = weight->sum_of_squared_weights(weight);
-    FrtSimilarity *sim     = query->get_similarity(query, searcher);
-    float       norm    = frt_sim_query_norm(sim, sum);
+FrtWeight *frt_q_weight(FrtQuery *self, FrtSearcher *searcher) {
+    FrtQuery    *query = searcher->rewrite(searcher, self);
+    FrtWeight  *weight = query->create_weight_i(query, searcher);
+    float          sum = weight->sum_of_squared_weights(weight);
+    FrtSimilarity *sim = query->get_similarity(query, searcher);
+    float         norm = frt_sim_query_norm(sim, sum);
     frt_q_deref(query);
 
     weight->normalize(weight, norm);
@@ -350,8 +347,8 @@ FrtWeight *frt_q_weight(FrtQuery *self, FrtSearcher *searcher)
 }
 
 #define BQ(query) ((FrtBooleanQuery *)(query))
-FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
-{
+
+FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt) {
     int i;
     FrtQuery *q, *ret_q;
     FrtHashSet *uniques = frt_hs_new((frt_hash_ft)&frt_q_hash, (frt_eq_ft)&frt_q_eq, NULL);
@@ -399,28 +396,24 @@ FrtQuery *frt_q_combine(FrtQuery **queries, int q_cnt)
     return ret_q;
 }
 
-unsigned long long frt_q_hash(FrtQuery *self)
-{
+unsigned long long frt_q_hash(FrtQuery *self) {
     return (self->hash(self) << 5) | self->type;
 }
 
-int frt_q_eq(FrtQuery *self, FrtQuery *o)
-{
+int frt_q_eq(FrtQuery *self, FrtQuery *o) {
     return (self == o)
         || ((self->type == o->type)
             && (self->boost == o->boost)
             && self->eq(self, o));
 }
 
-static FrtMatchVector *q_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv)
-{
+static FrtMatchVector *q_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv) {
     /* be default we don't add any matches */
     (void)self; (void)tv;
     return mv;
 }
 
-FrtQuery *frt_q_create(size_t size)
-{
+FrtQuery *frt_q_create(size_t size) {
     FrtQuery *self = (FrtQuery *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtQuery)) {
@@ -448,9 +441,8 @@ void frt_scorer_destroy_i(FrtScorer *scorer) {
     free(scorer);
 }
 
-FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity)
-{
-    FrtScorer *self        = (FrtScorer *)frt_ecalloc(size);
+FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity) {
+    FrtScorer *self     = (FrtScorer *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtScorer)) {
         FRT_RAISE(FRT_ARG_ERROR, "size of scorer <%d> should be at least <%d>",
@@ -462,13 +454,11 @@ FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity)
     return self;
 }
 
-bool frt_scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2)
-{
+bool frt_scorer_doc_less_than(const FrtScorer *s1, const FrtScorer *s2) {
     return s1->doc < s2->doc;
 }
 
-int frt_scorer_doc_cmp(const void *p1, const void *p2)
-{
+int frt_scorer_doc_cmp(const void *p1, const void *p2) {
     return (*(FrtScorer **)p1)->doc - (*(FrtScorer **)p2)->doc;
 }
 

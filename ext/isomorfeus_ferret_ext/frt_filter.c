@@ -13,15 +13,13 @@ void frt_filt_destroy_i(FrtFilter *filt) {
     free(filt);
 }
 
-void frt_filt_deref(FrtFilter *filt)
-{
+void frt_filt_deref(FrtFilter *filt) {
     if (--(filt->ref_cnt) == 0) {
         filt->destroy_i(filt);
     }
 }
 
-FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
-{
+FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir) {
     FrtCacheObject *co = (FrtCacheObject *)frt_h_get(filt->cache, ir);
 
     if (!co) {
@@ -36,19 +34,16 @@ FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir)
     return (FrtBitVector *)co->obj;
 }
 
-static char *filt_to_s_i(FrtFilter *filt)
-{
+static char *filt_to_s_i(FrtFilter *filt) {
     return frt_estrdup(rb_id2name(filt->name));
 }
 
-static unsigned long long frt_filt_hash_default(FrtFilter *filt)
-{
+static unsigned long long frt_filt_hash_default(FrtFilter *filt) {
     (void)filt;
     return 0;
 }
 
-static int frt_filt_eq_default(FrtFilter *filt, FrtFilter *o)
-{
+static int frt_filt_eq_default(FrtFilter *filt, FrtFilter *o) {
     (void)filt; (void)o;
     return false;
 }
@@ -65,8 +60,7 @@ FrtFilter *frt_filt_create(size_t size, ID name) {
     return filt;
 }
 
-unsigned long long frt_filt_hash(FrtFilter *filt)
-{
+unsigned long long frt_filt_hash(FrtFilter *filt) {
     return frt_str_hash(rb_id2name(filt->name)) ^ filt->hash(filt);
 }
 

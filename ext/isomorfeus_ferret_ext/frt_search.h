@@ -816,6 +816,7 @@ struct FrtSearcher {
     FrtTermVector  *(*get_term_vector)(FrtSearcher *self, const int doc_num, ID field);
     FrtSimilarity  *(*get_similarity)(FrtSearcher *self);
     void           (*close)(FrtSearcher *self);
+    VALUE          rsea;
 };
 
 #define frt_searcher_get_doc(s, dn)         s->get_doc(s, dn)
