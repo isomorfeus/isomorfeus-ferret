@@ -358,6 +358,7 @@ static FrtLock *ram_open_lock_i(FrtStore *store, const char *lockname) {
     lock->obtain = &ram_lock_obtain;
     lock->release = &ram_lock_release;
     lock->is_locked = &ram_lock_is_locked;
+    lock->rlock = Qnil;
     return lock;
 }
 

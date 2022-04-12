@@ -759,12 +759,12 @@ static void frb_pq_push(PriQ *pq, VALUE elem) {
 
 static VALUE cPriorityQueue;
 
-static void
-frb_pq_mark(void *p) {
+static void frb_pq_mark(void *p) {
     PriQ *pq = (PriQ *)p;
     int i;
     for (i = pq->size; i > 0; i--) {
-        rb_gc_mark_maybe(pq->heap[i]);
+        if (pq->heap[i])
+            rb_gc_mark_maybe(pq->heap[i]);
     }
 }
 
@@ -815,9 +815,7 @@ static VALUE frb_pq_alloc(VALUE klass) {
  *  automatically popped off the top of the queue as more elements are
  *  inserted into the queue.
  */
-static VALUE
-frb_pq_init(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_pq_init(int argc, VALUE *argv, VALUE self) {
     if (argc >= 1) {
         PriQ *pq;
         VALUE options = argv[0];
@@ -870,9 +868,7 @@ frb_pq_init(int argc, VALUE *argv, VALUE self)
  *  Returns a shallow clone of the priority queue. That is only the priority
  *  queue is cloned, its contents are not cloned.
  */
-static VALUE
-frb_pq_clone(VALUE self)
-{
+static VALUE frb_pq_clone(VALUE self) {
     PriQ *pq, *new_pq = ALLOC(PriQ);
     GET_PQ(pq, self);
     memcpy(new_pq, pq, sizeof(PriQ));
@@ -888,9 +884,7 @@ frb_pq_clone(VALUE self)
  *
  *  Clears all elements from the priority queue. The size will be reset to 0.
  */
-static VALUE
-frb_pq_clear(VALUE self)
-{
+static VALUE frb_pq_clear(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     pq->size = 0;
@@ -905,9 +899,7 @@ frb_pq_clear(VALUE self)
  *  Insert an element into a queue. It will be inserted into the correct
  *  position in the queue according to its priority.
  */
-static VALUE
-frb_pq_insert(VALUE self, VALUE elem)
-{
+static VALUE frb_pq_insert(VALUE self, VALUE elem) {
     PriQ *pq;
     GET_PQ(pq, self);
     if (pq->size < pq->capa) {
@@ -929,9 +921,7 @@ frb_pq_insert(VALUE self, VALUE elem)
  *  priority changes. When you do this you need to reorder the queue and you
  *  do this by calling the adjust method.
  */
-static VALUE
-frb_pq_adjust(VALUE self)
-{
+static VALUE frb_pq_adjust(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     frb_pq_down(pq);
@@ -945,9 +935,7 @@ frb_pq_adjust(VALUE self)
  *  Returns the top element in the queue but does not remove it from the
  *  queue.
  */
-static VALUE
-frb_pq_top(VALUE self)
-{
+static VALUE frb_pq_top(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     return (pq->size > 0) ? pq->heap[1] : Qnil;
@@ -959,9 +947,7 @@ frb_pq_top(VALUE self)
  *
  *  Returns the top element in the queue removing it from the queue.
  */
-static VALUE
-frb_pq_pop(VALUE self)
-{
+static VALUE frb_pq_pop(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     if (pq->size > 0) {
@@ -985,9 +971,7 @@ frb_pq_pop(VALUE self)
  *  in the queue. The _size_ of a PriorityQueue can never be greater than
  *  its _capacity_
  */
-static VALUE
-frb_pq_size(VALUE self)
-{
+static VALUE frb_pq_size(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     return INT2FIX(pq->size);
@@ -1002,9 +986,7 @@ frb_pq_size(VALUE self)
  *  _size_ of a PriorityQueue can never be greater than its
  *  _capacity_
  */
-static VALUE
-frb_pq_capa(VALUE self)
-{
+static VALUE frb_pq_capa(VALUE self) {
     PriQ *pq;
     GET_PQ(pq, self);
     return INT2FIX(pq->capa);
@@ -1052,9 +1034,7 @@ frb_pq_capa(VALUE self)
  *    word = q.pop    #=> "xxxyyyy"
  *    word = q.pop    #=> nil
  */
-static void
-Init_PriorityQueue(void)
-{
+static void Init_PriorityQueue(void) {
     /* PriorityQueue */
     cPriorityQueue = rb_define_class_under(mUtils, "PriorityQueue", rb_cObject);
     rb_define_alloc_func(cPriorityQueue, frb_pq_alloc);
@@ -1089,9 +1069,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  These helper classes could also be quite useful outside of Ferret and may
  *  one day find themselves in their own separate library.
  */
-void
-Init_Utils(void)
-{
+void Init_Utils(void) {
     mUtils = rb_define_module_under(mFerret, "Utils");
 
     Init_BitVector();

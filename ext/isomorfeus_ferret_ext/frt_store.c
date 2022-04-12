@@ -68,6 +68,7 @@ FrtStore *frt_store_init(FrtStore *store) {
     frt_mutex_init(&store->mutex_i, NULL);
     frt_mutex_init(&store->mutex, NULL);
     store->locks = frt_hs_new_ptr((frt_free_ft)&frt_close_lock_i);
+    store->rstore = Qnil;
     return store;
 }
 

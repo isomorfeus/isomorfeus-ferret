@@ -5194,10 +5194,7 @@ static void dw_add_offsets(FrtDocWriter *dw, int pos, off_t start, off_t end)
     dw->offsets_size = pos + 1;
 }
 
-FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
-                           FrtFieldInverter *fld_inv,
-                           FrtDocField *df)
-{
+FrtHash *frt_dw_invert_field(FrtDocWriter *dw, FrtFieldInverter *fld_inv, FrtDocField *df) {
     FrtMemoryPool *mp = dw->mp;
     FrtAnalyzer *a = dw->analyzer;
     FrtHash *curr_plists = dw->curr_plists;
@@ -5223,21 +5220,16 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
                     if (pos < 0) {
                         pos = 0;
                     }
-                    dw_add_posting(mp, curr_plists, fld_plists, doc_num,
-                                   tk->text, tk->len, pos);
-                    dw_add_offsets(dw, pos,
-                                   start_offset + tk->start,
-                                   start_offset + tk->end);
+                    dw_add_posting(mp, curr_plists, fld_plists, doc_num, tk->text, tk->len, pos);
+                    dw_add_offsets(dw, pos, start_offset + tk->start, start_offset + tk->end);
                     if (num_terms++ >= dw->max_field_length) {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 while (NULL != (tk = ts->next(ts))) {
                     pos += tk->pos_inc;
-                    dw_add_posting(mp, curr_plists, fld_plists, doc_num,
-                                   tk->text, tk->len, pos);
+                    dw_add_posting(mp, curr_plists, fld_plists, doc_num, tk->text, tk->len, pos);
                     if (num_terms++ >= dw->max_field_length) {
                         break;
                     }
@@ -5247,8 +5239,7 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
             start_offset += df->lengths[i] + 1;
         }
         fld_inv->length = num_terms;
-    }
-    else {
+    } else {
         char buf[FRT_MAX_WORD_SIZE];
         buf[FRT_MAX_WORD_SIZE - 1] = '\0';
         for (i = 0; i < df_size; i++) {
@@ -5258,11 +5249,9 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
                 len = FRT_MAX_WORD_SIZE - 1;
                 data_ptr = (char *)memcpy(buf, df->data[i], len);
             }
-            dw_add_posting(mp, curr_plists, fld_plists, doc_num, data_ptr,
-                           len, i);
+            dw_add_posting(mp, curr_plists, fld_plists, doc_num, data_ptr, len, i);
             if (store_offsets) {
-                dw_add_offsets(dw, i, start_offset,
-                               start_offset + df->lengths[i]);
+                dw_add_offsets(dw, i, start_offset, start_offset + df->lengths[i]);
             }
             start_offset += df->lengths[i] + 1;
         }
@@ -5271,14 +5260,12 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw,
     return curr_plists;
 }
 
-void frt_dw_reset_postings(FrtHash *postings)
-{
+void frt_dw_reset_postings(FrtHash *postings) {
     FRT_ZEROSET_N(postings->table, FrtHashEntry, postings->mask + 1);
     postings->fill = postings->size = 0;
 }
 
-void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
-{
+void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc) {
     int i;
     float boost;
     FrtDocField *df;
@@ -5300,16 +5287,12 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc)
 
         postings = frt_dw_invert_field(dw, fld_inv, df);
         if (fld_inv->store_term_vector) {
-            frt_fw_add_postings(dw->fw, fld_inv->fi->number,
-                            dw_sort_postings(postings), postings->size,
-                            dw->offsets, dw->offsets_size);
+            frt_fw_add_postings(dw->fw, fld_inv->fi->number, dw_sort_postings(postings), postings->size, dw->offsets, dw->offsets_size);
         }
 
         if (fld_inv->has_norms) {
-            boost = fld_inv->fi->boost * doc->boost * df->boost *
-                frt_sim_length_norm(dw->similarity, fi->name, fld_inv->length);
-            fld_inv->norms[dw->doc_num] =
-                frt_sim_encode_norm(dw->similarity, boost);
+            boost = fld_inv->fi->boost * doc->boost * df->boost * frt_sim_length_norm(dw->similarity, fi->name, fld_inv->length);
+            fld_inv->norms[dw->doc_num] = frt_sim_encode_norm(dw->similarity, boost);
         }
         frt_dw_reset_postings(postings);
         if (dw->offsets_size > 0) {
@@ -6141,9 +6124,7 @@ FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *vo
 /*******************/
 /*** Add Indexes ***/
 /*******************/
-static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr,
-                         const char *segment, int *map)
-{
+static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr, const char *segment, int *map) {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtOutStream *fdt_out, *fdx_out;
     FrtInStream *fdt_in, *fdx_in;
@@ -6170,7 +6151,6 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr,
         frt_is2os_copy_bytes(del_in, del_out, frt_is_length(del_in));
     }
 
-
     if (map) {
         int i;
         const int max_doc = sr_max_doc(IR(sr));
@@ -6191,10 +6171,12 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr,
                 frt_os_write_vint(fdt_out, df_size);
                 /* sum total lengths of FrtDocField */
                 for (k = 0; k < df_size; k++) {
-                    /* Each field has one ' ' byte so add 1 */
                     const int flen = frt_is_read_vint(fdt_in);
+                    const int fenc = frt_is_read_vint(fdt_in);
                     frt_os_write_vint(fdt_out, flen);
-                    data_len +=  flen + 1;
+                    frt_os_write_vint(fdt_out, fenc);
+                    /* Each field has one ' ' byte so add 1 */
+                    data_len += flen + 1;
                 }
             }
             frt_is2os_copy_bytes(fdt_in, fdt_out, data_len);
@@ -6217,8 +6199,7 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr,
                 frt_os_write_vint(fdt_out, tv_size);
             }
         }
-    }
-    else {
+    } else {
         frt_is2os_copy_bytes(fdt_in, fdt_out, frt_is_length(fdt_in));
         frt_is2os_copy_bytes(fdx_in, fdx_out, frt_is_length(fdx_in));
     }
@@ -6328,9 +6309,7 @@ static void iw_cp_norms(FrtIndexWriter *iw, FrtSegmentReader *sr,
     }
 }
 
-static void iw_cp_map_files(FrtIndexWriter *iw, FrtSegmentReader *sr,
-                            FrtSegmentInfo *si)
-{
+static void iw_cp_map_files(FrtIndexWriter *iw, FrtSegmentReader *sr, FrtSegmentInfo *si) {
     int i;
     FrtFieldInfos *from_fis = IR(sr)->fis;
     FrtFieldInfos *to_fis = iw->fis;
@@ -6348,9 +6327,7 @@ static void iw_cp_map_files(FrtIndexWriter *iw, FrtSegmentReader *sr,
     free(field_map);
 }
 
-static void iw_cp_files(FrtIndexWriter *iw, FrtSegmentReader *sr,
-                        FrtSegmentInfo *si)
-{
+static void iw_cp_files(FrtIndexWriter *iw, FrtSegmentReader *sr, FrtSegmentInfo *si) {
     iw_cp_fields(iw, sr, si->name, NULL);
     iw_cp_terms( iw, sr, si->name, NULL);
     iw_cp_norms( iw, sr, si,       NULL);

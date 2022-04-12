@@ -713,7 +713,8 @@ static size_t frb_boolean_clause_t_size(const void *p) {
 }
 
 static void frb_bc_mark(void *p) {
-    rb_gc_mark(((FrtBooleanClause *)p)->query->rquery);
+    if (((FrtBooleanClause *)p)->query->rquery)
+        rb_gc_mark(((FrtBooleanClause *)p)->query->rquery);
 }
 
 static void frb_bc_free(void *p) {
@@ -899,7 +900,8 @@ static void frb_bq_mark(void *p) {
     FrtQuery *q = (FrtQuery *)p;
     FrtBooleanQuery *bq = (FrtBooleanQuery *)q;
     for (i = 0; i < bq->clause_cnt; i++) {
-        frb_gc_mark(bq->clauses[i]);
+        if (bq->clauses[i]->rbc)
+            rb_gc_mark(bq->clauses[i]->rbc);
     }
 }
 
@@ -1836,8 +1838,10 @@ static size_t frb_filtered_query_size(const void *p) {
 
 static void frb_fqq_mark(void *p) {
     FrtFilteredQuery *fq = (FrtFilteredQuery *)p;
-    frb_gc_mark(fq->query);
-    frb_gc_mark(fq->filter);
+    if (fq->query->rquery)
+        rb_gc_mark(fq->query->rquery);
+    if (fq->filter->rfilter)
+        rb_gc_mark(fq->filter->rfilter);
 }
 
 const rb_data_type_t frb_filtered_query_t = {
@@ -2147,7 +2151,8 @@ static void frb_spannq_mark(void *p) {
     int i;
     FrtSpanNearQuery *snq = (FrtSpanNearQuery *)p;
     for (i = 0; i < snq->c_cnt; i++) {
-        frb_gc_mark(snq->clauses[i]);
+        if (snq->clauses[i]->rquery)
+            rb_gc_mark(snq->clauses[i]->rquery);
     }
 }
 
@@ -2270,7 +2275,8 @@ static void frb_spanoq_mark(void *p) {
     int i;
     FrtSpanOrQuery *soq = (FrtSpanOrQuery *)p;
     for (i = 0; i < soq->c_cnt; i++) {
-        frb_gc_mark(soq->clauses[i]);
+        if (soq->clauses[i]->rquery)
+            rb_gc_mark(soq->clauses[i]->rquery);
     }
 }
 
@@ -2346,8 +2352,10 @@ static size_t frb_span_not_query_size(const void *p) {
 
 static void frb_spanxq_mark(void *p) {
     FrtSpanNotQuery *sxq = (FrtSpanNotQuery *)p;
-    frb_gc_mark(sxq->inc);
-    frb_gc_mark(sxq->exc);
+    if (sxq->inc->rquery)
+        rb_gc_mark(sxq->inc->rquery);
+    if (sxq->exc->rquery)
+        rb_gc_mark(sxq->exc->rquery);
 }
 
 const rb_data_type_t frb_span_not_query_t = {
@@ -2837,7 +2845,8 @@ static void frb_sort_mark(void *p) {
     FrtSort *sort = (FrtSort *)p;
     int i;
     for (i = 0; i < sort->size; i++) {
-        frb_gc_mark(sort->sort_fields[i]);
+        if (sort->sort_fields[i]->rfield)
+            rb_gc_mark(sort->sort_fields[i]->rfield);
     }
 }
 
@@ -3538,9 +3547,7 @@ static VALUE frb_sea_highlight(int argc, VALUE *argv, VALUE self) {
 }
 
 /****************************************************************************
- *
  * Searcher Methods
- *
  ****************************************************************************/
 
 static size_t frb_index_searcher_size(const void *p) {
@@ -3550,8 +3557,10 @@ static size_t frb_index_searcher_size(const void *p) {
 
 static void frb_sea_mark(void *p) {
     FrtIndexSearcher *isea = (FrtIndexSearcher *)p;
-    frb_gc_mark(isea->ir);
-    frb_gc_mark(isea->ir->store);
+    if (isea->ir->rir)
+        rb_gc_mark(isea->ir->rir);
+    if (isea->ir->store->rstore)
+        rb_gc_mark(isea->ir->store->rstore);
 }
 
 const rb_data_type_t frb_index_searcher_t = {
@@ -3635,7 +3644,8 @@ static void frb_ms_mark(void *p) {
     int i;
     FrtMultiSearcher *msea = (FrtMultiSearcher *)p;
     for (i = 0; i < msea->s_cnt; i++) {
-        frb_gc_mark(msea->searchers[i]);
+        if (msea->searchers[i]->rsea)
+            rb_gc_mark(msea->searchers[i]->rsea);
     }
 }
 

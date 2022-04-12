@@ -369,7 +369,8 @@ static void frb_fis_mark(void *p) {
     FrtFieldInfos *fis = (FrtFieldInfos *)p;
 
     for (i = 0; i < fis->size; i++) {
-        frb_gc_mark(fis->fields[i]);
+        if (fis->fields[i]->rfi)
+            rb_gc_mark(fis->fields[i]->rfi);
     }
 }
 
@@ -1257,9 +1258,12 @@ void frb_iw_free(void *p) {
 
 void frb_iw_mark(void *p) {
     FrtIndexWriter *iw = (FrtIndexWriter *)p;
-    frb_gc_mark(iw->analyzer);
-    frb_gc_mark(iw->store);
-    frb_gc_mark(iw->fis);
+    if (iw->analyzer->ranalyzer)
+        rb_gc_mark(iw->analyzer->ranalyzer);
+    if (iw->store->rstore)
+        rb_gc_mark(iw->store->rstore);
+    if (iw->fis->rfis)
+        rb_gc_mark(iw->fis->rfis);
 }
 
 /*
@@ -1402,7 +1406,6 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
     FRT_XENDTRY
 
     if (ex_code && msg) {
-        // free(((struct RData *)(self))->data);
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
         ((struct RData *)(self))->dfree = NULL;
@@ -1587,10 +1590,12 @@ void frb_ir_mark(void *p) {
     if (ir->type == FRT_MULTI_READER) {
         int i;
         for (i = 0; i < mr->r_cnt; i++) {
-            frb_gc_mark(mr->sub_readers[i]);
+            if (mr->sub_readers[i]->rir)
+                rb_gc_mark(mr->sub_readers[i]->rir);
         }
     } else {
-        frb_gc_mark(ir->store);
+        if (ir->store && ir->store->rstore)
+            rb_gc_mark(ir->store->rstore);
     }
 }
 
@@ -2207,7 +2212,6 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
     FRT_XENDTRY
 
     if (ex_code && msg) {
-        free(((struct RData *)(self))->data);
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
         ((struct RData *)(self))->dfree = NULL;

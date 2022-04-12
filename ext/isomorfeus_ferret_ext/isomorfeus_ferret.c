@@ -7,9 +7,6 @@
 #include "frb_threading.h"
 #include "frb_lang.h"
 
-/* Object Map */
-static FrtHash *object_map;
-
 /* IDs */
 ID id_new;
 ID id_call;
@@ -55,43 +52,6 @@ unsigned long long value_hash(const void *key) {
 
 int value_eq(const void *key1, const void *key2) {
     return key1 == key2;
-}
-
-VALUE object_get(void *key) {
-    VALUE val = (VALUE)frt_h_get(object_map, key);
-    if (!val) val = Qnil;
-    return val;
-}
-
-void object_add2(void *key, VALUE obj, const char *file, int line) {
-    if (frt_h_get(object_map, key)) {
-        printf("failed adding %lx to %lld; already contains %llx. %s:%d\n",
-               (long)obj, (long long)key, (long long)frt_h_get(object_map, key), file, line);
-    } else {
-        frt_h_set(object_map, key, (void *)obj);
-    }
-}
-
-void object_set2(void *key, VALUE obj, const char *file, int line) {
-    frt_h_set(object_map, key, (void *)obj);
-}
-
-void object_del2(void *key, const char *file, int line) {
-    if (object_get(key) == Qnil) {
-        printf("failed deleting %lld. %s:%d\n", (long long)key, file, line);
-    } else {
-        frt_h_del(object_map, key);
-    }
-}
-
-void frb_gc_mark(void *key) {
-    VALUE val = (VALUE)frt_h_get(object_map, key);
-    if (val)
-        rb_gc_mark(val);
-}
-
-void frb_deref_free(void *p) {
-    object_del(p);
 }
 
 void frb_thread_once(int *once_control, void (*init_routine) (void)) {
@@ -293,9 +253,6 @@ void Init_isomorfeus_ferret_ext(void) {
     const char *const progname[] = {"ruby"};
 
     frt_init(1, progname);
-
-    /* initialize object map */
-    object_map = frt_h_new(&value_hash, &value_eq, NULL, NULL);
 
     /* IDs */
     id_new = rb_intern("new");

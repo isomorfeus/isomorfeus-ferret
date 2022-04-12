@@ -150,6 +150,7 @@ struct FrtLock
     int (*obtain)(FrtLock *lock);
     int (*is_locked)(FrtLock *lock);
     void (*release)(FrtLock *lock);
+    VALUE rlock;
 };
 
 typedef struct FrtCompoundStore
@@ -320,6 +321,11 @@ struct FrtStore
      * @param store self
      */
     void (*close_i)(FrtStore *store);
+
+    /**
+     * Reference to be used within ruby realm.
+     */
+    VALUE rstore;
 };
 
 /**

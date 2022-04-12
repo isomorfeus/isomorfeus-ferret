@@ -18,26 +18,24 @@ VALUE cFSDirectory;
 void frb_unwrap_locks(FrtStore *store) {
     FrtHashSetEntry *hse = store->locks->first;
     for (; hse; hse = hse->next) {
-        void *lock = hse->elem;
-        VALUE rlock = object_get(lock);
-        if (rlock != Qnil) {
-            object_del(lock);
-            ((struct RData *)(rlock))->data = NULL;
-            ((struct RData *)(rlock))->dmark = NULL;
-            ((struct RData *)(rlock))->dfree = NULL;
+        FrtLock *lock = hse->elem;
+        if (lock->rlock != Qnil && lock->rlock != 0) {
+            ((struct RData *)(lock->rlock))->data = NULL;
+            ((struct RData *)(lock->rlock))->dmark = NULL;
+            ((struct RData *)(lock->rlock))->dfree = NULL;
         }
     }
 }
 
 void frb_lock_free(void *p) {
     FrtLock *lock = (FrtLock *)p;
-    object_del(p);
     frt_close_lock(lock);
 }
 
 void frb_lock_mark(void *p) {
     FrtLock *lock = (FrtLock *)p;
-    frb_gc_mark(lock->store);
+    if (lock->store->rstore)
+        rb_gc_mark(lock->store->rstore);
 }
 
 static size_t frb_lock_size(const void *p) {
@@ -79,9 +77,7 @@ const rb_data_type_t frb_lock_t = {
  *  return::  true if lock was successfully obtained. Raises a
  *            Lock::LockError otherwise.
  */
-static VALUE
-frb_lock_obtain(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_lock_obtain(int argc, VALUE *argv, VALUE self) {
     VALUE rtimeout;
     int timeout = 1;
     FrtLock *lock;
@@ -125,9 +121,7 @@ frb_lock_obtain(int argc, VALUE *argv, VALUE self)
  *  return::  true if lock was successfully obtained. Raises a
  *            Lock::LockError otherwise.
  */
-static VALUE
-frb_lock_while_locked(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_lock_while_locked(int argc, VALUE *argv, VALUE self) {
     VALUE rtimeout;
     int timeout = 1;
     FrtLock *lock;
@@ -165,9 +159,7 @@ frb_lock_while_locked(int argc, VALUE *argv, VALUE self)
  *
  *  Returns true if the lock has been obtained.
  */
-static VALUE
-frb_lock_is_locked(VALUE self)
-{
+static VALUE frb_lock_is_locked(VALUE self) {
     FrtLock *lock;
     GET_LOCK(lock, self);
     return lock->is_locked(lock) ? Qtrue : Qfalse;
@@ -180,9 +172,7 @@ frb_lock_is_locked(VALUE self)
  *  Release the lock. This should only be called by the process which obtains
  *  the lock.
  */
-static VALUE
-frb_lock_release(VALUE self)
-{
+static VALUE frb_lock_release(VALUE self) {
     FrtLock *lock;
     GET_LOCK(lock, self);
     lock->release(lock);
@@ -198,7 +188,6 @@ frb_lock_release(VALUE self)
 void frb_dir_free(void *p) {
     FrtStore *store = (FrtStore *)p;
     frb_unwrap_locks(store);
-    object_del(store);
     frt_store_deref(store);
 }
 
@@ -210,14 +199,11 @@ void frb_dir_free(void *p) {
  *  Although the garbage collector will currently handle this for you, this
  *  behaviour may change in future.
  */
-static VALUE
-frb_dir_close(VALUE self)
-{
+static VALUE frb_dir_close(VALUE self) {
     FrtStore *store = DATA_PTR(self);
     int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) - 1;
     rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
     if (ref_cnt < 0) {
-        object_del(store);
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
         ((struct RData *)(self))->dfree = NULL;
@@ -233,9 +219,7 @@ frb_dir_close(VALUE self)
  *
  *  Return true if a file with the name +file_name+ exists in the directory.
  */
-static VALUE
-frb_dir_exists(VALUE self, VALUE rfname)
-{
+static VALUE frb_dir_exists(VALUE self, VALUE rfname) {
     FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     return store->exists(store, rs2s(rfname)) ? Qtrue : Qfalse;
@@ -247,9 +231,7 @@ frb_dir_exists(VALUE self, VALUE rfname)
  *
  *  Create an empty file in the directory with the name +file_name+.
  */
-static VALUE
-frb_dir_touch(VALUE self, VALUE rfname)
-{
+static VALUE frb_dir_touch(VALUE self, VALUE rfname) {
     FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     store->touch(store, rs2s(rfname));
@@ -262,9 +244,7 @@ frb_dir_touch(VALUE self, VALUE rfname)
  *
  *  Remove file +file_name+ from the directory. Returns true if successful.
  */
-static VALUE
-frb_dir_delete(VALUE self, VALUE rfname)
-{
+static VALUE frb_dir_delete(VALUE self, VALUE rfname) {
     FrtStore *store = DATA_PTR(self);
     StringValue(rfname);
     return (store->remove(store, rs2s(rfname)) == 0) ? Qtrue : Qfalse;
@@ -276,9 +256,7 @@ frb_dir_delete(VALUE self, VALUE rfname)
  *
  *  Return a count of the number of files in the directory.
  */
-static VALUE
-frb_dir_file_count(VALUE self)
-{
+static VALUE frb_dir_file_count(VALUE self) {
     FrtStore *store = DATA_PTR(self);
     return INT2FIX(store->count(store));
 }
@@ -289,9 +267,7 @@ frb_dir_file_count(VALUE self)
  *
  *  Delete all files in the directory. It gives you a clean slate.
  */
-static VALUE
-frb_dir_refresh(VALUE self)
-{
+static VALUE frb_dir_refresh(VALUE self) {
     FrtStore *store = DATA_PTR(self);
     store->clear_all(store);
     return self;
@@ -304,9 +280,7 @@ frb_dir_refresh(VALUE self)
  *  Rename a file from +from+ to +to+. An error will be raised if the file
  *  doesn't exist or there is some other type of IOError.
  */
-static VALUE
-frb_dir_rename(VALUE self, VALUE rfrom, VALUE rto)
-{
+static VALUE frb_dir_rename(VALUE self, VALUE rfrom, VALUE rto) {
     FrtStore *store = DATA_PTR(self);
     StringValue(rfrom);
     StringValue(rto);
@@ -323,15 +297,14 @@ frb_dir_rename(VALUE self, VALUE rfrom, VALUE rto)
  *  should avoid using files with a .lck extension as this extension is
  *  reserved for lock files
  */
-static VALUE
-frb_dir_make_lock(VALUE self, VALUE rlock_name) {
+static VALUE frb_dir_make_lock(VALUE self, VALUE rlock_name) {
     VALUE rlock;
     FrtLock *lock;
     FrtStore *store = DATA_PTR(self);
     StringValue(rlock_name);
     lock = frt_open_lock(store, rs2s(rlock_name));
     rlock = TypedData_Wrap_Struct(cLock, &frb_lock_t, lock);
-    object_add(lock, rlock);
+    lock->rlock = rlock;
     return rlock;
 }
 
@@ -393,7 +366,7 @@ static VALUE frb_ramdir_init(int argc, VALUE *argv, VALUE self) {
                 }
         default: frt_open_ram_store(store);
     }
-    object_add(store, self);
+    store->rstore = self;
     rb_ivar_set(self, id_ref_cnt, INT2FIX(0));
     return self;
 }
@@ -418,9 +391,7 @@ static VALUE frb_ramdir_init(int argc, VALUE *argv, VALUE self) {
  *  create:: set to true if you want any existing files in the directory to be
  *           deleted
  */
-static VALUE
-frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
-{
+static VALUE frb_fsdir_new(int argc, VALUE *argv, VALUE klass) {
     VALUE self, rpath, rcreate;
     FrtStore *store;
     bool create;
@@ -437,12 +408,11 @@ frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
     }
     store = frt_open_fs_store(rs2s(rpath));
     if (create) store->clear_all(store);
-    if ((self = object_get(store)) == Qnil) {
+    if ((self = store->rstore) == Qnil) {
         self = TypedData_Wrap_Struct(klass, &frb_store_t, store);
-        object_add(store, self);
+        store->rstore = self;
         rb_ivar_set(self, id_ref_cnt, INT2FIX(0));
-    }
-    else {
+    } else {
         int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) + 1;
         rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
         FRT_DEREF(store);
@@ -474,9 +444,7 @@ frb_fsdir_new(int argc, VALUE *argv, VALUE klass)
  *  called _open_input_ If there is a risk of simultaneous modifications of
  *  the files then locks should be used. See Lock to find out how.
  */
-void
-Init_Directory(void)
-{
+void Init_Directory(void) {
     cDirectory = rb_define_class_under(mStore, "Directory", rb_cObject);
     rb_define_const(cDirectory, "LOCK_PREFIX", rb_str_new2(FRT_LOCK_PREFIX));
     rb_define_method(cDirectory, "close", frb_dir_close, 0);
@@ -512,9 +480,7 @@ Init_Directory(void)
  *      ... # Do your file modifications # ...
  *    end
  */
-void
-Init_Lock(void)
-{
+void Init_Lock(void) {
     cLock = rb_define_class_under(mStore, "Lock", rb_cObject);
     rb_define_method(cLock, "obtain", frb_lock_obtain, -1);
     rb_define_method(cLock, "while_locked", frb_lock_while_locked, -1);
@@ -533,9 +499,7 @@ Init_Lock(void)
  *  operating systems there won't be much difference so it wouldn't be worth
  *  your trouble.
  */
-void
-Init_RAMDirectory(void)
-{
+void Init_RAMDirectory(void) {
     cRAMDirectory = rb_define_class_under(mStore, "RAMDirectory", cDirectory);
     rb_define_alloc_func(cRAMDirectory, frb_store_alloc);
     rb_define_method(cRAMDirectory, "initialize", frb_ramdir_init, -1);
@@ -550,9 +514,7 @@ Init_RAMDirectory(void)
  *  the index. The one exception to this rule is you may need to delete stale
  *  lock files which have a ".lck" extension.
  */
-void
-Init_FSDirectory(void)
-{
+void Init_FSDirectory(void) {
     cFSDirectory = rb_define_class_under(mStore, "FSDirectory", cDirectory);
     rb_define_alloc_func(cFSDirectory, frb_store_alloc);
     rb_define_singleton_method(cFSDirectory, "new", frb_fsdir_new, -1);
@@ -572,9 +534,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
  *  you want to add a different type of Directory, like a database Directory
  *  for instance, you will to implement it in C.
  */
-void
-Init_Store(void)
-{
+void Init_Store(void) {
     id_ref_cnt = rb_intern("@id_ref_cnt");
     mStore = rb_define_module_under(mFerret, "Store");
     Init_Directory();

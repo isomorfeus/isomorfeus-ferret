@@ -1326,11 +1326,13 @@ static VALUE frb_standard_analyzer_init(int argc, VALUE *argv, VALUE self) {
 }
 
 static void frb_h_mark_values_i(void *key, void *value, void *arg) {
-    frb_gc_mark(value);
+    if (((FrtAnalyzer *)value)->ranalyzer)
+        rb_gc_mark(((FrtAnalyzer *)value)->ranalyzer);
 }
 
 static void frb_pfa_mark(void *p) {
-    frb_gc_mark(PFA(p)->default_a);
+    if (PFA(p)->default_a->ranalyzer)
+        rb_gc_mark(PFA(p)->default_a->ranalyzer);
     frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
 }
 
@@ -1433,8 +1435,8 @@ static VALUE frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstri
 /*** RegExpAnalyzer ***/
 
 static void frb_re_analyzer_mark(void *p) {
-    FrtAnalyzer *a = (FrtAnalyzer *)p;
-    frb_gc_mark(a->current_ts);
+    if (((FrtAnalyzer *)p)->current_ts->rts)
+        rb_gc_mark(((FrtAnalyzer *)p)->current_ts->rts);
 }
 
 static void re_analyzer_destroy_i(FrtAnalyzer *a) {

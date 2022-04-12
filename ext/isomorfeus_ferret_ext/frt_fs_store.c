@@ -405,6 +405,7 @@ static FrtLock *fs_open_lock_i(FrtStore *store, const char *lockname)
     lock->obtain = &fs_lock_obtain;
     lock->release = &fs_lock_release;
     lock->is_locked = &fs_lock_is_locked;
+    lock->rlock = Qnil;
     return lock;
 }
 

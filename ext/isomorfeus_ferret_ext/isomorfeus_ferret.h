@@ -50,15 +50,6 @@ extern void Init_Search();
 extern void Init_QueryParser();
 
 extern void frb_raise(int excode, const char *msg);
-#define object_add(key, obj) object_add2(key, obj,  __FILE__, __LINE__)
-extern void object_add2(void *key, VALUE obj, const char *file, int line);
-#define object_set(key, obj) object_set2(key, obj,  __FILE__, __LINE__)
-extern void object_set2(void *key, VALUE obj, const char *file, int line);
-#define object_del(key) object_del2(key,  __FILE__, __LINE__)
-extern void object_del2(void *key, const char *file, int line);
-extern void frb_gc_mark(void *key);
-extern VALUE object_get(void *key);
-extern void frb_deref_free(void *p);
 extern void frb_create_dir(VALUE rpath);
 extern VALUE frb_hs_to_rb_ary(FrtHashSet *hs);
 extern void *frb_rb_data_ptr(VALUE val);
