@@ -99,6 +99,7 @@ typedef struct FrtFieldInfo {
     unsigned int bits;
     int          number;
     int          ref_cnt;
+    VALUE        rfi;
 } FrtFieldInfo;
 
 extern FrtFieldInfo *frt_fi_alloc();
@@ -135,6 +136,7 @@ typedef struct FrtFieldInfos {
     FrtFieldInfo       **fields;
     FrtHash            *field_dict;
     int                ref_cnt;
+    VALUE              rfis;
 } FrtFieldInfos;
 
 FrtFieldInfos *frt_fis_alloc();

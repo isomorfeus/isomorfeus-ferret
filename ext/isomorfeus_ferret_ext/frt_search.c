@@ -1019,9 +1019,9 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
         }
     } else {
         hq = frt_pq_new(max_size, (frt_lt_ft)&hit_lt, &free);
-        hq_pop = &hit_pq_pop;
         hq_insert = &hit_pq_insert;
         hq_destroy = &frt_pq_destroy;
+        hq_pop = &hit_pq_pop;
     }
 
     scorer = weight->scorer(weight, ISEA(self)->ir);
@@ -1058,7 +1058,6 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
     } else {
         num_docs = 0;
     }
-    frt_pq_clear(hq);
     hq_destroy(hq);
     return frt_td_new(total_hits, num_docs, score_docs, max_score);
 }

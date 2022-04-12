@@ -504,6 +504,7 @@ void frt_fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit) {
 
 void frt_fshq_pq_destroy(FrtPriorityQueue *self) {
     sorter_destroy((Sorter *)self->heap[0]);
+    frt_pq_clear(self);
     frt_pq_destroy(self);
 }
 

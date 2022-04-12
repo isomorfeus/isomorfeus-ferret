@@ -72,20 +72,11 @@ extern VALUE frb_get_analyzer(FrtAnalyzer *a);
  *
  ****************************************************************************/
 
-static void
-frb_fi_free(void *p)
-{
-    object_del(p);
+static void frb_fi_free(void *p) {
     frt_fi_deref((FrtFieldInfo *)p);
 }
 
-static void
-frb_fi_get_params(VALUE roptions,
-                  FrtStoreValue *store,
-                  FrtIndexValue *index,
-                  FrtTermVectorValue *term_vector,
-                  float *boost)
-{
+static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
     VALUE v;
     Check_Type(roptions, T_HASH);
     v = rb_hash_aref(roptions, sym_boost);
@@ -174,16 +165,13 @@ const rb_data_type_t frb_field_info_t = {
 };
 
 static VALUE frb_get_field_info(FrtFieldInfo *fi) {
-    VALUE rfi = Qnil;
     if (fi) {
-        rfi = object_get(fi);
-        if (rfi == Qnil) {
-            rfi = TypedData_Wrap_Struct(cFieldInfo, &frb_field_info_t, fi);
+        if (fi->rfi == 0 || fi->rfi == Qnil) {
+            fi->rfi = TypedData_Wrap_Struct(cFieldInfo, &frb_field_info_t, fi);
             FRT_REF(fi);
-            object_add(fi, rfi);
         }
     }
-    return rfi;
+    return fi->rfi;
 }
 
 /*
@@ -215,7 +203,7 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
     }
     fi = frt_fi_init(fi, frb_field(rname), store, index, term_vector);
     fi->boost = boost;
-    object_add(fi, self);
+    fi->rfi = self;
     return self;
 }
 
@@ -373,7 +361,6 @@ static VALUE frb_fi_to_s(VALUE self) {
  ****************************************************************************/
 
 static void frb_fis_free(void *p) {
-    object_del(p);
     frt_fis_deref((FrtFieldInfos *)p);
 }
 
@@ -406,16 +393,13 @@ const rb_data_type_t frb_field_infos_t = {
 };
 
 static VALUE frb_get_field_infos(FrtFieldInfos *fis) {
-    VALUE rfis = Qnil;
     if (fis) {
-        rfis = object_get(fis);
-        if (rfis == Qnil) {
-            rfis = TypedData_Wrap_Struct(cFieldInfos, &frb_field_infos_t, fis);
+        if (fis->rfis == 0 || fis->rfis == Qnil) {
+            fis->rfis = TypedData_Wrap_Struct(cFieldInfos, &frb_field_infos_t, fis);
             FRT_REF(fis);
-            object_add(fis, rfis);
         }
     }
-    return rfis;
+    return fis->rfis;
 }
 
 /*
@@ -446,7 +430,7 @@ static VALUE frb_fis_init(int argc, VALUE *argv, VALUE self) {
         frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
     }
     fis = frt_fis_init(fis, store, index, term_vector);
-    object_add(fis, self);
+    fis->rfis = self;
     return self;
 }
 
@@ -1371,9 +1355,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
             }
             /* use_compound_file defaults to true */
             config.use_compound_file =
-                (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse)
-                ? false
-                : true;
+                (rb_hash_aref(roptions, sym_use_compound_file) == Qfalse) ? false : true;
 
             if ((rval = rb_hash_aref(roptions, sym_analyzer)) != Qnil) {
                 analyzer = frb_get_cwrapped_analyzer(rval);
@@ -1405,8 +1387,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
                 TypedData_Get_Struct(rval, FrtFieldInfos, &frb_field_infos_t, fis);
                 frt_index_create(store, fis);
             } else {
-                fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                            FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
                 frt_index_create(store, fis);
                 frt_fis_deref(fis);
             }
@@ -1421,6 +1402,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
     FRT_XENDTRY
 
     if (ex_code && msg) {
+        // free(((struct RData *)(self))->data);
         ((struct RData *)(self))->data = NULL;
         ((struct RData *)(self))->dmark = NULL;
         ((struct RData *)(self))->dfree = NULL;
@@ -2224,7 +2206,13 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
         FRT_HANDLED();
     FRT_XENDTRY
 
-    if (ex_code && msg) { frb_raise(ex_code, msg); }
+    if (ex_code && msg) {
+        free(((struct RData *)(self))->data);
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        frb_raise(ex_code, msg);
+    }
 
     ir->rir = self;
 

@@ -288,6 +288,7 @@ FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtInd
     fi_set_index(fi, index);
     fi_set_term_vector(fi, term_vector);
     fi->ref_cnt = 1;
+    fi->rfi = Qnil;
     return fi;
 }
 
@@ -346,6 +347,7 @@ FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexVal
     fis->index = index;
     fis->term_vector = term_vector;
     fis->ref_cnt = 1;
+    fis->rfis = Qnil;
     return fis;
 }
 
