@@ -30,9 +30,7 @@ class IndexWriterTest < Test::Unit::TestCase
   end
 
   def test_add_document
-    iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => StandardAnalyzer.new,
-                         :create => true)
+    iw = IndexWriter.new(:dir => @dir, :analyzer => StandardAnalyzer.new, :create => true)
     iw << {:title => "first doc", :content => ["contents of", "first doc"]}
     assert_equal(1, iw.doc_count)
     iw << ["contents of", "second doc"]
@@ -43,8 +41,7 @@ class IndexWriterTest < Test::Unit::TestCase
   end
 
   def test_add_documents_fuzzy
-    iw = IndexWriter.new(:dir => @dir,
-                         :analyzer => StandardAnalyzer.new)
+    iw = IndexWriter.new(:dir => @dir, :analyzer => StandardAnalyzer.new)
     iw.merge_factor = 3
     iw.max_buffered_docs = 3
 
@@ -58,12 +55,9 @@ class IndexWriterTest < Test::Unit::TestCase
   end
 
   def test_adding_long_url
-    iw = IndexWriter.new(:dir => @dir,
-                          :default_field => 'content')
+    iw = IndexWriter.new(:dir => @dir, :default_field => 'content')
     iw << {:content => "http://" + 'x' * 255}
-    # The following line will cause a segfault prior to 0.11.6
-    # Also currently failing on Travis server
-    #iw << {:content => "http://" + 'x' * 1_000_000}
+    iw << {:content => "http://" + 'x' * 1_000_000}
   end
 
   private
