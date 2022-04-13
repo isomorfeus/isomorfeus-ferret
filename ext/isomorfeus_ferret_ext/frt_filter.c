@@ -57,6 +57,7 @@ FrtFilter *frt_filt_create(size_t size, ID name) {
     filt->eq        = &frt_filt_eq_default;
     filt->destroy_i = &frt_filt_destroy_i;
     filt->ref_cnt   = 1;
+    filt->rfilter   = Qnil;
     return filt;
 }
 

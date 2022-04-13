@@ -149,6 +149,7 @@ FrtTokenStream *frt_ts_clone_size(FrtTokenStream *orig_ts, size_t size) {
     memcpy(ts, orig_ts, size);
     ts->ref_cnt = 1;
     ts->rts = 0;
+    ts->rts = Qnil;
     return ts;
 }
 
@@ -160,6 +161,7 @@ FrtTokenStream *frt_ts_init(FrtTokenStream *ts) {
     ts->destroy_i = (void (*)(FrtTokenStream *))&free;
     ts->reset = &frt_ts_reset;
     ts->ref_cnt = 1;
+    ts->rts = Qnil;
     return ts;
 }
 
@@ -1114,6 +1116,7 @@ void frt_analyzer_init(FrtAnalyzer *a, FrtTokenStream *ts, void (*destroy_i)(Frt
     a->destroy_i = (destroy_i ? destroy_i : &frt_a_standard_destroy_i);
     a->get_ts = (get_ts ? get_ts : &a_standard_get_ts);
     a->ref_cnt = 1;
+    a->ranalyzer = Qnil;
 }
 
 FrtAnalyzer *frt_analyzer_new(FrtTokenStream *ts, void (*destroy_i)(FrtAnalyzer *a),

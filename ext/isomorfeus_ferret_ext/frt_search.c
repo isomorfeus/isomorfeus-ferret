@@ -421,13 +421,14 @@ FrtQuery *frt_q_create(size_t size) {
               "the size of a Query struct <%d>", (int)size, (int)sizeof(FrtQuery));
     }
 #endif
-    self->boost             = 1.0f;
-    self->rewrite           = &q_rewrite;
-    self->get_similarity    = &frt_q_get_similarity_i;
-    self->extract_terms     = &q_extract_terms;
-    self->get_matchv_i      = &q_get_matchv_i;
-    self->weight            = NULL;
-    self->ref_cnt           = 1;
+    self->boost          = 1.0f;
+    self->rewrite        = &q_rewrite;
+    self->get_similarity = &frt_q_get_similarity_i;
+    self->extract_terms  = &q_extract_terms;
+    self->get_matchv_i   = &q_get_matchv_i;
+    self->weight         = NULL;
+    self->ref_cnt        = 1;
+    self->rquery         = Qnil;
     return self;
 }
 
@@ -1212,7 +1213,7 @@ FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir) {
     self->get_term_vector   = &isea_get_term_vector;
     self->get_similarity    = &sea_get_similarity;
     self->close             = &isea_close;
-
+    self->rsea              = Qnil;
     return self;
 }
 
@@ -1748,30 +1749,31 @@ FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt
     }
     starts[i] = max_doc;
 
-    MSEA(self)->s_cnt           = s_cnt;
-    MSEA(self)->searchers       = searchers;
-    MSEA(self)->starts          = starts;
-    MSEA(self)->max_doc         = max_doc;
-    MSEA(self)->close_subs      = close_subs;
+    MSEA(self)->s_cnt       = s_cnt;
+    MSEA(self)->searchers   = searchers;
+    MSEA(self)->starts      = starts;
+    MSEA(self)->max_doc     = max_doc;
+    MSEA(self)->close_subs  = close_subs;
 
-    self->similarity            = frt_sim_create_default();
-    self->doc_freq              = &msea_doc_freq;
-    self->get_doc               = &msea_get_doc;
-    self->get_lazy_doc          = &msea_get_lazy_doc;
-    self->max_doc               = &msea_max_doc;
-    self->create_weight         = &msea_create_weight;
-    self->search                = &msea_search;
-    self->search_w              = &msea_search_w;
-    self->search_each           = &msea_search_each;
-    self->search_each_w         = &msea_search_each_w;
-    self->search_unscored       = &msea_search_unscored;
-    self->search_unscored_w     = &msea_search_unscored_w;
-    self->rewrite               = &msea_rewrite;
-    self->explain               = &msea_explain;
-    self->explain_w             = &msea_explain_w;
-    self->get_term_vector       = &msea_get_term_vector;
-    self->get_similarity        = &msea_get_similarity;
-    self->close                 = &msea_close;
+    self->similarity        = frt_sim_create_default();
+    self->doc_freq          = &msea_doc_freq;
+    self->get_doc           = &msea_get_doc;
+    self->get_lazy_doc      = &msea_get_lazy_doc;
+    self->max_doc           = &msea_max_doc;
+    self->create_weight     = &msea_create_weight;
+    self->search            = &msea_search;
+    self->search_w          = &msea_search_w;
+    self->search_each       = &msea_search_each;
+    self->search_each_w     = &msea_search_each_w;
+    self->search_unscored   = &msea_search_unscored;
+    self->search_unscored_w = &msea_search_unscored_w;
+    self->rewrite           = &msea_rewrite;
+    self->explain           = &msea_explain;
+    self->explain_w         = &msea_explain_w;
+    self->get_term_vector   = &msea_get_term_vector;
+    self->get_similarity    = &msea_get_similarity;
+    self->close             = &msea_close;
+    self->rsea              = Qnil;
     return self;
 }
 

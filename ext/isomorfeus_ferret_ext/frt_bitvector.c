@@ -10,6 +10,7 @@ FrtBitVector *frt_bv_new_capa(int capa) {
     bv->bits = FRT_ALLOC_AND_ZERO_N(frt_u32, bv->capa);
     bv->curr_bit = -1;
     bv->ref_cnt = 1;
+    bv->rbv = Qnil;
     return bv;
 }
 

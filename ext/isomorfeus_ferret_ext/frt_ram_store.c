@@ -42,8 +42,7 @@ static void ram_touch(FrtStore *store, const char *filename) {
 static int ram_exists(FrtStore *store, const char *filename) {
     if (frt_h_get(store->dir.ht, filename) != NULL) {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -54,8 +53,7 @@ static int ram_remove(FrtStore *store, const char *filename) {
         FRT_DEREF(rf);
         rf_close(rf);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -156,8 +154,7 @@ static off_t ram_length(FrtStore *store, const char *filename) {
     FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
     if (rf != NULL) {
         return rf->len;
-    }
-    else {
+    } else {
         return 0;
     }
 }
@@ -279,8 +276,7 @@ static void rami_read_i(FrtInStream *is, frt_uchar *b, int len) {
 
         if (bytes_in_buffer >= remainder) {
             bytes_to_copy = remainder;
-        }
-        else {
+        } else {
             bytes_to_copy = bytes_in_buffer;
         }
         buffer = rf->buffers[buffer_number];
