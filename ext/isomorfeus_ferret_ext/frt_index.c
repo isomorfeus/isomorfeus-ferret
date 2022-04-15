@@ -47,7 +47,7 @@ static char *ste_next(FrtTermEnum *te);
 #define SEGMENTS_GEN_FILE_NAME "segments"
 #define MAX_EXT_LEN 10
 #define FRT_COMPRESSION_BUFFER_SIZE 16348
-#define FRT_BROTLI_COMPRESSION_LEVEL 7
+#define FRT_BROTLI_COMPRESSION_LEVEL 4
 #define FRT_BZIP_COMPRESSION_LEVEL 9
 
 /* *** Must be three characters *** */
