@@ -1187,6 +1187,7 @@ static FrtLazyDocField *lazy_df_new(ID name, const int size, FrtCompressionType 
     self->size = size;
     self->data = FRT_ALLOC_AND_ZERO_N(FrtLazyDocFieldData, size);
     self->compression = compression;
+    self->decompressed = false;
     return self;
 }
 
