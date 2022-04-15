@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include "brotli_decode.h"
 #include "brotli_encode.h"
+#include "lz4.h"
 
 #undef close
 #undef read
@@ -1221,7 +1222,7 @@ static char *is_read_brotli_compressed_bytes(FrtInStream *is, int compressed_len
     if (!b_state) { comp_raise(); return NULL; }
 
     do {
-        read_len = compressed_len > FRT_COMPRESSION_BUFFER_SIZE ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
+        read_len = (compressed_len > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
         frt_is_read_bytes(is, buf_in, read_len);
         compressed_len -= read_len;
         available_in = read_len;
@@ -1251,7 +1252,30 @@ static char *is_read_bz2_compressed_bytes(FrtInStream *is, int compressed_len, i
 }
 
 static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
-    // TODO
+    size_t remaining_length = compressed_len;
+    size_t read_length = 0;
+    int decompressed_bytes = 0;
+    int buf_out_idx = 0;
+    int out_size = 256 * FRT_COMPRESSION_BUFFER_SIZE + FRT_COMPRESSION_BUFFER_SIZE;
+    frt_uchar buf_in[LZ4_COMPRESSBOUND(FRT_COMPRESSION_BUFFER_SIZE)];
+    frt_uchar *buf_out = NULL;
+    LZ4_streamDecode_t *lz4_stream_decode = LZ4_createStreamDecode();
+
+    do {
+        read_length = (remaining_length > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : remaining_length;
+        frt_is_read_bytes(is, buf_in, read_length);
+        remaining_length -= read_length;
+        FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + out_size);
+        decompressed_bytes = LZ4_decompress_safe_continue(lz4_stream_decode, (char *)buf_in, (char *)(buf_out + buf_out_idx), read_length, out_size);
+        if (decompressed_bytes <= 0) break;
+        buf_out_idx += decompressed_bytes;
+    } while (remaining_length > 0);
+
+    LZ4_freeStreamDecode(lz4_stream_decode);
+    FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + 1);
+    buf_out[buf_out_idx] = '\0';
+    *len = buf_out_idx;
+    return (char *)buf_out;
 }
 
 static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *len, FrtCompressionType compression) {
@@ -1705,7 +1729,7 @@ void frt_fw_close(FrtFieldsWriter *fw)
 }
 
 static int frt_os_write_brotli_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
-    size_t compressed_len = 0;
+    size_t compressed_length = 0;
     const frt_uchar *next_in = data;
     size_t available_in = length;
     size_t available_out;
@@ -1721,7 +1745,7 @@ static int frt_os_write_brotli_compressed_bytes(FrtOutStream* out_stream, frt_uc
         next_out = compression_buffer;
         if (!BrotliEncoderCompressStream(b_state, BROTLI_OPERATION_FINISH,
             &available_in, &next_in,
-            &available_out, &next_out, &compressed_len)) {
+            &available_out, &next_out, &compressed_length)) {
             BrotliEncoderDestroyInstance(b_state);
             comp_raise();
             return -1;
@@ -1731,7 +1755,7 @@ static int frt_os_write_brotli_compressed_bytes(FrtOutStream* out_stream, frt_uc
 
     BrotliEncoderDestroyInstance(b_state);
 
-    return (int)compressed_len;
+    return (int)compressed_length;
 }
 
 static int frt_os_write_bz2_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
@@ -1739,7 +1763,28 @@ static int frt_os_write_bz2_compressed_bytes(FrtOutStream* out_stream, frt_uchar
 }
 
 static int frt_os_write_lz4_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
-    // TODO
+    int compressed_length = 0;
+    int current_length = 0;
+    int remaining_length = length;
+    int compressed_bytes = 0;
+    size_t compression_buffer_length = LZ4_COMPRESSBOUND(FRT_COMPRESSION_BUFFER_SIZE);
+
+    frt_uchar *compression_buffer = frt_emalloc(compression_buffer_length);
+    LZ4_stream_t *lz4_stream = LZ4_createStream();
+
+    do {
+        current_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? FRT_COMPRESSION_BUFFER_SIZE : remaining_length;
+        compressed_bytes = LZ4_compress_fast_continue(lz4_stream, (char *)(data + (length - remaining_length)), (char *)compression_buffer, current_length, compression_buffer_length, 1);
+        if (compressed_bytes <= 0) break;
+        compressed_length += compressed_bytes;
+        remaining_length -= current_length;
+        frt_os_write_bytes(out_stream, compression_buffer, compressed_bytes);
+    } while (remaining_length > 0);
+
+    LZ4_freeStream(lz4_stream);
+    free(compression_buffer);
+
+    return compressed_length;
 }
 
 static int frt_os_write_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length, FrtCompressionType compression) {

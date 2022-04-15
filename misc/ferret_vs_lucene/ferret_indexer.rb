@@ -25,9 +25,11 @@ def init_writer(create)
     :max_buffered_docs => 20_000
   }
   if create
+    ca = :brotli
+    ca = :lz4 if @comp == 'l'
     s = @store ? :yes : :no
-    c = @comp ? :brotli : :no
-    sc = @store && @comp ? :brotli : :no
+    c = @comp ? ca : :no
+    sc = @store && @comp ? ca : :no
     options[:create] = true
     field_infos = FieldInfos.new()
     field_infos.add_field(:title, :store => :yes, :compression => c, :term_vector => :no)
@@ -83,7 +85,7 @@ opts = OptionParser.new do |opts|
   opts.on("-d", "--docs VAL", Integer) {|v| @docs = v}
   opts.on("-r", "--reps VAL", Integer) {|v| @reps = v}
   opts.on("-i", "--inc VAL", Integer) {|v| @reps = v}
-  opts.on("-c", "--comp") { @comp = true }
+  opts.on("-c", "--comp VAL") {|v| @comp = v }
   opts.on("-s", "--store") { @store = true }
   opts.on("-a", "--analyzer VAL", String) {|v| @analyzer = v.downcase[0] }
 end

@@ -5,7 +5,7 @@
 #undef close
 #undef read
 
-static ID body, title, text, author, year, changing_field, compressed_field, tag;
+static ID body, title, text, author, year, changing_field, compressed_field_brotli, compressed_field_lz4, tag;
 
 static FrtFieldInfos *prep_all_fis(void) {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
@@ -346,7 +346,10 @@ FrtDocument **prep_ir_test_docs(void) {
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(changing_field),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
                     "word3 word3"), enc))->destroy_data = true;
-    frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field),
+    frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_brotli),
+            frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
+                    "word3 word3"), enc))->destroy_data = true;
+    frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_lz4),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
                     "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(body),
@@ -365,7 +368,7 @@ FrtDocument **prep_ir_test_docs(void) {
     frt_df_add_data(df, frt_estrdup("three"), enc);
     frt_df_add_data(df, frt_estrdup("four"), enc);
     frt_doc_add_field(docs[2], df)->destroy_data = true;
-    df = frt_df_new(compressed_field);
+    df = frt_df_new(compressed_field_brotli);
     frt_df_add_data(df, frt_estrdup("one"), enc);
     frt_df_add_data(df, frt_estrdup("two"), enc);
     frt_df_add_data(df, frt_estrdup("three"), enc);
@@ -1358,8 +1361,8 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                         frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
                     } else if (text == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-                    } else if (compressed_field == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                    } else if (compressed_field_brotli == df->name) {
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     }
                 }
             }
@@ -1414,7 +1417,8 @@ static void write_ir_test_docs(FrtStore *store)
     frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
     frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
     config.max_buffered_docs = 5;
@@ -1457,9 +1461,7 @@ static void test_ir_basic_ops(TestCase *tc, void *data)
     Atrue(frt_ir_is_latest(ir));
 }
 
-static void test_ir_term_docpos_enum_skip_to(TestCase *tc,
-                                             FrtTermDocEnum *tde,
-                                             int field_num)
+static void test_ir_term_docpos_enum_skip_to(TestCase *tc, FrtTermDocEnum *tde, int field_num)
 {
     /* test skip_to working skip interval */
     tde->seek(tde, field_num, "skip");
@@ -1777,46 +1779,60 @@ static void test_ir_compression(TestCase *tc, void *data)
     int i;
     FrtIndexReader *ir = (FrtIndexReader *)data;
     FrtLazyDoc *lz_doc;
-    FrtLazyDocField *lz_df1, *lz_df2;
+    FrtLazyDocField *lz_df1, *lz_df2, *lz_df3;
     FrtDocument *doc = ir->get_doc(ir, 0);
-    FrtDocField *df1, *df2;
+    FrtDocField *df1, *df2, *df3;
     char buf1[20], buf2[20];
     Aiequal(3, doc->size);
 
     df1 = frt_doc_get_field(doc, changing_field);
-    df2 = frt_doc_get_field(doc, compressed_field);
+    df2 = frt_doc_get_field(doc, compressed_field_brotli);
+    df3 = frt_doc_get_field(doc, compressed_field_lz4);
     Asequal(df1->data[0], df2->data[0]);
+    Asequal(df1->data[0], df3->data[0]);
     Assert(df1->lengths[0] == df2->lengths[0], "Field lengths should be equal");
-   frt_doc_destroy(doc);
+    Assert(df1->lengths[0] == df3->lengths[0], "Field lengths should be equal");
+    frt_doc_destroy(doc);
 
     doc = ir->get_doc(ir, 2);
     df1 = frt_doc_get_field(doc, tag);
-    df2 = frt_doc_get_field(doc, compressed_field);
+    df2 = frt_doc_get_field(doc, compressed_field_brotli);
+    df3 = frt_doc_get_field(doc, compressed_field_lz4);
     for (i = 0; i < 4; i++) {
         Asequal(df1->data[i], df2->data[i]);
+        Asequal(df1->data[i], df3->data[i]);
         Assert(df1->lengths[i] == df2->lengths[i], "Field lengths not equal");
+        Assert(df1->lengths[i] == df3->lengths[i], "Field lengths not equal");
     }
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 
     lz_doc = ir->get_lazy_doc(ir, 0);
     lz_df1 = frt_lazy_doc_get(lz_doc, changing_field);
-    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field);
+    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
+    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
     Asequal(frt_lazy_df_get_data(lz_df1, 0), frt_lazy_df_get_data(lz_df2, 0));
+    Asequal(frt_lazy_df_get_data(lz_df1, 0), frt_lazy_df_get_data(lz_df3, 0));
     frt_lazy_doc_close(lz_doc);
 
     lz_doc = ir->get_lazy_doc(ir, 2);
     lz_df1 = frt_lazy_doc_get(lz_doc, tag);
-    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field);
+    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
+    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
     for (i = 0; i < 4; i++) {
         Asequal(frt_lazy_df_get_data(lz_df1, i), frt_lazy_df_get_data(lz_df2, i));
+        Asequal(frt_lazy_df_get_data(lz_df1, i), frt_lazy_df_get_data(lz_df3, i));
     }
     frt_lazy_doc_close(lz_doc);
 
     lz_doc = ir->get_lazy_doc(ir, 2);
     lz_df1 = frt_lazy_doc_get(lz_doc, tag);
-    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field);
+    lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
+    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
     frt_lazy_df_get_bytes(lz_df1, buf1, 5, 11);
     frt_lazy_df_get_bytes(lz_df2, buf2, 5, 11);
+    buf2[11] = buf1[11] = '\0';
+    Asequal(buf1, buf2);
+    frt_lazy_df_get_bytes(lz_df3, buf2, 5, 11);
     buf2[11] = buf1[11] = '\0';
     Asequal(buf1, buf2);
     frt_lazy_doc_close(lz_doc);
@@ -2167,7 +2183,7 @@ TestSuite *ts_index(TestSuite *suite)
     author           = rb_intern("author");
     year             = rb_intern("year");
     changing_field   = rb_intern("changing_field");
-    compressed_field = rb_intern("compressed_field");
+    compressed_field_brotli = rb_intern("compressed_field_brotli");
     tag              = rb_intern("tag");
 
     srand(5);
@@ -2217,25 +2233,16 @@ TestSuite *ts_index(TestSuite *suite)
     rte = reader_test_env_new(multi_reader_type);
     ir = reader_test_env_ir_open(rte);
 
-    tst_run_test_with_name(suite, test_ir_basic_ops, ir,
-                           "test_multi_reader_basic_ops");
-    tst_run_test_with_name(suite, test_ir_get_doc, ir,
-                           "test_multi_get_doc");
-    tst_run_test_with_name(suite, test_ir_compression, ir,
-                           "test_multi_compression");
-    tst_run_test_with_name(suite, test_ir_term_enum, ir,
-                           "test_multi_term_enum");
-    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir,
-                           "test_multi_term_doc_enum");
-    tst_run_test_with_name(suite, test_ir_term_vectors, ir,
-                           "test_multi_term_vectors");
-    tst_run_test_with_name(suite, test_ir_mtdpe, ir,
-                           "test_multi_multiple_term_doc_pos_enum");
+    tst_run_test_with_name(suite, test_ir_basic_ops, ir, "test_multi_reader_basic_ops");
+    tst_run_test_with_name(suite, test_ir_get_doc, ir, "test_multi_get_doc");
+    tst_run_test_with_name(suite, test_ir_compression, ir, "test_multi_compression");
+    tst_run_test_with_name(suite, test_ir_term_enum, ir, "test_multi_term_enum");
+    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir, "test_multi_term_doc_enum");
+    tst_run_test_with_name(suite, test_ir_term_vectors, ir, "test_multi_term_vectors");
+    tst_run_test_with_name(suite, test_ir_mtdpe, ir, "test_multi_multiple_term_doc_pos_enum");
 
-    tst_run_test_with_name(suite, test_ir_norms, &multi_reader_type,
-                           "test_multi_norms");
-    tst_run_test_with_name(suite, test_ir_delete, &multi_reader_type,
-                           "test_multi_reader_delete");
+    tst_run_test_with_name(suite, test_ir_norms, &multi_reader_type, "test_multi_norms");
+    tst_run_test_with_name(suite, test_ir_delete, &multi_reader_type, "test_multi_reader_delete");
     frt_ir_close(ir);
     reader_test_env_destroy(rte);
 
@@ -2243,25 +2250,16 @@ TestSuite *ts_index(TestSuite *suite)
     rte = reader_test_env_new(multi_external_reader_type);
     ir = reader_test_env_ir_open(rte);
 
-    tst_run_test_with_name(suite, test_ir_basic_ops, ir,
-                           "test_multi_ext_reader_basic_ops");
-    tst_run_test_with_name(suite, test_ir_get_doc, ir,
-                           "test_multi_ext_get_doc");
-    tst_run_test_with_name(suite, test_ir_compression, ir,
-                           "test_multi_ext_compression");
-    tst_run_test_with_name(suite, test_ir_term_enum, ir,
-                           "test_multi_ext_term_enum");
-    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir,
-                           "test_multi_ext_term_doc_enum");
-    tst_run_test_with_name(suite, test_ir_term_vectors, ir,
-                           "test_multi_ext_term_vectors");
-    tst_run_test_with_name(suite, test_ir_mtdpe, ir,
-                           "test_multi_ext_multiple_term_doc_pos_enum");
+    tst_run_test_with_name(suite, test_ir_basic_ops, ir, "test_multi_ext_reader_basic_ops");
+    tst_run_test_with_name(suite, test_ir_get_doc, ir, "test_multi_ext_get_doc");
+    tst_run_test_with_name(suite, test_ir_compression, ir, "test_multi_ext_compression");
+    tst_run_test_with_name(suite, test_ir_term_enum, ir, "test_multi_ext_term_enum");
+    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir, "test_multi_ext_term_doc_enum");
+    tst_run_test_with_name(suite, test_ir_term_vectors, ir, "test_multi_ext_term_vectors");
+    tst_run_test_with_name(suite, test_ir_mtdpe, ir, "test_multi_ext_multiple_term_doc_pos_enum");
 
-    tst_run_test_with_name(suite, test_ir_norms, &multi_external_reader_type,
-                           "test_multi_ext_norms");
-    tst_run_test_with_name(suite, test_ir_delete, &multi_external_reader_type,
-                           "test_multi_ext_reader_delete");
+    tst_run_test_with_name(suite, test_ir_norms, &multi_external_reader_type, "test_multi_ext_norms");
+    tst_run_test_with_name(suite, test_ir_delete, &multi_external_reader_type, "test_multi_ext_reader_delete");
 
     frt_ir_close(ir);
     reader_test_env_destroy(rte);
@@ -2270,36 +2268,25 @@ TestSuite *ts_index(TestSuite *suite)
     rte = reader_test_env_new(add_indexes_reader_type);
     ir = reader_test_env_ir_open(rte);
 
-    tst_run_test_with_name(suite, test_ir_basic_ops, ir,
-                           "test_add_indexes_reader_basic_ops");
-    tst_run_test_with_name(suite, test_ir_get_doc, ir,
-                           "test_add_indexes_get_doc");
-    tst_run_test_with_name(suite, test_ir_compression, ir,
-                           "test_add_indexes_compression");
-    tst_run_test_with_name(suite, test_ir_term_enum, ir,
-                           "test_add_indexes_term_enum");
-    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir,
-                           "test_add_indexes_term_doc_enum");
-    tst_run_test_with_name(suite, test_ir_term_vectors, ir,
-                           "test_add_indexes_term_vectors");
-    tst_run_test_with_name(suite, test_ir_mtdpe, ir,
-                           "test_add_indexes_multiple_term_doc_pos_enum");
+    tst_run_test_with_name(suite, test_ir_basic_ops, ir, "test_add_indexes_reader_basic_ops");
+    tst_run_test_with_name(suite, test_ir_get_doc, ir, "test_add_indexes_get_doc");
+    tst_run_test_with_name(suite, test_ir_compression, ir, "test_add_indexes_compression");
+    tst_run_test_with_name(suite, test_ir_term_enum, ir, "test_add_indexes_term_enum");
+    tst_run_test_with_name(suite, test_ir_term_doc_enum, ir, "test_add_indexes_term_doc_enum");
+    tst_run_test_with_name(suite, test_ir_term_vectors, ir, "test_add_indexes_term_vectors");
+    tst_run_test_with_name(suite, test_ir_mtdpe, ir, "test_add_indexes_multiple_term_doc_pos_enum");
 
-    tst_run_test_with_name(suite, test_ir_norms, &add_indexes_reader_type,
-                           "test_add_indexes_norms");
-    tst_run_test_with_name(suite, test_ir_delete, &add_indexes_reader_type,
-                           "test_add_indexes_reader_delete");
+    tst_run_test_with_name(suite, test_ir_norms, &add_indexes_reader_type, "test_add_indexes_norms");
+    tst_run_test_with_name(suite, test_ir_delete, &add_indexes_reader_type, "test_add_indexes_reader_delete");
 
     frt_ir_close(ir);
     reader_test_env_destroy(rte);
 
     /* Other FrtIndexReader Tests */
-    tst_run_test_with_name(suite, test_ir_read_while_optimizing, store,
-                           "test_ir_read_while_optimizing_in_ram");
+    tst_run_test_with_name(suite, test_ir_read_while_optimizing, store, "test_ir_read_while_optimizing_in_ram");
 
     fs_store = frt_open_fs_store(TEST_DIR);
-    tst_run_test_with_name(suite, test_ir_read_while_optimizing, fs_store,
-                           "test_ir_read_while_optimizing_on_disk");
+    tst_run_test_with_name(suite, test_ir_read_while_optimizing, fs_store, "test_ir_read_while_optimizing_on_disk");
     fs_store->clear_all(fs_store);
     frt_store_deref(fs_store);
 
