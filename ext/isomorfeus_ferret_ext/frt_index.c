@@ -44,8 +44,8 @@ static char *ste_next(FrtTermEnum *te);
 #define FORMAT 0
 #define SEGMENTS_GEN_FILE_NAME "segments"
 #define MAX_EXT_LEN 10
-#define COMPRESSION_BUFFER_SIZE 16348
-#define COMPRESSION_LEVEL 9
+#define FRT_COMPRESSION_BUFFER_SIZE 16348
+#define FRT_BROTLI_COMPRESSION_LEVEL 7
 
 /* *** Must be three characters *** */
 static const char *INDEX_EXTENSIONS[] = {
@@ -209,22 +209,33 @@ FrtHash *frt_co_hash_create(void) {
  *
  ****************************************************************************/
 
-static void fi_set_store(FrtFieldInfo *fi, int store)
-{
+static void fi_set_store(FrtFieldInfo *fi, FrtStoreValue store) {
     switch (store) {
         case FRT_STORE_NO:
             break;
         case FRT_STORE_YES:
             fi->bits |= FRT_FI_IS_STORED_BM;
             break;
-        case FRT_STORE_COMPRESS:
-            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_IS_STORED_BM;
+    }
+}
+
+static void fi_set_compression(FrtFieldInfo *fi, FrtCompressionType compression) {
+    switch (compression) {
+        case FRT_COMPRESSION_NONE:
+            break;
+        case FRT_COMPRESSION_BROTLI:
+            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM;
+            break;
+        case FRT_COMPRESSION_BZ2:
+            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BZ2_BM;
+            break;
+        case FRT_COMPRESSION_LZ4:
+            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_LZ4_BM;
             break;
     }
 }
 
-static void fi_set_index(FrtFieldInfo *fi, int index)
-{
+static void fi_set_index(FrtFieldInfo *fi, FrtIndexValue index) {
     switch (index) {
         case FRT_INDEX_NO:
             break;
@@ -244,8 +255,7 @@ static void fi_set_index(FrtFieldInfo *fi, int index)
     }
 }
 
-static void fi_set_term_vector(FrtFieldInfo *fi, int term_vector)
-{
+static void fi_set_term_vector(FrtFieldInfo *fi, FrtTermVectorValue term_vector) {
     switch (term_vector) {
         case FRT_TERM_VECTOR_NO:
             break;
@@ -265,12 +275,13 @@ static void fi_set_term_vector(FrtFieldInfo *fi, int term_vector)
     }
 }
 
-static void fi_check_params(int store, int index, int term_vector)
-{
+static void fi_check_params(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
     (void)store;
     if ((index == FRT_INDEX_NO) && (term_vector != FRT_TERM_VECTOR_NO)) {
-        FRT_RAISE(FRT_ARG_ERROR,
-              "You can't store the term vectors of an unindexed field");
+        FRT_RAISE(FRT_ARG_ERROR, "You can't store the term vectors of an unindexed field.");
+    }
+    if ((compression != FRT_COMPRESSION_NONE) && (store == FRT_STORE_NO)) {
+        FRT_RAISE(FRT_ARG_ERROR, "Field must be stored for compression to be useful.");
     }
 }
 
@@ -278,13 +289,14 @@ FrtFieldInfo *frt_fi_alloc(void) {
     return FRT_ALLOC(FrtFieldInfo);
 }
 
-FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
     assert(NULL != name);
-    fi_check_params(store, index, term_vector);
+    fi_check_params(store, compression, index, term_vector);
     fi->name = name;
     fi->boost = 1.0f;
     fi->bits = 0;
     fi_set_store(fi, store);
+    fi_set_compression(fi, compression);
     fi_set_index(fi, index);
     fi_set_term_vector(fi, term_vector);
     fi->ref_cnt = 1;
@@ -292,15 +304,31 @@ FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtInd
     return fi;
 }
 
-FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
     FrtFieldInfo *fi = frt_fi_alloc();
-    return frt_fi_init(fi, name, store, index, term_vector);
+    return frt_fi_init(fi, name, store, compression, index, term_vector);
 }
 
 void frt_fi_deref(FrtFieldInfo *fi)
 {
     if (0 == --(fi->ref_cnt)) {
         free(fi);
+    }
+}
+
+FrtCompressionType frt_fi_get_compression(FrtFieldInfo *fi) {
+    if (fi_is_compressed(fi)) {
+        if (fi_is_compressed_brotli(fi)) {
+            return FRT_COMPRESSION_BROTLI;
+        } else if (fi_is_compressed_bz2(fi)) {
+            return FRT_COMPRESSION_BZ2;
+        } else if (fi_is_compressed_lz4(fi)) {
+            return FRT_COMPRESSION_LZ4;
+        } else {
+            return FRT_COMPRESSION_BROTLI;
+        }
+    } else {
+        return FRT_COMPRESSION_NONE;
     }
 }
 
@@ -337,13 +365,14 @@ FrtFieldInfos *frt_fis_alloc(void) {
     return FRT_ALLOC(FrtFieldInfos);
 }
 
-FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
-    fi_check_params(store, index, term_vector);
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
+    fi_check_params(store, compression, index, term_vector);
     fis->field_dict = frt_h_new_ptr((frt_free_ft)&frt_fi_deref);
     fis->size = 0;
     fis->capa = FIELD_INFOS_INIT_CAPA;
     fis->fields = FRT_ALLOC_N(FrtFieldInfo *, fis->capa);
     fis->store = store;
+    fis->compression = compression;
     fis->index = index;
     fis->term_vector = term_vector;
     fis->ref_cnt = 1;
@@ -351,13 +380,12 @@ FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexVal
     return fis;
 }
 
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
     FrtFieldInfos *fis = frt_fis_alloc();
-    return frt_fis_init(fis, store, index, term_vector);
+    return frt_fis_init(fis, store, compression, index, term_vector);
 }
 
-FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi)
-{
+FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi) {
     if (fis->size == fis->capa) {
         fis->capa <<= 1;
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
@@ -384,7 +412,7 @@ int frt_fis_get_field_num(FrtFieldInfos *fis, ID name) {
 FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, ID name) {
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (!fi) {
-        fi = (FrtFieldInfo*)frt_fi_new(name, fis->store, fis->index, fis->term_vector);
+        fi = (FrtFieldInfo*)frt_fi_new(name, fis->store, fis->compression, fis->index, fis->term_vector);
         frt_fis_add_field(fis, fi);
     }
     return fi;
@@ -396,16 +424,14 @@ FrtFieldInfos *frt_fis_read(FrtInStream *is)
     char *field_name;
     FRT_TRY
         do {
-            FrtStoreValue store_val;
-            FrtIndexValue index_val;
             FrtTermVectorValue term_vector_val;
             volatile int i;
             union { frt_u32 i; float f; } tmp;
             FrtFieldInfo *volatile fi;
-            store_val = (FrtStoreValue)frt_is_read_vint(is);
-            index_val = (FrtIndexValue)frt_is_read_vint(is);
+            FrtStoreValue store_val = (FrtStoreValue)frt_is_read_vint(is);
+            FrtIndexValue index_val = (FrtIndexValue)frt_is_read_vint(is);
             term_vector_val = (FrtTermVectorValue)frt_is_read_vint(is);
-            fis = frt_fis_new(store_val, index_val, term_vector_val);
+            fis = frt_fis_new(store_val, FRT_COMPRESSION_NONE, index_val, term_vector_val); // TODO compression, read from store?
             for (i = frt_is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
                 FRT_TRY
@@ -1155,17 +1181,16 @@ frt_u64 frt_sis_read_current_version(FrtStore *store)
  *
  ****************************************************************************/
 
-static FrtLazyDocField *lazy_df_new(ID name, const int size, bool is_compressed) {
+static FrtLazyDocField *lazy_df_new(ID name, const int size, FrtCompressionType compression) {
     FrtLazyDocField *self = FRT_ALLOC(FrtLazyDocField);
     self->name = name;
     self->size = size;
     self->data = FRT_ALLOC_AND_ZERO_N(FrtLazyDocFieldData, size);
-    self->is_compressed = is_compressed;
+    self->compression = compression;
     return self;
 }
 
-static void lazy_df_destroy(FrtLazyDocField *self)
-{
+static void lazy_df_destroy(FrtLazyDocField *self) {
     int i;
     for (i = self->size - 1; i >= 0; i--) {
         if (self->data[i].text) {
@@ -1180,11 +1205,10 @@ static void comp_raise(void) {
     FRT_RAISE(EXCEPTION, "Compression error");
 }
 
-static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *len)
-{
+static char *is_read_brotli_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
     int buf_out_idx = 0;
     int read_len;
-    frt_uchar buf_in[COMPRESSION_BUFFER_SIZE];
+    frt_uchar buf_in[FRT_COMPRESSION_BUFFER_SIZE];
     const frt_uchar *next_in;
     size_t available_in;
     frt_uchar *buf_out = NULL;
@@ -1196,20 +1220,20 @@ static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *
     if (!b_state) { comp_raise(); return NULL; }
 
     do {
-        read_len = compressed_len > COMPRESSION_BUFFER_SIZE ? COMPRESSION_BUFFER_SIZE : compressed_len;
+        read_len = compressed_len > FRT_COMPRESSION_BUFFER_SIZE ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
         frt_is_read_bytes(is, buf_in, read_len);
         compressed_len -= read_len;
         available_in = read_len;
         next_in = buf_in;
-        available_out = COMPRESSION_BUFFER_SIZE;
+        available_out = FRT_COMPRESSION_BUFFER_SIZE;
         do {
-            FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + COMPRESSION_BUFFER_SIZE);
+            FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + FRT_COMPRESSION_BUFFER_SIZE);
             next_out = buf_out + buf_out_idx;
             b_result = BrotliDecoderDecompressStream(b_state,
                 &available_in, &next_in,
                 &available_out, &next_out, NULL);
             if (b_result == BROTLI_DECODER_RESULT_ERROR) { comp_raise(); return NULL; }
-            buf_out_idx += COMPRESSION_BUFFER_SIZE - available_out;
+            buf_out_idx += FRT_COMPRESSION_BUFFER_SIZE - available_out;
         } while (b_result == BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT);
     } while (b_result != BROTLI_DECODER_RESULT_SUCCESS && compressed_len > 0);
 
@@ -1221,16 +1245,34 @@ static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *
     return (char *)buf_out;
 }
 
-char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
-{
+static char *is_read_bz2_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
+    // TODO
+}
+
+static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
+    // TODO
+}
+
+static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *len, FrtCompressionType compression) {
+    switch (compression) {
+        case FRT_COMPRESSION_BROTLI:
+            return is_read_brotli_compressed_bytes(is, compressed_len, len);
+        case FRT_COMPRESSION_BZ2:
+            return is_read_bz2_compressed_bytes(is, compressed_len, len);
+        case FRT_COMPRESSION_LZ4:
+            return is_read_lz4_compressed_bytes(is, compressed_len, len);
+    }
+}
+
+char *frt_lazy_df_get_data(FrtLazyDocField *self, int i) {
     char *text = NULL;
     if (i < self->size && i >= 0) {
         text = self->data[i].text;
         if (NULL == text) {
             const int read_len = self->data[i].length + 1;
             frt_is_seek(self->doc->fields_in, self->data[i].start);
-            if (self->is_compressed) {
-                self->data[i].text = text = is_read_compressed_bytes(self->doc->fields_in, read_len, &(self->data[i].length));
+            if (self->data[i].compression != FRT_COMPRESSION_NONE) {
+                self->data[i].text = text = is_read_compressed_bytes(self->doc->fields_in, read_len, &(self->data[i].length), self->data[i].compression);
             } else {
                 self->data[i].text = text = FRT_ALLOC_N(char, read_len);
                 frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
@@ -1242,9 +1284,8 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i)
     return text;
 }
 
-void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
-{
-    if (self->is_compressed == 1) {
+void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len) {
+    if (self->compression != FRT_COMPRESSION_NONE && !self->decompressed) {
         int i;
         self->len = 0;
         for (i = self->size-1; i >= 0; i--) {
@@ -1252,7 +1293,7 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
             self->len += self->data[i].length + 1;
         }
         self->len--; /* each field separated by ' ' but no need to add to end */
-        self->is_compressed = 2;
+        self->decompressed = true;
     }
     if (start < 0 || start >= self->len) {
         FRT_RAISE(FRT_IO_ERROR, "start out of range in LazyDocField#get_bytes. %d "
@@ -1265,7 +1306,7 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
         FRT_RAISE(FRT_IO_ERROR, "Tried to read past end of field. Field is only %d "
               "bytes long but tried to read to %d", self->len, start + len);
     }
-    if (self->is_compressed) {
+    if (self->compression != FRT_COMPRESSION_NONE) {
         int cur_start = 0, buf_start = 0, cur_end, i, copy_start, copy_len;
         for (i = 0; i < self->size; i++) {
             cur_end = cur_start + self->data[i].length;
@@ -1375,7 +1416,7 @@ void frt_fr_close(FrtFieldsReader *fr) {
     free(fr);
 }
 
-static FrtDocField *frt_fr_df_new(ID name, int size, bool is_compressed) {
+static FrtDocField *frt_fr_df_new(ID name, int size, FrtCompressionType compression) {
     FrtDocField *df = FRT_ALLOC(FrtDocField);
     df->name = name;
     df->capa = df->size = size;
@@ -1384,19 +1425,18 @@ static FrtDocField *frt_fr_df_new(ID name, int size, bool is_compressed) {
     df->encodings = FRT_ALLOC_N(rb_encoding *, df->capa);
     df->destroy_data = true;
     df->boost = 1.0f;
-    df->is_compressed = is_compressed;
+    df->compression = compression;
     return df;
 }
 
-static void frt_fr_read_compressed_fields(FrtFieldsReader *fr, FrtDocField *df)
-{
+static void frt_fr_read_compressed_fields(FrtFieldsReader *fr, FrtDocField *df, FrtCompressionType compression) {
     int i;
     const int df_size = df->size;
     FrtInStream *fdt_in = fr->fdt_in;
 
     for (i = 0; i < df_size; i++) {
         const int compressed_len = df->lengths[i] + 1;
-        df->data[i] = is_read_compressed_bytes(fdt_in, compressed_len, &(df->lengths[i]));
+        df->data[i] = is_read_compressed_bytes(fdt_in, compressed_len, &(df->lengths[i]), compression);
     }
 }
 
@@ -1418,19 +1458,20 @@ FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
         const int field_num = frt_is_read_vint(fdt_in);
         FrtFieldInfo *fi = fr->fis->fields[field_num];
         const int df_size = frt_is_read_vint(fdt_in);
-        FrtDocField *df = frt_fr_df_new(fi->name, df_size, fi_is_compressed(fi));
+        FrtDocField *df = frt_fr_df_new(fi->name, df_size, frt_fi_get_compression(fi));
 
         for (j = 0; j < df_size; j++) {
             df->lengths[j] = frt_is_read_vint(fdt_in);
             df->encodings[j] = rb_enc_from_index(frt_is_read_vint(fdt_in));
+            df->compression = frt_is_read_vint(fdt_in);
         }
 
         frt_doc_add_field(doc, df);
     }
     for (i = 0; i < stored_cnt; i++) {
         FrtDocField *df = doc->fields[i];
-        if (df->is_compressed) {
-            frt_fr_read_compressed_fields(fr, df);
+        if (df->compression != FRT_COMPRESSION_NONE) {
+            frt_fr_read_compressed_fields(fr, df, df->compression);
         } else {
             const int df_size = df->size;
             for (j = 0; j < df_size; j++) {
@@ -1464,7 +1505,7 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
     for (i = 0; i < stored_cnt; i++) {
         FrtFieldInfo *fi = fr->fis->fields[frt_is_read_vint(fdt_in)];
         const int df_size = frt_is_read_vint(fdt_in);
-        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, df_size, fi_is_compressed(fi));
+        FrtLazyDocField *lazy_df = lazy_df_new(fi->name, df_size, frt_fi_get_compression(fi));
         const int field_start = start;
         /* get the starts relative positions this time around */
 
@@ -1472,6 +1513,7 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
             lazy_df->data[j].start = start;
             start += 1 + (lazy_df->data[j].length = frt_is_read_vint(fdt_in));
             lazy_df->data[j].encoding = rb_enc_from_index(frt_is_read_vint(fdt_in));
+            lazy_df->data[j].compression = frt_is_read_vint(fdt_in);
         }
 
         lazy_df->len = start - field_start - 1;
@@ -1661,21 +1703,20 @@ void frt_fw_close(FrtFieldsWriter *fw)
     free(fw);
 }
 
-static int frt_os_write_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length)
-{
+static int frt_os_write_brotli_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
     size_t compressed_len = 0;
     const frt_uchar *next_in = data;
     size_t available_in = length;
     size_t available_out;
-    frt_uchar compression_buffer[COMPRESSION_BUFFER_SIZE];
+    frt_uchar compression_buffer[FRT_COMPRESSION_BUFFER_SIZE];
     frt_uchar *next_out;
     BrotliEncoderState *b_state = BrotliEncoderCreateInstance(NULL, NULL, NULL);
     if (!b_state) { comp_raise(); return -1; }
 
-    BrotliEncoderSetParameter(b_state, BROTLI_PARAM_QUALITY, COMPRESSION_LEVEL);
+    BrotliEncoderSetParameter(b_state, BROTLI_PARAM_QUALITY, FRT_BROTLI_COMPRESSION_LEVEL);
 
     do {
-        available_out = COMPRESSION_BUFFER_SIZE;
+        available_out = FRT_COMPRESSION_BUFFER_SIZE;
         next_out = compression_buffer;
         if (!BrotliEncoderCompressStream(b_state, BROTLI_OPERATION_FINISH,
             &available_in, &next_in,
@@ -1684,19 +1725,41 @@ static int frt_os_write_compressed_bytes(FrtOutStream* out_stream, frt_uchar *da
             comp_raise();
             return -1;
         }
-        frt_os_write_bytes(out_stream, compression_buffer, COMPRESSION_BUFFER_SIZE - available_out);
+        frt_os_write_bytes(out_stream, compression_buffer, FRT_COMPRESSION_BUFFER_SIZE - available_out);
     } while (!BrotliEncoderIsFinished(b_state));
 
     BrotliEncoderDestroyInstance(b_state);
-    // fprintf(stderr, "Compressed: %i -> %i\n", length, (int)compressed_len);
+
     return (int)compressed_len;
 }
 
-void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
-{
+static int frt_os_write_bz2_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
+    // TODO
+}
+
+static int frt_os_write_lz4_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
+    // TODO
+}
+
+static int frt_os_write_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length, FrtCompressionType compression) {
+    switch (compression) {
+        case FRT_COMPRESSION_BROTLI:
+            return frt_os_write_brotli_compressed_bytes(out_stream, data, length);
+        case FRT_COMPRESSION_BZ2:
+            return frt_os_write_bz2_compressed_bytes(out_stream, data, length);
+        case FRT_COMPRESSION_LZ4:
+            return frt_os_write_lz4_compressed_bytes(out_stream, data, length);
+        default:
+            return -1;
+    }
+
+}
+
+void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc) {
     int i, j, stored_cnt = 0;
     FrtDocField *df;
     FrtFieldInfo *fi;
+    FrtCompressionType compression;
     FrtOutStream *fdt_out = fw->fdt_out, *fdx_out = fw->fdx_out;
     const int doc_size = doc->size;
 
@@ -1722,17 +1785,20 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc)
             frt_os_write_vint(fdt_out, df_size);
 
             if (fi_is_compressed(fi)) {
+                compression = frt_fi_get_compression(fi);
                 for (j = 0; j < df_size; j++) {
                     const int length = df->lengths[j];
-                    int compressed_len = frt_os_write_compressed_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
+                    int compressed_len = frt_os_write_compressed_bytes(fw->buffer, (frt_uchar*)df->data[j], length, compression);
                     frt_os_write_vint(fdt_out, compressed_len - 1);
                     frt_os_write_vint(fdt_out, rb_enc_to_index(df->encodings[j]));
+                    frt_os_write_vint(fdt_out, compression);
                 }
             } else {
                 for (j = 0; j < df_size; j++) {
                     const int length = df->lengths[j];
                     frt_os_write_vint(fdt_out, length);
                     frt_os_write_vint(fdt_out, rb_enc_to_index(df->encodings[j]));
+                    frt_os_write_vint(fdt_out, FRT_COMPRESSION_NONE);
                     frt_os_write_bytes(fw->buffer, (frt_uchar*)df->data[j], length);
                     /* leave a space between fields as that is how they are analyzed */
                     frt_os_write_byte(fw->buffer, ' ');
@@ -4702,7 +4768,7 @@ FrtIndexReader *frt_mr_open(FrtIndexReader *ir, FrtIndexReader **sub_readers, co
     ir = (FrtIndexReader *)frt_mr_init((FrtMultiReader *)ir, sub_readers, r_cnt);
     FrtMultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
     int i, j;
     bool need_field_map = false;
 
@@ -6171,10 +6237,12 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr, const char *s
                 frt_os_write_vint(fdt_out, df_size);
                 /* sum total lengths of FrtDocField */
                 for (k = 0; k < df_size; k++) {
-                    const int flen = frt_is_read_vint(fdt_in);
-                    const int fenc = frt_is_read_vint(fdt_in);
+                    const int flen = frt_is_read_vint(fdt_in); /* length */
+                    const int fenc = frt_is_read_vint(fdt_in); /* encoding */
+                    const int fcmp = frt_is_read_vint(fdt_in); /* compression */
                     frt_os_write_vint(fdt_out, flen);
                     frt_os_write_vint(fdt_out, fenc);
+                    frt_os_write_vint(fdt_out, fcmp);
                     /* Each field has one ' ' byte so add 1 */
                     data_len += flen + 1;
                 }
@@ -6348,7 +6416,7 @@ static void iw_add_segment(FrtIndexWriter *iw, FrtSegmentReader *sr)
         FrtFieldInfo *fi = sub_fis->fields[j];
         FrtFieldInfo *new_fi = frt_fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
-            new_fi = frt_fi_new(fi->name, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+            new_fi = frt_fi_new(fi->name, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
             new_fi->bits = fi->bits;
             frt_fis_add_field(fis, new_fi);
         }

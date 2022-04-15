@@ -65,7 +65,6 @@ extern FrtHash *frt_co_hash_create();
 typedef enum {
     FRT_STORE_NO = 0,
     FRT_STORE_YES = 1,
-    FRT_STORE_COMPRESS = 2
 } FrtStoreValue;
 
 typedef enum {
@@ -84,14 +83,17 @@ typedef enum {
     FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS = 7
 } FrtTermVectorValue;
 
-#define FRT_FI_IS_STORED_BM         0x001
-#define FRT_FI_IS_COMPRESSED_BM     0x002
-#define FRT_FI_IS_INDEXED_BM        0x004
-#define FRT_FI_IS_TOKENIZED_BM      0x008
-#define FRT_FI_OMIT_NORMS_BM        0x010
-#define FRT_FI_STORE_TERM_VECTOR_BM 0x020
-#define FRT_FI_STORE_POSITIONS_BM   0x040
-#define FRT_FI_STORE_OFFSETS_BM     0x080
+#define FRT_FI_IS_STORED_BM          0x001
+#define FRT_FI_IS_COMPRESSED_BM      0x002
+#define FRT_FI_IS_INDEXED_BM         0x004
+#define FRT_FI_IS_TOKENIZED_BM       0x008
+#define FRT_FI_OMIT_NORMS_BM         0x010
+#define FRT_FI_STORE_TERM_VECTOR_BM  0x020
+#define FRT_FI_STORE_POSITIONS_BM    0x040
+#define FRT_FI_STORE_OFFSETS_BM      0x080
+#define FRT_FI_COMPRESSION_BROTLI_BM 0x100
+#define FRT_FI_COMPRESSION_BZ2_BM    0x200
+#define FRT_FI_COMPRESSION_LZ4_BM    0x400
 
 typedef struct FrtFieldInfo {
     ID           name;
@@ -103,19 +105,22 @@ typedef struct FrtFieldInfo {
 } FrtFieldInfo;
 
 extern FrtFieldInfo *frt_fi_alloc();
-extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
-extern FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern char *frt_fi_to_s(FrtFieldInfo *fi);
 extern void frt_fi_deref(FrtFieldInfo *fi);
 
-#define fi_is_stored(fi)         (((fi)->bits & FRT_FI_IS_STORED_BM) != 0)
-#define fi_is_compressed(fi)     (((fi)->bits & FRT_FI_IS_COMPRESSED_BM) != 0)
-#define fi_is_indexed(fi)        (((fi)->bits & FRT_FI_IS_INDEXED_BM) != 0)
-#define fi_is_tokenized(fi)      (((fi)->bits & FRT_FI_IS_TOKENIZED_BM) != 0)
-#define fi_omit_norms(fi)        (((fi)->bits & FRT_FI_OMIT_NORMS_BM) != 0)
-#define fi_store_term_vector(fi) (((fi)->bits & FRT_FI_STORE_TERM_VECTOR_BM) != 0)
-#define fi_store_positions(fi)   (((fi)->bits & FRT_FI_STORE_POSITIONS_BM) != 0)
-#define fi_store_offsets(fi)     (((fi)->bits & FRT_FI_STORE_OFFSETS_BM) != 0)
+#define fi_is_stored(fi)            (((fi)->bits & FRT_FI_IS_STORED_BM) != 0)
+#define fi_is_compressed(fi)        (((fi)->bits & FRT_FI_IS_COMPRESSED_BM) != 0)
+#define fi_is_compressed_brotli(fi) (((fi)->bits & FRT_FI_COMPRESSION_BROTLI_BM) != 0)
+#define fi_is_compressed_bz2(fi)    (((fi)->bits & FRT_FI_COMPRESSION_BZ2_BM) != 0)
+#define fi_is_compressed_lz4(fi)    (((fi)->bits & FRT_FI_COMPRESSION_LZ4_BM) != 0)
+#define fi_is_indexed(fi)           (((fi)->bits & FRT_FI_IS_INDEXED_BM) != 0)
+#define fi_is_tokenized(fi)         (((fi)->bits & FRT_FI_IS_TOKENIZED_BM) != 0)
+#define fi_omit_norms(fi)           (((fi)->bits & FRT_FI_OMIT_NORMS_BM) != 0)
+#define fi_store_term_vector(fi)    (((fi)->bits & FRT_FI_STORE_TERM_VECTOR_BM) != 0)
+#define fi_store_positions(fi)      (((fi)->bits & FRT_FI_STORE_POSITIONS_BM) != 0)
+#define fi_store_offsets(fi)        (((fi)->bits & FRT_FI_STORE_OFFSETS_BM) != 0)
 #define fi_has_norms(fi)\
     (((fi)->bits & (FRT_FI_OMIT_NORMS_BM|FRT_FI_IS_INDEXED_BM)) == FRT_FI_IS_INDEXED_BM)
 
@@ -129,6 +134,7 @@ extern void frt_fi_deref(FrtFieldInfo *fi);
 /* carry changes over to dummy_fis in test/test_segments.c */
 typedef struct FrtFieldInfos {
     FrtStoreValue      store;
+    FrtCompressionType compression;
     FrtIndexValue      index;
     FrtTermVectorValue term_vector;
     int                size;
@@ -140,8 +146,8 @@ typedef struct FrtFieldInfos {
 } FrtFieldInfos;
 
 FrtFieldInfos *frt_fis_alloc();
-FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtIndexValue index, FrtTermVectorValue term_vector);
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
+FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
 extern FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi);
 extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, ID name);
 extern int frt_fis_get_field_num(FrtFieldInfos *fis, ID name);
@@ -523,10 +529,11 @@ extern FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term);
 
 /* * * FrtLazyDocField * * */
 typedef struct FrtLazyDocFieldData {
-    off_t       start;
-    int         length;
-    rb_encoding *encoding;
-    char        *text;
+    off_t              start;
+    int                length;
+    rb_encoding        *encoding;
+    FrtCompressionType compression; /* as stored */
+    char               *text;
 } FrtLazyDocFieldData;
 
 typedef struct FrtLazyDoc FrtLazyDoc;
@@ -536,7 +543,8 @@ typedef struct FrtLazyDocField {
     FrtLazyDoc          *doc;
     int                 size; /* number of data elements */
     int                 len;  /* length of data elements concatenated */
-    int                 is_compressed : 2; /* set to 2 after all data is loaded */
+    FrtCompressionType  compression; /* as configured */
+    bool                decompressed;
 } FrtLazyDocField;
 
 extern char *frt_lazy_df_get_data(FrtLazyDocField *self, int i);

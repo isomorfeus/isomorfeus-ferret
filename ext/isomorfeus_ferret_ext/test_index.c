@@ -8,14 +8,11 @@
 static ID body, title, text, author, year, changing_field, compressed_field, tag;
 
 static FrtFieldInfos *prep_all_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv un-t"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
-                              FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets"), FRT_STORE_NO, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets un-t"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED,
-                              FRT_TERM_VECTOR_WITH_OFFSETS));
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv un-t"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_OFFSETS));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets un-t"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
     return fis;
 
 }
@@ -30,9 +27,8 @@ static void destroy_docs(FrtDocument **docs, int len)
 }
 
 static FrtFieldInfos *prep_book_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("year"), FRT_STORE_YES, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("year"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
     return fis;
 
 }
@@ -723,15 +719,13 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
 static void test_index_create(TestCase *tc, void *data)
 {
     FrtStore *store = (FrtStore *)data;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     (void)tc;
 
     store->clear_all(store);
-    Assert(!store->exists(store, "segments"),
-           "segments shouldn't exist yet");
+    Assert(!store->exists(store, "segments"), "segments shouldn't exist yet");
     frt_index_create(store, fis);
-    Assert(store->exists(store, "segments"),
-           "segments should now exist");
+    Assert(store->exists(store, "segments"), "segments should now exist");
     frt_fis_deref(fis);
 }
 
@@ -1179,8 +1173,8 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
     FrtDocument *doc;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
@@ -1335,8 +1329,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
     rte->stores = FRT_ALLOC_N(FrtStore *, store_cnt);
     for (i = 0; i < store_cnt; i++) {
         FrtStore *store = rte->stores[i] = frt_open_ram_store(NULL);
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                                  FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         int start_doc = i * doc_cnt;
         int end_doc = (i + 1) * doc_cnt;
         if (end_doc > IR_TEST_DOC_CNT) {
@@ -1358,24 +1351,15 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                 fis = iw->fis;
                 if (NULL == frt_fis_get_field(fis, df->name)) {
                     if (author == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_INDEX_YES,
-                                  FRT_TERM_VECTOR_WITH_POSITIONS));
+                        frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS));
                     } else if (title == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES,
-                                                  FRT_INDEX_UNTOKENIZED,
-                                                  FRT_TERM_VECTOR_WITH_OFFSETS));
+                        frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
                     } else if (year == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES,
-                                                  FRT_INDEX_UNTOKENIZED,
-                                                  FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
                     } else if (text == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_INDEX_YES,
-                                                  FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     } else if (compressed_field == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field,
-                                                  FRT_STORE_COMPRESS,
-                                                  FRT_INDEX_YES,
-                                                  FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     }
                 }
             }
@@ -1391,8 +1375,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
     if (type == add_indexes_reader_type) {
         /* Prepare store for Add Indexes test */
         FrtStore *store = frt_open_ram_store(NULL);
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                                  FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         FrtIndexReader **readers = FRT_ALLOC_N(FrtIndexReader *, rte->store_cnt);
         int i;
         for (i = 0; i < rte->store_cnt; i++) {
@@ -1426,18 +1409,12 @@ static void write_ir_test_docs(FrtStore *store)
     FrtIndexWriter *iw;
     FrtDocument **docs = prep_ir_test_docs();
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
-                              FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_INDEX_UNTOKENIZED,
-                              FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_COMPRESS, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS));
+    frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
+    frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
     config.max_buffered_docs = 5;
@@ -2108,8 +2085,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     FrtDocument *doc = frt_doc_new();
     FrtDocField *df;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
-                              FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     const char *body_text = "this is the body FrtDocument Field";
     const char *title_text = "this is the title FrtDocument Field";
     const char *author_text = "this is the author FrtDocument Field";

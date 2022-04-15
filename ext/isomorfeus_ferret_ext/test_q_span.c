@@ -28,7 +28,7 @@ static void span_test_setup(FrtStore *store)
 {
     const char **d;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     const char *data[] = {
         "start finish one two three four five six seven",
         "start one finish two three four five six seven",

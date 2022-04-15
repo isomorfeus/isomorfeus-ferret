@@ -34,12 +34,12 @@ static void test_posting(TestCase *tc, void *data)
 }
 
 static FrtFieldInfos *create_tv_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv2"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_offsets"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions_offsets"), FRT_STORE_NO, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv2"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_offsets"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv_with_positions_offsets"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
     return fis;
 }
 

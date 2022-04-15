@@ -20,8 +20,8 @@ typedef struct FrtDocField {
     rb_encoding **encodings; /* used for processing */
     char **data;
     float boost;
+    FrtCompressionType compression;
     bool destroy_data : 1;
-    bool is_compressed : 1;
 } FrtDocField;
 
 extern FrtDocField *frt_df_new(ID name);

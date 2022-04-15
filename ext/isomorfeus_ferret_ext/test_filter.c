@@ -19,7 +19,7 @@ void prepare_filter_index(FrtStore *store)
 {
     int i;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
     num      = rb_intern("num");

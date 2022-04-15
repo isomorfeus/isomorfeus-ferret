@@ -81,7 +81,7 @@ static void test_match_vector(TestCase *tc, void *data)
 
 static void make_index(FrtStore *store)
 {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES,
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES,
                               FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
@@ -96,7 +96,7 @@ static void add_string_docs(FrtStore *store, const char *string[])
         FrtDocument *doc = frt_doc_new();
         frt_doc_add_field(doc, frt_df_add_data(frt_df_new(rb_intern("field")), (char *)*string, enc));
         frt_iw_add_doc(iw, doc);
-       frt_doc_destroy(doc);
+        frt_doc_destroy(doc);
         string++;
     }
     frt_iw_close(iw);

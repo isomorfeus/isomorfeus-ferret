@@ -7,34 +7,32 @@
 static const char *NON_UNIQUE_KEY_ERROR_MSG =
     "Tried to use a key that was not unique";
 
-#define INDEX_CLOSE_READER(self) do { \
-    if (self->sea) {                  \
-        frt_searcher_close(self->sea);    \
-        self->sea = NULL;             \
-        self->ir = NULL;              \
-    } else if (self->ir) {            \
-        frt_ir_close(self->ir);           \
-        self->ir = NULL;              \
-    }                                 \
+#define INDEX_CLOSE_READER(self) do {  \
+    if (self->sea) {                   \
+        frt_searcher_close(self->sea); \
+        self->sea = NULL;              \
+        self->ir = NULL;               \
+    } else if (self->ir) {             \
+        frt_ir_close(self->ir);        \
+        self->ir = NULL;               \
+    }                                  \
 } while (0)
 
-#define AUTOFLUSH_IR(self) do {                 \
+#define AUTOFLUSH_IR(self) do {                     \
      if (self->auto_flush) frt_ir_commit(self->ir); \
-    else self->has_writes = true;               \
+    else self->has_writes = true;                   \
 } while(0)
 
 #define AUTOFLUSH_IW(self) do {  \
     if (self->auto_flush) {      \
-        frt_iw_close(self->iw);      \
+        frt_iw_close(self->iw);  \
         self->iw = NULL;         \
     } else {                     \
         self->has_writes = true; \
     }                            \
 } while (0)
 
-FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fields,
-                 bool create)
-{
+FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_fields, bool create) {
     FrtIndex *self = FRT_ALLOC_AND_ZERO(FrtIndex);
     FrtHashSetEntry *hse;
     /* FIXME: need to add these to the query parser */
@@ -56,7 +54,7 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
     }
 
     if (create) {
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
         frt_index_create(self->store, fis);
         frt_fis_deref(fis);
     }

@@ -144,25 +144,20 @@ static FrtTermDocEnum *spanq_ir_term_positions(FrtIndexReader *ir)
     return tde;
 }
 
-static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv,
-                                       FrtTermVector *tv)
-{
+static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, FrtTermVector *tv) {
     if (SpQ(self)->field == tv->field) {
         FrtSpanEnum *sp_enum;
         FrtIndexReader *ir = FRT_ALLOC(FrtIndexReader);
         FrtMatchVector *full_mv = frt_matchv_new();
         FrtHashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
-        ir->fis = frt_fis_new(FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-        frt_fis_add_field(ir->fis,
-                      frt_fi_new(tv->field, FRT_STORE_NO, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+        ir->fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+        frt_fis_add_field(ir->fis, frt_fi_new(tv->field, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
         ir->store = (FrtStore *)tv;
         ir->term_positions = &spanq_ir_term_positions;
         sp_enum = SpQ(self)->get_spans(self, ir);
         while (sp_enum->next(sp_enum)) {
-            frt_matchv_add(full_mv,
-                       sp_enum->start(sp_enum),
-                       sp_enum->end(sp_enum) - 1);
+            frt_matchv_add(full_mv, sp_enum->start(sp_enum), sp_enum->end(sp_enum) - 1);
         }
         sp_enum->destroy(sp_enum);
 

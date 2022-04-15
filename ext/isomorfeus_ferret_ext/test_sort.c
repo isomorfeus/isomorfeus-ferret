@@ -48,7 +48,7 @@ static void sort_test_setup(FrtStore *store)
 {
     int i;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
@@ -63,7 +63,7 @@ static void sort_test_setup(FrtStore *store)
 static void sort_multi_test_setup(FrtStore *store1, FrtStore *store2)
 {
     int i;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
     FrtIndexWriter *iw;
 
     frt_index_create(store1, fis);

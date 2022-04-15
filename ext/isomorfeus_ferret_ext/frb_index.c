@@ -43,8 +43,11 @@ static VALUE sym_store;
 static VALUE sym_index;
 static VALUE sym_term_vector;
 
-static VALUE sym_compress;
-static VALUE sym_compressed;
+static VALUE sym_brotli;
+static VALUE sym_bz2;
+static VALUE sym_lz4;
+// static VALUE sym_level;
+static VALUE sym_compression;
 
 static VALUE sym_untokenized;
 static VALUE sym_omit_norms;
@@ -76,7 +79,7 @@ static void frb_fi_free(void *p) {
     frt_fi_deref((FrtFieldInfo *)p);
 }
 
-static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
+static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
     VALUE v;
     Check_Type(roptions, T_HASH);
     v = rb_hash_aref(roptions, sym_boost);
@@ -91,13 +94,27 @@ static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtIndexValu
         *store = FRT_STORE_NO;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
         *store = FRT_STORE_YES;
-    } else if (v == sym_compress || v == sym_compressed) {
-        *store = FRT_STORE_COMPRESS;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
-        rb_raise(rb_eArgError, ":%s isn't a valid argument for :store."
-                 " Please choose from [:yes, :no, :compressed]",
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :store. Please choose from [:yes, :no]",
+                 rb_id2name(SYM2ID(v)));
+    }
+
+    v = rb_hash_aref(roptions, sym_compression);
+    if (Qnil != v) Check_Type(v, T_SYMBOL);
+    if (v == sym_no || v == sym_false || v == Qfalse) {
+        *compression = FRT_COMPRESSION_NONE;
+    } else if (v == sym_yes || v == sym_true || v == Qtrue || v == sym_brotli) {
+        *compression = FRT_COMPRESSION_BROTLI;
+    } else if (v == sym_bz2) {
+        *compression = FRT_COMPRESSION_BZ2;
+    } else if (v == sym_lz4) {
+        *compression = FRT_COMPRESSION_LZ4;
+    } else if (v == Qnil) {
+        /* leave as default */
+    } else {
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :compression. Please choose from [:yes, :no, :brotli, :bz2, :lz4]",
                  rb_id2name(SYM2ID(v)));
     }
 
@@ -116,10 +133,8 @@ static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtIndexValu
     } else if (v == Qnil) {
         /* leave as default */
     } else {
-        rb_raise(rb_eArgError, ":%s isn't a valid argument for :index."
-                 " Please choose from [:no, :yes, :untokenized, "
-                 ":omit_norms, :untokenized_omit_norms]",
-                 rb_id2name(SYM2ID(v)));
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :index. Please choose from [:no, :yes, :untokenized, "
+                 ":omit_norms, :untokenized_omit_norms]", rb_id2name(SYM2ID(v)));
     }
 
     v = rb_hash_aref(roptions, sym_term_vector);
@@ -137,11 +152,8 @@ static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtIndexValu
     } else if (v == Qnil) {
         /* leave as default */
     } else {
-        rb_raise(rb_eArgError, ":%s isn't a valid argument for "
-                 ":term_vector. Please choose from [:no, :yes, "
-                 ":with_positions, :with_offsets, "
-                 ":with_positions_offsets]",
-                 rb_id2name(SYM2ID(v)));
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :term_vector. Please choose from [:no, :yes, "
+                 ":with_positions, :with_offsets, :with_positions_offsets]", rb_id2name(SYM2ID(v)));
     }
 }
 
@@ -179,8 +191,8 @@ static VALUE frb_get_field_info(FrtFieldInfo *fi) {
  *     FieldInfo.new(name, options = {}) -> field_info
  *
  *  Create a new FieldInfo object with the name +name+ and the properties
- *  specified in +options+. The available options are [:store, :index,
- *  :term_vector, :boost]. See the description of FieldInfo for more
+ *  specified in +options+. The available options are [:store, :compression,
+ *  :index, :term_vector, :boost]. See the description of FieldInfo for more
  *  information on these properties.
  */
 static VALUE frb_fi_alloc(VALUE rclass) {
@@ -193,15 +205,16 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
     FrtFieldInfo *fi;
     TypedData_Get_Struct(self, FrtFieldInfo, &frb_field_info_t, fi);
     FrtStoreValue store = FRT_STORE_YES;
+    FrtCompressionType compression = FRT_COMPRESSION_NONE;
     FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost = 1.0f;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
     if (argc > 1) {
-        frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
+        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
     }
-    fi = frt_fi_init(fi, frb_field(rname), store, index, term_vector);
+    fi = frt_fi_init(fi, frb_field(rname), store, compression, index, term_vector);
     fi->boost = boost;
     fi->rfi = self;
     return self;
@@ -422,15 +435,16 @@ static VALUE frb_fis_init(int argc, VALUE *argv, VALUE self) {
     FrtFieldInfos *fis;
     TypedData_Get_Struct(self, FrtFieldInfos, &frb_field_infos_t, fis);
     FrtStoreValue store = FRT_STORE_YES;
+    FrtCompressionType compression = FRT_COMPRESSION_NONE;
     FrtIndexValue index = FRT_INDEX_YES;
     FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     float boost;
 
     rb_scan_args(argc, argv, "01", &roptions);
     if (argc > 0) {
-        frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
+        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
     }
-    fis = frt_fis_init(fis, store, index, term_vector);
+    fis = frt_fis_init(fis, store, compression, index, term_vector);
     fis->rfis = self;
     return self;
 }
@@ -525,6 +539,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
     FrtStoreValue store = fis->store;
+    FrtCompressionType compression = fis->compression;
     FrtIndexValue index = fis->index;
     FrtTermVectorValue term_vector = fis->term_vector;
     float boost = 1.0f;
@@ -532,9 +547,9 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
     if (argc > 1) {
-        frb_fi_get_params(roptions, &store, &index, &term_vector, &boost);
+        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
     }
-    fi = frt_fi_new(frb_field(rname), store, index, term_vector);
+    fi = frt_fi_new(frb_field(rname), store, compression, index, term_vector);
     fi->boost = boost;
     frt_fis_add_field(fis, fi);
     return self;
@@ -1391,7 +1406,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
                 TypedData_Get_Struct(rval, FrtFieldInfos, &frb_field_infos_t, fis);
                 frt_index_create(store, fis);
             } else {
-                fis = frt_fis_new(FRT_STORE_YES, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
                 frt_index_create(store, fis);
                 frt_fis_deref(fis);
             }
@@ -2810,9 +2825,14 @@ frb_ir_version(VALUE self)
  *                  |                         | want to highlight matches.
  *                  |                         | or print match excerpts a la
  *                  |                         | Google search.
+ *     -------------|-------------------------|------------------------------
+ *     :compression | :no (default)           | Don't compress stored field
  *                  |                         |
- *                  | :compressed             | Store field in compressed
- *                  |                         | format.
+ *                  | :brotli                 | Compress field using Brotli
+ *                  |                         |
+ *                  | :bz2                    | Compress field using BZip2
+ *                  |                         |
+ *                  | :lz4                    | Compress field using LZ4
  *     -------------|-------------------------|------------------------------
  *     :index       | :no                     | Do not make this field
  *                  |                         | searchable.
@@ -2882,8 +2902,11 @@ Init_FieldInfo(void)
     sym_index = ID2SYM(rb_intern("index"));
     sym_term_vector = ID2SYM(rb_intern("term_vector"));
 
-    sym_compress = ID2SYM(rb_intern("compress"));
-    sym_compressed = ID2SYM(rb_intern("compressed"));
+    sym_brotli = ID2SYM(rb_intern("brotli"));
+    sym_bz2 = ID2SYM(rb_intern("bz2"));
+    sym_lz4 = ID2SYM(rb_intern("lz4"));
+    // sym_level = ID2SYM(rb_intern("level"));
+    sym_compression = ID2SYM(rb_intern("compression"));
 
     sym_untokenized = ID2SYM(rb_intern("untokenized"));
     sym_omit_norms = ID2SYM(rb_intern("omit_norms"));

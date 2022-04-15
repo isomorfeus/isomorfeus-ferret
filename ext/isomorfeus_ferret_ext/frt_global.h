@@ -15,6 +15,13 @@
 #define FRT_MAX_FILE_PATH 1024
 #define FRT_BUFFER_SIZE 1024
 
+typedef enum {
+    FRT_COMPRESSION_NONE = 0,
+    FRT_COMPRESSION_BROTLI = 1,
+    FRT_COMPRESSION_BZ2 = 2,
+    FRT_COMPRESSION_LZ4 = 3
+} FrtCompressionType;
+
 #define FRT_DBL2S "%#.7g"
 
 #if __GNUC__ >= 3
@@ -34,7 +41,6 @@
 typedef void (*frt_free_ft)(void *key);
 
 #define FRT_NELEMS(array) ((int)(sizeof(array)/sizeof(array[0])))
-
 
 #define FRT_ZEROSET(ptr, type) memset(ptr, 0, sizeof(type))
 #define FRT_ZEROSET_N(ptr, type, n) memset(ptr, 0, sizeof(type)*(n))
