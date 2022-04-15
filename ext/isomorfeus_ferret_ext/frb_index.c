@@ -46,7 +46,6 @@ static VALUE sym_term_vector;
 static VALUE sym_brotli;
 static VALUE sym_bz2;
 static VALUE sym_lz4;
-// static VALUE sym_level;
 static VALUE sym_compression;
 
 static VALUE sym_untokenized;
@@ -2032,7 +2031,7 @@ static VALUE frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df) 
     if (lazy_df) {
         if (lazy_df->size == 1) {
             char *data = frt_lazy_df_get_data(lazy_df, 0);
-            rdata = rb_str_new(data, lazy_df->len);
+            rdata = rb_str_new(data, lazy_df->data[0].length);
             rb_enc_associate(rdata, lazy_df->data[0].encoding);
         } else {
             int i;
