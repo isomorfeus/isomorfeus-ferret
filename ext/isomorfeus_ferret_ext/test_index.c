@@ -1367,7 +1367,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                     } else if (compressed_field_brotli == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     } else if (compressed_field_bzip2 == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZIP2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZ2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     } else if (compressed_field_lz4 == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     }
@@ -1425,7 +1425,7 @@ static void write_ir_test_docs(FrtStore *store)
     frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZIP2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZ2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
@@ -1787,7 +1787,7 @@ static void test_ir_compression(TestCase *tc, void *data)
     int i;
     FrtIndexReader *ir = (FrtIndexReader *)data;
     FrtLazyDoc *lz_doc;
-    FrtLazyDocField *lz_df1, *lz_df2, *lz_df3, *ls_df4;
+    FrtLazyDocField *lz_df1, *lz_df2, *lz_df3, *lz_df4;
     FrtDocument *doc = ir->get_doc(ir, 0);
     FrtDocField *df1, *df2, *df3, *df4;
     char buf1[20], buf2[20];
