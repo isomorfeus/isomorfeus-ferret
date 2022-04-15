@@ -353,8 +353,8 @@ FrtDocument **prep_ir_test_docs(void) {
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
                     "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_lz4),
-            frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
-                    "word3 word3"), enc))->destroy_data = true;
+           frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
+                   "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(body),
             frt_estrdup("Where is Wally"), enc))->destroy_data = true;
     docs[1] = frt_doc_new();
@@ -372,6 +372,18 @@ FrtDocument **prep_ir_test_docs(void) {
     frt_df_add_data(df, frt_estrdup("four"), enc);
     frt_doc_add_field(docs[2], df)->destroy_data = true;
     df = frt_df_new(compressed_field_brotli);
+    frt_df_add_data(df, frt_estrdup("one"), enc);
+    frt_df_add_data(df, frt_estrdup("two"), enc);
+    frt_df_add_data(df, frt_estrdup("three"), enc);
+    frt_df_add_data(df, frt_estrdup("four"), enc);
+    frt_doc_add_field(docs[2], df)->destroy_data = true;
+    df = frt_df_new(compressed_field_bzip2);
+    frt_df_add_data(df, frt_estrdup("one"), enc);
+    frt_df_add_data(df, frt_estrdup("two"), enc);
+    frt_df_add_data(df, frt_estrdup("three"), enc);
+    frt_df_add_data(df, frt_estrdup("four"), enc);
+    frt_doc_add_field(docs[2], df)->destroy_data = true;
+    df = frt_df_new(compressed_field_lz4);
     frt_df_add_data(df, frt_estrdup("one"), enc);
     frt_df_add_data(df, frt_estrdup("two"), enc);
     frt_df_add_data(df, frt_estrdup("three"), enc);
@@ -1369,7 +1381,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                     } else if (compressed_field_bzip2 == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZ2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     } else if (compressed_field_lz4 == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                       frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     }
                 }
             }
@@ -1703,8 +1715,8 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
     Aiequal(5, tv->terms[2].positions[1]);
     Aiequal(8, tv->terms[2].positions[2]);
     Aiequal(9, tv->terms[2].positions[3]);
-    Aiequal(0,  tv->offsets[tv->terms[2].positions[0]].start);
-    Aiequal(5,  tv->offsets[tv->terms[2].positions[0]].end);
+    Aiequal(0, tv->offsets[tv->terms[2].positions[0]].start);
+    Aiequal(5, tv->offsets[tv->terms[2].positions[0]].end);
     Aiequal(30, tv->offsets[tv->terms[2].positions[1]].start);
     Aiequal(35, tv->offsets[tv->terms[2].positions[1]].end);
     Aiequal(48, tv->offsets[tv->terms[2].positions[2]].start);
@@ -1715,7 +1727,7 @@ static void test_ir_term_vectors(TestCase *tc, void *data)
     Aiequal(2, tv->terms[3].freq);
     Aiequal(1, tv->terms[3].positions[0]);
     Aiequal(6, tv->terms[3].positions[1]);
-    Aiequal(6,  tv->offsets[tv->terms[3].positions[0]].start);
+    Aiequal(6, tv->offsets[tv->terms[3].positions[0]].start);
     Aiequal(11, tv->offsets[tv->terms[3].positions[0]].end);
     Aiequal(36, tv->offsets[tv->terms[3].positions[1]].start);
     Aiequal(41, tv->offsets[tv->terms[3].positions[1]].end);
@@ -1791,7 +1803,7 @@ static void test_ir_compression(TestCase *tc, void *data)
     FrtDocument *doc = ir->get_doc(ir, 0);
     FrtDocField *df1, *df2, *df3, *df4;
     char buf1[20], buf2[20];
-    Aiequal(3, doc->size);
+    Aiequal(5, doc->size);
 
     df1 = frt_doc_get_field(doc, changing_field);
     df2 = frt_doc_get_field(doc, compressed_field_brotli);

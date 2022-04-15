@@ -27,6 +27,7 @@ def init_writer(create)
   if create
     ca = :brotli
     ca = :lz4 if @comp == 'l'
+    ca = :bz2 if @comp == 'z'
     s = @store ? :yes : :no
     c = @comp ? ca : :no
     sc = @store && @comp ? ca : :no
