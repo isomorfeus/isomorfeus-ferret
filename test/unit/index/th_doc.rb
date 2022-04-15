@@ -20,9 +20,9 @@ module IndexTestHelper
     fis.add_field(:unindexed_field, :index => :no)
     fis.add_field(:unstored_field1, :store => :no, :term_vector => :no)
     fis.add_field(:unstored_field2, :store => :no, :term_vector => :yes)
-    fis.add_field(:compressed_field, :store => :compressed, :term_vector => :yes)
+    fis.add_field(:compressed_field, :store => :yes, :compression => :brotli, :term_vector => :yes)
     fis.add_field(:binary_field, :index => :no, :term_vector => :no)
-    fis.add_field(:compressed_binary_field, :store => :compressed, :index => :no, :term_vector => :no)
+    fis.add_field(:compressed_binary_field, :store => :yes, :compression => :brotli, :index => :no, :term_vector => :no)
 
     doc = {
       :text_field1             => "field one text",

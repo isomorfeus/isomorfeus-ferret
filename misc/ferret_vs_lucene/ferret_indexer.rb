@@ -25,17 +25,12 @@ def init_writer(create)
     :max_buffered_docs => 20_000
   }
   if create
-    s = if @store && @comp
-          :compressed
-        elsif @store
-          :yes
-        else
-          :no
-        end
+    s = @store ? :yes : :no
+    c = @comp ? :brotli : :no
     options[:create] = true
     field_infos = FieldInfos.new()
-    field_infos.add_field(:title, :store => @comp ? :compressed : :yes, :term_vector => :no)
-    field_infos.add_field(:body, :store => s, :term_vector => :with_positions_offsets)
+    field_infos.add_field(:title, :store => :yes, :compression => c, :term_vector => :no)
+    field_infos.add_field(:body, :store => s, :compression => c, :term_vector => :with_positions_offsets)
     options[:field_infos] = field_infos
   end
 

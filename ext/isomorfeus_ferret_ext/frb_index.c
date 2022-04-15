@@ -2892,7 +2892,7 @@ frb_ir_version(VALUE self)
  *    fi = FieldInfo.new(:created_on, :index => :untokenized_omit_norms,
  *                       :term_vector => :no)
  *
- *    fi = FieldInfo.new(:image, :store => :compressed, :index => :no,
+ *    fi = FieldInfo.new(:image, :store => :yes, :compression => :brotli, :index => :no,
  *                       :term_vector => :no)
  */
 static void
@@ -2961,7 +2961,7 @@ Init_FieldInfo(void)
  *    field_infos.add_field(:created_on, :index => :untokenized_omit_norms,
  *                          :term_vector => :no)
  *
- *    field_infos.add_field(:image, :store => :compressed, :index => :no,
+ *    field_infos.add_field(:image, :store => :yes, :compression => :brotli, :index => :no,
  *                          :term_vector => :no)
  *
  *    field_infos.create_index("/path/to/index")
