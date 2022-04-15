@@ -1,7 +1,7 @@
 /*
  *  LZ4 - Fast LZ compression algorithm
  *  Header File
- *  Copyright (C) 2011-2020, Yann Collet.
+ *  Copyright (C) 2011-present, Yann Collet.
 
    BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
 
@@ -116,28 +116,17 @@ LZ4LIB_API const char* LZ4_versionString (void);   /**< library version string; 
 /*-************************************
 *  Tuning parameter
 **************************************/
-#define LZ4_MEMORY_USAGE_MIN 10
-#define LZ4_MEMORY_USAGE_DEFAULT 14
-#define LZ4_MEMORY_USAGE_MAX 20
-
 /*!
  * LZ4_MEMORY_USAGE :
- * Memory usage formula : N->2^N Bytes (examples : 10 -> 1KB; 12 -> 4KB ; 16 -> 64KB; 20 -> 1MB; )
- * Increasing memory usage improves compression ratio, at the cost of speed.
- * Reduced memory usage may improve speed at the cost of ratio, thanks to better cache locality.
+ * Memory usage formula : N->2^N Bytes (examples : 10 -> 1KB; 12 -> 4KB ; 16 -> 64KB; 20 -> 1MB; etc.)
+ * Increasing memory usage improves compression ratio.
+ * Reduced memory usage may improve speed, thanks to better cache locality.
  * Default value is 14, for 16KB, which nicely fits into Intel x86 L1 cache
  */
 #ifndef LZ4_MEMORY_USAGE
-# define LZ4_MEMORY_USAGE LZ4_MEMORY_USAGE_DEFAULT
+# define LZ4_MEMORY_USAGE 14
 #endif
 
-#if (LZ4_MEMORY_USAGE < LZ4_MEMORY_USAGE_MIN)
-#  error "LZ4_MEMORY_USAGE is too small !"
-#endif
-
-#if (LZ4_MEMORY_USAGE > LZ4_MEMORY_USAGE_MAX)
-#  error "LZ4_MEMORY_USAGE is too large !"
-#endif
 
 /*-************************************
 *  Simple Functions
@@ -513,7 +502,7 @@ LZ4LIB_STATIC_API void LZ4_attach_dictionary(LZ4_stream_t* workingStream, const 
 /*! In-place compression and decompression
  *
  * It's possible to have input and output sharing the same buffer,
- * for highly constrained memory environments.
+ * for highly contrained memory environments.
  * In both cases, it requires input to lay at the end of the buffer,
  * and decompression to start at beginning of the buffer.
  * Buffer size must feature some margin, hence be larger than final size.
@@ -631,7 +620,7 @@ typedef struct {
  *  note : only use this definition in association with static linking !
  *  this definition is not API/ABI safe, and may change in future versions.
  */
-#define LZ4_STREAMSIZE       ((1UL << LZ4_MEMORY_USAGE) + 32)  /* static size, for inter-version compatibility */
+#define LZ4_STREAMSIZE       16416  /* static size, for inter-version compatibility */
 #define LZ4_STREAMSIZE_VOIDP (LZ4_STREAMSIZE / sizeof(void*))
 union LZ4_stream_u {
     void* table[LZ4_STREAMSIZE_VOIDP];
