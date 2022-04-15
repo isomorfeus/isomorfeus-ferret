@@ -5,7 +5,7 @@
 #undef close
 #undef read
 
-static ID body, title, text, author, year, changing_field, compressed_field_brotli, compressed_field_lz4, tag;
+static ID body, title, text, author, year, changing_field, compressed_field_brotli, compressed_field_bzip2, compressed_field_lz4, tag;
 
 static FrtFieldInfos *prep_all_fis(void) {
     FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
@@ -347,6 +347,9 @@ FrtDocument **prep_ir_test_docs(void) {
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
                     "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_brotli),
+            frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
+                    "word3 word3"), enc))->destroy_data = true;
+    frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_bzip2),
             frt_estrdup("word3 word4 word1 word2 word1 word3 word4 word1 "
                     "word3 word3"), enc))->destroy_data = true;
     frt_doc_add_field(docs[0], frt_df_add_data(frt_df_new(compressed_field_lz4),
@@ -1363,6 +1366,10 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                         frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     } else if (compressed_field_brotli == df->name) {
                         frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                    } else if (compressed_field_bzip2 == df->name) {
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZIP2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                    } else if (compressed_field_lz4 == df->name) {
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
                     }
                 }
             }
@@ -1418,6 +1425,7 @@ static void write_ir_test_docs(FrtStore *store)
     frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZIP2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
@@ -1779,60 +1787,74 @@ static void test_ir_compression(TestCase *tc, void *data)
     int i;
     FrtIndexReader *ir = (FrtIndexReader *)data;
     FrtLazyDoc *lz_doc;
-    FrtLazyDocField *lz_df1, *lz_df2, *lz_df3;
+    FrtLazyDocField *lz_df1, *lz_df2, *lz_df3, *ls_df4;
     FrtDocument *doc = ir->get_doc(ir, 0);
-    FrtDocField *df1, *df2, *df3;
+    FrtDocField *df1, *df2, *df3, *df4;
     char buf1[20], buf2[20];
     Aiequal(3, doc->size);
 
     df1 = frt_doc_get_field(doc, changing_field);
     df2 = frt_doc_get_field(doc, compressed_field_brotli);
-    df3 = frt_doc_get_field(doc, compressed_field_lz4);
+    df3 = frt_doc_get_field(doc, compressed_field_bzip2);
+    df4 = frt_doc_get_field(doc, compressed_field_lz4);
     Asequal(df1->data[0], df2->data[0]);
     Asequal(df1->data[0], df3->data[0]);
+    Asequal(df1->data[0], df4->data[0]);
     Assert(df1->lengths[0] == df2->lengths[0], "Field lengths should be equal");
     Assert(df1->lengths[0] == df3->lengths[0], "Field lengths should be equal");
+    Assert(df1->lengths[0] == df4->lengths[0], "Field lengths should be equal");
     frt_doc_destroy(doc);
 
     doc = ir->get_doc(ir, 2);
     df1 = frt_doc_get_field(doc, tag);
     df2 = frt_doc_get_field(doc, compressed_field_brotli);
-    df3 = frt_doc_get_field(doc, compressed_field_lz4);
+    df3 = frt_doc_get_field(doc, compressed_field_bzip2);
+    df4 = frt_doc_get_field(doc, compressed_field_lz4);
     for (i = 0; i < 4; i++) {
         Asequal(df1->data[i], df2->data[i]);
         Asequal(df1->data[i], df3->data[i]);
+        Asequal(df1->data[i], df4->data[i]);
         Assert(df1->lengths[i] == df2->lengths[i], "Field lengths not equal");
         Assert(df1->lengths[i] == df3->lengths[i], "Field lengths not equal");
+        Assert(df1->lengths[i] == df4->lengths[i], "Field lengths not equal");
     }
     frt_doc_destroy(doc);
 
     lz_doc = ir->get_lazy_doc(ir, 0);
     lz_df1 = frt_lazy_doc_get(lz_doc, changing_field);
     lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
-    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
+    lz_df3 = frt_lazy_doc_get(lz_doc, compressed_field_bzip2);
+    lz_df4 = frt_lazy_doc_get(lz_doc, compressed_field_lz4);
     Asequal(frt_lazy_df_get_data(lz_df1, 0), frt_lazy_df_get_data(lz_df2, 0));
     Asequal(frt_lazy_df_get_data(lz_df1, 0), frt_lazy_df_get_data(lz_df3, 0));
+    Asequal(frt_lazy_df_get_data(lz_df1, 0), frt_lazy_df_get_data(lz_df4, 0));
     frt_lazy_doc_close(lz_doc);
 
     lz_doc = ir->get_lazy_doc(ir, 2);
     lz_df1 = frt_lazy_doc_get(lz_doc, tag);
     lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
-    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
+    lz_df3 = frt_lazy_doc_get(lz_doc, compressed_field_bzip2);
+    lz_df4 = frt_lazy_doc_get(lz_doc, compressed_field_lz4);
     for (i = 0; i < 4; i++) {
         Asequal(frt_lazy_df_get_data(lz_df1, i), frt_lazy_df_get_data(lz_df2, i));
         Asequal(frt_lazy_df_get_data(lz_df1, i), frt_lazy_df_get_data(lz_df3, i));
+        Asequal(frt_lazy_df_get_data(lz_df1, i), frt_lazy_df_get_data(lz_df4, i));
     }
     frt_lazy_doc_close(lz_doc);
 
     lz_doc = ir->get_lazy_doc(ir, 2);
     lz_df1 = frt_lazy_doc_get(lz_doc, tag);
     lz_df2 = frt_lazy_doc_get(lz_doc, compressed_field_brotli);
-    lz_df3 = frt_lazy_doc_get(doc, compressed_field_lz4);
+    lz_df3 = frt_lazy_doc_get(lz_doc, compressed_field_bzip2);
+    lz_df4 = frt_lazy_doc_get(lz_doc, compressed_field_lz4);
     frt_lazy_df_get_bytes(lz_df1, buf1, 5, 11);
     frt_lazy_df_get_bytes(lz_df2, buf2, 5, 11);
     buf2[11] = buf1[11] = '\0';
     Asequal(buf1, buf2);
     frt_lazy_df_get_bytes(lz_df3, buf2, 5, 11);
+    buf2[11] = buf1[11] = '\0';
+    Asequal(buf1, buf2);
+    frt_lazy_df_get_bytes(lz_df4, buf2, 5, 11);
     buf2[11] = buf1[11] = '\0';
     Asequal(buf1, buf2);
     frt_lazy_doc_close(lz_doc);
@@ -2184,6 +2206,8 @@ TestSuite *ts_index(TestSuite *suite)
     year             = rb_intern("year");
     changing_field   = rb_intern("changing_field");
     compressed_field_brotli = rb_intern("compressed_field_brotli");
+    compressed_field_bzip2 = rb_intern("compressed_field_bzip2");
+    compressed_field_lz4 = rb_intern("compressed_field_lz4");
     tag              = rb_intern("tag");
 
     srand(5);

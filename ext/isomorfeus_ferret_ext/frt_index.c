@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include "brotli_decode.h"
 #include "brotli_encode.h"
+#include "bzlib.h"
 #include "lz4.h"
 
 #undef close
@@ -47,6 +48,7 @@ static char *ste_next(FrtTermEnum *te);
 #define MAX_EXT_LEN 10
 #define FRT_COMPRESSION_BUFFER_SIZE 16348
 #define FRT_BROTLI_COMPRESSION_LEVEL 7
+#define FRT_BZIP_COMPRESSION_LEVEL 9
 
 /* *** Must be three characters *** */
 static const char *INDEX_EXTENSIONS[] = {
@@ -1247,8 +1249,83 @@ static char *is_read_brotli_compressed_bytes(FrtInStream *is, int compressed_len
     return (char *)buf_out;
 }
 
+static void zraise(int ret) {
+    switch (ret) {
+    case BZ_IO_ERROR:
+        if (ferror(stdin))
+            FRT_RAISE(FRT_IO_ERROR, "bzlib: error reading stdin");
+        if (ferror(stdout))
+            FRT_RAISE(FRT_IO_ERROR, "bzlib: error writing stdout");
+        break;
+    case BZ_CONFIG_ERROR:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: system configuration error");
+        break;
+    case BZ_SEQUENCE_ERROR: /* shouldn't occur if code is correct */
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: !!BUG!! sequence error");
+        break;
+    case BZ_PARAM_ERROR:    /* shouldn't occur if code is correct */
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: !!BUG!! parameter error");
+        break;
+    case BZ_MEM_ERROR:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: memory error");
+        break;
+    case BZ_DATA_ERROR:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: data integrity check error");
+        break;
+    case BZ_DATA_ERROR_MAGIC:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: data integrity check - non-matching magic");
+        break;
+    case BZ_UNEXPECTED_EOF:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: unexpected end-of-file");
+        break;
+    case BZ_OUTBUFF_FULL:
+        FRT_RAISE(FRT_IO_ERROR, "bzlib: output buffer full");
+        break;
+    default:
+        FRT_RAISE(FRT_EXCEPTION, "bzlib: unknown error");
+    }
+}
+
 static char *is_read_bz2_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
-    // TODO
+    int buf_out_idx = 0, ret, read_len;
+    char *buf_out = NULL;
+    char buf_in[FRT_COMPRESSION_BUFFER_SIZE];
+    bz_stream zstrm;
+    zstrm.bzalloc = NULL;
+    zstrm.bzfree  = NULL;
+    zstrm.opaque  = NULL;
+    zstrm.next_in = NULL;
+    zstrm.avail_in = 0;
+    if ((ret = BZ2_bzDecompressInit(&zstrm, 0, 0)) != BZ_OK) zraise(ret);
+
+    do {
+        read_len = compressed_len > FRT_COMPRESSION_BUFFER_SIZE ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
+        frt_is_read_bytes(is, (frt_uchar *)buf_in, compressed_len);
+        compressed_len -= read_len;
+        zstrm.avail_in = read_len;
+        zstrm.next_in = buf_in;
+        zstrm.avail_out = FRT_COMPRESSION_BUFFER_SIZE;
+
+        do {
+            REALLOC_N(buf_out, char, buf_out_idx + FRT_COMPRESSION_BUFFER_SIZE);
+            zstrm.next_out = buf_out + buf_out_idx;
+            ret = BZ2_bzDecompress(&zstrm);
+            assert(ret != BZ_SEQUENCE_ERROR);  /* state not clobbered */
+            if (ret != BZ_OK && ret != BZ_STREAM_END) {
+                (void)BZ2_bzDecompressEnd(&zstrm);
+                zraise(ret);
+            }
+            buf_out_idx += FRT_COMPRESSION_BUFFER_SIZE - zstrm.avail_out;
+        } while (zstrm.avail_out == 0);
+    } while (ret != BZ_STREAM_END && compressed_len != 0);
+
+    (void)BZ2_bzDecompressEnd(&zstrm);
+
+    FRT_REALLOC_N(buf_out, char, buf_out_idx + 1);
+    buf_out[buf_out_idx] = '\0';
+
+    *len = buf_out_idx;
+    return (char *)buf_out;
 }
 
 static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
@@ -1759,7 +1836,29 @@ static int frt_os_write_brotli_compressed_bytes(FrtOutStream* out_stream, frt_uc
 }
 
 static int frt_os_write_bz2_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
-    // TODO
+    int ret, buf_size, compressed_len = 0;
+    char out_buffer[FRT_COMPRESSION_BUFFER_SIZE];
+    bz_stream zstrm;
+    zstrm.bzalloc = NULL;
+    zstrm.bzfree  = NULL;
+    zstrm.opaque = NULL;
+    if ((ret = BZ2_bzCompressInit(&zstrm, FRT_BZIP_COMPRESSION_LEVEL, 0, 0)) != BZ_OK) zraise(ret);
+
+    zstrm.avail_in = length;
+    zstrm.next_in = (char *)data;
+    zstrm.avail_out = FRT_COMPRESSION_BUFFER_SIZE;
+    zstrm.next_out = out_buffer;
+
+    do {
+        ret = BZ2_bzCompress(&zstrm, BZ_FINISH); /* no bad return value */
+        assert(ret != BZ_SEQUENCE_ERROR);        /* state not clobbered */
+        compressed_len += buf_size = FRT_COMPRESSION_BUFFER_SIZE - zstrm.avail_out;
+        frt_os_write_bytes(out_stream, (frt_uchar *)out_buffer, buf_size);
+    } while (zstrm.avail_out == 0);
+    assert(zstrm.avail_in == 0);       /* all input will be used */
+
+    (void)BZ2_bzCompressEnd(&zstrm);
+    return compressed_len;
 }
 
 static int frt_os_write_lz4_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
