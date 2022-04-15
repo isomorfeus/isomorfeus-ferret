@@ -27,10 +27,11 @@ def init_writer(create)
   if create
     s = @store ? :yes : :no
     c = @comp ? :brotli : :no
+    sc = @store && @comp ? :brotli : :no
     options[:create] = true
     field_infos = FieldInfos.new()
     field_infos.add_field(:title, :store => :yes, :compression => c, :term_vector => :no)
-    field_infos.add_field(:body, :store => s, :compression => c, :term_vector => :with_positions_offsets)
+    field_infos.add_field(:body, :store => s, :compression => sc, :term_vector => :with_positions_offsets)
     options[:field_infos] = field_infos
   end
 
