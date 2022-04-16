@@ -1286,6 +1286,7 @@ FrtBooleanClause *frt_bc_alloc(void) {
 FrtBooleanClause *frt_bc_init(FrtBooleanClause *self, FrtQuery *query, FrtBCType occur) {
     self->ref_cnt = 1;
     self->query = query;
+    self->rbc = Qnil;
     frt_bc_set_occur(self, occur);
     return self;
 }
