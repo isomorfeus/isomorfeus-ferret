@@ -130,12 +130,12 @@ JVM 11.0.14.1 (Ubuntu)
 
 Results on Linux, 0.13.0:
 
-| Compression | Index & Store | Retrieve     | Index size |
-|-------------|--------------|---------------|------------|
-| none        |  2008 docs/s | 153853 docs/s |      43 MB |
-| brotli      |  1726 docs/s |  58315 docs/s |      36 MB |
-| bzip2       |  1438 docs/s |  15382 docs/s |      38 MB |
-| lz4         |  1932 docs/s | 127100 docs/s |      41 MB |
+| Compression | Index & Store | Retrieve      | Index size |
+|-------------|---------------|---------------|------------|
+| none        |   2008 docs/s | 153853 docs/s |      43 MB |
+| brotli      |   1726 docs/s |  58315 docs/s |      36 MB |
+| bzip2       |   1438 docs/s |  15382 docs/s |      38 MB |
+| lz4         |   1932 docs/s | 127100 docs/s |      41 MB |
 
 ## Future
 
