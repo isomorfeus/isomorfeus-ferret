@@ -1,7 +1,7 @@
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "test_helper.rb"))
 
 class PoshTest < Test::Unit::TestCase
-  def test_all_internal
+  def test_posh
     puts "\n\n POSH:"
     Isomorfeus::Ferret::Test.posh
 

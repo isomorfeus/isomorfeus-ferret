@@ -105,6 +105,7 @@ end
 task :specs do
   Rake::Task['units'].invoke
   Rake::Task['thread_safety'].invoke
+  # Rake::Task['largefile'].invoke
 end
 
 task :push_packages do
@@ -127,17 +128,23 @@ task :push do
   system("git push gitprep")
 end
 
-task :thread_safety do
-  system('bundle exec ruby test/threading/thread_safety_index_test.rb')
-  system('bundle exec ruby test/threading/thread_safety_read_write_test.rb')
-  system('bundle exec ruby test/threading/thread_safety_test.rb')
+Rake::TestTask.new(:largefile => :compile) do |t|
+  t.libs << "test/long_running/largefile"
+  t.pattern = 'test/long_running/largefile/tc_*.rb'
+  t.verbose = true
 end
 
-Rake::TestTask.new("units" => :compile) do |t|
+Rake::TestTask.new(:thread_safety => :compile) do |t|
+  t.libs << "test/threading"
+  t.pattern = 'test/threading/*.rb'
+  t.verbose = true
+end
+
+Rake::TestTask.new(:units => :compile) do |t|
   t.libs << "test/unit"
   t.pattern = 'test/unit/t[csz]_*.rb'
   t.verbose = true
 end
 task :unit => :units
 
-task :default => [:compile, :units]
+task :default => [:compile, :specs]
