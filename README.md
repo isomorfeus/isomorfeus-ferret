@@ -97,6 +97,7 @@ Ensure your locale is set to C.UTF-8, because the internal c tests don't know ho
 
 ## Benchmarks
 
+### Indexing and Searching
 - clone repo
 - bundle install
 - rake ferret_vs_lucene
@@ -105,19 +106,36 @@ A recent Java JDK must be installed to compile and run lucene benchmarks.
 
 Results on Linux:
 ```
-Ferret:
-Indexing Secs: 7.36  Docs: 19043, 2587 docs/s
-Searching took: 0.3366296s for 8000 queries
-thats 23765 q/s
+Ferret 0.13.0:
+Indexing: 9.35 secs, Docs: 19043, 2035 docs/s
+Searching took: 0.3133133s for 8000 queries
+thats 25533 q/s
+Total found: 42000
+Index size: 28Mb
 
-Lucene:
-Indexing Secs: 4.22  Docs: 19043, 4516 docs/s
-Searching took: 1.48s for 8000 queries
-thats 5420 q/s
----------------------------------------------------
-Lucene 9.0.0 0b18b3b965cedaf5eb129aa41243a44c83ca826d - jpountz - 2021-12-01 14:23:49
-JVM 17.0.1 (Private Build)
+Lucene 9.1.0:
+Indexing: 4.20 secs, Docs: 19043, 4538 docs/s
+Searching took: 1.64s for 8000 queries
+thats 4875 q/s
+Total found: 41000
+index size: 35Mb
+
+JVM 11.0.14.1 (Ubuntu)
 ```
+
+### Storing Fields with compression, Indexing and Retrieval
+- clone repo
+- bundle install
+- rake ferret_compression_benchmark
+
+Results on Linux, 0.13.0:
+
+| Compression | Indexing    | Retrieval     | Index size |
+|-------------|-------------|---------------|------------|
+| none        | 2008 docs/s | 153853 docs/s |      43 MB |
+| brotli      | 1726 docs/s |  58315 docs/s |      36 MB |
+| bzip2       | 1438 docs/s |  15382 docs/s |      38 MB |
+| lz4         | 1932 docs/s | 127100 docs/s |      41 MB |
 
 ## Future
 
