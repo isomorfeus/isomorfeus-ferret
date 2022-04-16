@@ -50,6 +50,7 @@ Compression semantics have changed, now Brotli, BZip2 and LZ4 compression codecs
 - BZip2: slow compression, slow decompression, high compression ratio
 - Brotli: slow compression, fast decrompression, high compression ratio, recommended for general purpose.
 - LZ4: fast compression, fast decrompression, low compression ratio
+
 To see performance and compression ratios `rake ferret_compression_bench` can be run from the cloned repo.
 It uses data and code within the misc/ferret_vs_lucene directory.
 
