@@ -63,33 +63,33 @@ task :ferret_compression_bench => :compile do
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
 
-  puts "\ntitle and content stored:"
+  puts "\nTitle and content stored:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 --store')
   system('bundle exec ruby ferret_search.rb')
   system('bundle exec ruby ferret_reader.rb')
-  puts "Stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
-  puts "\ntitle and content stored and compressed with brotli:"
+  puts "\nTitle and content stored and compressed with brotli:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c b --store')
   system('bundle exec ruby ferret_search.rb')
   system('bundle exec ruby ferret_reader.rb')
-  puts "Compressed stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
-  puts "\ntitle and content stored and compressed with bzip:"
+  puts "\nTitle and content stored and compressed with bzip:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c z --store')
   system('bundle exec ruby ferret_search.rb')
   system('bundle exec ruby ferret_reader.rb')
-  puts "Compressed stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
-  puts "\ntitle and content stored and compressed with lz4:"
+  puts "\nTitle and content stored and compressed with lz4:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c l --store')
   system('bundle exec ruby ferret_search.rb')
   system('bundle exec ruby ferret_reader.rb')
-  puts "Compressed stored content index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   Dir.chdir(pwd)
 end
