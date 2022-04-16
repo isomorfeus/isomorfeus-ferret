@@ -232,71 +232,6 @@ void frt_dummy_free(void *p) {
     (void)p; /* suppress unused argument warning */
 }
 
-#ifdef HAVE_GDB
-#define CMD_BUF_SIZE (128 + FILENAME_MAX)
-/* need to declare this as it is masked by default in linux */
-
-static char *build_shell_command(void) {
-    int   pid = getpid();
-    char *buf = FRT_ALLOC_N(char, CMD_BUF_SIZE);
-    char *command =
-        "gdb -quiet -ex='bt' -ex='quit' %s %d 2>/dev/null | grep '^[ #]'";
-
-    snprintf(buf, CMD_BUF_SIZE, command, frt_progname(), pid);
-    return buf;
-}
-
-#endif
-
-/**
- * Call out to gdb to get our stacktrace.
- */
-char *frt_get_stacktrace(void) {
-#ifdef HAVE_GDB
-    FILE *stream;
-    char *gdb_filename = NULL, *buf = NULL, *stack = NULL;
-    int   offset = -FRT_BUFFER_SIZE;
-
-    if ( !(buf = build_shell_command()) ) {
-        fprintf(EXCEPTION_STREAM,
-                "Unable to build stacktrace shell command\n");
-        goto cleanup;
-    }
-
-    if ( !(stream = popen(buf, "r")) ) {
-        fprintf(EXCEPTION_STREAM,
-                "Unable to exec stacktrace shell command: '%s'\n", buf);
-        goto cleanup;
-    }
-
-    do {
-        offset += FRT_BUFFER_SIZE;
-        FRT_REALLOC_N(stack, char, offset + FRT_BUFFER_SIZE);
-        FRT_ZEROSET_N(stack + offset, char, FRT_BUFFER_SIZE);
-    } while(fread(stack + offset, 1, FRT_BUFFER_SIZE, stream) == FRT_BUFFER_SIZE);
-
-    pclose(stream);
-
- cleanup:
-    if (gdb_filename) free(gdb_filename);
-    if (buf) free(buf);
-    return stack;
-#else
-    return NULL;
-#endif
-}
-
-void frt_print_stacktrace(void) {
-    char *stack = frt_get_stacktrace();
-
-    if (stack) {
-        fprintf(EXCEPTION_STREAM, "Stack trace:\n%s", stack);
-        free(stack);
-    } else {
-        fprintf(EXCEPTION_STREAM, "Stack trace not available\n");
-    }
-}
-
 typedef struct FreeMe {
     void *p;
     frt_free_ft free_func;
@@ -321,55 +256,7 @@ void frt_register_for_cleanup(void *p, frt_free_ft free_func) {
     free_me->free_func = free_func;
 }
 
-#define MAX_PROG_NAME 200
-static char name[MAX_PROG_NAME]; /* program name for error msgs */
-
-/* frt_setprogname: set stored name of program */
-void frt_setprogname(const char *str) {
-    strncpy(name, str, sizeof(name) - 1);
-}
-
-const char *frt_progname(void) {
-    return name;
-}
-
-static const char *signal_to_string(int signum) {
-    switch (signum)
-    {
-        case SIGILL:  return "SIGILL";
-        case SIGABRT: return "SIGABRT";
-        case SIGFPE:  return "SIGFPE";
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-        case SIGBUS:  return "SIGBUS";
-#endif
-        case SIGSEGV: return "SIGSEGV";
-    }
-
-    return "Unknown Signal";
-}
-
-static void sighandler_crash(int signum) {
-    frt_print_stacktrace();
-    FRT_XEXIT("Signal", "Exiting on signal %s (%d)", signal_to_string(signum), signum);
-}
-
-#define SETSIG_IF_UNSET(sig, handler) do { \
-    signal(sig, handler);                  \
-} while(0)
-
 void frt_init(int argc, const char *const argv[]) {
-    if (argc > 0) {
-        frt_setprogname(argv[0]);
-    }
-
-    SETSIG_IF_UNSET(SIGILL , sighandler_crash);
-    SETSIG_IF_UNSET(SIGABRT, sighandler_crash);
-    SETSIG_IF_UNSET(SIGFPE , sighandler_crash);
-#if !defined POSH_OS_WIN32 && !defined POSH_OS_WIN64
-    SETSIG_IF_UNSET(SIGBUS , sighandler_crash);
-#endif
-    SETSIG_IF_UNSET(SIGSEGV, sighandler_crash);
-
     atexit(&frt_hash_finalize);
 
     utf8_encoding = rb_enc_find("UTF-8");
@@ -428,42 +315,4 @@ void frt_init(int argc, const char *const argv[]) {
     FRT_SORT_FIELD_DOC_REV->reverse = true;                       /* reverse */
     FRT_SORT_FIELD_DOC_REV->compare = frt_sort_field_doc_compare; /* compare */
     FRT_SORT_FIELD_DOC_REV->get_val = frt_sort_field_doc_get_val; /* get_val */
-}
-
-/**
- * For general use when testing
- *
- * TODO wrap in #ifdef
- */
-
-static bool p_switch = false;
-static bool p_switch_tmp = false;
-
-void p(const char *format, ...) {
-    va_list args;
-
-    if (!p_switch) return;
-
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
-
-void p_on(void) {
-    fprintf(stderr, "> > > > > STARTING PRINT\n");
-    p_switch = true;
-}
-
-void p_off(void) {
-    fprintf(stderr, "< < < < < STOPPING PRINT\n");
-    p_switch = false;
-}
-
-void frt_p_pause(void) {
-    p_switch_tmp = p_switch;
-    p_switch = false;
-}
-
-void frt_p_resume(void) {
-    p_switch = p_switch_tmp;
 }

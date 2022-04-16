@@ -266,7 +266,6 @@ void tst_check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const 
     int i, count;
     int total_hits = s2l(expected_hits, num_array);
     FrtTopDocs *top_docs = frt_searcher_search(searcher, query, 0, total_hits + 1, NULL, NULL, NULL);
-    frt_p_pause();
     if (!tc->failed && !Aiequal(total_hits, top_docs->total_hits)) {
         int i;
         Tmsg_nf("\texpected docs:\n\t    ");
@@ -314,7 +313,6 @@ void tst_check_hits(TestCase *tc, FrtSearcher *searcher, FrtQuery *query, const 
         count = frt_searcher_search_unscored(searcher, query, num_array2, ARRAY_SIZE, num_array2[3]);
         Aaiequal(num_array + 3, num_array2, count);
     }
-    frt_p_resume();
 }
 
 void check_match_vector(TestCase *tc, FrtSearcher *searcher, FrtQuery *query,

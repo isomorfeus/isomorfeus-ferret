@@ -105,9 +105,6 @@ extern char *frt_dbl_to_s(char *buf, double num);
 extern char *frt_strfmt(const char *fmt, ...);
 extern char *frt_vstrfmt(const char *fmt, va_list args);
 
-extern char *frt_get_stacktrace();
-extern void  frt_print_stacktrace();
-
 extern void frt_register_for_cleanup(void *p, frt_free_ft free_func);
 
 /**
@@ -277,18 +274,6 @@ extern bool frt_x_do_logging;
 #endif
 
 extern void frt_init(int arc, const char *const argv[]);
-extern void frt_setprogname(const char *str);
-extern const char *frt_progname();
 extern void frt_micro_sleep(const int micro_seconds);
-
-/**
- * For general use during testing. Switch this on and off for print statements
- * to only print when p_on is called and not after p_off is called
- */
-extern void p(const char *format, ...);
-extern void p_on();
-extern void p_off();
-extern void frt_p_pause();
-extern void frt_p_resume();
 
 #endif

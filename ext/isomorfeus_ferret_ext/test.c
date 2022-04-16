@@ -279,22 +279,10 @@ static void append_to_msg_buf(const char *fmt, ...)
     va_end(args);
 }
 
-
-static void Tstack(void) {
-    if (show_stack) {
-        char *stack = frt_get_stacktrace();
-        if (stack) {
-            append_to_msg_buf("\n\nStack trace:\n%s\n", stack);
-            free(stack);
-        }
-    }
-}
-
 static void vTmsg_nf(const char *fmt, va_list args)
 {
     if (verbose) {
         vappend_to_msg_buf(fmt, args);
-        Tstack();
     }
 }
 
@@ -305,8 +293,6 @@ void vTmsg(const char *fmt, va_list args)
         vappend_to_msg_buf(fmt, args);
         va_end(args);
         append_to_msg_buf("\n");
-
-        Tstack();
     }
 }
 
@@ -348,8 +334,6 @@ void tst_msg(const char *func, const char *fname, int line_num, const char *fmt,
         va_start(args, fmt);
         vappend_to_msg_buf(fmt, args);
         va_end(args);
-
-        Tstack();
     }
 }
 

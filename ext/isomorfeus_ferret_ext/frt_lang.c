@@ -61,7 +61,6 @@ void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
 # endif
 {
     fflush(stdout);
-    fprintf(EXCEPTION_STREAM, "\n%s: ", frt_progname());
 
 # ifdef FRT_HAS_VARARGS
     fprintf(EXCEPTION_STREAM, "%s occurred at <%s>:%d in %s\n",
@@ -76,7 +75,6 @@ void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
     }
 
     fprintf(EXCEPTION_STREAM, "\n");
-    frt_print_stacktrace();
     if (frt_x_abort_on_exception) {
         exit(2);                 /* conventional value for failed execution */
     }

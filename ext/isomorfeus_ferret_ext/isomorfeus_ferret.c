@@ -250,9 +250,7 @@ void Init_Ferret(void) {
 }
 
 void Init_isomorfeus_ferret_ext(void) {
-    const char *const progname[] = {"ruby"};
-
-    frt_init(1, progname);
+    frt_init(0, NULL);
 
     /* IDs */
     id_new = rb_intern("new");

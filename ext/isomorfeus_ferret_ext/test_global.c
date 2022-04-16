@@ -145,50 +145,6 @@ static void test_dbl_to_s(TestCase *tc, void *data)
     Asequal("NaN", frt_dbl_to_s(buf, NAN));
 }
 
-
-/**
- * Generate a stacktrace, make sure it does something
- */
-static void test_stacktrace(TestCase *tc, void *data)
-{
-    FILE *old_stream = frt_x_exception_stream;
-    (void)data; /* suppress warning */
-    int tfd = fio_tmpfile();
-    frt_x_exception_stream = fdopen(tfd, "w+");
-    Atrue(frt_x_exception_stream != NULL);
-    if (frt_x_exception_stream) {
-        frt_print_stacktrace();
-        long int f = ftell(frt_x_exception_stream);
-        Assert(f, "Stream position should not be 0");
-        fclose(frt_x_exception_stream);
-    }
-    frt_x_exception_stream = old_stream;
-}
-
-/**
- * Generate a normally fatal signal, which gets caught
- */
- /*
-static void test_sighandler(TestCase *tc, void *data)
-{
-    bool  old_abort = frt_x_abort_on_exception;
-    FILE *old_stream = frt_x_exception_stream;
-    (void)data;
-    (void)tc;
-
-    frt_x_exception_stream = false;
-    frt_x_exception_stream = tmpfile();
-
-    raise(SIGSEGV);
-
-    Assert(ftell(frt_x_exception_stream), "Stream position should not be 0");
-    fclose(frt_x_exception_stream);
-
-    frt_x_exception_stream = old_stream;
-    frt_x_abort_on_exception = old_abort;
-}
-*/
-
 static void test_count_leading_zeros(TestCase *tc, void *data)
 {
     (void)data;
@@ -284,8 +240,6 @@ TestSuite *ts_global(TestSuite *suite)
     tst_run_test(suite, test_alloc, NULL);
     tst_run_test(suite, test_strfmt, NULL);
     tst_run_test(suite, test_dbl_to_s, NULL);
-    tst_run_test(suite, test_stacktrace, NULL);
-    // tst_run_test(suite, test_sighandler, NULL);
     tst_run_test(suite, test_count_leading_zeros, NULL);
     tst_run_test(suite, test_count_leading_ones, NULL);
     tst_run_test(suite, test_count_trailing_zeros, NULL);
