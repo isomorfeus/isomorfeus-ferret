@@ -23,4 +23,13 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rake-compiler'
   s.add_development_dependency 'test-unit'
+
+  s.post_install_message = <<~TEXT
+
+  isomorfeus-ferret 0.13:
+  Breaking change:
+    To support Ruby string encodings, die index file format has changed.
+    Indexes created with previous versions < 0.13 must be recreated with 0.13!
+
+  TEXT
 end
