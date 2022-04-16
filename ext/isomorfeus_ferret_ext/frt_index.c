@@ -9,7 +9,7 @@
 #include "brotli_decode.h"
 #include "brotli_encode.h"
 #include "bzlib.h"
-#include "lz4.h"
+#include "lz4frame.h"
 
 #undef close
 #undef read
@@ -1299,8 +1299,8 @@ static char *is_read_bz2_compressed_bytes(FrtInStream *is, int compressed_len, i
     if ((ret = BZ2_bzDecompressInit(&zstrm, 0, 0)) != BZ_OK) zraise(ret);
 
     do {
-        read_len = compressed_len > FRT_COMPRESSION_BUFFER_SIZE ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
-        frt_is_read_bytes(is, (frt_uchar *)buf_in, compressed_len);
+        read_len = (compressed_len > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
+        frt_is_read_bytes(is, (frt_uchar *)buf_in, read_len);
         compressed_len -= read_len;
         zstrm.avail_in = read_len;
         zstrm.next_in = buf_in;
@@ -1328,31 +1328,77 @@ static char *is_read_bz2_compressed_bytes(FrtInStream *is, int compressed_len, i
     return (char *)buf_out;
 }
 
-static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
-    size_t remaining_length = compressed_len;
-    size_t read_length = 0;
-    int decompressed_bytes = 0;
-    int buf_out_idx = 0;
-    int out_size = 256 * FRT_COMPRESSION_BUFFER_SIZE + FRT_COMPRESSION_BUFFER_SIZE;
-    frt_uchar buf_in[LZ4_COMPRESSBOUND(FRT_COMPRESSION_BUFFER_SIZE)];
-    frt_uchar *buf_out = NULL;
-    LZ4_streamDecode_t *lz4_stream_decode = LZ4_createStreamDecode();
+static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, int *length) {
+    frt_uchar buf_in[FRT_COMPRESSION_BUFFER_SIZE];
+    char *buf_out = NULL;
+    int dc_length = 0;
+    LZ4F_dctx *dctx;
+    LZ4F_frameInfo_t frame_info;
+    LZ4F_errorCode_t dctx_status = LZ4F_createDecompressionContext(&dctx, LZ4F_VERSION);
+    if (LZ4F_isError(dctx_status)) { *length = -1; return NULL; }
 
-    do {
-        read_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? remaining_length : FRT_COMPRESSION_BUFFER_SIZE;
-        frt_is_read_bytes(is, buf_in, read_length);
-        remaining_length -= read_length;
-        FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + out_size);
-        decompressed_bytes = LZ4_decompress_safe_continue(lz4_stream_decode, (char *)buf_in, (char *)(buf_out + buf_out_idx), read_length, out_size);
-        if (decompressed_bytes <= 0) break;
-        buf_out_idx += decompressed_bytes;
-    } while (remaining_length > 0);
+    /* header and buffer */
+    int read_length = (compressed_len > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
+    frt_is_read_bytes(is, buf_in, read_length);
+    compressed_len -= read_length;
 
-    LZ4_freeStreamDecode(lz4_stream_decode);
-    FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + 1);
-    buf_out[buf_out_idx] = '\0';
-    *len = buf_out_idx;
-    return (char *)buf_out;
+    size_t consumed_size = read_length;
+    size_t res = LZ4F_getFrameInfo(dctx, &frame_info, buf_in, &consumed_size);
+    if (LZ4F_isError(res)) { *length = -1; return NULL; }
+    size_t buf_out_length;
+    switch(frame_info.blockSizeID) {
+        case LZ4F_default:
+        case LZ4F_max64KB:
+            buf_out_length = 1 << 16;
+            break;
+        case LZ4F_max256KB:
+            buf_out_length = 1 << 18;
+            break;
+        case LZ4F_max1MB:
+            buf_out_length = 1 << 20;
+            break;
+        case LZ4F_max4MB:
+            buf_out_length = 1 << 22;
+            break;
+        default:
+            buf_out_length = 0;
+    }
+
+    res = 1;
+    int first_chunk = 1;
+
+    /* decompress data */
+    while (res != 0) {
+        if (!first_chunk) {
+            read_length = (compressed_len > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : compressed_len;
+            frt_is_read_bytes(is, buf_in, read_length);
+            compressed_len -= read_length;
+            consumed_size = 0;
+        }
+        first_chunk = 0;
+
+        char *src = (char *)(buf_in + consumed_size);
+        char *src_end = (char *)buf_in + read_length;
+
+        while (src < src_end && res != 0){
+            size_t dest_length = buf_out_length;
+            size_t consumed_size = read_length;
+            FRT_REALLOC_N(buf_out, char, dc_length + buf_out_length);
+            res = LZ4F_decompress(dctx, buf_out + dc_length, &dest_length, src, &consumed_size, NULL);
+            if (LZ4F_isError(res)) { *length = -1; return NULL; }
+            dc_length += dest_length;
+            src = src + consumed_size;
+        }
+    }
+
+    /* finish up */
+    LZ4F_freeDecompressionContext(dctx);
+
+    FRT_REALLOC_N(buf_out, char, dc_length + 1);
+    buf_out[dc_length] = '\0';
+
+    *length = dc_length;
+    return buf_out;
 }
 
 static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *len, FrtCompressionType compression) {
@@ -1363,6 +1409,8 @@ static char *is_read_compressed_bytes(FrtInStream *is, int compressed_len, int *
             return is_read_bz2_compressed_bytes(is, compressed_len, len);
         case FRT_COMPRESSION_LZ4:
             return is_read_lz4_compressed_bytes(is, compressed_len, len);
+        default:
+            return NULL;
     }
 }
 
@@ -1861,27 +1909,71 @@ static int frt_os_write_bz2_compressed_bytes(FrtOutStream* out_stream, frt_uchar
     return compressed_len;
 }
 
+static const LZ4F_preferences_t lz4_prefs = {
+    {
+        LZ4F_default,
+        LZ4F_blockLinked,
+        LZ4F_noContentChecksum,
+        LZ4F_frame,
+        0, /* unknown content size */
+        0, /* no dictID */
+        LZ4F_noBlockChecksum
+    },
+    0,
+    1,
+    1,
+    {0,0,0}
+};
+
 static int frt_os_write_lz4_compressed_bytes(FrtOutStream* out_stream, frt_uchar *data, int length) {
     int compressed_length = 0;
-    int current_length = 0;
     int remaining_length = length;
-    int compressed_bytes = 0;
-    size_t compression_buffer_length = LZ4_COMPRESSBOUND(FRT_COMPRESSION_BUFFER_SIZE);
+    size_t ccmp_length = 0;
+    LZ4F_compressionContext_t ctx;
+    size_t out_buf_length = LZ4F_compressBound(FRT_COMPRESSION_BUFFER_SIZE, &lz4_prefs);
+    frt_uchar *out_buf = frt_ecalloc(out_buf_length);
 
-    frt_uchar *compression_buffer = frt_emalloc(compression_buffer_length);
-    LZ4_stream_t *lz4_stream = LZ4_createStream();
+    size_t ctx_creation = LZ4F_createCompressionContext(&ctx, LZ4F_VERSION);
+    if (LZ4F_isError(ctx_creation)) {
+        compressed_length = -1;
+        goto finish;
+    }
 
+    /* create header */
+    ccmp_length = LZ4F_compressBegin(ctx, out_buf, out_buf_length, &lz4_prefs);
+    if (LZ4F_isError(ccmp_length)) {
+        compressed_length = -1;
+        goto finish;
+    }
+    compressed_length = ccmp_length;
+    frt_os_write_bytes(out_stream, out_buf, ccmp_length);
+
+    /* compress data */
     do {
-        current_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? remaining_length : FRT_COMPRESSION_BUFFER_SIZE;
-        compressed_bytes = LZ4_compress_fast_continue(lz4_stream, (char *)(data + (length - remaining_length)), (char *)compression_buffer, current_length, compression_buffer_length, 1);
-        if (compressed_bytes <= 0) break;
-        compressed_length += compressed_bytes;
-        remaining_length -= current_length;
-        frt_os_write_bytes(out_stream, compression_buffer, compressed_bytes);
+        int read_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? remaining_length : FRT_COMPRESSION_BUFFER_SIZE;
+        ccmp_length = LZ4F_compressUpdate(ctx, out_buf, out_buf_length, data + (length - remaining_length), read_length, NULL);
+        if (LZ4F_isError(ccmp_length)) {
+            compressed_length = -1;
+            goto finish;
+        }
+        frt_os_write_bytes(out_stream, out_buf, ccmp_length);
+        compressed_length += ccmp_length;
+        remaining_length -= read_length;
     } while (remaining_length > 0);
 
-    LZ4_freeStream(lz4_stream);
-    free(compression_buffer);
+    /* finish up */
+    ccmp_length = LZ4F_compressEnd(ctx, out_buf, out_buf_length, NULL);
+    if (LZ4F_isError(ccmp_length)) {
+        compressed_length = -1;
+        goto finish;
+    }
+
+    frt_os_write_bytes(out_stream, out_buf, ccmp_length);
+    compressed_length += ccmp_length;
+
+finish:
+    LZ4F_freeCompressionContext(ctx);
+    free(out_buf);
 
     return compressed_length;
 }
