@@ -16,7 +16,59 @@ During revival many things havbe been fixed, now all tests pass, no crashes and 
 successfully compiles and runs with rubys >3. Its no longer a goal to have
 a c library available, but instead the usage is meant as ruby gem with a c extension only.
 
-It should work on *nixes and *nuxes and also works on Windows.
+It should work on *nixes, *nuxes, *BSDs and also works on Windows.
+
+## Improvements and Changes in Version 0.13
+
+### Breaking
+
+- For version 0.13 die index file format has changed and is no longer compatible with previous versions. Indexes of older versions must be recreated with 0.13 (export all data from and with previous version, import alls data with 0.13)
+- The :store option no longer accepts :compress, compression must now be specified by the separate :compress options (see below).
+- The ASCII-specific Tokenizers and Analyzers have been removed
+
+### Sring Encoding support
+
+#### Input strings and stored fields
+
+In versions prior 0.13 the string encoding had to match the locale string encoding.
+In 0.13 the dependency on the locale setting has been resolved, input strings are now correctly tokenized
+according to their source encoding, with positions correctly matching the input string.
+All Ruby string encodings are supported.
+When fields are stored, they are now stored with the encoding, so that when they are retrieved again, they
+retain the original encoding with positions matching the string in its original encoding.
+
+#### Tokens and Filters
+
+Tokens are internally converted to UTF-8, which may change their length compared to their original encoding,
+yet they retain position information according to the source in its original encoding.
+The benefit is, that Filters, Stemmers or anything else working with Tokens only needs to support UTF-8 encoding,
+greatly simplifying things and ensuring consistent query results.
+
+### Compression
+
+Compression semantics have changed, now Brotli, BZip2 and LZ4 compression codecs are supported.
+- BZip2: slow compression, slow decompression, high compression ratio
+- Brotli: slow compression, fast decrompression, high compression ratio, recommended for general purpose.
+- LZ4: fast compression, fast decrompression, low compression ratio
+To see performance and compression ratios `rake ferret_compression_bench` can be run from the cloned repo.
+It uses data and code within the misc/ferret_vs_lucene directory.
+
+To compress a stored field the :compression option can be used with one of: :no, :brotli, :bz2 or :lz4.
+Example:
+```ruby
+fis.add_field(:compressed_field, :store => :yes, :compression => :brotli, :term_vector => :yes)
+```
+
+### Performance
+
+The encoding support demands its toll, indexing performance dropped a bit in comparision to 0.12, but still thousands of docs per second, depending on machine/docs.
+On Windows the indexing performance is still terrible, but that may be resolved in a future project.
+
+Search performance is still excellent and multiple times faster than Lucene.
+
+Lucene achieves roughly double the indexing performance. This seems to be because of the different way strings and
+encodings are handled in Java. For example, the Java WhitespaceTokenizer code requires only one method call per character (check for whitespace), but for Ruby, to support all the different encodings, several method calls are required per character (retrieve character according to encoding, check character for whitespace).
+Ferret is internally using the standard Ruby string encoding methods.
 
 ## Documentation
 
@@ -69,6 +121,7 @@ JVM 17.0.1 (Private Build)
 ## Future
 
 Lots of things to do:
+- Improve indexing performance on Windows (WriteFile is terribly slow, maybe use mapping, see libuv)
 - Bring documentation in order in a docs directory
 - Review code (especially for memory/stack issues, typical c issues)
 - Take care of ruby GVL and threading
