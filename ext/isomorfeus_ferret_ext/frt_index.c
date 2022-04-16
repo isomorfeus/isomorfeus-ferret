@@ -1339,7 +1339,7 @@ static char *is_read_lz4_compressed_bytes(FrtInStream *is, int compressed_len, i
     LZ4_streamDecode_t *lz4_stream_decode = LZ4_createStreamDecode();
 
     do {
-        read_length = (remaining_length > FRT_COMPRESSION_BUFFER_SIZE) ? FRT_COMPRESSION_BUFFER_SIZE : remaining_length;
+        read_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? remaining_length : FRT_COMPRESSION_BUFFER_SIZE;
         frt_is_read_bytes(is, buf_in, read_length);
         remaining_length -= read_length;
         FRT_REALLOC_N(buf_out, frt_uchar, buf_out_idx + out_size);
@@ -1872,7 +1872,7 @@ static int frt_os_write_lz4_compressed_bytes(FrtOutStream* out_stream, frt_uchar
     LZ4_stream_t *lz4_stream = LZ4_createStream();
 
     do {
-        current_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? FRT_COMPRESSION_BUFFER_SIZE : remaining_length;
+        current_length = (FRT_COMPRESSION_BUFFER_SIZE > remaining_length) ? remaining_length : FRT_COMPRESSION_BUFFER_SIZE;
         compressed_bytes = LZ4_compress_fast_continue(lz4_stream, (char *)(data + (length - remaining_length)), (char *)compression_buffer, current_length, compression_buffer_length, 1);
         if (compressed_bytes <= 0) break;
         compressed_length += compressed_bytes;
