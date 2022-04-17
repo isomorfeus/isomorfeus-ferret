@@ -28,14 +28,17 @@ Fields ->
     Int    Boost          # CastAsInt
     Byte   FieldBits
     <
-      0x01 => store fields
-      0x02 => compress fields
-      0x04 => index fields
-      0x08 => tokenize fields
-      0x10 => omit norms
-      0x20 => store term vector
-      0x40 => store positions
-      0x80 => store offsets
+      0x001 => store fields
+      0x002 => compress fields
+      0x004 => index fields
+      0x008 => tokenize fields
+      0x010 => omit norms
+      0x020 => store term vector
+      0x040 => store positions
+      0x080 => store offsets
+      0x100 => brotli compression
+      0x200 => bzip2 compression
+      0x400 => lz4 compression
     > FieldBits
   } * FieldCount
 
@@ -51,6 +54,8 @@ FieldData(.fdt) ->
     {
       VInt   FieldNum
       VInt   FieldLen
+      VInt   FieldEncoding
+      VInt   FieldCompressionCodec
     } * FieldCount
     {
       Bytes FieldData
