@@ -44,7 +44,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   rescue Exception => e
     puts e
     puts e.backtrace
-    raise 'hell'
+    raise e
   end
 
   def do_optimize(index)
