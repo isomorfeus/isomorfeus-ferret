@@ -1219,6 +1219,7 @@ static VALUE frb_get_tv_term(FrtTVTerm *tv_term) {
     VALUE rtext;
     VALUE rpositions = Qnil;
     rtext = rb_str_new2(tv_term->text);
+    rb_enc_associate(rtext, utf8_encoding);
     if (tv_term->positions) {
         int *positions = tv_term->positions;
         rpositions = rb_ary_new2(freq);
@@ -3085,10 +3086,6 @@ static void Init_TermDocEnum(void) {
     rb_define_method(cTermDocEnum, "to_json",        frb_tde_to_json, -1);
 }
 
-/* rdochack
-cTermVector = rb_define_class_under(mIndex, "TermVector", rb_cObject);
-*/
-
 /*
  *  Document-class: Ferret::Index::TermVector::TVOffsets
  *
@@ -3107,9 +3104,6 @@ cTermVector = rb_define_class_under(mIndex, "TermVector", rb_cObject);
  */
 static void Init_TVOffsets(void) {
     const char *tv_offsets_class = "TVOffsets";
-    /* rdochack
-    cTVOffsets = rb_define_class_under(cTermVector, "TVOffsets", rb_cObject);
-    */
     cTVOffsets = rb_struct_define(tv_offsets_class, "start", "end", NULL);
     rb_set_class_path(cTVOffsets, cTermVector, tv_offsets_class);
     rb_const_set(mIndex, rb_intern(tv_offsets_class), cTVOffsets);
@@ -3130,13 +3124,8 @@ static void Init_TVOffsets(void) {
  *    tv_term = tv.find {|tvt| tvt.term = "fox"}
  *    offsets = tv_term.positions.collect {|pos| tv.offsets[pos]}
  */
-static void
-Init_TVTerm(void)
-{
+static void Init_TVTerm(void) {
     const char *tv_term_class = "TVTerm";
-    /* rdochack
-    cTVTerm = rb_define_class_under(cTermVector, "TVTerm", rb_cObject);
-    */
     cTVTerm = rb_struct_define(tv_term_class, "text", "freq", "positions", NULL);
     rb_set_class_path(cTVTerm, cTermVector, tv_term_class);
     rb_const_set(mIndex, rb_intern(tv_term_class), cTVTerm);
@@ -3172,15 +3161,9 @@ Init_TVTerm(void)
  *  particular that you need to store both positions and offsets if you want
  *  to associate offsets with particular terms.
  */
-static void
-Init_TermVector(void)
-{
+static void Init_TermVector(void) {
     const char *tv_class = "TermVector";
-    /* rdochack
-    cTermVector = rb_define_class_under(mIndex, "TermVector", rb_cObject);
-    */
-    cTermVector = rb_struct_define(tv_class,
-                                   "field", "terms", "offsets", NULL);
+    cTermVector = rb_struct_define(tv_class, "field", "terms", "offsets", NULL);
     rb_set_class_path(cTermVector, mIndex, tv_class);
     rb_const_set(mIndex, rb_intern(tv_class), cTermVector);
 
