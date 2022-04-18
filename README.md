@@ -37,12 +37,13 @@ All Ruby string encodings are supported.
 When fields are stored, they are now stored with the encoding, so that when they are retrieved again, they
 retain the original encoding with positions matching the string in its original encoding.
 
-#### Tokens and Filters
+#### Tokens, Terms, Filters and Queries
 
 Tokens are internally converted to UTF-8, which may change their length compared to their original encoding,
-yet they retain position information according to the source in its original encoding.
-The benefit is, that Filters, Stemmers or anything else working with Tokens only needs to support UTF-8 encoding,
-greatly simplifying things and ensuring consistent query results.
+yet they retain position information according to the source in its original encoding. Terms are likewise stored in UTF-8 encoding.
+Queries are converted to UTF-8 encoding too.
+The benefit is, that Filters, Stemmers or anything else working with Tokens and Terms only needs to support UTF-8 encoding,
+greatly simplifying things and ensuring consistent query results, independent of source encoding.
 
 ### Compression
 
