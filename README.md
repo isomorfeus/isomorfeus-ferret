@@ -26,7 +26,7 @@ It should work on *nixes, *nuxes, *BSDs and also works on Windows.
 - The :store option no longer accepts :compress, compression must now be specified by the separate :compress options (see below).
 - The ASCII-specific Tokenizers and Analyzers have been removed
 
-### Sring Encoding support
+### String Encoding support
 
 #### Input strings and stored fields
 
