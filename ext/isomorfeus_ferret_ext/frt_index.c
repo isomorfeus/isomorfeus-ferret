@@ -14,6 +14,7 @@
 #undef close
 #undef read
 
+extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);
 
 #define GET_LOCK(lock, name, store, err_msg) do {\
@@ -1710,8 +1711,7 @@ static FrtTermVector *frt_fr_read_term_vector(FrtFieldsReader *fr, int field_num
             total_len = delta_start + delta_len;
             frt_is_read_bytes(fdt_in, buffer + delta_start, delta_len);
             buffer[total_len++] = '\0';
-            term->text = (char *)memcpy(FRT_ALLOC_N(char, total_len),
-                                        buffer, total_len);
+            term->text = (char *)memcpy(FRT_ALLOC_N(char, total_len), buffer, total_len);
 
             /* read freq */
             freq = term->freq = frt_is_read_vint(fdt_in);
@@ -1822,8 +1822,7 @@ FrtTermVector *frt_fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_n
  *
  ****************************************************************************/
 
-FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis)
-{
+FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis) {
     FrtFieldsWriter *fw = FRT_ALLOC(FrtFieldsWriter);
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     size_t segment_len = strlen(segment);
@@ -1844,8 +1843,7 @@ FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos
     return fw;
 }
 
-void frt_fw_close(FrtFieldsWriter *fw)
-{
+void frt_fw_close(FrtFieldsWriter *fw) {
     frt_os_close(fw->fdt_out);
     frt_os_close(fw->fdx_out);
     frt_ram_destroy_buffer(fw->buffer);
@@ -2046,8 +2044,7 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc) {
     frt_ramo_write_to(fw->buffer, fdt_out);
 }
 
-void frt_fw_write_tv_index(FrtFieldsWriter *fw)
-{
+void frt_fw_write_tv_index(FrtFieldsWriter *fw) {
     int i;
     const int tv_cnt = frt_ary_size(fw->tv_fields);
     FrtOutStream *fdt_out = fw->fdt_out;
@@ -5548,9 +5545,24 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw, FrtFieldInverter *fld_inv, FrtDoc
         for (i = 0; i < df_size; i++) {
             int len = df->lengths[i];
             char *data_ptr = df->data[i];
-            if (len > FRT_MAX_WORD_SIZE) {
-                len = FRT_MAX_WORD_SIZE - 1;
-                data_ptr = (char *)memcpy(buf, df->data[i], len);
+            if (df->encodings[i] == utf8_encoding) {
+                if (len >= FRT_MAX_WORD_SIZE) {
+                    len = FRT_MAX_WORD_SIZE - 1;  // TODO: this may invalidate mbc's
+                    data_ptr = (char *)memcpy(buf, df->data[i], len);
+                    buf[len] = '\0';
+                }
+            } else if (df->encodings[i] != utf8_encoding) {
+                if (len >= FRT_MAX_WORD_SIZE)
+                    len = FRT_MAX_WORD_SIZE - 1;
+                const unsigned char *sp = (unsigned char *)df->data[i];
+                unsigned char *dp = (unsigned char *)&buf;
+                rb_econv_t *ec = rb_econv_open(rb_enc_name(df->encodings[i]), "UTF-8", RUBY_ECONV_INVALID_REPLACE);
+                assert(ec != NULL);
+                rb_econv_convert(ec, &sp, (unsigned char *)df->data[i] + len, &dp, (unsigned char *)&buf + FRT_MAX_WORD_SIZE - 1, 0);
+                rb_econv_close(ec);
+                len = dp - (unsigned char *)&buf;
+                buf[len] = '\0';
+                data_ptr = buf;
             }
             dw_add_posting(mp, curr_plists, fld_plists, doc_num, data_ptr, len, i);
             if (store_offsets) {

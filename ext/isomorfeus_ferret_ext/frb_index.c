@@ -64,6 +64,7 @@ static ID id_fld_num_map;
 static ID id_field_num;
 static ID id_boost;
 
+extern rb_encoding *utf8_encoding;
 extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
