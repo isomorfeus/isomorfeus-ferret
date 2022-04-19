@@ -182,8 +182,9 @@ static VALUE frb_get_field_info(FrtFieldInfo *fi) {
             fi->rfi = TypedData_Wrap_Struct(cFieldInfo, &frb_field_info_t, fi);
             FRT_REF(fi);
         }
+        return fi->rfi;
     }
-    return fi->rfi;
+    return Qnil;
 }
 
 /*
@@ -412,8 +413,9 @@ static VALUE frb_get_field_infos(FrtFieldInfos *fis) {
             fis->rfis = TypedData_Wrap_Struct(cFieldInfos, &frb_field_infos_t, fis);
             FRT_REF(fis);
         }
+        return fis->rfis;
     }
-    return fis->rfis;
+    return Qnil;
 }
 
 /*
@@ -497,11 +499,6 @@ static VALUE frb_fis_get(VALUE self, VALUE ridx) {
         case T_STRING:
             rfi = frb_get_field_info(frt_fis_get_field(fis, frb_field(ridx)));
             break;
-            /*
-        case T_STRING:
-            rfi = frb_get_field_info(frt_fis_get_field(fis, StringValuePtr(ridx)));
-            break;
-            */
         default:
             rb_raise(rb_eArgError, "Can't index FieldInfos with %s",
                      rs2s(rb_obj_as_string(ridx)));
@@ -1699,10 +1696,9 @@ frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm)
  *  Get the FieldInfos object for this FrtIndexWriter. This is useful if you need
  *  to dynamically add new fields to the index with specific properties.
  */
-static VALUE
-frb_iw_field_infos(VALUE self)
-{
-    FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
+static VALUE frb_iw_field_infos(VALUE self) {
+    FrtIndexWriter *iw;
+    TypedData_Get_Struct(self, FrtIndexWriter, &frb_index_writer_t, iw);
     return frb_get_field_infos(iw->fis);
 }
 
@@ -2717,10 +2713,9 @@ frb_ir_fields(VALUE self)
  *
  *  Get the FieldInfos object for this IndexReader.
  */
-static VALUE
-frb_ir_field_infos(VALUE self)
-{
-    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
+static VALUE frb_ir_field_infos(VALUE self) {
+    FrtIndexReader *ir;
+    TypedData_Get_Struct(self, FrtIndexReader, &frb_index_reader_t, ir);
     return frb_get_field_infos(ir->fis);
 }
 
