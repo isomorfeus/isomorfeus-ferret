@@ -4,7 +4,7 @@ module Isomorfeus
       # This is a simplified interface to the index. See the TUTORIAL for more
       # information on how to use this class.
       class Index
-        include Isomorfeus::Ferret::MonitorMixin
+        include MonitorMixin
         include Isomorfeus::Ferret::Store
         include Isomorfeus::Ferret::Search
 
