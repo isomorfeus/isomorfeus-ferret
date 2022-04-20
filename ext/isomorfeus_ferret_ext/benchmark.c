@@ -117,13 +117,13 @@ static void bm_single_run(BenchMarkUnit *unit, BenchMarkTimes *bm_times)
     struct rusage ru_before, ru_after;
 
     if (gettimeofday(&tv_before, NULL) == -1)
-        FRT_RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
+        rb_raise(rb_eRuntimeError, "gettimeofday failed\n");
     getrusage(RUSAGE_SELF, &ru_before);
 
     unit->run();
 
     if (gettimeofday(&tv_after, NULL) == -1)
-        FRT_RAISE(FRT_UNSUPPORTED_ERROR, "gettimeofday failed\n");
+        rb_raise(rb_eRuntimeError, "gettimeofday failed\n");
     getrusage(RUSAGE_SELF, &ru_after);
 
     bm_times->rtime = TVAL_TO_SEC(tv_before, tv_after);
