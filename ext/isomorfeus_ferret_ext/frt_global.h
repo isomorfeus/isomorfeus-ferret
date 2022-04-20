@@ -266,13 +266,6 @@ extern FILE *frt_x_exception_stream;
 #define EXCEPTION 2
 #define EXCEPTION_STREAM (frt_x_exception_stream ? frt_x_exception_stream : stderr)
 
-#ifdef DEBUG
-extern bool frt_x_do_logging;
-#define xlog if (frt_x_do_logging) printf
-#else
-#define xlog()
-#endif
-
 extern void frt_init(int arc, const char *const argv[]);
 extern void frt_micro_sleep(const int micro_seconds);
 
