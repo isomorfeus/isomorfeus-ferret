@@ -1271,11 +1271,11 @@ void frb_iw_free(void *p) {
 
 void frb_iw_mark(void *p) {
     FrtIndexWriter *iw = (FrtIndexWriter *)p;
-    if (iw->analyzer->ranalyzer)
+    if (iw->analyzer && iw->analyzer->ranalyzer)
         rb_gc_mark(iw->analyzer->ranalyzer);
-    if (iw->store->rstore)
+    if (iw->store && iw->store->rstore)
         rb_gc_mark(iw->store->rstore);
-    if (iw->fis->rfis)
+    if (iw->fis && iw->fis->rfis)
         rb_gc_mark(iw->fis->rfis);
 }
 
