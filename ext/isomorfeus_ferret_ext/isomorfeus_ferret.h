@@ -1,10 +1,9 @@
 #ifndef __FERRET_H_
 #define __FERRET_H_
-#include <ruby.h>
 #include "frt_global.h"
 #include "frt_hashset.h"
 #include "frt_document.h"
-#include "frb_lang.h"
+#include <ruby.h>
 
 /* IDs */
 extern ID id_new;

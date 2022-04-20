@@ -175,7 +175,7 @@ TestSuite *ts_threading(TestSuite *suite)
 
     tst_run_test(suite, test_number_to_str, NULL);
     tst_run_test(suite, test_threading_test, index);
-    // tst_run_test(suite, test_threading, index);
+    tst_run_test(suite, test_threading, index);
 
     frt_index_destroy(index);
 

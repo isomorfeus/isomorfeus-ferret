@@ -418,9 +418,7 @@ static void fs_close_lock_i(FrtLock *lock)
 
 static FrtHash *stores = NULL;
 
-#ifndef UNTHREADED
 static frt_mutex_t stores_mutex = FRT_MUTEX_INITIALIZER;
-#endif
 
 static void fs_close_i(FrtStore *store)
 {

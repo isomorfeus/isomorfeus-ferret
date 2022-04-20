@@ -4,8 +4,8 @@
 #include "frt_except.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
-#include "frb_threading.h"
-#include "frb_lang.h"
+#include "frt_threading.h"
+#include "ruby.h"
 
 /* IDs */
 ID id_new;

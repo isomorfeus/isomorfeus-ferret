@@ -5,7 +5,7 @@
 #include "frt_global.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
-#include "frb_threading.h"
+#include "frt_threading.h"
 
 #define FRT_LOCK_PREFIX "ferret-"
 #define FRT_LOCK_EXT ".lck"
