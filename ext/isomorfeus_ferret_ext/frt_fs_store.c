@@ -272,15 +272,13 @@ static const struct FrtOutStreamMethods FS_OUT_STREAM_METHODS = {
 static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
-    int fd = open(join_path(path, store->dir.path, filename),
-                  O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
-    FrtOutStream *os;
+    int fd = open(join_path(path, store->dir.path, filename), O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
     if (fd < 0) {
         FRT_RAISE(FRT_IO_ERROR, "couldn't create OutStream %s: <%s>",
               path, strerror(errno));
     }
 
-    os = frt_os_new();
+    FrtOutStream *os = frt_os_new();
     os->file.fd = fd;
     os->m = &FS_OUT_STREAM_METHODS;
     return os;
