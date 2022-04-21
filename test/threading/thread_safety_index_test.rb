@@ -13,19 +13,13 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   ANALYZER = Isomorfeus::Ferret::Analysis::StandardAnalyzer.new
 
   def setup
-    index = Index.new(:path => INDEX_DIR,
-                      :create => true,
-                      :analyzer => ANALYZER,
-                      :default_field => :content)
+    index = Index.new(:path => INDEX_DIR, :create => true, :analyzer => ANALYZER, :default_field => :content)
     index.close
     @verbose = false
   end
 
   def indexing_thread
-    index = Index.new(:path => INDEX_DIR,
-                      :analyzer => ANALYZER,
-                      :auto_flush => true,
-                      :default_field => :content)
+    index = Index.new(:path => INDEX_DIR, :analyzer => ANALYZER, :auto_flush => true, :default_field => :content)
 
     ITERATIONS.times do
       choice = rand
