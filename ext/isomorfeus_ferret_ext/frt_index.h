@@ -627,9 +627,9 @@ struct FrtDeleter {
 
 extern FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store);
 extern void frt_deleter_destroy(FrtDeleter *dlr);
+extern void frt_deleter_queue_file(FrtDeleter *dlr, const char *file_name);
 extern void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name);
 extern void frt_deleter_find_deletable_files(FrtDeleter *dlr);
-extern void frt_deleter_delete_files(FrtDeleter *dlr, char **files, int file_cnt);
 
 /****************************************************************************
  *
@@ -859,6 +859,6 @@ typedef struct FrtCompoundWriter {
 
 extern FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name);
 extern void frt_cw_add_file(FrtCompoundWriter *cw, char *id);
-extern void frt_cw_close(FrtCompoundWriter *cw);
+extern void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr);
 
 #endif

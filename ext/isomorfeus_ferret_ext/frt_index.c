@@ -681,15 +681,13 @@ static char *si_norm_file_name(FrtSegmentInfo *si, char *buf, int field_num)
     if (field_num >= si->norm_gens_size
         || 0 > (norm_gen = si->norm_gens[field_num])) {
         return NULL;
-    }
-    else {
+    } else {
         const char *ext = (si->use_compound_file && norm_gen > 0) ? "s" : "f";
         return fn_for_gen_field(buf, si->name, ext, norm_gen, field_num);
     }
 }
 
-static void deleter_queue_file(FrtDeleter *dlr, const char *file_name);
-#define DEL(file_name) deleter_queue_file(dlr, file_name)
+void frt_deleter_queue_file(FrtDeleter *dlr, const char *file_name);
 
 static void si_delete_files(FrtSegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *dlr)
 {
@@ -700,7 +698,7 @@ static void si_delete_files(FrtSegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *
 
     for (i = si->norm_gens_size - 1; i >= 0; i--) {
         if (0 <= si->norm_gens[i]) {
-            DEL(si_norm_file_name(si, file_name, fis->fields[i]->number));
+            frt_deleter_queue_file(dlr, si_norm_file_name(si, file_name, fis->fields[i]->number));
         }
     }
 
@@ -710,15 +708,14 @@ static void si_delete_files(FrtSegmentInfo *si, FrtFieldInfos *fis, FrtDeleter *
 
     if (si->use_compound_file) {
         memcpy(ext, "cfs", 4);
-        DEL(file_name);
+        frt_deleter_queue_file(dlr, file_name);
         if (0 <= si->del_gen) {
-            DEL(frt_fn_for_generation(file_name, si->name, "del", si->del_gen));
+            frt_deleter_queue_file(dlr, frt_fn_for_generation(file_name, si->name, "del", si->del_gen));
         }
-    }
-    else {
+    } else {
         for (i = FRT_NELEMS(INDEX_EXTENSIONS) - 1; i >= 0; i--) {
             memcpy(ext, INDEX_EXTENSIONS[i], 4);
-            DEL(file_name);
+            frt_deleter_queue_file(dlr, file_name);
         }
     }
 }
@@ -3695,8 +3692,7 @@ static bool file_name_filter_is_cfs_file(const char *file_name) {
  ****************************************************************************/
 
 #define DELETABLE_START_CAPA 8
-FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store)
-{
+FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store) {
     FrtDeleter *dlr = FRT_ALLOC(FrtDeleter);
     dlr->sis = sis;
     dlr->store = store;
@@ -3704,19 +3700,16 @@ FrtDeleter *frt_deleter_new(FrtSegmentInfos *sis, FrtStore *store)
     return dlr;
 }
 
-void frt_deleter_destroy(FrtDeleter *dlr)
-{
+void frt_deleter_destroy(FrtDeleter *dlr) {
     frt_hs_destroy(dlr->pending);
     free(dlr);
 }
 
-static void deleter_queue_file(FrtDeleter *dlr, const char *file_name)
-{
+void frt_deleter_queue_file(FrtDeleter *dlr, const char *file_name) {
     frt_hs_add(dlr->pending, frt_estrdup(file_name));
 }
 
-void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name)
-{
+void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name) {
     FrtStore *store = dlr->store;
     FRT_TRY
         if (store->exists(store, file_name)) {
@@ -3728,22 +3721,12 @@ void frt_deleter_delete_file(FrtDeleter *dlr, char *file_name)
     FRT_XENDTRY
 }
 
-static void deleter_commit_pending_deletions(FrtDeleter *dlr)
-{
+static void deleter_commit_pending_deletions(FrtDeleter *dlr) {
     FrtHashSetEntry *hse, *hse_next = dlr->pending->first;
     while ((hse = hse_next) != NULL) {
         hse_next = hse->next;
         frt_deleter_delete_file(dlr, (char *)hse->elem);
     }
-}
-
-void frt_deleter_delete_files(FrtDeleter *dlr, char **files, int file_cnt)
-{
-    int i;
-    for (i = file_cnt - 1; i >= 0; i--) {
-        deleter_queue_file(dlr, files[i]);
-    }
-    deleter_commit_pending_deletions(dlr);
 }
 
 struct DelFilesArg {
@@ -3752,8 +3735,7 @@ struct DelFilesArg {
     FrtHash *current;
 };
 
-static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
-{
+static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg) {
     struct DelFilesArg *dfa = (struct DelFilesArg *)arg;
     FrtDeleter *dlr = dfa->dlr;
 
@@ -3773,8 +3755,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
         if (NULL != p) {
             *p = '\0';
             extension = p + 1;
-        }
-        else {
+        } else {
             extension = NULL;
         }
 
@@ -3789,16 +3770,14 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
         if (NULL == (si = (FrtSegmentInfo *)frt_h_get(dfa->current, segment_name))) {
             /* Delete if segment is not referenced: */
             do_delete = true;
-        }
-        else {
+        } else {
             char tmp_fn[FRT_SEGMENT_NAME_MAX_LENGTH];
             /* OK, segment is referenced, but file may still be orphan'd: */
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {
                 /* This file is stored in a CFS file for this segment: */
                 do_delete = true;
-            }
-            else if (0 == strcmp("del", extension)) {
+            } else if (0 == strcmp("del", extension)) {
                 /* This is a _segmentName_N.del file: */
                 if (!frt_fn_for_generation(tmp_fn, segment_name, "del", si->del_gen)
                     || 0 != strcmp(file_name, tmp_fn)) {
@@ -3807,8 +3786,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
                      * this segment, then delete it: */
                     do_delete = true;
                 }
-            }
-            else if (NULL != extension
+            } else if (NULL != extension
                      && ('s' == *extension || 'f' == *extension)
                      && isdigit(extension[1])) {
                 si_norm_file_name(si, tmp_fn, atoi(extension + 1));
@@ -3817,15 +3795,14 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
                     /* This is an orphan'd norms file: */
                     do_delete = true;
                 }
-            }
-            else if (0 == strcmp("cfs", extension) && !si->use_compound_file) {
+            } else if (0 == strcmp("cfs", extension) && !si->use_compound_file) {
                 /* This is a partially written _segmentName.cfs: */
                 do_delete = true;
             }
         }
 
         if (do_delete) {
-            deleter_queue_file(dlr, file_name);
+            frt_deleter_queue_file(dlr, file_name);
         }
     }
 }
@@ -3837,8 +3814,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
  * create the unused file (eg when merging segments), and we only remove from
  * deletable when a file is successfully deleted.
  */
-void frt_deleter_find_deletable_files(FrtDeleter *dlr)
-{
+void frt_deleter_find_deletable_files(FrtDeleter *dlr) {
     /* Gather all "current" segments: */
     int i;
     FrtSegmentInfos *sis = dlr->sis;
@@ -4207,7 +4183,7 @@ static void norm_rewrite(Norm *norm, FrtStore *store, FrtDeleter *dlr,
     const int field_num = norm->field_num;
 
     if (si_norm_file_name(si, norm_file_name, field_num)) {
-        deleter_queue_file(dlr, norm_file_name);
+        frt_deleter_queue_file(dlr, norm_file_name);
     }
     frt_si_advance_norm_gen(si, field_num);
     si_norm_file_name(si, norm_file_name, field_num);
@@ -4363,7 +4339,7 @@ static void sr_commit_i(FrtIndexReader *ir)
     if (SR(ir)->undelete_all || SR(ir)->deleted_docs_dirty) {
         if (si->del_gen >= 0) {
             frt_fn_for_generation(tmp_file_name, segment, "del", si->del_gen);
-            deleter_queue_file(ir->deleter, tmp_file_name);
+            frt_deleter_queue_file(ir->deleter, tmp_file_name);
         }
         if (SR(ir)->undelete_all) {
             si->del_gen = -1;
@@ -6116,14 +6092,7 @@ int frt_iw_doc_count(FrtIndexWriter *iw)
     return doc_cnt;
 }
 
-#define MOVE_TO_COMPOUND_DIR(file_name)\
-    deleter_queue_file(dlr, file_name);\
-    frt_cw_add_file(cw, file_name)
-
-static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis,
-                                    FrtSegmentInfo *si, char *cfs_file_name,
-                                    FrtDeleter *dlr)
-{
+static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis, FrtSegmentInfo *si, char *cfs_file_name, FrtDeleter *dlr) {
     int i;
     FrtCompoundWriter *cw;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
@@ -6137,19 +6106,18 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis,
     cw = frt_open_cw(store, cfs_file_name);
     for (i = 0; i < FRT_NELEMS(COMPOUND_EXTENSIONS); i++) {
         memcpy(ext, COMPOUND_EXTENSIONS[i], 4);
-        MOVE_TO_COMPOUND_DIR(file_name);
+        frt_cw_add_file(cw, file_name);
     }
 
     /* Field norm file_names */
     for (i = fis->size - 1; i >= 0; i--) {
-        if (fi_has_norms(fis->fields[i])
-            && si_norm_file_name(si, file_name, i)) {
-            MOVE_TO_COMPOUND_DIR(file_name);
+        if (fi_has_norms(fis->fields[i]) && si_norm_file_name(si, file_name, i)) {
+            frt_cw_add_file(cw, file_name);
         }
     }
 
     /* Perform the merge */
-    frt_cw_close(cw);
+    frt_cw_close(cw, dlr);
 }
 
 static void iw_commit_compound_file(FrtIndexWriter *iw, FrtSegmentInfo *si)

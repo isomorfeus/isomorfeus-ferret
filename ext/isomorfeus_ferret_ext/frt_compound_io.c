@@ -329,7 +329,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     frt_is_close(is);
 }
 
-void frt_cw_close(FrtCompoundWriter *cw)
+void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr)
 {
     FrtOutStream *os = NULL;
     int i;
@@ -356,6 +356,9 @@ void frt_cw_close(FrtCompoundWriter *cw)
     for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
         cw->file_entries[i].data_offset = frt_os_pos(os);
         cw_copy_file(cw, &cw->file_entries[i], os);
+        if (dlr) {
+            frt_deleter_queue_file(dlr, cw->file_entries[i].name);
+        }
     }
 
     /* Write the data offsets into the directory of the compound stream */

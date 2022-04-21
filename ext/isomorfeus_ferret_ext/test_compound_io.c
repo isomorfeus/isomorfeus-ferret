@@ -48,7 +48,7 @@ void test_compound_writer(TestCase *tc, void *data)
     cw = frt_open_cw(store, (char *)"cfile");
     frt_cw_add_file(cw, (char *)"file1");
     frt_cw_add_file(cw, (char *)"file2");
-    frt_cw_close(cw);
+    frt_cw_close(cw, NULL);
 
     is = store->open_input(store, "cfile");
     Aiequal(2, frt_is_read_vint(is));
@@ -94,7 +94,7 @@ void test_compound_io(TestCase *tc, void *data)
     frt_cw_add_file(cw, (char *)"file1");
     frt_cw_add_file(cw, (char *)"file2");
     frt_cw_add_file(cw, (char *)"file3");
-    frt_cw_close(cw);
+    frt_cw_close(cw, NULL);
 
     c_reader = frt_open_cmpd_store(store, "cfile");
     is1 = c_reader->open_input(c_reader, "file1");
@@ -137,7 +137,7 @@ void test_compound_io_many_files(TestCase *tc, void *data)
         frt_os_write_vint(os, MAGIC);
         frt_os_close(os);
     }
-    frt_cw_close(cw);
+    frt_cw_close(cw, NULL);
 
     c_reader = frt_open_cmpd_store(store, "_.cfs");
     for (i = 0; i < TEST_FILE_CNT; i++) {
