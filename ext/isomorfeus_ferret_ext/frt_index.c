@@ -5663,7 +5663,6 @@ static SegmentMergeInfo *smi_new(int base, FrtStore *store, FrtSegmentInfo *si)
         smi->store = frt_open_cmpd_store(store, file_name);
     }
 
-
     sprintf(file_name, "%s.fdx", segment);
     smi->doc_cnt = smi->max_doc
         = smi->store->length(smi->store, file_name) / FIELDS_IDX_PTR_SIZE;
