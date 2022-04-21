@@ -7,13 +7,11 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
 
   INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
   ITERATIONS = 10000
+  NUM_THREADS = 3
   ANALYZER = Isomorfeus::Ferret::Analysis::Analyzer.new
 
   def setup
-    @index = Index.new(:path => INDEX_DIR,
-                       :create => true,
-                       :analyzer => ANALYZER,
-                       :default_field => :content)
+    @index = Index.new(:path => INDEX_DIR, :create => true, :analyzer => ANALYZER, :default_field => :content)
     @verbose = false
   end
 
@@ -66,9 +64,12 @@ class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
 
   def test_threading
     threads = []
-    threads << Thread.new { search_thread }
-    threads << Thread.new { index_thread }
-
+    NUM_THREADS.times do
+      threads << Thread.new { search_thread }
+    end
+    NUM_THREADS.times do
+      threads << Thread.new { index_thread }
+    end
     threads.each { |t| t.join }
   end
 end
