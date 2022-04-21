@@ -15,8 +15,7 @@ class ThreadSafetyTest
   INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
   ANALYZER = Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new
   ITERATIONS = 1000
-  QUERY_PARSER = Isomorfeus::Ferret::QueryParser.new(:analyzer => ANALYZER,
-                                         :default_field => 'contents')
+  QUERY_PARSER = Isomorfeus::Ferret::QueryParser.new(:analyzer => ANALYZER, :default_field => 'contents')
   @@searcher = nil
 
   def run_index_thread(writer)
@@ -84,8 +83,7 @@ class ThreadSafetyTest
   def run_test_threads
     threads = []
     unless @options[:read_only]
-      writer = IndexWriter.new(:path => INDEX_DIR, :analyzer => ANALYZER,
-                               :create => !@options[:add])
+      writer = IndexWriter.new(:path => INDEX_DIR, :analyzer => ANALYZER, :create => !@options[:add])
 
       threads << Thread.new { run_index_thread(writer) }
       sleep(1)
