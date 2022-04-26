@@ -45,6 +45,7 @@ static void test_hash_str(TestCase *tc, void *data)
 
     size_t res;
     f = temp_open();
+    Assert(f != NULL, "Could not open tempfile");
     frt_h_str_print_keys(h, f);
     fseek(f, 0, SEEK_SET);
     res = fread(buf, 1, 100, f);
