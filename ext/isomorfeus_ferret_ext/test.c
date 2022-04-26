@@ -810,7 +810,7 @@ void Init_Test(void) {
     rb_define_singleton_method(mTest, "filter",         frb_ts_filter, 0);
     rb_define_singleton_method(mTest, "fs_store",       frb_ts_fs_store, 0);
     rb_define_singleton_method(mTest, "global",         frb_ts_global, 0);
-    rb_define_singleton_method(mTest, "hash",           frb_ts_hash, 0);
+    rb_define_singleton_method(mTest, "test_hash",      frb_ts_hash, 0);
     rb_define_singleton_method(mTest, "hashset",        frb_ts_hashset, 0);
     rb_define_singleton_method(mTest, "helper",         frb_ts_helper, 0);
     rb_define_singleton_method(mTest, "highlighter",    frb_ts_highlighter, 0);
