@@ -63,14 +63,8 @@ fis.add_field(:compressed_field, :store => :yes, :compression => :brotli, :term_
 
 ### Performance
 
-The encoding support demands its toll, indexing performance dropped a bit in comparision to 0.12, but still thousands of docs per second, depending on machine/docs.
-On Windows the indexing performance is still terrible, but that may be resolved in a future project.
-
-Search performance is still excellent and multiple times faster than Lucene.
-
-Lucene achieves roughly double the indexing performance. This seems to be because of the different way strings and
-encodings are handled in Java. For example, the Java WhitespaceTokenizer code requires only one method call per character (check for whitespace), but for Ruby, to support all the different encodings, several method calls are required per character (retrieve character according to encoding, check character for whitespace).
-Ferret is internally using the standard Ruby string encoding methods.
+For version 0.13.7 the performance bottle-nack has been identified and removed, ferret now delivers excellent indexing perfomance on all platforms, see numbers below.
+On Windows performance is still not as good as on Linux, but that is equally true for Lucene and because of how the Windows filesystem works.
 
 ## Documentation
 
@@ -105,43 +99,35 @@ Ensure your locale is set to C.UTF-8, because the internal c tests don't know ho
 
 A recent Java JDK must be installed to compile and run lucene benchmarks.
 
-Results on Linux:
-```
-Ferret 0.13.0:
-Indexing: 9.35 secs, Docs: 19043, 2035 docs/s
-Searching took: 0.3133133s for 8000 queries
-thats 25533 q/s
-Total found: 42000
-Index size: 28Mb
+Results, Ferret 0.13.7 vs. Lucene 9.1.0, WhitespaceAnalyzer, on old Intel Core i5 from 2015:
 
-Lucene 9.1.0:
-Indexing: 4.20 secs, Docs: 19043, 4538 docs/s
-Searching took: 1.64s for 8000 queries
-thats 4875 q/s
-Total found: 41000
-index size: 35Mb
+| OS      | Task       | Ferret          | Lucene*        |
+|---------|------------|-----------------|----------------|
+| Linux   | Indexing   |     4905 docs/s |    4785 docs/s |
+| Windows | Indexing   |     2361 docs/s |    2395 docs/s |
+| Linux   | Searching  | 25664 queries/s | 4708 queries/s |
+| Windows | Searching  |  3646 queries/s |  935 queries/s |
+|         | Index Size |           28 MB |          35 MB |
 
-JVM 11.0.14.1 (Ubuntu)
-```
+*Lucene 9.1.0 on JVM 11.0.14.1 (Ubuntu)
 
 ### Storing Fields with Compression, Indexing and Retrieval
 - clone repo
 - bundle install
 - rake ferret_compression_benchmark
 
-Results on Linux, 0.13.0:
+Results on Linux, 0.13.7, on old Intel Core i5 from 2015:
 
 | Compression | Index & Store | Retrieve      | Index size |
 |-------------|---------------|---------------|------------|
-| none        |   2008 docs/s | 153853 docs/s |      43 MB |
-| brotli      |   1726 docs/s |  58315 docs/s |      36 MB |
-| bzip2       |   1438 docs/s |  15382 docs/s |      38 MB |
-| lz4         |   1932 docs/s | 127100 docs/s |      41 MB |
+| none        |   4866 docs/s | 153853 docs/s |      43 MB |
+| brotli      |   3539 docs/s |  58315 docs/s |      36 MB |
+| bzip2       |   2624 docs/s |  15382 docs/s |      38 MB |
+| lz4         |   4639 docs/s | 127100 docs/s |      41 MB |
 
 ## Future
 
 Lots of things to do:
-- Improve indexing performance on Windows (WriteFile is terribly slow, maybe use mapping, see libuv)
 - Bring documentation in order in a docs directory
 - Review code (especially for memory/stack issues, typical c issues)
 - Take care of ruby GVL and threading
