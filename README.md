@@ -63,7 +63,7 @@ fis.add_field(:compressed_field, :store => :yes, :compression => :brotli, :term_
 
 ### Performance
 
-For version 0.13.7 the performance bottle-nack has been identified and removed, ferret now delivers excellent indexing perfomance on all platforms, see numbers below.
+For version 0.13.7 the performance bottle neck has been identified and removed, ferret now delivers excellent indexing perfomance on all platforms, see numbers below.
 On Windows performance is still not as good as on Linux, but that is equally true for Lucene and because of how the Windows filesystem works.
 
 ## Documentation
