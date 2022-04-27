@@ -149,7 +149,7 @@ void frt_os_seek(FrtOutStream *os, off_t new_pos)
  */
 void frt_os_write_byte(FrtOutStream *os, frt_uchar b)
 {
-    if (os->buf.pos >= FRT_BUFFER_SIZE) {
+    if (os->buf.pos >= (FRT_BUFFER_SIZE - 1)) {
         frt_os_flush(os);
     }
     write_byte(os, b);
@@ -157,15 +157,12 @@ void frt_os_write_byte(FrtOutStream *os, frt_uchar b)
 
 void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
 {
-    if (os->buf.pos > 0) {      /* flush buffer */
-        frt_os_flush(os);
-    }
-
-    if (len < FRT_BUFFER_SIZE) {
-        os->m->flush_i(os, buf, len);
-        os->buf.start += len;
+    if (len < (FRT_BUFFER_SIZE - os->buf.pos)) {
+        memcpy(os->buf.buf + os->buf.pos, buf, len);
+        os->buf.pos += len;
     }
     else {
+        frt_os_flush(os);
         int pos = 0;
         int size;
         while (pos < len) {
