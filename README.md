@@ -114,7 +114,6 @@ LinuxPi on RaspberryPi 400:
 |         | Index Size |           28 MB |          35 MB |
 
 *Lucene 9.1.0 on JVM 11.0.14.1 (Ubuntu)
-LinuxPi run on RaspberryPi
 
 ### Storing Fields with Compression, Indexing and Retrieval
 - clone repo
