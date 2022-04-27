@@ -674,8 +674,7 @@ frb_fis_get_tk_fields(VALUE self)
  ****************************************************************************/
 
 static void frb_te_free(void *p) {
-    FrtTermEnum *te = (FrtTermEnum *)p;
-    te->close(te);
+    ((FrtTermEnum *)p)->close((FrtTermEnum *)p);
 }
 
 static size_t frb_te_size(const void *p) {
