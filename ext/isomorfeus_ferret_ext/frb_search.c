@@ -713,7 +713,7 @@ static size_t frb_boolean_clause_t_size(const void *p) {
 }
 
 static void frb_bc_mark(void *p) {
-    if (((FrtBooleanClause *)p)->query->rquery)
+    if (((FrtBooleanClause *)p)->query && ((FrtBooleanClause *)p)->query->rquery)
         rb_gc_mark(((FrtBooleanClause *)p)->query->rquery);
 }
 
@@ -1838,9 +1838,9 @@ static size_t frb_filtered_query_size(const void *p) {
 
 static void frb_fqq_mark(void *p) {
     FrtFilteredQuery *fq = (FrtFilteredQuery *)p;
-    if (fq->query->rquery)
+    if (fq->query && fq->query->rquery)
         rb_gc_mark(fq->query->rquery);
-    if (fq->filter->rfilter)
+    if (fq->filter && fq->filter->rfilter)
         rb_gc_mark(fq->filter->rfilter);
 }
 
@@ -2352,9 +2352,9 @@ static size_t frb_span_not_query_size(const void *p) {
 
 static void frb_spanxq_mark(void *p) {
     FrtSpanNotQuery *sxq = (FrtSpanNotQuery *)p;
-    if (sxq->inc->rquery)
+    if (sxq->inc && sxq->inc->rquery)
         rb_gc_mark(sxq->inc->rquery);
-    if (sxq->exc->rquery)
+    if (sxq->exc && sxq->exc->rquery)
         rb_gc_mark(sxq->exc->rquery);
 }
 
