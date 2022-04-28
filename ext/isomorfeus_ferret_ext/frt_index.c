@@ -6432,6 +6432,8 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr, const char *s
         sprintf(file_name, "%s.del", segment);
         del_out = store_out->new_output(store_out, file_name);
         frt_is2os_copy_bytes(del_in, del_out, frt_is_length(del_in));
+        frt_os_close(del_out);
+        frt_is_close(del_in);
     }
 
     if (map) {
