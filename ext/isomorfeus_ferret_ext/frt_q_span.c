@@ -4,7 +4,7 @@
 #include "frt_search.h"
 #include "frt_hashset.h"
 
-#undef close
+// #undef close
 
 #define CLAUSE_INIT_CAPA 4
 

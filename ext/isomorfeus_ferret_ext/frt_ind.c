@@ -2,7 +2,7 @@
 #include "frt_array.h"
 #include <string.h>
 
-#undef close
+// #undef close
 
 static const char *NON_UNIQUE_KEY_ERROR_MSG =
     "Tried to use a key that was not unique";

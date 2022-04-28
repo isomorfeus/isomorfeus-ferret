@@ -4,7 +4,7 @@
 #include "isomorfeus_ferret.h"
 #include <ruby.h>
 
-#undef close
+// #undef close
 
 VALUE mSearch;
 

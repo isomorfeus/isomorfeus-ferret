@@ -2,8 +2,8 @@
 #include "testhelper.h"
 #include "test.h"
 
-#undef close
-#undef read
+// #undef close
+// #undef read
 
 static ID body, title, text, author, year, changing_field, compressed_field_brotli, compressed_field_bzip2, compressed_field_lz4, tag;
 

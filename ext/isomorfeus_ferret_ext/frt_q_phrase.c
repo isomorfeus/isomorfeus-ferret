@@ -4,7 +4,7 @@
 #include "frt_search.h"
 #include "frt_array.h"
 
-#undef close
+// #undef close
 
 #define PhQ(query) ((FrtPhraseQuery *)(query))
 

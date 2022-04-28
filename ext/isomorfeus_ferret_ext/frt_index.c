@@ -11,8 +11,8 @@
 #include "bzlib.h"
 #include "lz4frame.h"
 
-#undef close
-#undef read
+// #undef close
+// #undef read
 
 extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);

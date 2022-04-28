@@ -3,7 +3,7 @@
 #include <limits.h>
 #include "test.h"
 
-#undef rename
+// #undef rename
 
 #define TEST_LOCK_NAME "test"
 

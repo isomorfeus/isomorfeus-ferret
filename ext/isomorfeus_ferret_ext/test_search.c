@@ -5,7 +5,7 @@
 #include "testhelper.h"
 #include "test.h"
 
-#undef close
+// #undef close
 
 #define ARRAY_SIZE 40
 

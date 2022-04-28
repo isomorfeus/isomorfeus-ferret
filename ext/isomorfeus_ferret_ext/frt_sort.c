@@ -3,7 +3,7 @@
 #include "frt_index.h"
 #include "frt_field_index.h"
 
-#undef close
+// #undef close
 
 /***************************************************************************
  *

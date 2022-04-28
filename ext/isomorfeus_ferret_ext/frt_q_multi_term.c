@@ -3,8 +3,8 @@
 #include "frt_search.h"
 #include "frt_helper.h"
 
-#undef close
-#undef read
+// #undef close
+// #undef read
 
 #define MTQ(query) ((FrtMultiTermQuery *)(query))
 

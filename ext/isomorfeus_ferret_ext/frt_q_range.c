@@ -2,7 +2,7 @@
 #include "frt_global.h"
 #include "frt_search.h"
 
-#undef close
+// #undef close
 
 /*****************************************************************************
  *

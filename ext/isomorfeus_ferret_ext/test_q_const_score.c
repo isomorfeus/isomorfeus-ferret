@@ -1,7 +1,7 @@
 #include "frt_search.h"
 #include "test.h"
 
-#undef close
+// #undef close
 
 static ID num;
 
