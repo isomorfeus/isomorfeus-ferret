@@ -11,12 +11,12 @@ At the [Isomorfeus Framework Project](https://isomorfeus.com)
 
 ## About this project
 
-Isomorfeus-Ferret is a revived version of the original ferret gem created by Dave Balmain.
+Isomorfeus-Ferret is a revived version of the original ferret gem created by Dave Balmain, [https://github.com/dbalmain/ferret](https://github.com/dbalmain/ferret).
 During revival many things havbe been fixed, now all tests pass, no crashes and it
 successfully compiles and runs with rubys >3. Its no longer a goal to have
 a c library available, but instead the usage is meant as ruby gem with a c extension only.
 
-It should work on *nixes, *nuxes, *BSDs and also works on Windows.
+It works on *nixes, *nuxes, *BSDs and also works on Windows and RaspberryPi.
 
 ## Improvements and Changes in Version 0.13
 

@@ -34,7 +34,7 @@ static void frb_qp_free(void *p) {
 }
 
 static void frb_qp_mark(void *p) {
-    if (((FrtQParser *)p)->analyzer->ranalyzer)
+    if (((FrtQParser *)p)->analyzer && ((FrtQParser *)p)->analyzer->ranalyzer)
         rb_gc_mark(((FrtQParser *)p)->analyzer->ranalyzer);
 }
 

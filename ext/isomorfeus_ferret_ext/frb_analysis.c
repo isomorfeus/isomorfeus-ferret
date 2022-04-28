@@ -458,7 +458,7 @@ static VALUE frb_ts_next(VALUE self) {
 
 static void frb_tf_mark(void *p) {
     FrtTokenStream *ts = (FrtTokenStream *)p;
-    if (TkFilt(ts)->sub_ts->rts)
+    if (TkFilt(ts)->sub_ts && TkFilt(ts)->sub_ts->rts)
         rb_gc_mark(TkFilt(ts)->sub_ts->rts);
 }
 
@@ -1331,7 +1331,7 @@ static void frb_h_mark_values_i(void *key, void *value, void *arg) {
 }
 
 static void frb_pfa_mark(void *p) {
-    if (PFA(p)->default_a->ranalyzer)
+    if (PFA(p)->default_a && PFA(p)->default_a->ranalyzer)
         rb_gc_mark(PFA(p)->default_a->ranalyzer);
     frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
 }
@@ -1435,7 +1435,7 @@ static VALUE frb_pfa_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstri
 /*** RegExpAnalyzer ***/
 
 static void frb_re_analyzer_mark(void *p) {
-    if (((FrtAnalyzer *)p)->current_ts->rts)
+    if (((FrtAnalyzer *)p)->current_ts && ((FrtAnalyzer *)p)->current_ts->rts)
         rb_gc_mark(((FrtAnalyzer *)p)->current_ts->rts);
 }
 

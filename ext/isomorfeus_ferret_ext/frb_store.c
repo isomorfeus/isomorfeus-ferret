@@ -34,7 +34,7 @@ void frb_lock_free(void *p) {
 
 void frb_lock_mark(void *p) {
     FrtLock *lock = (FrtLock *)p;
-    if (lock->store->rstore)
+    if (lock->store && lock->store->rstore)
         rb_gc_mark(lock->store->rstore);
 }
 
