@@ -3913,9 +3913,10 @@ static FrtIndexReader *ir_setup(FrtIndexReader *ir, FrtStore *store, FrtSegmentI
         ir->store = store;
         FRT_REF(store);
     }
-    ir->sis = sis;
-    ir->fis = fis;
+    ir->sis     = sis;
+    ir->fis     = fis;
     ir->ref_cnt = 1;
+    ir->rir     = Qnil;
 
     ir->is_owner = is_owner;
     if (is_owner) {
