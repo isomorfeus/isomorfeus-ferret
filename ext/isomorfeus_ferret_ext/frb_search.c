@@ -3557,9 +3557,9 @@ static size_t frb_index_searcher_size(const void *p) {
 
 static void frb_sea_mark(void *p) {
     FrtIndexSearcher *isea = (FrtIndexSearcher *)p;
-    if (isea->ir->rir)
+    if (isea->ir && isea->ir->rir)
         rb_gc_mark(isea->ir->rir);
-    if (isea->ir->store->rstore)
+    if (isea->ir && isea->ir->store && isea->ir->store->rstore)
         rb_gc_mark(isea->ir->store->rstore);
 }
 
