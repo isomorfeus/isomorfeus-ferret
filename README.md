@@ -100,15 +100,17 @@ Ensure your locale is set to C.UTF-8, because the internal c tests don't know ho
 A recent Java JDK must be installed to compile and run lucene benchmarks.
 
 Results, Ferret 0.13.7 vs. Lucene 9.1.0, WhitespaceAnalyzer,
-Linux and Windows on old Intel Core i5 from 2015
+Linux Ubuntu 20.04, FreeBSD 13.0 and Windows 10 on old Intel Core i5 from 2015,
 LinuxPi on RaspberryPi 400:
 
 | OS      | Task       | Ferret          | Lucene*        |
 |---------|------------|-----------------|----------------|
 | Linux   | Indexing   |     4905 docs/s |    4785 docs/s |
+| FreeBSD | Indexing   |     4516 docs/s |       -        |
 | Windows | Indexing   |     2361 docs/s |    2395 docs/s |
 | LinuxPi | Indexing   |     1161 docs/s |     707 docs/s |
 | Linux   | Searching  | 25664 queries/s | 4708 queries/s |
+| FreeBSD | Searching  | 25073 queries/s |    -           |
 | Windows | Searching  |  3646 queries/s |  935 queries/s |
 | LinuxPi | Searching  |  5768 queries/s |  680 queries/s |
 |         | Index Size |           28 MB |          35 MB |
