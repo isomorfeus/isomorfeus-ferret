@@ -4126,7 +4126,6 @@ void frt_ir_close(FrtIndexReader *ir)
     else {
         frt_mutex_unlock(&ir->mutex);
     }
-
 }
 
 /**
