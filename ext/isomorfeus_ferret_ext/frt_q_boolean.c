@@ -1280,7 +1280,7 @@ static int  bc_eq(FrtBooleanClause *self, FrtBooleanClause *o) {
 }
 
 FrtBooleanClause *frt_bc_alloc(void) {
-    return FRT_ALLOC(FrtBooleanClause);
+    return FRT_ALLOC_AND_ZERO(FrtBooleanClause);
 }
 
 FrtBooleanClause *frt_bc_init(FrtBooleanClause *self, FrtQuery *query, FrtBCType occur) {

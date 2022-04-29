@@ -429,6 +429,7 @@ static VALUE frb_get_field_infos(FrtFieldInfos *fis) {
 
 static VALUE frb_fis_alloc(VALUE rclass) {
     FrtFieldInfos *fis = frt_fis_alloc();
+    fis->size = 0;
     return TypedData_Wrap_Struct(rclass, &frb_field_infos_t, fis);
 }
 

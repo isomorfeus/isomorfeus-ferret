@@ -1837,11 +1837,11 @@ static size_t frb_filtered_query_size(const void *p) {
 }
 
 static void frb_fqq_mark(void *p) {
-    FrtFilteredQuery *fq = (FrtFilteredQuery *)p;
-    if (fq->query && fq->query->rquery)
-        rb_gc_mark(fq->query->rquery);
-    if (fq->filter && fq->filter->rfilter)
-        rb_gc_mark(fq->filter->rfilter);
+    FrtFilteredQuery *fqq = (FrtFilteredQuery *)p;
+    if (fqq->query && fqq->query->rquery)
+        rb_gc_mark(fqq->query->rquery);
+    if (fqq->filter && fqq->filter->rfilter)
+        rb_gc_mark(fqq->filter->rfilter);
 }
 
 const rb_data_type_t frb_filtered_query_t = {
@@ -1860,6 +1860,8 @@ const rb_data_type_t frb_filtered_query_t = {
 
 static VALUE frb_fqq_alloc(VALUE rclass) {
     FrtQuery *fqq = frt_fq_alloc();
+    ((FrtFilteredQuery *)fqq)->query = NULL;
+    ((FrtFilteredQuery *)fqq)->filter = NULL;
     return TypedData_Wrap_Struct(rclass, &frb_filtered_query_t, fqq);
 }
 
@@ -2172,6 +2174,7 @@ const rb_data_type_t frb_span_near_query_t = {
 
 static VALUE frb_spannq_alloc(VALUE rclass) {
     FrtQuery *snq = frt_spannq_alloc();
+    ((FrtSpanNearQuery *)snq)->c_cnt = 0;
     return TypedData_Wrap_Struct(rclass, &frb_span_near_query_t, snq);
 }
 
@@ -3557,10 +3560,12 @@ static size_t frb_index_searcher_size(const void *p) {
 
 static void frb_sea_mark(void *p) {
     FrtIndexSearcher *isea = (FrtIndexSearcher *)p;
-    if (isea->ir && isea->ir->rir)
-        rb_gc_mark(isea->ir->rir);
-    if (isea->ir && isea->ir->store && isea->ir->store->rstore)
-        rb_gc_mark(isea->ir->store->rstore);
+    if (isea->ir) {
+        if (isea->ir->rir)
+            rb_gc_mark(isea->ir->rir);
+        if (isea->ir->store && isea->ir->store->rstore)
+            rb_gc_mark(isea->ir->store->rstore);
+    }
 }
 
 const rb_data_type_t frb_index_searcher_t = {
@@ -3578,8 +3583,9 @@ const rb_data_type_t frb_index_searcher_t = {
 };
 
 static VALUE frb_sea_alloc(VALUE rclass) {
-    FrtSearcher *s = frt_isea_alloc();
-    return TypedData_Wrap_Struct(rclass, &frb_index_searcher_t, s);
+    FrtSearcher *sea = frt_isea_alloc();
+    ((FrtIndexSearcher *)sea)->ir = NULL;
+    return TypedData_Wrap_Struct(rclass, &frb_index_searcher_t, sea);
 }
 
 /*
@@ -3665,6 +3671,7 @@ const rb_data_type_t frb_multi_searcher_t = {
 
 static VALUE frb_ms_alloc(VALUE rclass) {
     FrtSearcher *s = frt_msea_alloc();
+    ((FrtMultiSearcher *)s)->s_cnt = 0;
     return TypedData_Wrap_Struct(rclass, &frb_multi_searcher_t, s);
 }
 

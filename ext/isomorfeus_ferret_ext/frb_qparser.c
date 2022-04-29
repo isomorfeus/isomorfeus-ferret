@@ -59,6 +59,7 @@ const rb_data_type_t frb_qp_t = {
 
 static VALUE frb_qp_alloc(VALUE rclass) {
     FrtQParser *qp = frt_qp_alloc();
+    qp->analyzer = NULL;
     return TypedData_Wrap_Struct(rclass, &frb_qp_t, qp);
 }
 

@@ -1333,7 +1333,8 @@ static void frb_h_mark_values_i(void *key, void *value, void *arg) {
 static void frb_pfa_mark(void *p) {
     if (PFA(p)->default_a && PFA(p)->default_a->ranalyzer)
         rb_gc_mark(PFA(p)->default_a->ranalyzer);
-    frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
+    if (PFA(p)->dict)
+        frt_h_each(PFA(p)->dict, &frb_h_mark_values_i, NULL);
 }
 
 /*** PerFieldAnalyzer ***/
@@ -1370,6 +1371,8 @@ const rb_data_type_t frb_per_field_analyzer_t = {
 
 static VALUE frb_per_field_analyzer_alloc(VALUE rclass) {
     FrtAnalyzer *a = frt_per_field_analyzer_alloc();
+    PFA(a)->default_a = NULL;
+    PFA(a)->dict = NULL;
     return TypedData_Wrap_Struct(rclass, &frb_per_field_analyzer_t, a);
 }
 
