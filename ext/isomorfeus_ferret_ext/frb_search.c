@@ -3623,7 +3623,6 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
     }
     TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
     frt_isea_init(sea, ir);
-    ((FrtIndexSearcher *)sea)->close_ir = false;
     sea->rsea = self;
     return self;
 }

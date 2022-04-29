@@ -849,7 +849,6 @@ extern char **frt_searcher_highlight(FrtSearcher *self,
 typedef struct FrtIndexSearcher {
     FrtSearcher    super;
     FrtIndexReader *ir;
-    bool           close_ir : 1;
 } FrtIndexSearcher;
 
 extern FrtSearcher *frt_isea_alloc(void);

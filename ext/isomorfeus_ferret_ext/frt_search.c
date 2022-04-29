@@ -1181,7 +1181,7 @@ static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num,
 }
 
 static void isea_close(FrtSearcher *self) {
-    if (ISEA(self)->ir && ISEA(self)->close_ir) {
+    if (ISEA(self)->ir) {
         frt_ir_close(ISEA(self)->ir);
     }
     free(self);
@@ -1193,8 +1193,7 @@ FrtSearcher *frt_isea_alloc(void) {
 
 FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir) {
     ISEA(self)->ir          = ir;
-    ISEA(self)->close_ir    = true;
-
+    FRT_REF(ir);
     self->similarity        = frt_sim_create_default();
     self->doc_freq          = &frt_isea_doc_freq;
     self->get_doc           = &isea_get_doc;
