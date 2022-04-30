@@ -23,7 +23,7 @@ class ThreadSafetyTest
 
     use_compound_file = false
 
-    (400*ITERATIONS).times do |i|
+    (40*ITERATIONS).times do |i|
       n = rand(0xFFFFFFFF)
       d = {:id => n.to_s, :contents => n.to_spoken}
       puts("Adding #{n}") if @options[:verbose]
@@ -54,7 +54,7 @@ class ThreadSafetyTest
       searcher = Searcher.new(INDEX_DIR)
     end
 
-    (50*ITERATIONS).times do |i|
+    (5*ITERATIONS).times do |i|
       search_for(rand(0xFFFFFFFF), (searcher.nil? ? @@searcher : searcher))
       if (i % reopen_interval == 0)
         searcher = Searcher.new(INDEX_DIR)
