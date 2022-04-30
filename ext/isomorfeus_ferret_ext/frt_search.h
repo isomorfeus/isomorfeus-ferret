@@ -790,6 +790,7 @@ typedef struct FrtPostFilter {
 } FrtPostFilter;
 
 struct FrtSearcher {
+    int            ref_cnt;
     FrtSimilarity  *similarity;
     int            (*doc_freq)(FrtSearcher *self, ID field, const char *term);
     FrtDocument    *(*get_doc)(FrtSearcher *self, int doc_num);
