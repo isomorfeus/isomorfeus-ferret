@@ -42,7 +42,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   end
 
   def do_optimize(index)
-    puts "Optimizing the index"
+    puts "Optimizing the index" if @verbose
     index.optimize
   end
 
