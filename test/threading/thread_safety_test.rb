@@ -56,13 +56,8 @@ class ThreadSafetyTest
 
     (50*ITERATIONS).times do |i|
       search_for(rand(0xFFFFFFFF), (searcher.nil? ? @@searcher : searcher))
-      if (i%reopen_interval == 0)
-        if (searcher == nil)
-          @@searcher = Searcher.new(INDEX_DIR)
-        else
-          searcher.close
-          searcher = Searcher.new(INDEX_DIR)
-        end
+      if (i % reopen_interval == 0)
+        searcher = Searcher.new(INDEX_DIR)
       end
     end
   rescue => e
@@ -89,14 +84,14 @@ class ThreadSafetyTest
       sleep(1)
     end
 
-    threads << Thread.new { run_search_thread(false)}
+    threads << Thread.new { run_search_thread(false) }
 
     @@searcher = Searcher.new(INDEX_DIR)
-    threads << Thread.new { run_search_thread(true)}
+    threads << Thread.new { run_search_thread(true) }
 
-    threads << Thread.new { run_search_thread(true)}
+    threads << Thread.new { run_search_thread(true) }
 
-    threads.each {|t| t.join}
+    threads.each { |t| t.join }
   end
 end
 
