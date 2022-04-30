@@ -12,7 +12,7 @@ class ThreadSafetyTest
     @options = options
   end
 
-  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
+  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".." , "temp", "threading"))
   ANALYZER = Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new
   ITERATIONS = 1000
   QUERY_PARSER = Isomorfeus::Ferret::QueryParser.new(:analyzer => ANALYZER, :default_field => 'contents')
