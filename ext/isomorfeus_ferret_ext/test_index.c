@@ -1684,55 +1684,55 @@ static void test_ir_term_doc_enum(TestCase *tc, void *data)
 static void test_ir_term_vectors(TestCase *tc, void *data)
 {
     FrtIndexReader *ir = (FrtIndexReader *)data;
-
-    FrtTermVector *tv = ir->term_vector(ir, 3, rb_intern("body"));
     FrtHash *tvs;
+    FrtTermVector *tv = ir->term_vector(ir, 3, rb_intern("body"));
+    if (Apnotnull(tv)) {
+        Asequal("body", rb_id2name(tv->field));
+        Aiequal(4, tv->term_cnt);
+        Asequal("word1", tv->terms[0].text);
+        Asequal("word2", tv->terms[1].text);
+        Asequal("word3", tv->terms[2].text);
+        Asequal("word4", tv->terms[3].text);
+        Aiequal(3, tv->terms[0].freq);
+        Aiequal(2, tv->terms[0].positions[0]);
+        Aiequal(4, tv->terms[0].positions[1]);
+        Aiequal(7, tv->terms[0].positions[2]);
+        Aiequal(12, tv->offsets[tv->terms[0].positions[0]].start);
+        Aiequal(17, tv->offsets[tv->terms[0].positions[0]].end);
+        Aiequal(24, tv->offsets[tv->terms[0].positions[1]].start);
+        Aiequal(29, tv->offsets[tv->terms[0].positions[1]].end);
+        Aiequal(42, tv->offsets[tv->terms[0].positions[2]].start);
+        Aiequal(47, tv->offsets[tv->terms[0].positions[2]].end);
 
-    Asequal("body", rb_id2name(tv->field));
-    Aiequal(4, tv->term_cnt);
-    Asequal("word1", tv->terms[0].text);
-    Asequal("word2", tv->terms[1].text);
-    Asequal("word3", tv->terms[2].text);
-    Asequal("word4", tv->terms[3].text);
-    Aiequal(3, tv->terms[0].freq);
-    Aiequal(2, tv->terms[0].positions[0]);
-    Aiequal(4, tv->terms[0].positions[1]);
-    Aiequal(7, tv->terms[0].positions[2]);
-    Aiequal(12, tv->offsets[tv->terms[0].positions[0]].start);
-    Aiequal(17, tv->offsets[tv->terms[0].positions[0]].end);
-    Aiequal(24, tv->offsets[tv->terms[0].positions[1]].start);
-    Aiequal(29, tv->offsets[tv->terms[0].positions[1]].end);
-    Aiequal(42, tv->offsets[tv->terms[0].positions[2]].start);
-    Aiequal(47, tv->offsets[tv->terms[0].positions[2]].end);
+        Aiequal(1, tv->terms[1].freq);
+        Aiequal(3, tv->terms[1].positions[0]);
+        Aiequal(18, tv->offsets[tv->terms[1].positions[0]].start);
+        Aiequal(23, tv->offsets[tv->terms[1].positions[0]].end);
 
-    Aiequal(1, tv->terms[1].freq);
-    Aiequal(3, tv->terms[1].positions[0]);
-    Aiequal(18, tv->offsets[tv->terms[1].positions[0]].start);
-    Aiequal(23, tv->offsets[tv->terms[1].positions[0]].end);
+        Aiequal(4, tv->terms[2].freq);
+        Aiequal(0, tv->terms[2].positions[0]);
+        Aiequal(5, tv->terms[2].positions[1]);
+        Aiequal(8, tv->terms[2].positions[2]);
+        Aiequal(9, tv->terms[2].positions[3]);
+        Aiequal(0, tv->offsets[tv->terms[2].positions[0]].start);
+        Aiequal(5, tv->offsets[tv->terms[2].positions[0]].end);
+        Aiequal(30, tv->offsets[tv->terms[2].positions[1]].start);
+        Aiequal(35, tv->offsets[tv->terms[2].positions[1]].end);
+        Aiequal(48, tv->offsets[tv->terms[2].positions[2]].start);
+        Aiequal(53, tv->offsets[tv->terms[2].positions[2]].end);
+        Aiequal(54, tv->offsets[tv->terms[2].positions[3]].start);
+        Aiequal(59, tv->offsets[tv->terms[2].positions[3]].end);
 
-    Aiequal(4, tv->terms[2].freq);
-    Aiequal(0, tv->terms[2].positions[0]);
-    Aiequal(5, tv->terms[2].positions[1]);
-    Aiequal(8, tv->terms[2].positions[2]);
-    Aiequal(9, tv->terms[2].positions[3]);
-    Aiequal(0, tv->offsets[tv->terms[2].positions[0]].start);
-    Aiequal(5, tv->offsets[tv->terms[2].positions[0]].end);
-    Aiequal(30, tv->offsets[tv->terms[2].positions[1]].start);
-    Aiequal(35, tv->offsets[tv->terms[2].positions[1]].end);
-    Aiequal(48, tv->offsets[tv->terms[2].positions[2]].start);
-    Aiequal(53, tv->offsets[tv->terms[2].positions[2]].end);
-    Aiequal(54, tv->offsets[tv->terms[2].positions[3]].start);
-    Aiequal(59, tv->offsets[tv->terms[2].positions[3]].end);
+        Aiequal(2, tv->terms[3].freq);
+        Aiequal(1, tv->terms[3].positions[0]);
+        Aiequal(6, tv->terms[3].positions[1]);
+        Aiequal(6, tv->offsets[tv->terms[3].positions[0]].start);
+        Aiequal(11, tv->offsets[tv->terms[3].positions[0]].end);
+        Aiequal(36, tv->offsets[tv->terms[3].positions[1]].start);
+        Aiequal(41, tv->offsets[tv->terms[3].positions[1]].end);
 
-    Aiequal(2, tv->terms[3].freq);
-    Aiequal(1, tv->terms[3].positions[0]);
-    Aiequal(6, tv->terms[3].positions[1]);
-    Aiequal(6, tv->offsets[tv->terms[3].positions[0]].start);
-    Aiequal(11, tv->offsets[tv->terms[3].positions[0]].end);
-    Aiequal(36, tv->offsets[tv->terms[3].positions[1]].start);
-    Aiequal(41, tv->offsets[tv->terms[3].positions[1]].end);
-
-    frt_tv_destroy(tv);
+        frt_tv_destroy(tv);
+    }
 
     tvs = ir->term_vectors(ir, 3);
     Aiequal(3, tvs->size);
