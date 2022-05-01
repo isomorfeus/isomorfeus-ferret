@@ -4892,6 +4892,7 @@ FrtMultiReader *frt_mr_init(FrtMultiReader *mr, FrtIndexReader **sub_readers, co
 
     for (i = 0; i < r_cnt; i++) {
         FrtIndexReader *sub_reader = sub_readers[i];
+        FRT_REF(sub_reader);
         mr->starts[i] = mr->max_doc;
         mr->max_doc += sub_reader->max_doc(sub_reader); /* compute max_docs */
 
