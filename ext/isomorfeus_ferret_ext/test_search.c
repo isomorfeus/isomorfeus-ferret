@@ -1688,8 +1688,9 @@ TestSuite *ts_search(TestSuite *suite)
 
     tst_run_test(suite, test_search_unscored, (void *)searcher);
 
-    frt_store_deref(store);
     frt_searcher_close(searcher);
+    frt_ir_close(ir);
+    frt_store_close(store);
     return suite;
 }
 
@@ -1845,7 +1846,9 @@ TestSuite *ts_multi_search(TestSuite *suite)
     searchers = FRT_ALLOC_N(FrtSearcher *, 2);
     searchers[0] = frt_isea_new(ir0);
     searchers[1] = frt_isea_new(ir1);
-    searcher = frt_msea_new(searchers, 2, true);
+    FRT_DEREF(searchers[0]);
+    FRT_DEREF(searchers[1]);
+    searcher = frt_msea_new(searchers, 2);
 
     tst_run_test(suite, test_get_doc, (void *)searcher);
 
@@ -1862,8 +1865,10 @@ TestSuite *ts_multi_search(TestSuite *suite)
 
     tst_run_test(suite, test_query_combine, NULL);
 
-    frt_store_deref(store0);
-    frt_store_deref(store1);
     frt_searcher_close(searcher);
+    frt_ir_close(ir0);
+    frt_ir_close(ir1);
+    frt_store_close(store0);
+    frt_store_close(store1);
     return suite;
 }

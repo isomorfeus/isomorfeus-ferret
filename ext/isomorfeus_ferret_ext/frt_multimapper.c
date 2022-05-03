@@ -328,19 +328,18 @@ char *frt_mulmap_dynamic_map(FrtMultiMapper *self, char *from)
     return to;
 }
 
-void frt_mulmap_destroy(FrtMultiMapper *self)
-{
-    if (--(self->ref_cnt) <= 0) {
+void frt_mulmap_destroy(FrtMultiMapper *mulm) {
+    if (FRT_DEREF(mulm) <= 0) {
         int i;
-        mulmap_free_dstates(self);
-        for (i = self->size - 1; i >= 0; i--) {
-            FrtMapping *mapping = self->mappings[i];
+        mulmap_free_dstates(mulm);
+        for (i = mulm->size - 1; i >= 0; i--) {
+            FrtMapping *mapping = mulm->mappings[i];
             free(mapping->pattern);
             free(mapping->replacement);
             free(mapping);
         }
-        free(self->mappings);
-        free(self->dstates);
-        free(self);
+        free(mulm->mappings);
+        free(mulm->dstates);
+        free(mulm);
     }
 }

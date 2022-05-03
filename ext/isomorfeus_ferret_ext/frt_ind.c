@@ -40,8 +40,8 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
     frt_mutex_init(&self->mutex, NULL);
     self->has_writes = false;
     if (store) {
-        FRT_REF(store);
         self->store = store;
+        FRT_REF(store);
     } else {
         self->store = frt_open_ram_store(NULL);
         create = true;
@@ -84,13 +84,12 @@ void frt_index_destroy(FrtIndex *self)
     frt_mutex_destroy(&self->mutex);
     INDEX_CLOSE_READER(self);
     if (self->iw) frt_iw_close(self->iw);
-    frt_store_deref(self->store);
+    frt_store_close(self->store);
     frt_a_deref(self->analyzer);
     if (self->qp) frt_qp_destroy(self->qp);
     if (self->key) frt_hs_destroy(self->key);
     free(self);
 }
-
 
 void frt_ensure_writer_open(FrtIndex *self)
 {

@@ -100,6 +100,7 @@ static void test_span_term(TestCase *tc, void *data)
     frt_q_deref(tq);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_term_hash(TestCase *tc, void *data)
@@ -169,6 +170,7 @@ static void test_span_multi_term(TestCase *tc, void *data)
     frt_q_deref(mtq);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_multi_term_hash(TestCase *tc, void *data)
@@ -230,6 +232,7 @@ static void test_span_prefix(TestCase *tc, void *data)
     frt_q_deref(prq);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_prefix_hash(TestCase *tc, void *data)
@@ -279,6 +282,7 @@ static void test_span_first(TestCase *tc, void *data)
     frt_q_deref(q);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_first_hash(TestCase *tc, void *data)
@@ -327,6 +331,7 @@ static void test_span_or(TestCase *tc, void *data)
     TEST_SE(q, ir, "SpanOrEnum(span_or[span_terms(field:flip),span_terms(field:flop)])@START");
     frt_q_deref(q);
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_or_hash(TestCase *tc, void *data)
@@ -407,6 +412,7 @@ static void test_span_near(TestCase *tc, void *data)
     frt_q_deref(q);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_near_hash(TestCase *tc, void *data)
@@ -514,6 +520,7 @@ static void test_span_not(TestCase *tc, void *data)
     frt_q_deref(q);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_span_not_hash(TestCase *tc, void *data)
@@ -573,6 +580,6 @@ TestSuite *ts_q_span(TestSuite *suite)
     tst_run_test(suite, test_span_near_hash, NULL);
     tst_run_test(suite, test_span_not, (void *)store);
     tst_run_test(suite, test_span_not_hash, NULL);
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

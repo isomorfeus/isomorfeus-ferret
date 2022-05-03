@@ -80,7 +80,8 @@ TestSuite *ts_q_const_score(TestSuite *suite)
     tst_run_test(suite, test_const_score_query, (void *)searcher);
     tst_run_test(suite, test_const_score_query_hash, NULL);
 
-    frt_store_deref(store);
     frt_searcher_close(searcher);
+    frt_ir_close(ir);
+    frt_store_close(store);
     return suite;
 }

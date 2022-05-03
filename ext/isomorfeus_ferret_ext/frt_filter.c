@@ -14,9 +14,7 @@ void frt_filt_destroy_i(FrtFilter *filt) {
 }
 
 void frt_filt_deref(FrtFilter *filt) {
-    if (--(filt->ref_cnt) == 0) {
-        filt->destroy_i(filt);
-    }
+    if (FRT_DEREF(filt) == 0) filt->destroy_i(filt);
 }
 
 FrtBitVector *frt_filt_get_bv(FrtFilter *filt, FrtIndexReader *ir) {
@@ -97,7 +95,7 @@ static FrtBitVector *qfilt_get_bv_i(FrtFilter *filt, FrtIndexReader *ir) {
         scorer->destroy(scorer);
     }
     weight->destroy(weight);
-    free(sea);
+    frt_searcher_close(sea);
     return bv;
 }
 

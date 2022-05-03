@@ -33,6 +33,7 @@ static frt_thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
 
 static void exception_stack_alloc(void) {
     frt_thread_key_create(&exception_stack_key, NULL);
+    frt_thread_setspecific(exception_stack_key, NULL);
 }
 
 void frt_xpush_context(frt_xcontext_t *context) {

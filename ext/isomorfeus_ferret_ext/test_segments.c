@@ -54,6 +54,7 @@ static void test_si(TestCase *tc, void *data)
     si->name[1] = '2';
     si->doc_cnt += 2;
     si->store = store;
+    FRT_REF(store);
     Asi_has_vals(si, "_2", 12, store);
     Assert(!frt_si_has_separate_norms(si), "doesn't use compound file/have norms");
     si->use_compound_file = true;
@@ -65,8 +66,8 @@ static void test_si(TestCase *tc, void *data)
     Assert(!frt_si_has_separate_norms(si), "has norms in compound file");
     frt_si_advance_norm_gen(si, 3);
     Assert(frt_si_has_separate_norms(si), "has seperate norms");
-    frt_si_deref(si);
-    frt_store_deref(store);
+    frt_si_close(si);
+    frt_store_close(store);
 }
 
 /***************************************************************************
@@ -163,6 +164,6 @@ TestSuite *ts_segments(TestSuite *suite)
     tst_run_test(suite, test_sis_add_del, store);
     tst_run_test(suite, test_sis_rw, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

@@ -29,7 +29,7 @@ void test_compound_reader(TestCase *tc, void *data)
     Asequal("this is file 2", p = frt_is_read_string(is2)); free(p);
     frt_is_close(is1);
     frt_is_close(is2);
-    frt_store_deref(c_reader);
+    frt_store_close(c_reader);
 }
 
 void test_compound_writer(TestCase *tc, void *data)
@@ -42,12 +42,12 @@ void test_compound_writer(TestCase *tc, void *data)
     FrtInStream *is;
 
     frt_os_write_u32(os1, 20);
-    frt_os_write_string(os2,"this is file2");
+    frt_os_write_string(os2, "this is file2");
     frt_os_close(os1);
     frt_os_close(os2);
-    cw = frt_open_cw(store, (char *)"cfile");
-    frt_cw_add_file(cw, (char *)"file1");
-    frt_cw_add_file(cw, (char *)"file2");
+    cw = frt_open_cw(store, "cfile");
+    frt_cw_add_file(cw, "file1");
+    frt_cw_add_file(cw, "file2");
     frt_cw_close(cw, NULL);
 
     is = store->open_input(store, "cfile");
@@ -109,7 +109,7 @@ void test_compound_io(TestCase *tc, void *data)
     Asequal(short_string, p = frt_is_read_string(is3)); free(p);
     frt_is_close(is3);
 
-    frt_store_deref(c_reader);
+    frt_store_close(c_reader);
 }
 
 #define MAX_TEST_WORDS 50
@@ -150,7 +150,7 @@ void test_compound_io_many_files(TestCase *tc, void *data)
         Aiequal(frt_is_length(is), frt_is_pos(is));
         frt_is_close(is);
     }
-    frt_store_deref(c_reader);
+    frt_store_close(c_reader);
 }
 
 TestSuite *ts_compound_io(TestSuite *suite)
@@ -164,7 +164,7 @@ TestSuite *ts_compound_io(TestSuite *suite)
     tst_run_test(suite, test_compound_io, store);
     tst_run_test(suite, test_compound_io_many_files, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
 
     return suite;
 }

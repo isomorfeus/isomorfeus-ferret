@@ -190,7 +190,7 @@ static void test_fis_rw(TestCase *tc, void *data)
     is = store->open_input(store, "fields");
     fis = frt_fis_read(is);
     frt_is_close(is);
-    Aiequal(FRT_STORE_YES, fis->store);
+    Aiequal(FRT_STORE_YES, fis->store_val);
     Aiequal(FRT_INDEX_UNTOKENIZED_OMIT_NORMS, fis->index);
     Aiequal(FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS, fis->term_vector);
 
@@ -247,7 +247,7 @@ static void test_fis_rw(TestCase *tc, void *data)
             "    term_vector: :with_positions_offsets\n", str);
     free(str);
     frt_fis_deref(fis);
-    frt_store_deref(store);
+    frt_store_close(store);
 }
 
 /****************************************************************************
@@ -373,8 +373,8 @@ static void test_fields_rw_single(TestCase *tc, void *data)
     check_df_data(df, 4, "go");
 
     free(bin_data);
-    frt_store_deref(store);
-   frt_doc_destroy(doc);
+    frt_store_close(store);
+    frt_doc_destroy(doc);
     frt_fis_deref(fis);
 }
 
@@ -453,8 +453,8 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
     check_df_data(df, 4, "go");
 
     free(bin_data);
-    frt_store_deref(store);
-   frt_doc_destroy(doc);
+    frt_store_close(store);
+    frt_doc_destroy(doc);
     frt_fis_deref(fis);
 }
 
@@ -490,7 +490,7 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
     lazy_doc = frt_fr_get_lazy_doc(fr, 0);
     frt_fr_close(fr);
     frt_fis_deref(fis);
-    frt_store_deref(store);
+    frt_store_close(store);
 
     lazy_df = frt_lazy_doc_get(lazy_doc, rb_intern("stored"));
     Apnull(lazy_doc->fields[0]->data[0].text);

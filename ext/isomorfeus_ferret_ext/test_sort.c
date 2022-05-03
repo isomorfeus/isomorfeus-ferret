@@ -292,6 +292,8 @@ TestSuite *ts_sort(TestSuite *suite)
 {
     FrtSearcher *sea, **searchers;
     FrtStore *store = frt_open_ram_store(NULL), *fs_store;
+    FrtIndexReader *ir0;
+    FrtIndexReader *ir1;
 
     search = rb_intern("search");
     string = rb_intern("string");
@@ -305,11 +307,13 @@ TestSuite *ts_sort(TestSuite *suite)
     tst_run_test(suite, test_sort_field_to_s, NULL);
     tst_run_test(suite, test_sort_to_s, NULL);
 
-    sea = frt_isea_new(frt_ir_open(NULL, store));
+    ir0 = frt_ir_open(NULL, store);
+    sea = frt_isea_new(ir0);
 
     tst_run_test(suite, test_sorts, (void *)sea);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir0);
 
     do_byte_test = false;
 
@@ -321,16 +325,20 @@ TestSuite *ts_sort(TestSuite *suite)
     sort_multi_test_setup(store, fs_store);
 
     searchers = FRT_ALLOC_N(FrtSearcher *, 2);
-
-    searchers[0] = frt_isea_new(frt_ir_open(NULL, store));
-    searchers[1] = frt_isea_new(frt_ir_open(NULL, fs_store));
-
-    sea = frt_msea_new(searchers, 2, true);
+    ir0 = frt_ir_open(NULL, store);
+    ir1 = frt_ir_open(NULL, fs_store);
+    searchers[0] = frt_isea_new(ir0);
+    searchers[1] = frt_isea_new(ir1);
+    FRT_DEREF(searchers[0]);
+    FRT_DEREF(searchers[1]);
+    sea = frt_msea_new(searchers, 2);
     tst_run_test(suite, test_sorts, (void *)sea);
-    frt_searcher_close(sea);
 
-    frt_store_deref(store);
-    frt_store_deref(fs_store);
+    frt_searcher_close(sea);
+    frt_ir_close(ir0);
+    frt_ir_close(ir1);
+    frt_store_close(store);
+    frt_store_close(fs_store);
 
     return suite;
 }

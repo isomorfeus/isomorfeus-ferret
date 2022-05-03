@@ -163,7 +163,9 @@ void test_segment_term_enum(TestCase *tc, void *data)
     add_multi_field_terms(store);
 
     sfi = frt_sfi_open(store, "_0");
-    te = frt_ste_new(store->open_input(store, "_0.tis"), sfi);
+    FrtInStream *is = store->open_input(store, "_0.tis");
+    FRT_DEREF(is);
+    te = frt_ste_new(is, sfi);
     te->set_field(te, 0);
     for (i = 0; i < 40; i++) {
         int doc_count = i % 20 + 1;
@@ -347,7 +349,7 @@ TestSuite *ts_term(TestSuite *suite)
     tst_run_test(suite, test_segment_term_enum, store);
     tst_run_test(suite, test_term_infos_reader, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
 
     return suite;
 }

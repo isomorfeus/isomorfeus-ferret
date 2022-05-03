@@ -3606,7 +3606,6 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
         frb_create_dir(obj);
         store = frt_open_fs_store(rs2s(obj));
         ir = frt_ir_open(NULL, store);
-        FRT_DEREF(store);
         ir->rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);
     } else {
         // Check_Type(obj, T_DATA);
@@ -3621,7 +3620,6 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
         }
     }
     TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
-    FRT_REF(ir);
     frt_isea_init(sea, ir);
     sea->rsea = self;
     return self;
@@ -3709,7 +3707,7 @@ static VALUE frb_ms_init(int argc, VALUE *argv, VALUE self) {
         }
     }
     TypedData_Get_Struct(self, FrtSearcher, &frb_multi_searcher_t, sea);
-    frt_msea_init(sea, searchers, top, false);
+    frt_msea_init(sea, searchers, top);
     sea->rsea = self;
     return self;
 }

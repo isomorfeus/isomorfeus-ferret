@@ -163,6 +163,6 @@ TestSuite *ts_file_deleter(TestSuite *suite)
 
     tst_run_test(suite, test_delete_leftover_files, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

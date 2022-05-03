@@ -120,6 +120,7 @@ static void check_searcher_match_vector(TestCase *tc, FrtStore *store, FrtQuery 
     }
     frt_matchv_destroy(mv);
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 #define Chk_mv(query, doc_num, expected) check_match_vector(tc, store, query, doc_num, expected)
@@ -529,6 +530,7 @@ static void test_searcher_highlight(TestCase *tc, void *data)
     frt_q_deref(q);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 TestSuite *ts_highlighter(TestSuite *suite)
@@ -547,6 +549,6 @@ TestSuite *ts_highlighter(TestSuite *suite)
     tst_run_test(suite, test_searcher_get_match_vector, store);
     tst_run_test(suite, test_searcher_highlight, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

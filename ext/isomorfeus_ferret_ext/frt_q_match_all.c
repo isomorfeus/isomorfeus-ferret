@@ -45,9 +45,15 @@ static FrtExplanation *masc_explain(FrtScorer *self, int doc_num)
     return frt_expl_new(1.0, "MatchAllScorer");
 }
 
+void masc_destroy_i(FrtScorer *self) {
+    frt_ir_close(MASc(self)->ir);
+    frt_scorer_destroy_i(self);
+}
+
 static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir) {
-    FrtScorer *self        = frt_scorer_new(MatchAllScorer, weight->similarity);
+    FrtScorer *self     = frt_scorer_new(MatchAllScorer, weight->similarity);
     MASc(self)->ir      = ir;
+    FRT_REF(ir);
     MASc(self)->max_doc = ir->max_doc(ir);
     MASc(self)->score   = weight->value;
     self->doc           = -1;
@@ -55,7 +61,7 @@ static FrtScorer *masc_new(FrtWeight *weight, FrtIndexReader *ir) {
     self->next          = &masc_next;
     self->skip_to       = &masc_skip_to;
     self->explain       = &masc_explain;
-    self->destroy       = &frt_scorer_destroy_i;
+    self->destroy       = &masc_destroy_i;
 
     return self;
 }
@@ -142,4 +148,3 @@ FrtQuery *frt_maq_new(void) {
     FrtQuery *self = frt_maq_alloc();
     return frt_maq_init(self);
 }
-

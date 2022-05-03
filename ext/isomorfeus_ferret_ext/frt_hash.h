@@ -25,9 +25,8 @@ typedef enum
 /**
  * struct used internally to store values in the Hash
  */
-typedef struct
-{
-    unsigned long long hash;
+typedef struct {
+    unsigned long hash;
     void *key;
     void *value;
 } FrtHashEntry;
@@ -40,12 +39,11 @@ typedef struct
  * know when to resize. The Hash is resized when more than two thirds of
  * the Hash is Filled.
  */
-typedef struct FrtHash
-{
+typedef struct FrtHash {
     int fill;                   /* num Active + num Dummy */
     int size;                   /* num Active ie, num keys set */
     int mask;                   /* capacity_of_table - 1 */
-    int ref_cnt;
+    _Atomic unsigned int ref_cnt;
 
     /* table points to smalltable initially. If the table grows beyond 2/3 of
      * FRT_HASH_MINSIZE it will point to newly malloced memory as it grows. */
@@ -60,7 +58,7 @@ typedef struct FrtHash
      * used outside of the Hash methods */
     FrtHashEntry *(*lookup_i)(struct FrtHash *self,
                               register const void *key);
-    unsigned long long  (*hash_i)(const void *key);
+    unsigned long  (*hash_i)(const void *key);
     int                 (*eq_i)(const void *key1, const void *key2);
     void                (*free_key_i)(void *p);
     void                (*free_value_i)(void *p);
@@ -73,7 +71,7 @@ typedef struct FrtHash
  * @param key object to hash
  * @return an unsigned 32-bit integer hash value
  */
-typedef unsigned long long (*frt_hash_ft)(const void *key);
+typedef unsigned long (*frt_hash_ft)(const void *key);
 
 /**
  * Equals function type used by Hash. A function of this type must be
@@ -87,7 +85,7 @@ typedef int (*frt_eq_ft)(const void *key1, const void *key2);
  * @param str string to hash
  * @return an unsigned long integer hash value
  */
-extern unsigned long long frt_str_hash(const char *const str);
+extern unsigned long frt_str_hash(const char *const str);
 
 /**
  * Determine a hash value for a pointer. Just cast the pointer to an unsigned
@@ -96,7 +94,7 @@ extern unsigned long long frt_str_hash(const char *const str);
  * @param ptr pointer to hash
  * @return an unsigned long integer hash value
  */
-extern unsigned long long frt_ptr_hash(const void *const ptr);
+extern unsigned long frt_ptr_hash(const void *const ptr);
 
 /**
  * Determine if two pointers point to the same point in memory.
@@ -320,7 +318,7 @@ extern FrtHashKeyStatus frt_h_has_key(FrtHash *self,
  * @return the value referenced by the key +key+. If there is no value
  *   referenced by that key, NULL is returned.
  */
-extern void *frt_h_get_int(FrtHash *self, const unsigned long long key);
+extern void *frt_h_get_int(FrtHash *self, const unsigned long key);
 
 /**
  * Delete the value in Hash referenced by the integer key +key+. When the
@@ -337,7 +335,7 @@ extern void *frt_h_get_int(FrtHash *self, const unsigned long long key);
  * @return true if the object was successfully deleted or false if the key was
  *   not found
  */
-extern int frt_h_del_int(FrtHash *self, const unsigned long long key);
+extern int frt_h_del_int(FrtHash *self, const unsigned long key);
 
 /**
  * Remove the value in Hash referenced by the integer key +key+. When the
@@ -351,7 +349,7 @@ extern int frt_h_del_int(FrtHash *self, const unsigned long long key);
  * @param key the integer key to lookup
  * @return the value referenced by +key+ if it can be found or NULL otherwise
  */
-extern void *frt_h_rem_int(FrtHash *self, const unsigned long long key);
+extern void *frt_h_rem_int(FrtHash *self, const unsigned long key);
 
 /**
  * WARNING: this function may destroy an old value if the key already exists
@@ -382,7 +380,7 @@ extern void *frt_h_rem_int(FrtHash *self, const unsigned long long key);
  *   </pre>
  */
 extern FrtHashKeyStatus frt_h_set_int(FrtHash *self,
-                                         const unsigned long long key,
+                                         const unsigned long key,
                                          void *value);
 
 /**
@@ -396,7 +394,7 @@ extern FrtHashKeyStatus frt_h_set_int(FrtHash *self,
  * @return true if the value was successfully added or false otherwise
  */
 extern int frt_h_set_safe_int(FrtHash *self,
-                              const unsigned long long key,
+                              const unsigned long key,
                               void *value);
 /**
  * Check whether integer key +key+ exists in the Hash.
@@ -405,7 +403,7 @@ extern int frt_h_set_safe_int(FrtHash *self,
  * @param key the integer key to check for in the Hash
  * @return true if the key exists in the Hash, false otherwise.
  */
-extern int frt_h_has_key_int(FrtHash *self, const unsigned long long key);
+extern int frt_h_has_key_int(FrtHash *self, const unsigned long key);
 
 typedef void (*frt_h_each_key_val_ft)(void *key, void *value, void *arg);
 

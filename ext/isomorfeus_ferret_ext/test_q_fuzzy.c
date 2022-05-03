@@ -110,6 +110,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     frt_td_destroy(top_docs);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 static void test_fuzziness_long(TestCase *tc, void *data)
@@ -165,6 +166,7 @@ static void test_fuzziness_long(TestCase *tc, void *data)
     frt_td_destroy(top_docs);
 
     frt_searcher_close(sea);
+    frt_ir_close(ir);
 }
 
 /**
@@ -239,6 +241,6 @@ TestSuite *ts_q_fuzzy(TestSuite *suite)
     tst_run_test(suite, test_fuzzy_query_hash, (void *)store);
     tst_run_test(suite, test_fuzzy_query_to_s, (void *)store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

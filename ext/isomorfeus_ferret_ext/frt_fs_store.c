@@ -223,7 +223,6 @@ static void fs_destroy(FrtStore *store)
         FRT_HANDLED();
     FRT_XENDTRY
     free(store->dir.path);
-    frt_store_destroy(store);
 }
 
 static off_t fs_length(FrtStore *store, const char *filename)
@@ -286,7 +285,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
 
 static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 {
-    int fd = is->file.fd;
+    int fd = is->f->file.fd;
     off_t pos = frt_is_pos(is);
     if (pos != lseek(fd, 0, SEEK_CUR)) {
         lseek(fd, pos, SEEK_SET);
@@ -302,7 +301,7 @@ static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 
 static void fsi_seek_i(FrtInStream *is, off_t pos)
 {
-    if (lseek(is->file.fd, pos, SEEK_SET) < 0) {
+    if (lseek(is->f->file.fd, pos, SEEK_SET) < 0) {
         FRT_RAISE(FRT_IO_ERROR, "seeking pos %"FRT_OFF_T_PFX"d: <%s>",
               pos, strerror(errno));
     }
@@ -310,16 +309,16 @@ static void fsi_seek_i(FrtInStream *is, off_t pos)
 
 static void fsi_close_i(FrtInStream *is)
 {
-    if (close(is->file.fd)) {
+    if (close(is->f->file.fd)) {
         FRT_RAISE(FRT_IO_ERROR, "%s", strerror(errno));
     }
-    free(is->d.path);
+    if (is->d.path) free(is->d.path);
 }
 
 static off_t fsi_length_i(FrtInStream *is)
 {
     struct stat stt;
-    if (fstat(is->file.fd, &stt)) {
+    if (fstat(is->f->file.fd, &stt)) {
         FRT_RAISE(FRT_IO_ERROR, "fstat failed: <%s>", strerror(errno));
     }
     return stt.st_size;
@@ -343,7 +342,8 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
               path, strerror(errno));
     }
     is = frt_is_new();
-    is->file.fd = fd;
+    is->f->file.fd = fd;
+    is->f->ref_cnt = 1;
     is->d.path = frt_estrdup(path);
     is->m = &FS_IN_STREAM_METHODS;
     return is;
@@ -400,6 +400,7 @@ static FrtLock *fs_open_lock_i(FrtStore *store, const char *lockname)
     snprintf(lname, 100, "%s%s.lck", FRT_LOCK_PREFIX, lockname);
     lock->name = frt_estrdup(join_path(path, store->dir.path, lname));
     lock->store = store;
+    FRT_REF(store);
     lock->obtain = &fs_lock_obtain;
     lock->release = &fs_lock_release;
     lock->is_locked = &fs_lock_is_locked;
@@ -409,6 +410,7 @@ static FrtLock *fs_open_lock_i(FrtStore *store, const char *lockname)
 
 static void fs_close_lock_i(FrtLock *lock)
 {
+    frt_store_close(lock->store);
     remove(lock->name);
     free(lock->name);
     free(lock);
@@ -486,11 +488,8 @@ FrtStore *frt_open_fs_store(const char *pathname)
     frt_mutex_lock(&stores_mutex);
     store = (FrtStore *)frt_h_get(stores, pathname);
     if (store) {
-        frt_mutex_lock(&store->mutex);
-        store->ref_cnt++;
-        frt_mutex_unlock(&store->mutex);
-    }
-    else {
+        FRT_REF(store);
+    } else {
         store = fs_store_new(pathname);
         frt_h_set(stores, store->dir.path, store);
     }

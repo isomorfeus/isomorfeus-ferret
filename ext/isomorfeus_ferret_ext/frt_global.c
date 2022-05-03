@@ -116,13 +116,15 @@ char *frt_estrdup(const char *s) {
 char *frt_dbl_to_s(char *buf, double num) {
     char *p, *e;
 
-#ifdef FRT_IS_C99
     if (isinf(num)) {
-        return frt_estrdup(num < 0 ? "-Infinity" : "Infinity");
+        if (num < 0) {
+            return strcpy(buf, "-Infinity");
+        } else {
+            return strcpy(buf, "Infinity");
+        }
     } else if (isnan(num)) {
-        return frt_estrdup("NaN");
+        return strcpy(buf, "NaN");
     }
-#endif
 
     sprintf(buf, FRT_DBL2S, num);
     if (!(e = strchr(buf, 'e'))) {

@@ -33,15 +33,15 @@ typedef struct FrtTokenStream FrtTokenStream;
 struct FrtTokenStream {
     char           *t;             /* ptr used to scan text */
     char           *text;
-    int             length;
+    int            length;
     rb_encoding    *encoding;
     FrtToken       *(*next)(FrtTokenStream *ts);
     FrtTokenStream *(*reset)(FrtTokenStream *ts, char *text, rb_encoding *encoding);
     FrtTokenStream *(*clone_i)(FrtTokenStream *ts);
     void           (*destroy_i)(FrtTokenStream *ts);
-    int             ref_cnt;
-    VALUE           rts;
-    FrtToken        token;
+    _Atomic unsigned int    ref_cnt;
+    VALUE          rts;
+    FrtToken       token;
 };
 
 extern FrtTokenStream *frt_ts_new_i(size_t size);
@@ -184,7 +184,7 @@ typedef struct FrtAnalyzer {
     FrtTokenStream *current_ts;
     FrtTokenStream *(*get_ts)(struct FrtAnalyzer *a, ID field, char *text, rb_encoding *encoding);
     void           (*destroy_i)(struct FrtAnalyzer *a);
-    int            ref_cnt;
+    _Atomic unsigned int    ref_cnt;
     VALUE          ranalyzer;
 } FrtAnalyzer;
 

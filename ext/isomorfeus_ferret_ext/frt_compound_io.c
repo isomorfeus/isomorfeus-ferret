@@ -1,7 +1,7 @@
 #include "frt_index.h"
 #include "frt_array.h"
 
-extern void frt_store_destroy(FrtStore *store);
+extern void frt_store_close(FrtStore *store);
 extern FrtInStream *frt_is_new();
 extern FrtStore *frt_store_new();
 
@@ -16,45 +16,37 @@ typedef struct FileEntry {
     off_t length;
 } FileEntry;
 
-static void cmpd_touch(FrtStore *store, const char *file_name)
-{
+static void cmpd_touch(FrtStore *store, const char *file_name) {
     store->dir.cmpd->store->touch(store->dir.cmpd->store, file_name);
 }
 
-static int cmpd_exists(FrtStore *store, const char *file_name)
-{
+static int cmpd_exists(FrtStore *store, const char *file_name) {
     if (frt_h_get(store->dir.cmpd->entries, file_name) != NULL) {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
 
-static int cmpd_remove(FrtStore *store, const char *file_name)
-{
+static int cmpd_remove(FrtStore *store, const char *file_name) {
     (void)store;
     (void)file_name;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return 0;
 }
 
-static void cmpd_rename(FrtStore *store, const char *from, const char *to)
-{
+static void cmpd_rename(FrtStore *store, const char *from, const char *to) {
     (void)store;
     (void)from;
     (void)to;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static int cmpd_count(FrtStore *store)
-{
+static int cmpd_count(FrtStore *store) {
     return store->dir.cmpd->entries->size;
 }
 
-static void cmpd_each(FrtStore *store,
-                     void (*func)(const char *fname, void *arg), void *arg)
-{
+static void cmpd_each(FrtStore *store, void (*func)(const char *fname, void *arg), void *arg) {
     FrtHash *ht = store->dir.cmpd->entries;
     int i;
     for (i = 0; i <= ht->mask; i++) {
@@ -65,15 +57,12 @@ static void cmpd_each(FrtStore *store,
     }
 }
 
-
-static void cmpd_clear(FrtStore *store)
-{
+static void cmpd_clear(FrtStore *store) {
     (void)store;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-static void cmpd_close_i(FrtStore *store)
-{
+static void cmpd_close_i(FrtStore *store) {
     FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) {
         FRT_RAISE(FRT_IO_ERROR, "Tried to close already closed compound store");
@@ -83,42 +72,37 @@ static void cmpd_close_i(FrtStore *store)
 
     frt_is_close(cmpd->stream);
     cmpd->stream = NULL;
+    frt_store_close(cmpd->store);
     free(store->dir.cmpd);
-    frt_store_destroy(store);
 }
 
-static off_t cmpd_length(FrtStore *store, const char *file_name)
-{
+static off_t cmpd_length(FrtStore *store, const char *file_name) {
     FileEntry *fe = (FileEntry *)frt_h_get(store->dir.cmpd->entries, file_name);
     if (fe != NULL) {
         return fe->length;
-    }
-    else {
+    } else {
         return 0;
     }
 }
 
-static void cmpdi_seek_i(FrtInStream *is, off_t pos)
-{
+static void cmpdi_seek_i(FrtInStream *is, off_t pos) {
     (void)is;
     (void)pos;
 }
 
-static void cmpdi_close_i(FrtInStream *is)
-{
+static void cmpdi_close_i(FrtInStream *is) {
+    frt_is_close(is->d.cis->sub);
     free(is->d.cis);
 }
 
-static off_t cmpdi_length_i(FrtInStream *is)
-{
+static off_t cmpdi_length_i(FrtInStream *is) {
     return (is->d.cis->length);
 }
 
 /*
  * raises: FRT_EOF_ERROR
  */
-static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len)
-{
+static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len) {
     FrtCompoundInStream *cis = is->d.cis;
     off_t start = frt_is_pos(is);
 
@@ -139,12 +123,12 @@ static const struct FrtInStreamMethods CMPD_IN_STREAM_METHODS = {
     cmpdi_close_i
 };
 
-static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t length)
-{
+static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t length) {
     FrtInStream *is = frt_is_new();
     FrtCompoundInStream *cis = FRT_ALLOC(FrtCompoundInStream);
 
     cis->sub = sub_is;
+    FRT_REF(sub_is);
     cis->offset = offset;
     cis->length = length;
     is->d.cis = cis;
@@ -153,8 +137,7 @@ static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t l
     return is;
 }
 
-static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
-{
+static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name) {
     FileEntry *entry;
     FrtCompoundStore *cmpd = store->dir.cmpd;
     FrtInStream *is;
@@ -178,30 +161,26 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name)
     return is;
 }
 
-static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name)
-{
+static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name) {
     (void)store;
     (void)file_name;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static FrtLock *cmpd_open_lock_i(FrtStore *store, const char *lock_name)
-{
+static FrtLock *cmpd_open_lock_i(FrtStore *store, const char *lock_name) {
     (void)store;
     (void)lock_name;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
-static void cmpd_close_lock_i(FrtLock *lock)
-{
+static void cmpd_close_lock_i(FrtLock *lock) {
     (void)lock;
     FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
-FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
-{
+FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name) {
     int count, i;
     off_t offset;
     char *fname;
@@ -214,6 +193,7 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
         cmpd = FRT_ALLOC_AND_ZERO(FrtCompoundStore);
 
         cmpd->store       = store;
+        FRT_REF(store);
         cmpd->name        = name;
         cmpd->entries     = frt_h_new_str(&free, &free);
         is = cmpd->stream = store->open_input(store, cmpd->name);
@@ -235,6 +215,7 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
             frt_h_set(cmpd->entries, fname, entry);
         }
     FRT_XCATCHALL
+        frt_store_close(store);
         if (is) frt_is_close(is);
         if (cmpd->entries) frt_h_destroy(cmpd->entries);
         free(cmpd);
@@ -270,18 +251,17 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name)
  *
  ****************************************************************************/
 
-FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name)
-{
+FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name) {
     FrtCompoundWriter *cw = FRT_ALLOC(FrtCompoundWriter);
     cw->store = store;
+    FRT_REF(store);
     cw->name = name;
     cw->ids = frt_hs_new_str(&free);
     cw->file_entries = frt_ary_new_type_capa(FrtCWFileEntry, FRT_CW_INIT_CAPA);
     return cw;
 }
 
-void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
-{
+void frt_cw_add_file(FrtCompoundWriter *cw, char *id) {
     id = frt_estrdup(id);
     if (frt_hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
         FRT_RAISE(FRT_IO_ERROR, "Tried to add file \"%s\" which has already been "
@@ -292,8 +272,7 @@ void frt_cw_add_file(FrtCompoundWriter *cw, char *id)
     frt_ary_last(cw->file_entries).name = id;
 }
 
-static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os)
-{
+static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os) {
     off_t start_ptr = frt_os_pos(os);
     off_t end_ptr;
     off_t remainder, length, len;
@@ -329,8 +308,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     frt_is_close(is);
 }
 
-void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr)
-{
+void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr) {
     FrtOutStream *os = NULL;
     int i;
 
@@ -366,12 +344,9 @@ void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr)
         frt_os_seek(os, cw->file_entries[i].dir_offset);
         frt_os_write_u64(os, cw->file_entries[i].data_offset);
     }
-
-    if (os) {
-        frt_os_close(os);
-    }
-
+    frt_os_close(os);
     frt_hs_destroy(cw->ids);
     frt_ary_free(cw->file_entries);
+    frt_store_close(cw->store);
     free(cw);
 }

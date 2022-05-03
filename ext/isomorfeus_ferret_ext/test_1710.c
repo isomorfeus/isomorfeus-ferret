@@ -55,8 +55,7 @@ TestSuite *ts_1710(TestSuite *suite)
 
     tst_run_test(suite, test_problem_text, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
 
     return suite;
 }
-

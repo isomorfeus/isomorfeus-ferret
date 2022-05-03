@@ -539,7 +539,7 @@ static void prep_test_1seg_index(FrtStore *store, FrtDocument **docs,
 
     frt_dw_close(dw);
     frt_iw_close(iw);
-    frt_si_deref(si);
+    frt_si_close(si);
 }
 
 /****************************************************************************
@@ -725,7 +725,7 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
     frt_is_close(prx_in);
     frt_tir_close(tir);
     frt_sfi_close(sfi);
-    frt_si_deref(si);
+    frt_si_close(si);
 }
 
 /****************************************************************************
@@ -984,7 +984,7 @@ static void test_create_with_reader(TestCase *tc, void *data)
     frt_ir_close(ir);
     frt_ir_close(ir2);
     store->clear_all(store);
-    frt_store_deref(store);
+    frt_store_close(store);
    frt_doc_destroy(doc);
 }
 
@@ -1312,7 +1312,7 @@ static void reader_test_env_destroy(ReaderTestEnvironment *rte)
 {
     int i;
     for (i = 0; i < rte->store_cnt; i++) {
-        frt_store_deref(rte->stores[i]);
+        frt_store_close(rte->stores[i]);
     }
     free(rte->stores);
     free(rte);
@@ -1328,6 +1328,7 @@ static FrtIndexReader *reader_test_env_ir_open(ReaderTestEnvironment *rte)
         int i;
         for (i = 0; i < rte->store_cnt; i++) {
             sub_readers[i] = frt_ir_open(NULL, rte->stores[i]);
+            FRT_DEREF(sub_readers[i]);
         }
         return (frt_mr_open(NULL, sub_readers, rte->store_cnt));
     }
@@ -1413,7 +1414,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
         frt_iw_close(iw);
         for (i = 0; i < rte->store_cnt; i++) {
             frt_ir_close(readers[i]);
-            frt_store_deref(rte->stores[i]);
+            frt_store_close(rte->stores[i]);
         }
         free(readers);
         rte->stores[0] = store;
@@ -1473,7 +1474,6 @@ static void test_ir_open_empty_index(TestCase *tc, void *data)
 static void test_ir_basic_ops(TestCase *tc, void *data)
 {
     FrtIndexReader *ir = (FrtIndexReader *)data;
-
     Aiequal(IR_TEST_DOC_CNT, ir->num_docs(ir));
     Aiequal(IR_TEST_DOC_CNT, ir->max_doc(ir));
 
@@ -2103,7 +2103,7 @@ static void test_ir_delete(TestCase *tc, void *data)
     frt_ir_close(ir);
     frt_ir_close(ir2);
     reader_test_env_destroy(rte);
-    frt_store_deref(store);
+    frt_store_close(store);
 }
 
 static void test_ir_read_while_optimizing(TestCase *tc, void *data)
@@ -2167,7 +2167,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     Aiequal(true, fi_store_offsets(fi));
     Aiequal(true, fi_store_positions(fi));
 
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
     frt_iw_close(iw);
 
     ir = frt_ir_open(NULL, store);
@@ -2193,7 +2193,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     Aiequal(1, df->size);
     Asequal(author_text, df->data[0]);
 
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
     frt_ir_delete_doc(ir, 0);
     frt_ir_close(ir);
 }
@@ -2324,10 +2324,10 @@ TestSuite *ts_index(TestSuite *suite)
     fs_store = frt_open_fs_store(TEST_DIR);
     tst_run_test_with_name(suite, test_ir_read_while_optimizing, fs_store, "test_ir_read_while_optimizing_on_disk");
     fs_store->clear_all(fs_store);
-    frt_store_deref(fs_store);
+    frt_store_close(fs_store);
 
     tst_run_test(suite, test_ir_multivalue_fields, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
     return suite;
 }

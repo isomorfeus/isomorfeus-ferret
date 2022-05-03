@@ -303,7 +303,7 @@ const char *frt_q_get_query_name(FrtQueryType type) {
 static FrtQuery *q_rewrite(FrtQuery *self, FrtIndexReader *ir)
 {
     (void)ir;
-    self->ref_cnt++;
+    FRT_REF(self);
     return self;
 }
 
@@ -318,13 +318,12 @@ FrtSimilarity *frt_q_get_similarity_i(FrtQuery *self, FrtSearcher *searcher) {
     return searcher->get_similarity(searcher);
 }
 
-void frt_q_destroy_i(FrtQuery *self) {
-    free(self);
+void frt_q_destroy_i(FrtQuery *q) {
+    free(q);
 }
 
-void frt_q_deref(FrtQuery *self) {
-    if (--(self->ref_cnt) == 0)
-        self->destroy_i(self);
+void frt_q_deref(FrtQuery *q) {
+    if (FRT_DEREF(q) == 0) q->destroy_i(q);
 }
 
 FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher) {
@@ -1180,12 +1179,12 @@ static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num,
     return ir->term_vector(ir, doc_num, field);
 }
 
-static void isea_close(FrtSearcher *self) {
-    if (0 == --(self->ref_cnt)) {
-        if (ISEA(self)->ir) {
-            frt_ir_close(ISEA(self)->ir);
+static void isea_close(FrtSearcher *isea) {
+    if (FRT_DEREF(isea) == 0) {
+        if (ISEA(isea)->ir) {
+            frt_ir_close(ISEA(isea)->ir);
         }
-        free(self);
+        free(isea);
     }
 }
 
@@ -1195,6 +1194,7 @@ FrtSearcher *frt_isea_alloc(void) {
 
 FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir) {
     ISEA(self)->ir          = ir;
+    FRT_REF(ir);
     self->ref_cnt           = 1;
     self->similarity        = frt_sim_create_default();
     self->doc_freq          = &frt_isea_doc_freq;
@@ -1305,7 +1305,7 @@ static void cdfsea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *fil
 static FrtQuery *cdfsea_rewrite(FrtSearcher *self, FrtQuery *original)
 {
     (void)self;
-    original->ref_cnt++;
+    FRT_REF(original);
     return original;
 }
 
@@ -1722,20 +1722,18 @@ static FrtSimilarity *msea_get_similarity(FrtSearcher *self) {
     return self->similarity;
 }
 
-static void msea_close(FrtSearcher *self) {
-    int i;
-    FrtSearcher *s;
-    FrtMultiSearcher *msea = MSEA(self);
-    if (0 == --(self->ref_cnt)) {
-        if (msea->close_subs) {
-            for (i = 0; i < msea->s_cnt; i++) {
-                s = msea->searchers[i];
-                s->close(s);
-            }
+static void msea_close(FrtSearcher *msea) {
+    if (FRT_DEREF(msea) == 0) {
+        FrtMultiSearcher *rmsea = MSEA(msea);
+        FrtSearcher *s;
+        int i;
+        for (i = 0; i < rmsea->s_cnt; i++) {
+            s = rmsea->searchers[i];
+            s->close(s);
         }
-        free(msea->searchers);
-        free(msea->starts);
-        free(self);
+        free(rmsea->searchers);
+        free(rmsea->starts);
+        free(msea);
     }
 }
 
@@ -1743,7 +1741,7 @@ FrtSearcher *frt_msea_alloc(void) {
     return (FrtSearcher *)FRT_ALLOC(FrtMultiSearcher);
 }
 
-FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt, bool close_subs) {
+FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt) {
     int i, max_doc = 0;
     int *starts = FRT_ALLOC_N(int, s_cnt + 1);
     for (i = 0; i < s_cnt; i++) {
@@ -1757,7 +1755,6 @@ FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt
     MSEA(self)->searchers   = searchers;
     MSEA(self)->starts      = starts;
     MSEA(self)->max_doc     = max_doc;
-    MSEA(self)->close_subs  = close_subs;
     self->ref_cnt           = 1;
     self->similarity        = frt_sim_create_default();
     self->doc_freq          = &msea_doc_freq;
@@ -1781,7 +1778,7 @@ FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt
     return self;
 }
 
-FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs) {
+FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt) {
     FrtSearcher *self = frt_msea_alloc();
-    return frt_msea_init(self, searchers, s_cnt, close_subs);
+    return frt_msea_init(self, searchers, s_cnt);
 }

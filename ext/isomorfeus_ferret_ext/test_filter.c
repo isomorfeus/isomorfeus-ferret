@@ -50,7 +50,7 @@ void prepare_filter_index(FrtStore *store)
         frt_doc_add_field(doc, frt_df_add_data(frt_df_new(date), (char *)data[i].date, enc));
         frt_doc_add_field(doc, frt_df_add_data(frt_df_new(flipflop), (char *)data[i].flipflop, enc));
         frt_iw_add_doc(iw, doc);
-       frt_doc_destroy(doc);
+        frt_doc_destroy(doc);
     }
     frt_iw_close(iw);
     return;
@@ -328,7 +328,8 @@ TestSuite *ts_filter(TestSuite *suite)
     tst_run_test(suite, test_filter_func, searcher);
     tst_run_test(suite, test_score_altering_filter_func, searcher);
 
-    frt_store_deref(store);
-    searcher->close(searcher);
+    frt_searcher_close(searcher);
+    frt_ir_close(ir);
+    frt_store_close(store);
     return suite;
 }

@@ -57,7 +57,8 @@ TestSuite *ts_q_filtered(TestSuite *suite)
 
     tst_run_test(suite, test_filtered_query, (void *)searcher);
 
-    frt_store_deref(store);
-    searcher->close(searcher);
+    frt_searcher_close(searcher);
+    frt_ir_close(ir);
+    frt_store_close(store);
     return suite;
 }

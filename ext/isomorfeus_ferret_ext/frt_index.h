@@ -100,7 +100,7 @@ typedef struct FrtFieldInfo {
     float        boost;
     unsigned int bits;
     int          number;
-    int          ref_cnt;
+    _Atomic unsigned int  ref_cnt;
     VALUE        rfi;
 } FrtFieldInfo;
 
@@ -133,7 +133,7 @@ extern void frt_fi_deref(FrtFieldInfo *fi);
 #define FIELD_INFOS_INIT_CAPA 4
 /* carry changes over to dummy_fis in test/test_segments.c */
 typedef struct FrtFieldInfos {
-    FrtStoreValue      store;
+    FrtStoreValue      store_val;
     FrtCompressionType compression;
     FrtIndexValue      index;
     FrtTermVectorValue term_vector;
@@ -141,7 +141,7 @@ typedef struct FrtFieldInfos {
     int                capa;
     FrtFieldInfo       **fields;
     FrtHash            *field_dict;
-    int                ref_cnt;
+    _Atomic unsigned int ref_cnt;
     VALUE              rfis;
 } FrtFieldInfos;
 
@@ -167,18 +167,18 @@ extern void frt_fis_deref(FrtFieldInfos *fis);
 #define FRT_SEGMENTS_FILE_NAME "segments"
 
 typedef struct FrtSegmentInfo {
-    int ref_cnt;
-    char *name;
-    FrtStore *store;
-    int doc_cnt;
-    int del_gen;
-    int *norm_gens;
-    int norm_gens_size;
-    bool use_compound_file;
+    _Atomic unsigned int ref_cnt;
+    char        *name;
+    FrtStore    *store;
+    int         doc_cnt;
+    int         del_gen;
+    int         *norm_gens;
+    int         norm_gens_size;
+    bool        use_compound_file;
 } FrtSegmentInfo;
 
 extern FrtSegmentInfo *frt_si_new(char *name, int doc_cnt, FrtStore *store);
-extern void frt_si_deref(FrtSegmentInfo *si);
+extern void frt_si_close(FrtSegmentInfo *si);
 extern bool frt_si_has_deletions(FrtSegmentInfo *si);
 extern bool frt_si_has_separate_norms(FrtSegmentInfo *si);
 extern void frt_si_advance_norm_gen(FrtSegmentInfo *si, int field_num);
@@ -317,7 +317,6 @@ extern FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *t
  ****************************************************************************/
 
 typedef struct FrtTermInfosReader {
-    frt_thread_key_t thread_te;
     void             **te_bucket;
     FrtTermEnum      *orig_te;
     int              field_num;
@@ -671,7 +670,7 @@ struct FrtIndexReader {
     bool            (*is_latest_i)(FrtIndexReader *ir);
     void            (*commit_i)(FrtIndexReader *ir);
     void            (*close_i)(FrtIndexReader *ir);
-    int             ref_cnt;
+    _Atomic unsigned int     ref_cnt;
     FrtDeleter      *deleter;
     FrtStore        *store;
     FrtLock         *write_lock;
@@ -720,7 +719,6 @@ struct FrtSegmentReader {
     FrtInStream          *prx_in;
     FrtSegmentFieldIndex *sfi;
     FrtTermInfosReader   *tir;
-    frt_thread_key_t     thread_fr;
     void                 **fr_bucket;
     FrtHash              *norms;
     FrtStore             *cfs_store;

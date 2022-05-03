@@ -133,7 +133,7 @@ FrtToken *frt_tk_new(void) {
 /*****************************************************************************/
 
 void frt_ts_deref(FrtTokenStream *ts) {
-    if (--ts->ref_cnt <= 0)
+    if (FRT_DEREF(ts) == 0)
         ts->destroy_i(ts);
 }
 
@@ -1089,7 +1089,7 @@ FrtTokenStream *frt_stem_filter_new(FrtTokenStream *sub_ts, const char *algorith
 /*****************************************************************************/
 
 void frt_a_deref(FrtAnalyzer *a) {
-    if (--a->ref_cnt <= 0)
+    if (FRT_DEREF(a) == 0)
         a->destroy_i(a);
 }
 

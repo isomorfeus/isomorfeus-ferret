@@ -42,7 +42,7 @@ void test_write_to(TestCase *tc, void *data)
     frt_is_close(istream);
 
     Aiequal(17021, fs_store->length(fs_store, "_rw_funny_string.cfs"));
-    frt_store_deref(ram_store);
+    frt_store_close(ram_store);
     ram_store = frt_open_ram_store_and_copy(NULL, fs_store, false);
 
     istream = ram_store->open_input(ram_store, "_rw_funny_string.cfs");
@@ -54,8 +54,8 @@ void test_write_to(TestCase *tc, void *data)
     Aiequal(17021, ram_store->length(ram_store, "_rw_funny_string.cfs"));
 
     fs_store->clear_all(fs_store);
-    frt_store_deref(fs_store);
-    frt_store_deref(ram_store);
+    frt_store_close(fs_store);
+    frt_store_close(ram_store);
 }
 
 /**
@@ -71,7 +71,7 @@ TestSuite *ts_ram_store(TestSuite *suite)
 
     tst_run_test(suite, test_write_to, NULL);
 
-    frt_store_deref(store);
+    frt_store_close(store);
 
     return suite;
 }

@@ -28,17 +28,6 @@ void frt_with_lock_name(FrtStore *store, const char *lock_name, void (*func)(voi
     store->close_lock_i(lock);
 }
 
-void frt_store_deref(FrtStore *store)
-{
-    frt_mutex_lock(&store->mutex_i);
-    if (--store->ref_cnt <= 0) {
-        store->close_i(store);
-    }
-    else {
-        frt_mutex_unlock(&store->mutex_i);
-    }
-}
-
 FrtLock *frt_open_lock(FrtStore *store, const char *lockname)
 {
     FrtLock *lock = store->open_lock_i(store, lockname);
@@ -78,16 +67,25 @@ FrtStore *frt_store_new(void) {
 }
 
 /**
- * Destroy the store freeing allocated resources
+ * close the store freeing allocated resources
  *
  * @param store the store struct to free
  */
-void frt_store_destroy(FrtStore *store)
-{
-    frt_mutex_destroy(&store->mutex_i);
-    frt_mutex_destroy(&store->mutex);
-    frt_hs_destroy(store->locks);
-    free(store);
+void frt_store_close(FrtStore *store) {
+    if (store->ref_cnt == 0) {
+        fprintf(stderr, "store ref_cnt to low\n");
+        FRT_RAISE(FRT_STATE_ERROR, "store ref_cnt to low\n");
+    }
+
+    if (FRT_DEREF(store) == 0) {
+        frt_mutex_lock(&store->mutex_i);
+        store->close_i(store);
+        frt_hs_destroy(store->locks);
+        frt_mutex_destroy(&store->mutex);
+        frt_mutex_unlock(&store->mutex_i);
+        frt_mutex_destroy(&store->mutex_i);
+        free(store);
+    }
 }
 
 /**
@@ -186,10 +184,12 @@ void frt_os_write_bytes(FrtOutStream *os, const frt_uchar *buf, int len)
  */
 FrtInStream *frt_is_new(void) {
     FrtInStream *is = FRT_ALLOC(FrtInStream);
+    is->f = FRT_ALLOC_AND_ZERO(FrtInStreamFile);
+    is->f->ref_cnt = 1;
     is->buf.start = 0;
     is->buf.pos = 0;
     is->buf.len = 0;
-    is->ref_cnt_ptr = FRT_ALLOC_AND_ZERO(int);
+    is->ref_cnt = 1;
     return is;
 }
 
@@ -273,12 +273,10 @@ frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
     return buf;
 }
 
-void frt_is_seek(FrtInStream *is, off_t pos)
-{
+void frt_is_seek(FrtInStream *is, off_t pos) {
     if (pos >= is->buf.start && pos < (is->buf.start + is->buf.len)) {
         is->buf.pos = pos - is->buf.start;  /* seek within buffer */
-    }
-    else {
+    } else {
         is->buf.start = pos;
         is->buf.pos = 0;
         is->buf.len = 0;                    /* trigger refill() on read() */
@@ -286,21 +284,30 @@ void frt_is_seek(FrtInStream *is, off_t pos)
     }
 }
 
-void frt_is_close(FrtInStream *is)
-{
-    if (--(*(is->ref_cnt_ptr)) < 0) {
-        is->m->close_i(is);
-        free(is->ref_cnt_ptr);
+void frt_is_close(FrtInStream *is) {
+    if (is->ref_cnt == 0) {
+        fprintf(stderr, "is ref_cnt to low\n");
+        FRT_RAISE(FRT_STATE_ERROR, "is ref_cnt to low\n");
     }
-    free(is);
+
+    if (FRT_DEREF(is) == 0) {
+        if (FRT_DEREF(is->f) == 0) {
+            is->m->close_i(is);
+            free(is->f);
+        }
+        free(is);
+    }
 }
 
 FrtInStream *frt_is_clone(FrtInStream *is)
 {
-    FrtInStream *new_index_i = FRT_ALLOC(FrtInStream);
-    memcpy(new_index_i, is, sizeof(FrtInStream));
-    (*(new_index_i->ref_cnt_ptr))++;
-    return new_index_i;
+    if (!(is->f))
+        return NULL;
+    FrtInStream *new_is = FRT_ALLOC(FrtInStream);
+    memcpy(new_is, is, sizeof(FrtInStream));
+    new_is->ref_cnt = 1;
+    FRT_REF(new_is->f);
+    return new_is;
 }
 
 frt_i32 frt_is_read_i32(FrtInStream *is)

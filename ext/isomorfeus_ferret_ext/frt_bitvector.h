@@ -24,7 +24,7 @@ typedef struct FrtBitVector {
     int curr_bit;
 
     bool extends_as_ones : 1;
-    int ref_cnt;
+    _Atomic unsigned int ref_cnt;
     VALUE rbv;
 } FrtBitVector;
 

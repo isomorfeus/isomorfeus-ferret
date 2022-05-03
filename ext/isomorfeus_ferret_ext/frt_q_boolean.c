@@ -1264,10 +1264,10 @@ void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur) {
     }
 }
 
-void frt_bc_deref(FrtBooleanClause *self) {
-    if (--self->ref_cnt <= 0) {
-        frt_q_deref(self->query);
-        free(self);
+void frt_bc_deref(FrtBooleanClause *bc) {
+    if (FRT_DEREF(bc) == 0) {
+        frt_q_deref(bc->query);
+        free(bc);
     }
 }
 
@@ -1345,7 +1345,7 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
         }
     }
 
-    self->ref_cnt++;
+    FRT_REF(self);
     /* replace each clause's query with its rewritten query */
     for (i = 0; i < clause_cnt; i++) {
         FrtBooleanClause *clause = BQ(self)->clauses[i];
@@ -1364,7 +1364,7 @@ static FrtQuery *bq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
                 for (j = 0; j < clause_cnt; j++) {
                     FRT_REF(BQ(self)->clauses[j]);
                 }
-                self->ref_cnt--;
+                FRT_DEREF(self);
                 self = new_self;
                 self->ref_cnt = 1;
                 rewritten = true;

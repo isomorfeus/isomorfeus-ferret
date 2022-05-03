@@ -103,7 +103,7 @@ typedef struct FrtFilter {
     unsigned long long (*hash)(struct FrtFilter *self);
     int           (*eq)(struct FrtFilter *self, struct FrtFilter *o);
     void          (*destroy_i)(struct FrtFilter *self);
-    int           ref_cnt;
+    _Atomic unsigned int   ref_cnt;
     VALUE         rfilter;
 } FrtFilter;
 
@@ -228,7 +228,7 @@ typedef enum {
 } FrtQueryType;
 
 struct FrtQuery {
-    int                ref_cnt;
+    _Atomic unsigned int        ref_cnt;
     float              boost;
     FrtWeight          *weight;
     FrtQuery           *(*rewrite)(FrtQuery *self, FrtIndexReader *ir);
@@ -264,7 +264,7 @@ extern FrtQuery *frt_q_create(size_t size);
 
 typedef struct FrtTermQuery {
     FrtQuery  super;
-    ID field;
+    ID        field;
     char      *term;
 } FrtTermQuery;
 
@@ -283,12 +283,12 @@ typedef enum {
 } FrtBCType;
 
 typedef struct FrtBooleanClause {
-    int       ref_cnt;
-    FrtQuery  *query;
-    FrtBCType occur;
-    bool      is_prohibited : 1;
-    bool      is_required : 1;
-    VALUE     rbc;
+    _Atomic unsigned int ref_cnt;
+    FrtQuery    *query;
+    FrtBCType   occur;
+    bool        is_prohibited : 1;
+    bool        is_required : 1;
+    VALUE       rbc;
 } FrtBooleanClause;
 
 extern FrtBooleanClause *frt_bc_alloc(void);
@@ -330,7 +330,7 @@ extern FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *
 typedef struct FrtPhraseQuery {
     FrtQuery          super;
     int               slop;
-    ID         field;
+    ID                field;
     FrtPhrasePosition *positions;
     int               pos_cnt;
     int               pos_capa;
@@ -351,7 +351,7 @@ extern void frt_phq_set_slop(FrtQuery *self, int slop);
 #define MULTI_TERM_QUERY_MAX_TERMS 256
 typedef struct FrtMultiTermQuery {
     FrtQuery         super;
-    ID        field;
+    ID               field;
     FrtPriorityQueue *boosted_terms;
     float            min_boost;
 } FrtMultiTermQuery;
@@ -377,7 +377,7 @@ typedef struct FrtMTQSubQuery {
 
 typedef struct FrtPrefixQuery {
     FrtMTQSubQuery super;
-    ID      field;
+    ID             field;
     char           *prefix;
 } FrtPrefixQuery;
 
@@ -395,7 +395,7 @@ extern FrtQuery *frt_prefixq_new(ID field, const char *prefix);
 
 typedef struct FrtWildCardQuery {
     FrtMTQSubQuery super;
-    ID      field;
+    ID             field;
     char           *pattern;
 } FrtWildCardQuery;
 
@@ -415,7 +415,7 @@ extern bool frt_wc_match(const char *pattern, const char *text);
 
 typedef struct FrtFuzzyQuery {
     FrtMTQSubQuery super;
-    ID      field;
+    ID             field;
     char           *term;
     const char     *text; /* term text after prefix */
     int            text_len;
@@ -514,7 +514,7 @@ struct FrtSpanEnum {
 /* ** FrtSpanQuery ** */
 typedef struct FrtSpanQuery {
     FrtQuery    super;
-    ID   field;
+    ID          field;
     FrtSpanEnum *(*get_spans)(FrtQuery *self, FrtIndexReader *ir);
     FrtHashSet  *(*get_terms)(FrtQuery *self);
 } FrtSpanQuery;
@@ -790,7 +790,7 @@ typedef struct FrtPostFilter {
 } FrtPostFilter;
 
 struct FrtSearcher {
-    int            ref_cnt;
+    _Atomic unsigned int    ref_cnt;
     FrtSimilarity  *similarity;
     int            (*doc_freq)(FrtSearcher *self, ID field, const char *term);
     FrtDocument    *(*get_doc)(FrtSearcher *self, int doc_num);
@@ -869,12 +869,11 @@ typedef struct FrtMultiSearcher {
     FrtSearcher **searchers;
     int         *starts;
     int         max_doc;
-    bool        close_subs : 1;
 } FrtMultiSearcher;
 
 extern FrtSearcher *frt_msea_alloc(void);
-extern FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt, bool close_subs);
-extern FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt, bool close_subs);
+extern FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt);
+extern FrtSearcher *frt_msea_new(FrtSearcher **searchers, int s_cnt);
 
 /***************************************************************************
  *

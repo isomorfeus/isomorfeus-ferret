@@ -185,10 +185,35 @@ static VALUE frb_lock_release(VALUE self) {
  *
  ****************************************************************************/
 
+/*** FrbStore ****************************************************************/
+
+static size_t frb_store_size(const void *p) {
+    return sizeof(FrtStore);
+    (void)p;
+}
+
 void frb_dir_free(void *p) {
-    FrtStore *store = (FrtStore *)p;
-    frb_unwrap_locks(store);
-    frt_store_deref(store);
+    frb_unwrap_locks((FrtStore *)p);
+    frt_store_close((FrtStore *)p);
+}
+
+const rb_data_type_t frb_store_t = {
+    .wrap_struct_name = "FrbStore",
+    .function = {
+        .dmark = NULL,
+        .dfree = frb_dir_free,
+        .dsize = frb_store_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static VALUE frb_store_alloc(VALUE rclass) {
+    FrtStore *st = frt_store_alloc();
+    return TypedData_Wrap_Struct(rclass, &frb_store_t, st);
 }
 
 /*
@@ -208,7 +233,7 @@ static VALUE frb_dir_close(VALUE self) {
         ((struct RData *)(self))->dmark = NULL;
         ((struct RData *)(self))->dfree = NULL;
         frb_unwrap_locks(store);
-        frt_store_deref(store);
+        frt_store_close(store);
     }
     return Qnil;
 }
@@ -308,32 +333,6 @@ static VALUE frb_dir_make_lock(VALUE self, VALUE rlock_name) {
     return rlock;
 }
 
-/*** FrbStore ****************************************************************/
-
-static size_t frb_store_size(const void *p) {
-    return sizeof(FrtStore);
-    (void)p;
-}
-
-const rb_data_type_t frb_store_t = {
-    .wrap_struct_name = "FrbStore",
-    .function = {
-        .dmark = NULL,
-        .dfree = frb_dir_free,
-        .dsize = frb_store_size,
-        .dcompact = NULL,
-        .reserved = {0},
-    },
-    .parent = NULL,
-    .data = NULL,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
-};
-
-static VALUE frb_store_alloc(VALUE rclass) {
-    FrtStore *st = frt_store_alloc();
-    return TypedData_Wrap_Struct(rclass, &frb_store_t, st);
-}
-
 /****************************************************************************
  *
  * RAMDirectory Methods
@@ -403,19 +402,18 @@ static VALUE frb_fsdir_new(int argc, VALUE *argv, VALUE klass) {
         frb_create_dir(rpath);
     }
     if (!rb_funcall(rb_cFile, id_is_directory, 1, rpath)) {
-        rb_raise(rb_eIOError, "No directory <%s> found. Use :create => true"
-                 " to create one.", rs2s(rpath));
+        rb_raise(rb_eIOError, "No directory <%s> found. Use :create => true to create one.", rs2s(rpath));
     }
     store = frt_open_fs_store(rs2s(rpath));
     if (create) store->clear_all(store);
-    if ((self = store->rstore) == Qnil) {
+    self = store->rstore;
+    if (self == Qnil || DATA_PTR(self) == NULL) {
         self = TypedData_Wrap_Struct(klass, &frb_store_t, store);
         store->rstore = self;
         rb_ivar_set(self, id_ref_cnt, INT2FIX(0));
     } else {
         int ref_cnt = FIX2INT(rb_ivar_get(self, id_ref_cnt)) + 1;
         rb_ivar_set(self, id_ref_cnt, INT2FIX(ref_cnt));
-        FRT_DEREF(store);
     }
     return self;
 }

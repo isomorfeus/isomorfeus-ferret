@@ -27,7 +27,6 @@ static int phrase_pos_cmp(const void *p1, const void *p2) {
     return strcmp(((FrtPhrasePosition *)p1)->terms[0], ((FrtPhrasePosition *)p2)->terms[0]);
 }
 
-
 /***************************************************************************
  *
  * PhraseScorer
@@ -1061,7 +1060,7 @@ static FrtQuery *phq_rewrite(FrtQuery *self, FrtIndexReader *ir)
             return q;
         }
     } else {
-        self->ref_cnt++;
+        FRT_REF(self);
         return self;
     }
 }

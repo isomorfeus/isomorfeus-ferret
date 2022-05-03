@@ -536,7 +536,7 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
-    FrtStoreValue store = fis->store;
+    FrtStoreValue store_val = fis->store_val;
     FrtCompressionType compression = fis->compression;
     FrtIndexValue index = fis->index;
     FrtTermVectorValue term_vector = fis->term_vector;
@@ -545,9 +545,9 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
     if (argc > 1) {
-        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
+        frb_fi_get_params(roptions, &store_val, &compression, &index, &term_vector, &boost);
     }
-    fi = frt_fi_new(frb_field(rname), store, compression, index, term_vector);
+    fi = frt_fi_new(frb_field(rname), store_val, compression, index, term_vector);
     fi->boost = boost;
     frt_fis_add_field(fis, fi);
     return self;
@@ -593,9 +593,7 @@ frb_fis_to_s(VALUE self)
  *
  *  Return the number of fields in the FieldInfos object.
  */
-static VALUE
-frb_fis_size(VALUE self)
-{
+static VALUE frb_fis_size(VALUE self) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     return INT2FIX(fis->size);
 }
@@ -610,21 +608,19 @@ frb_fis_size(VALUE self)
  *  existing index (or other files for that matter) will be deleted from the
  *  directory and overwritten by the new index.
  */
-static VALUE
-frb_fis_create_index(VALUE self, VALUE rdir)
-{
+static VALUE frb_fis_create_index(VALUE self, VALUE rdir) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtStore *store = NULL;
     if (TYPE(rdir) == T_DATA) {
         store = DATA_PTR(rdir);
-        FRT_REF(store);
+        frt_index_create(store, fis);
     } else {
         StringValue(rdir);
         frb_create_dir(rdir);
         store = frt_open_fs_store(rs2s(rdir));
+        frt_index_create(store, fis);
+        frt_store_close(store);
     }
-    frt_index_create(store, fis);
-    frt_store_deref(store);
     return self;
 }
 
@@ -1344,6 +1340,8 @@ static VALUE frb_iw_alloc(VALUE rclass) {
     return TypedData_Wrap_Struct(rclass, &frb_index_writer_t, iw);
 }
 
+extern rb_data_type_t frb_store_t;
+
 static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions, rval;
     bool create = false;
@@ -1363,12 +1361,11 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
 
             if ((rval = rb_hash_aref(roptions, sym_dir)) != Qnil) {
                 // Check_Type(rval, T_DATA);
-                store = DATA_PTR(rval);
+                TypedData_Get_Struct(rval, FrtStore, &frb_store_t, store);
             } else if ((rval = rb_hash_aref(roptions, sym_path)) != Qnil) {
                 StringValue(rval);
                 frb_create_dir(rval);
                 store = frt_open_fs_store(rs2s(rval));
-                FRT_DEREF(store);
             }
             /* use_compound_file defaults to true */
             config.use_compound_file =
@@ -1393,7 +1390,6 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
         }
         if (NULL == store) {
             store = frt_open_ram_store(NULL);
-            FRT_DEREF(store);
         }
         if (!create && create_if_missing && !store->exists(store, "segments")) {
             create = true;
@@ -1411,7 +1407,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
         }
 
         TypedData_Get_Struct(self, FrtIndexWriter, &frb_index_writer_t, iw);
-        iw = frt_iw_open(iw, store, analyzer, &config);
+        frt_iw_open(iw, store, analyzer, &config);
     FRT_XCATCHALL
         ex_code = xcontext.excode;
         msg = xcontext.msg;
@@ -2158,7 +2154,6 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
     VALUE rfield_num_map = rb_hash_new();
     int ex_code = 0;
     const char *msg = NULL;
-
     FRT_TRY
         if (TYPE(rdir) == T_ARRAY) {
             VALUE rdirs = rdir;
@@ -2185,7 +2180,6 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                     case T_STRING:
                         frb_create_dir(rdir);
                         store = frt_open_fs_store(rs2s(rdir));
-                        FRT_DEREF(store);
                         break;
                     default:
                         FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory "
@@ -2195,6 +2189,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                         break;
                 }
                 sub_readers[i] = frt_ir_open(NULL, store);
+                FRT_DEREF(sub_readers[i]);
             }
             TypedData_Get_Struct(self, FrtIndexReader, &frb_index_reader_t, ir);
             ir = frt_mr_open(ir, sub_readers, reader_cnt);
@@ -2206,7 +2201,6 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                 case T_STRING:
                     frb_create_dir(rdir);
                     store = frt_open_fs_store(rs2s(rdir));
-                    FRT_DEREF(store);
                     break;
                 default:
                     FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory argument. "

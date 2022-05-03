@@ -38,7 +38,7 @@ typedef struct FrtMultiMapper
     FrtState **nstates;
     int nsize;
     int *next_states;
-    int ref_cnt;
+    _Atomic unsigned int ref_cnt;
 } FrtMultiMapper;
 
 extern FrtMultiMapper *frt_mulmap_new();

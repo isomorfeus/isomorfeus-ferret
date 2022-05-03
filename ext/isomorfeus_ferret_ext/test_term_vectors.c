@@ -220,7 +220,7 @@ static void test_tv_single_doc(TestCase *tc, void *data)
 
     frt_fr_close(fr);
     frt_fis_deref(fis);
-    frt_store_deref(store);
+    frt_store_close(store);
 }
 
 static void test_tv_multi_doc(TestCase *tc, void *data)
@@ -352,7 +352,7 @@ static void test_tv_multi_doc(TestCase *tc, void *data)
     frt_h_destroy(tvs);
     frt_fr_close(fr);
     frt_fis_deref(fis);
-    frt_store_deref(store);
+    frt_store_close(store);
 }
 
 

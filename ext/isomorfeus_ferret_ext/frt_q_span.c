@@ -66,11 +66,11 @@ static FrtMatchVector *mv_to_term_mv(FrtMatchVector *term_mv, FrtMatchVector *fu
 typedef struct TVTermDocEnum
 {
     FrtTermDocEnum super;
-    int         doc;
-    int         index;
-    int         freq;
-    int        *positions;
-    FrtTermVector *tv;
+    int            doc;
+    int            index;
+    int            freq;
+    int            *positions;
+    FrtTermVector  *tv;
 } TVTermDocEnum;
 
 static void tv_tde_seek(FrtTermDocEnum *tde, int field_num, const char *term)
@@ -131,7 +131,7 @@ static int tv_tde_doc_num(FrtTermDocEnum *tde)
 static FrtTermDocEnum *spanq_ir_term_positions(FrtIndexReader *ir)
 {
     TVTermDocEnum *tv_tde = FRT_ALLOC(TVTermDocEnum);
-    FrtTermDocEnum *tde      = (FrtTermDocEnum *)tv_tde;
+    FrtTermDocEnum *tde   = (FrtTermDocEnum *)tv_tde;
     tv_tde->tv            = (FrtTermVector *)ir->store;
     tde->seek             = &tv_tde_seek;
     tde->doc_num          = &tv_tde_doc_num;
@@ -154,6 +154,7 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, Fr
         ir->fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
         frt_fis_add_field(ir->fis, frt_fi_new(tv->field, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
         ir->store = (FrtStore *)tv;
+        FRT_REF((FrtStore *)tv);
         ir->term_positions = &spanq_ir_term_positions;
         sp_enum = SpQ(self)->get_spans(self, ir);
         while (sp_enum->next(sp_enum)) {
@@ -1727,7 +1728,7 @@ static FrtQuery *spanfq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     frt_q_deref(q);
     SpFQ(self)->match = rq;
 
-    self->ref_cnt++;
+    FRT_REF(self);
     return self;                    /* no clauses rewrote */
 }
 
@@ -1864,7 +1865,7 @@ static FrtQuery *spanoq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
         soq->clauses[i] = rewritten;
     }
 
-    self->ref_cnt++;
+    FRT_REF(self);
     return self;
 }
 
@@ -2050,7 +2051,7 @@ static FrtQuery *spannq_rewrite(FrtQuery *self, FrtIndexReader *ir)
         snq->clauses[i] = rewritten;
     }
 
-    self->ref_cnt++;
+    FRT_REF(self);
     return self;
 }
 
@@ -2207,7 +2208,7 @@ static FrtQuery *spanxq_rewrite(FrtQuery *self, FrtIndexReader *ir) {
     frt_q_deref(q);
     sxq->exc = rq;
 
-    self->ref_cnt++;
+    FRT_REF(self);
     return self;
 }
 

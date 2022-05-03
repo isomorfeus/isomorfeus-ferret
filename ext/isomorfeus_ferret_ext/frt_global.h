@@ -49,7 +49,7 @@ typedef void (*frt_free_ft)(void *key);
 #define FRT_ALLOC_AND_ZERO_N(type,n) (type*)frt_ecalloc(sizeof(type)*(n))
 
 #define FRT_REF(a) (a)->ref_cnt++
-#define FRT_DEREF(a) (a)->ref_cnt--
+#define FRT_DEREF(a) --((a)->ref_cnt)
 
 #define FRT_NEXT_NUM(index, size) (((index) + 1) % (size))
 #define FRT_PREV_NUM(index, size) (((index) + (size) - 1) % (size))

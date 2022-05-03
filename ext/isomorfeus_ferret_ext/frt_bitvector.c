@@ -19,7 +19,7 @@ FrtBitVector *frt_bv_new(void) {
 }
 
 void frt_bv_destroy(FrtBitVector *bv) {
-    if (--(bv->ref_cnt) == 0) {
+    if (FRT_DEREF(bv) == 0) {
         free(bv->bits);
         free(bv);
     }

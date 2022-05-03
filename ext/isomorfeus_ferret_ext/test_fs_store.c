@@ -19,7 +19,7 @@ TestSuite *ts_fs_store(TestSuite *suite)
 
     create_test_store_suite(suite, store);
 
-    frt_store_deref(store);
+    frt_store_close(store);
 
     return suite;
 }

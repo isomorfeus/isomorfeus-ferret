@@ -51,11 +51,11 @@ struct FrtOutStreamMethods {
 
 typedef struct FrtRAMFile
 {
-    char   *name;
-    frt_uchar **buffers;
-    int     bufcnt;
-    off_t   len;
-    int     ref_cnt;
+    char        *name;
+    frt_uchar   **buffers;
+    int         bufcnt;
+    off_t       len;
+    _Atomic unsigned int ref_cnt;
 } FrtRAMFile;
 
 struct FrtOutStream
@@ -114,21 +114,23 @@ struct FrtInStreamMethods
     void (*close_i)(struct FrtInStream *is);
 };
 
-struct FrtInStream
-{
-    FrtBuffer buf;
-    union
-    {
+typedef struct FrtInStreamFile {
+    _Atomic unsigned int ref_cnt;
+    union {
         int fd;
         FrtRAMFile *rf;
     } file;
-    union
-    {
+} FrtInStreamFile;
+
+struct FrtInStream {
+    FrtBuffer buf;
+    struct FrtInStreamFile *f;
+    union {
         off_t pointer;          /* only used by RAMIn */
         char *path;             /* only used by FSIn */
         FrtCompoundInStream *cis;
     } d;
-    int *ref_cnt_ptr;
+    _Atomic unsigned int ref_cnt;
     const struct FrtInStreamMethods *m;
 };
 
@@ -161,24 +163,21 @@ typedef struct FrtCompoundStore
     FrtInStream *stream;
 } FrtCompoundStore;
 
-struct FrtStore
-{
-    int ref_cnt;                /* for fs_store only */
+struct FrtStore {
+    _Atomic unsigned int ref_cnt;
     frt_mutex_t mutex_i;        /* for internal use only */
     frt_mutex_t mutex;          /* external mutex for use outside */
-    union
-    {
-        char *path;             /* for fs_store only */
-        FrtHash *ht;            /* for ram_store only */
+    union {
+        char             *path; /* for fs_store only */
+        FrtHash          *ht;   /* for ram_store only */
         FrtCompoundStore *cmpd; /* for compound_store only */
     } dir;
-
 #if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
-    int file_mode;
+    int         file_mode;
 #else
-    mode_t file_mode;
+    mode_t      file_mode;
 #endif
-    FrtHashSet *locks;
+    FrtHashSet  *locks;
 
     /**
      * Create the file +filename+ in the +store+.
@@ -443,7 +442,7 @@ extern void frt_with_lock_name(FrtStore *store, const char *lock_name, void (*fu
  *
  * @param store the store to be dereferenced
  */
-extern void frt_store_deref(FrtStore *store);
+extern void frt_store_close(FrtStore *store);
 
 /**
  * Flush the buffered contents of the FrtOutStream to the store.
@@ -788,7 +787,6 @@ extern void frt_close_lock(FrtLock *lock);
 extern FrtStore *frt_store_alloc();
 extern FrtStore *frt_store_init(FrtStore *store);
 extern FrtStore *frt_store_new();
-extern void frt_store_destroy(FrtStore *store);
 extern FrtOutStream *frt_os_new();
 extern FrtInStream *frt_is_new();
 extern int frt_file_is_lock(const char *filename);
