@@ -123,7 +123,10 @@ module Isomorfeus
             @dir = RAMDirectory.new
           end
 
-          @dir.extend(MonitorMixin) unless @dir.kind_of? MonitorMixin
+          unless @dir.kind_of? MonitorMixin
+            @dir.extend(MonitorMixin)
+            @dir.new_cond
+          end
           options[:dir] = @dir
           options[:lock_retry_time]||= 2
           @options = options
@@ -796,7 +799,10 @@ module Isomorfeus
             elsif directory.is_a?(Ferret::Store::Directory)
               @dir = directory
             end
-            @dir.extend(MonitorMixin) unless @dir.kind_of? MonitorMixin
+            unless @dir.kind_of? MonitorMixin
+              @dir.extend(MonitorMixin)
+              @dir.new_cond
+            end
             @options[:dir] = @dir
             @options[:create_if_missing] = true
             add_indexes([old_dir])
@@ -967,4 +973,3 @@ module Isomorfeus
     I = Index::Index
   end
 end
-
