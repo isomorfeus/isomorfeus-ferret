@@ -40,19 +40,19 @@ task :ferret_bench => :compile do
 
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -a l')
-  system('bundle exec ruby ferret_search.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   puts
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -a s')
-  system('bundle exec ruby ferret_search.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   puts
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -a w')
-  system('bundle exec ruby ferret_search.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   Dir.chdir(pwd)
@@ -66,29 +66,29 @@ task :ferret_compression_bench => :compile do
   puts "\nTitle and content stored:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 --store')
-  system('bundle exec ruby ferret_search.rb')
-  system('bundle exec ruby ferret_reader.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
+  system('bundle exec ruby ferret_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   puts "\nTitle and content stored and compressed with brotli:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c b --store')
-  system('bundle exec ruby ferret_search.rb')
-  system('bundle exec ruby ferret_reader.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
+  system('bundle exec ruby ferret_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   puts "\nTitle and content stored and compressed with bzip:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c z --store')
-  system('bundle exec ruby ferret_search.rb')
-  system('bundle exec ruby ferret_reader.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
+  system('bundle exec ruby ferret_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   puts "\nTitle and content stored and compressed with lz4:"
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -c l --store')
-  system('bundle exec ruby ferret_search.rb')
-  system('bundle exec ruby ferret_reader.rb')
+  system('bundle exec ruby ferret_search.rb -r 6')
+  system('bundle exec ruby ferret_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   Dir.chdir(pwd)
