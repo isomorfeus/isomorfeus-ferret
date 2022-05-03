@@ -3616,12 +3616,12 @@ static VALUE frb_sea_init(VALUE self, VALUE obj) {
             ir->rir = TypedData_Wrap_Struct(cIndexReader, &frb_index_reader_t, ir);
         } else if (rb_obj_is_kind_of(obj, cIndexReader) == Qtrue) {
             TypedData_Get_Struct(obj, FrtIndexReader, &frb_index_reader_t, ir);
-            ir->rir = obj;
         } else {
             rb_raise(rb_eArgError, "Unknown type for argument to IndexSearcher.new");
         }
     }
     TypedData_Get_Struct(self, FrtSearcher, &frb_index_searcher_t, sea);
+    FRT_REF(ir);
     frt_isea_init(sea, ir);
     sea->rsea = self;
     return self;

@@ -1181,10 +1181,12 @@ static FrtTermVector *isea_get_term_vector(FrtSearcher *self, const int doc_num,
 }
 
 static void isea_close(FrtSearcher *self) {
-    if (ISEA(self)->ir) {
-        frt_ir_close(ISEA(self)->ir);
+    if (0 == --(self->ref_cnt)) {
+        if (ISEA(self)->ir) {
+            frt_ir_close(ISEA(self)->ir);
+        }
+        free(self);
     }
-    free(self);
 }
 
 FrtSearcher *frt_isea_alloc(void) {
@@ -1193,7 +1195,7 @@ FrtSearcher *frt_isea_alloc(void) {
 
 FrtSearcher *frt_isea_init(FrtSearcher *self, FrtIndexReader *ir) {
     ISEA(self)->ir          = ir;
-    FRT_REF(ir);
+    self->ref_cnt           = 1;
     self->similarity        = frt_sim_create_default();
     self->doc_freq          = &frt_isea_doc_freq;
     self->get_doc           = &isea_get_doc;
@@ -1724,15 +1726,17 @@ static void msea_close(FrtSearcher *self) {
     int i;
     FrtSearcher *s;
     FrtMultiSearcher *msea = MSEA(self);
-    if (msea->close_subs) {
-        for (i = 0; i < msea->s_cnt; i++) {
-            s = msea->searchers[i];
-            s->close(s);
+    if (0 == --(self->ref_cnt)) {
+        if (msea->close_subs) {
+            for (i = 0; i < msea->s_cnt; i++) {
+                s = msea->searchers[i];
+                s->close(s);
+            }
         }
+        free(msea->searchers);
+        free(msea->starts);
+        free(self);
     }
-    free(msea->searchers);
-    free(msea->starts);
-    free(self);
 }
 
 FrtSearcher *frt_msea_alloc(void) {
@@ -1745,6 +1749,7 @@ FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt
     for (i = 0; i < s_cnt; i++) {
         starts[i] = max_doc;
         max_doc += searchers[i]->max_doc(searchers[i]);
+        FRT_REF(searchers[i]);
     }
     starts[i] = max_doc;
 
@@ -1753,7 +1758,7 @@ FrtSearcher *frt_msea_init(FrtSearcher *self, FrtSearcher **searchers, int s_cnt
     MSEA(self)->starts      = starts;
     MSEA(self)->max_doc     = max_doc;
     MSEA(self)->close_subs  = close_subs;
-
+    self->ref_cnt           = 1;
     self->similarity        = frt_sim_create_default();
     self->doc_freq          = &msea_doc_freq;
     self->get_doc           = &msea_get_doc;

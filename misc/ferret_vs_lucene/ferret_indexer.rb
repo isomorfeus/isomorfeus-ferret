@@ -1,5 +1,4 @@
 require 'optparse'
-require 'rubygems'
 require 'isomorfeus-ferret'
 
 FL = Dir["corpus/**/*.txt"]
@@ -82,7 +81,6 @@ opts = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Specific options:"
 
-
   opts.on("-d", "--docs VAL", Integer) {|v| @docs = v}
   opts.on("-r", "--reps VAL", Integer) {|v| @reps = v}
   opts.on("-i", "--inc VAL", Integer) {|v| @reps = v}
@@ -94,7 +92,7 @@ end
 opts.parse(ARGV)
 @inc = @inc == 0 ? @docs + 1 : @inc
 num_indexed = 0
-
+puts "Ferret Indexer"
 puts "-" * 63
 times = []
 
@@ -124,4 +122,4 @@ puts "-" * 63
 puts "Mean %.2f secs" % mean_time
 puts "Truncated Mean (#{num_kept} kept, #{@reps - num_kept} discarded): " +
      "%.2f secs, #{(num_indexed/trunc_mean_time).to_i} docs/s" % trunc_mean_time
-puts "-" * 60
+puts "-" * 63

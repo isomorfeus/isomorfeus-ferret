@@ -12,7 +12,7 @@ class ThreadSafetyTest
     @options = options
   end
 
-  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
+  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".." , "temp", "threading"))
   ANALYZER = Isomorfeus::Ferret::Analysis::WhiteSpaceAnalyzer.new
   ITERATIONS = 1000
   QUERY_PARSER = Isomorfeus::Ferret::QueryParser.new(:analyzer => ANALYZER, :default_field => 'contents')
@@ -23,7 +23,7 @@ class ThreadSafetyTest
 
     use_compound_file = false
 
-    (400*ITERATIONS).times do |i|
+    (40*ITERATIONS).times do |i|
       n = rand(0xFFFFFFFF)
       d = {:id => n.to_s, :contents => n.to_spoken}
       puts("Adding #{n}") if @options[:verbose]
@@ -54,15 +54,10 @@ class ThreadSafetyTest
       searcher = Searcher.new(INDEX_DIR)
     end
 
-    (50*ITERATIONS).times do |i|
+    (5*ITERATIONS).times do |i|
       search_for(rand(0xFFFFFFFF), (searcher.nil? ? @@searcher : searcher))
-      if (i%reopen_interval == 0)
-        if (searcher == nil)
-          @@searcher = Searcher.new(INDEX_DIR)
-        else
-          searcher.close
-          searcher = Searcher.new(INDEX_DIR)
-        end
+      if (i % reopen_interval == 0)
+        searcher = Searcher.new(INDEX_DIR)
       end
     end
   rescue => e
@@ -89,14 +84,14 @@ class ThreadSafetyTest
       sleep(1)
     end
 
-    threads << Thread.new { run_search_thread(false)}
+    threads << Thread.new { run_search_thread(false) }
 
     @@searcher = Searcher.new(INDEX_DIR)
-    threads << Thread.new { run_search_thread(true)}
+    threads << Thread.new { run_search_thread(true) }
 
-    threads << Thread.new { run_search_thread(true)}
+    threads << Thread.new { run_search_thread(true) }
 
-    threads.each {|t| t.join}
+    threads.each { |t| t.join }
   end
 end
 

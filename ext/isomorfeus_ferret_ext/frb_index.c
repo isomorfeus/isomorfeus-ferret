@@ -1598,9 +1598,9 @@ void frb_ir_free(void *p) {
 
 void frb_ir_mark(void *p) {
     FrtIndexReader *ir = (FrtIndexReader *)p;
-    FrtMultiReader *mr = (FrtMultiReader *)p;
 
     if (ir->type == FRT_MULTI_READER) {
+        FrtMultiReader *mr = (FrtMultiReader *)p;
         int i;
         for (i = 0; i < mr->r_cnt; i++) {
             if (mr->sub_readers[i]->rir)
@@ -1652,6 +1652,7 @@ static VALUE frb_iw_add_readers(VALUE self, VALUE rreaders) {
     while (i-- > 0) {
         FrtIndexReader *ir;
         TypedData_Get_Struct(RARRAY_PTR(rreaders)[i], FrtIndexReader, &frb_index_reader_t, ir);
+        FRT_REF(ir);
         irs[i] = ir;
     }
     frt_iw_add_readers(iw, irs, RARRAY_LEN(rreaders));
@@ -2170,7 +2171,6 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                     case T_DATA:
                         if (CLASS_OF(rdir) == cIndexReader) {
                             TypedData_Get_Struct(rdir, FrtIndexReader, &frb_index_reader_t, sub_readers[i]);
-                            FRT_REF(sub_readers[i]);
                             continue;
                         } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
                             store = DATA_PTR(rdir);

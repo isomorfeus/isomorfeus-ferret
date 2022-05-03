@@ -2490,25 +2490,6 @@ static bool tew_lt(const TermEnumWrapper *tew1, const TermEnumWrapper *tew2)
     }
 }
 
-/*
-static void tew_load_doc_map(TermEnumWrapper *tew)
-{
-    int j = 0, i;
-    FrtIndexReader *ir = tew->ir;
-    int max_doc = ir->max_doc(ir);
-    int *doc_map = tew->doc_map = FRT_ALLOC_N(int, max_doc);
-
-    for (i = 0; i < max_doc; i++) {
-        if (ir->is_deleted(ir, i)) {
-            doc_map[i] = -1;
-        }
-        else {
-            doc_map[i] = j++;
-        }
-    }
-}
-*/
-
 static char *tew_next(TermEnumWrapper *tew)
 {
     return (tew->term = tew->te->next(tew->te));
@@ -2750,7 +2731,6 @@ char *frt_tir_get_term(FrtTermInfosReader *tir, int pos) {
         return frt_ste_get_term(tir_enum(tir), pos);
     }
 }
-
 
 void frt_tir_close(FrtTermInfosReader *tir) {
     frt_ary_destroy(tir->te_bucket, (frt_free_ft)&frt_ste_close);
@@ -4908,11 +4888,11 @@ FrtMultiReader *frt_mr_init(FrtMultiReader *mr, FrtIndexReader **sub_readers, co
     mr->max_doc             = 0;
     mr->num_docs_cache      = -1;
     mr->has_deletions       = false;
-
     mr->starts              = FRT_ALLOC_N(int, (r_cnt+1));
 
     for (i = 0; i < r_cnt; i++) {
         FrtIndexReader *sub_reader = sub_readers[i];
+        FRT_REF(sub_reader);
         mr->starts[i] = mr->max_doc;
         mr->max_doc += sub_reader->max_doc(sub_reader); /* compute max_docs */
 

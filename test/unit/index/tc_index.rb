@@ -477,14 +477,14 @@ class IndexTest < Test::Unit::TestCase
   def test_index_key_batch1
     data0 = {
       "0" => {:id => "0", :val => "two"},
-      "1" =>{:id => "1", :val => "three"},
+      "1" => {:id => "1", :val => "three"},
       "2" => {:id => "1", :val => "four"},
     }
 
     data1 = {
       "0" => {:id => "0", :val => "one"},
       "3" => {:id => "3", :val => "two"},
-      "2" =>{:id => "2", :val => "three"},
+      "2" => {:id => "2", :val => "three"},
       "1" => {:id => "1", :val => "four"},
       "4" => {:id => "4", :val => "four"},
     }
@@ -622,8 +622,7 @@ class IndexTest < Test::Unit::TestCase
     assert_equal("four", index[top_docs.hits[1].doc][:content])
     assert_equal("19530315", index[top_docs.hits[2].doc][:date])
 
-    top_docs = index.search("one two three four",
-                            :sort => [:date, :content])
+    top_docs = index.search("one two three four", :sort => [:date, :content])
     assert_equal("19390912", index[top_docs.hits[0].doc][:date])
     assert_equal("four", index[top_docs.hits[0].doc][:content])
     assert_equal("19390912", index[top_docs.hits[1].doc][:date])

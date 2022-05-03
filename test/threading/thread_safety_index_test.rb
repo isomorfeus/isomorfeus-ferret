@@ -7,7 +7,7 @@ require 'thread'
 class IndexThreadSafetyTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Index
 
-  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), "index"))
+  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".." , "temp", "threading"))
   ITERATIONS = 100
   NUM_THREADS = 3
   ANALYZER = Isomorfeus::Ferret::Analysis::StandardAnalyzer.new
@@ -42,7 +42,7 @@ class IndexThreadSafetyTest < Test::Unit::TestCase
   end
 
   def do_optimize(index)
-    puts "Optimizing the index"
+    puts "Optimizing the index" if @verbose
     index.optimize
   end
 
