@@ -317,6 +317,7 @@ extern FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *t
  ****************************************************************************/
 
 typedef struct FrtTermInfosReader {
+    frt_thread_key_t thread_te;
     void             **te_bucket;
     FrtTermEnum      *orig_te;
     int              field_num;
@@ -719,6 +720,7 @@ struct FrtSegmentReader {
     FrtInStream          *prx_in;
     FrtSegmentFieldIndex *sfi;
     FrtTermInfosReader   *tir;
+    frt_thread_key_t     thread_fr;
     void                 **fr_bucket;
     FrtHash              *norms;
     FrtStore             *cfs_store;

@@ -2632,15 +2632,28 @@ FrtTermInfosReader *frt_tir_open(FrtStore *store, FrtSegmentFieldIndex *sfi, con
     FrtInStream *is = store->open_input(store, file_name);
     FRT_DEREF(is);
     tir->orig_te = frt_ste_new(is, sfi);
+    tir->thread_te = 0;
+    if (frt_thread_key_create(&tir->thread_te, NULL)) {
+        fprintf(stderr, "pthread_key_create_failed, possible reduced performance (tir)\n");
+        tir->thread_te = -1;
+    }
     tir->te_bucket = frt_ary_new();
     tir->field_num = -1;
     return tir;
 }
 
 static FrtTermEnum *tir_enum(FrtTermInfosReader *tir) {
-    FrtTermEnum *te = frt_ste_clone(tir->orig_te);
-    ste_set_field(te, tir->field_num);
-    frt_ary_push(tir->te_bucket, te);
+    FrtTermEnum *te;
+    if (tir->thread_te == -1) {
+        te = frt_ste_clone(tir->orig_te);
+        ste_set_field(te, tir->field_num);
+        frt_ary_push(tir->te_bucket, te);
+    } else if (NULL == (te = (FrtTermEnum *)frt_thread_getspecific(tir->thread_te))) {
+        te = frt_ste_clone(tir->orig_te);
+        ste_set_field(te, tir->field_num);
+        frt_ary_push(tir->te_bucket, te);
+        frt_thread_setspecific(tir->thread_te, te);
+    }
     return te;
 }
 
@@ -2690,6 +2703,10 @@ char *frt_tir_get_term(FrtTermInfosReader *tir, int pos) {
 void frt_tir_close(FrtTermInfosReader *tir) {
     frt_ary_destroy(tir->te_bucket, (frt_free_ft)&frt_ste_close);
     frt_ste_close(tir->orig_te);
+    if (tir->thread_te != -1) {
+        frt_thread_setspecific(tir->thread_te, NULL);
+        frt_thread_key_delete(tir->thread_te);
+    }
     free(tir);
 }
 
@@ -4127,8 +4144,15 @@ static void norm_rewrite(Norm *norm, FrtStore *store, FrtDeleter *dlr,
 #define SR_SIZE(ir) (SR(ir)->fr->size)
 
 static FrtFieldsReader *sr_fr(FrtSegmentReader *sr) {
-    FrtFieldsReader *fr = frt_fr_clone(sr->fr);
-    frt_ary_push(sr->fr_bucket, fr);
+    FrtFieldsReader *fr;
+    if (sr->thread_fr == -1) {
+        fr = frt_fr_clone(sr->fr);
+        frt_ary_push(sr->fr_bucket, fr);
+    } else if (NULL == (fr = (FrtFieldsReader *)frt_thread_getspecific(sr->thread_fr))) {
+        fr = frt_fr_clone(sr->fr);
+        frt_ary_push(sr->fr_bucket, fr);
+        frt_thread_setspecific(sr->thread_fr, fr);
+    }
     return fr;
 }
 
@@ -4293,6 +4317,10 @@ static void sr_close_i(FrtIndexReader *ir) {
     if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
     if (sr->cfs_store)    frt_store_close(sr->cfs_store);
     if (sr->fr_bucket) {
+        if (sr->thread_fr != -1) {
+            frt_thread_setspecific(sr->thread_fr, NULL);
+            frt_thread_key_delete(sr->thread_fr);
+        }
         frt_ary_destroy(sr->fr_bucket, (frt_free_ft)&frt_fr_close);
     }
 }
@@ -4482,6 +4510,7 @@ static FrtIndexReader *sr_setup_i(FrtSegmentReader *sr)
 
     ir->type                = FRT_SEGMENT_READER;
 
+    sr->thread_fr   = 0;
     sr->cfs_store   = NULL;
 
     FRT_TRY
@@ -4510,6 +4539,10 @@ static FrtIndexReader *sr_setup_i(FrtSegmentReader *sr)
         sr->norms = frt_h_new_int((frt_free_ft)&norm_destroy);
         sr_open_norms(ir, store);
         if (fis_has_vectors(ir->fis)) {
+            if (frt_thread_key_create(&sr->thread_fr, NULL)) {
+                fprintf(stderr, "pthread_key_create_failed, possible reduced performance (fr)\n");
+                sr->thread_fr = -1;
+            }
             sr->fr_bucket = frt_ary_new();
         }
     FRT_XCATCHALL
