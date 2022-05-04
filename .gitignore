@@ -4,10 +4,8 @@ misc/ferret/.deps
 misc/ferret_vs_lucene/*_index
 misc/ferret_vs_lucene/*.class
 parser/frt_q_parser.c
-scanner/frt_scanner_utf8.c
 test/temp
 test/testdir/*
-test/threading/index
 tmp
 *.o
 *.gem
