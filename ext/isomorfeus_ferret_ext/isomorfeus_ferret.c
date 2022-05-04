@@ -46,8 +46,8 @@ VALUE cStateError;
 void Init_Benchmark(void);
 void Init_Test(void);
 
-unsigned long long value_hash(const void *key) {
-    return (unsigned long long)key;
+unsigned long value_hash(const void *key) {
+    return (unsigned long)key;
 }
 
 int value_eq(const void *key1, const void *key2) {
@@ -61,8 +61,9 @@ void frb_thread_once(int *once_control, void (*init_routine) (void)) {
     }
 }
 
-void frb_thread_key_create(frt_thread_key_t *key, void (*destr_function)(void *)) {
+int frb_thread_key_create(frt_thread_key_t *key, void (*destr_function)(void *)) {
     *key = frt_h_new(&value_hash, &value_eq, NULL, destr_function);
+    return 0;
 }
 
 void frb_thread_key_delete(frt_thread_key_t key) {
