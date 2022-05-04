@@ -59,4 +59,5 @@ puts "-" * 63
 puts "Mean %.2f secs" % mean_time
 puts "Truncated Mean (#{num_kept} kept, #{@reps - num_kept} discarded): " +
      "%.2f secs, #{(queries/trunc_mean_time).to_i} queries/s" % trunc_mean_time
+puts "#{res} docs found"
 puts "-" * 63
