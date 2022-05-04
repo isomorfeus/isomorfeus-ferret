@@ -720,7 +720,7 @@ struct FrtSegmentReader {
     FrtInStream          *prx_in;
     FrtSegmentFieldIndex *sfi;
     FrtTermInfosReader   *tir;
-    // frt_thread_key_t     thread_fr;
+    frt_thread_key_t     thread_fr;
     void                 **fr_bucket;
     FrtHash              *norms;
     FrtStore             *cfs_store;

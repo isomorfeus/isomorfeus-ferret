@@ -4145,14 +4145,14 @@ static void norm_rewrite(Norm *norm, FrtStore *store, FrtDeleter *dlr,
 
 static FrtFieldsReader *sr_fr(FrtSegmentReader *sr) {
     FrtFieldsReader *fr;
-    // if (sr->thread_fr == -1) {
+    if (sr->thread_fr == -1) {
         fr = frt_fr_clone(sr->fr);
         frt_ary_push(sr->fr_bucket, fr);
-    // } else if (NULL == (fr = (FrtFieldsReader *)frt_thread_getspecific(sr->thread_fr))) {
-    //     fr = frt_fr_clone(sr->fr);
-    //     frt_ary_push(sr->fr_bucket, fr);
-    //     frt_thread_setspecific(sr->thread_fr, fr);
-    // }
+    } else if (NULL == (fr = (FrtFieldsReader *)frt_thread_getspecific(sr->thread_fr))) {
+        fr = frt_fr_clone(sr->fr);
+        frt_ary_push(sr->fr_bucket, fr);
+        frt_thread_setspecific(sr->thread_fr, fr);
+    }
     return fr;
 }
 
@@ -4317,10 +4317,10 @@ static void sr_close_i(FrtIndexReader *ir) {
     if (sr->deleted_docs) frt_bv_destroy(sr->deleted_docs);
     if (sr->cfs_store)    frt_store_close(sr->cfs_store);
     if (sr->fr_bucket) {
-        // if (sr->thread_fr != -1) {
-        //     frt_thread_setspecific(sr->thread_fr, NULL);
-        //     frt_thread_key_delete(sr->thread_fr);
-        // }
+        if (sr->thread_fr != -1) {
+            frt_thread_setspecific(sr->thread_fr, NULL);
+            frt_thread_key_delete(sr->thread_fr);
+        }
         frt_ary_destroy(sr->fr_bucket, (frt_free_ft)&frt_fr_close);
     }
 }
@@ -4510,7 +4510,7 @@ static FrtIndexReader *sr_setup_i(FrtSegmentReader *sr)
 
     ir->type                = FRT_SEGMENT_READER;
 
-    // sr->thread_fr   = 0;
+    sr->thread_fr   = 0;
     sr->cfs_store   = NULL;
 
     FRT_TRY
@@ -4539,10 +4539,10 @@ static FrtIndexReader *sr_setup_i(FrtSegmentReader *sr)
         sr->norms = frt_h_new_int((frt_free_ft)&norm_destroy);
         sr_open_norms(ir, store);
         if (fis_has_vectors(ir->fis)) {
-            // if (frt_thread_key_create(&sr->thread_fr, NULL)) {
-            //     fprintf(stderr, "pthread_key_create_failed, possible reduced performance (fr)\n");
-            //     sr->thread_fr = -1;
-            // }
+            if (frt_thread_key_create(&sr->thread_fr, NULL)) {
+                fprintf(stderr, "pthread_key_create_failed, possible reduced performance (fr)\n");
+                sr->thread_fr = -1;
+            }
             sr->fr_bucket = frt_ary_new();
         }
     FRT_XCATCHALL
