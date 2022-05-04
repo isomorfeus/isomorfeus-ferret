@@ -18,6 +18,7 @@ end
 
 opts.parse(ARGV)
 queries = 0
+res = 0
 puts "Ferret Search"
 puts "-" * 63
 times = []
