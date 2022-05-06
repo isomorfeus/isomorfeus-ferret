@@ -1,7 +1,7 @@
 require 'optparse'
 require 'isomorfeus-ferret'
 
-FL = Dir["corpus/**/*.txt"]
+FL = Dir["reuters_corpus/**/*.txt"]
 
 include Isomorfeus::Ferret
 include Isomorfeus::Ferret::Index
@@ -32,8 +32,13 @@ def init_writer(create)
     sc = @store && @comp ? ca : :no
     options[:create] = true
     field_infos = FieldInfos.new()
-    field_infos.add_field(:title, :store => :yes, :compression => c, :term_vector => :no)
-    field_infos.add_field(:body, :store => s, :compression => sc, :term_vector => :with_positions_offsets)
+    if @x
+      field_infos.add_field(:title, :store => :yes, :compression => c, :term_vector => :no)
+      field_infos.add_field(:body, :store => s, :compression => sc, :term_vector => :with_positions_offsets)
+    else
+      field_infos.add_field(:title, :index => :no, :store => :yes, :compression => c, :term_vector => :no)
+      field_infos.add_field(:body, :index => :no, :store => s, :compression => sc, :term_vector => :no)
+    end
     options[:field_infos] = field_infos
   end
 
@@ -47,7 +52,7 @@ def build_index(file_list, max_to_index, increment)
   file_list.each do |fn|
     File.open(fn, encoding: "ASCII-8BIT") do |f|
       raise("Failed to read title") if (title = f.readline).nil?
-      writer << {:title => title, :body => f.read }
+      writer << { :title => title, :body => f.read }
     end
 
     docs_so_far += 1
@@ -73,6 +78,7 @@ end
 @inc = 0
 @comp = false
 @store = false
+@x = true
 @analyzer = 'w'
 
 opts = OptionParser.new do |opts|
@@ -87,6 +93,7 @@ opts = OptionParser.new do |opts|
   opts.on("-c", "--comp VAL") {|v| @comp = v }
   opts.on("-s", "--store") { @store = true }
   opts.on("-a", "--analyzer VAL", String) {|v| @analyzer = v.downcase[0] }
+  opts.on("-x", "--do-not-index") { @x = false }
 end
 
 opts.parse(ARGV)
