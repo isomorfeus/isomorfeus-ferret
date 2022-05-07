@@ -29,7 +29,7 @@ typedef posh_i64_t frt_i64;
 #if defined POSH_OS_WIN64
 typedef off64_t frt_off_t;
 #else
-typedef frt_off_t frt_off_t;
+typedef off_t frt_off_t;
 #endif
 
 #if ( LONG_MAX == 2147483647 ) && defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64)
