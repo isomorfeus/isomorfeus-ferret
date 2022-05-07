@@ -2801,6 +2801,7 @@ FrtQParser *frt_qp_init(FrtQParser *self, FrtAnalyzer *analyzer) {
     qp_push_fields(self, self->def_fields, false);
 
     self->analyzer = analyzer;
+    if (analyzer) FRT_REF(analyzer);
     self->ts_cache = frt_h_new_ptr((frt_free_ft)&frt_ts_deref);
     self->buf_index = 0;
     self->dynbuf = NULL;
