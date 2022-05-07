@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.extensions    = %w(ext/isomorfeus_ferret_ext/extconf.rb)
   s.required_ruby_version = '>= 3.0.0'
 
+  s.add_development_dependency 'oj'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rake-compiler'
   s.add_development_dependency 'test-unit'

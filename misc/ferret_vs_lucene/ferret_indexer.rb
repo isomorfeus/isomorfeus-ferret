@@ -1,7 +1,6 @@
 require 'optparse'
+require 'oj'
 require 'isomorfeus-ferret'
-
-FL = Dir["reuters_corpus/**/*.txt"]
 
 include Isomorfeus::Ferret
 include Isomorfeus::Ferret::Index
@@ -45,7 +44,39 @@ def init_writer(create)
   IndexWriter.new(options)
 end
 
-def build_index(file_list, max_to_index, increment)
+def build_index_harvard(file_list, max_to_index, increment)
+  writer = init_writer(true)
+  docs_so_far = 0
+
+  file_list.each do |fn|
+    File.open(fn) do |f|
+      f.each_line do |json|
+        doc = Oj.load(json, mode: :strict)
+        writer << { :title => doc["name"], :body => doc["casebody"]["data"]["opinions"].map { |o| o["text"] }.join('\n') }
+
+        docs_so_far += 1
+
+        print '.' if (docs_so_far % 10000) == 0
+
+        break if (docs_so_far >= max_to_index)
+
+        if (docs_so_far % increment) == 0
+          writer.close()
+          writer = init_writer(false)
+        end
+      end
+    end
+  end
+
+  # finish index
+  num_indexed = writer.doc_count()
+  writer.optimize()
+  writer.close()
+
+  return num_indexed
+end
+
+def build_index_reuters(file_list, max_to_index, increment)
   writer = init_writer(true)
   docs_so_far = 0
 
@@ -73,13 +104,13 @@ def build_index(file_list, max_to_index, increment)
   return num_indexed
 end
 
-@docs = FL.size
 @reps = 1
 @inc = 0
 @comp = false
 @store = false
 @x = true
 @analyzer = 'w'
+@harvard = false
 
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: ferret_indexer.rb [options]"
@@ -94,18 +125,37 @@ opts = OptionParser.new do |opts|
   opts.on("-s", "--store") { @store = true }
   opts.on("-a", "--analyzer VAL", String) {|v| @analyzer = v.downcase[0] }
   opts.on("-x", "--do-not-index") { @x = false }
+  opts.on("-h", "--harvard") { @harvard = true }
 end
 
 opts.parse(ARGV)
-@inc = @inc == 0 ? @docs + 1 : @inc
+
+@docs = 0
+
+if @harvard
+  FL_HARVARD = Dir["harvard_corpus/*.jsonl"]
+  FL_HARVARD.each do |fn|
+    @docs += File.open(fn) { |f| f.count }
+  end
+else
+  FL_REUTERS = Dir["reuters_corpus/**/*.txt"]
+  @docs = FL_REUTERS.size
+end
+
 num_indexed = 0
+@inc = @inc == 0 ? @docs + 1 : @inc
+
 puts "Ferret Indexer"
 puts "-" * 63
 times = []
 
 @reps.times do |i|
   t = Time.now
-  num_indexed = build_index(FL, @docs, @inc)
+  if @harvard
+    num_indexed = build_index_harvard(FL_HARVARD, @docs, @inc)
+  else
+    num_indexed = build_index_reuters(FL_REUTERS, @docs, @inc)
+  end
   t = Time.new - t
   times << t
   puts "#{i+1}  Secs: %.2f  Docs: #{num_indexed}, #{(num_indexed/t).to_i} docs/s" % t
