@@ -6,7 +6,7 @@ Visit
 
 and download the \*\_text\_\*.zip files in the sub directories.
 Unzip those.
-Within ech of the uncompressed directories there is a 'data' directory with a 'data.jsonl.xz'
+Within ech of the uncompressed directories there is a 'data' directory with a 'data.jsonl.xz'.
 Unxz the data.jsonl.xz and move it to this 'harvard_corpus' directory,
 so that its contents eventually look like this:
 ```
