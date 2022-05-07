@@ -4,7 +4,7 @@ Visit
 
 [https://case.law/download/bulk_exports/20210921/by_jurisdiction/case_text_open/](https://case.law/download/bulk_exports/20210921/by_jurisdiction/case_text_open/)
 
-and download the \*\_text\_\*.zip` files in the sub directories.
+and download the \*\_text\_\*.zip files in the sub directories.
 Unzip those.
 Within ech of the uncompressed directories there is a 'data' directory with a 'data.jsonl.xz'
 Unxz the data.jsonl.xz and move it to this 'harvard_corpus' directory,
