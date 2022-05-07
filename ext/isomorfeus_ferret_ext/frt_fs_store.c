@@ -248,7 +248,7 @@ static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 }
 
 static void fso_seek_i(FrtOutStream *os, frt_off_t pos) {
-#if defined POSH_OS_WIN64
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
     if (_lseeki64(os->file.fd, pos, SEEK_SET) < 0) {
 #else
     if (lseek(os->file.fd, pos, SEEK_SET) < 0) {
@@ -302,9 +302,8 @@ static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
     }
 }
 
-static void fsi_seek_i(FrtInStream *is, frt_off_t pos)
-{
-#if defined POSH_OS_WIN64
+static void fsi_seek_i(FrtInStream *is, frt_off_t pos) {
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
     if (_lseeki64(is->f->file.fd, pos, SEEK_SET) < 0) {
 #else
     if (lseek(is->f->file.fd, pos, SEEK_SET) < 0) {
