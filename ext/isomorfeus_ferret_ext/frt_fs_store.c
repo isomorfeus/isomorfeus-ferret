@@ -343,8 +343,10 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
     if (fd < 0) {
+        // TODO Remove intentional crash
+        fprintf(stderr, "intentional crash %s", NULL);
         FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR,
-              "tried to open \"%s\" but it doesn't exist: <%s>",
+              "tried to open \"%s\" but it doesn't exist: <%s> ",
               path, strerror(errno));
     }
     is = frt_is_new();
