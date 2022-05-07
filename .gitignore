@@ -3,6 +3,7 @@ lib/isomorfeus_ferret_ext.so
 misc/ferret/.deps
 misc/ferret_vs_lucene/*_index
 misc/ferret_vs_lucene/*.class
+misc/ferret_vs_lucene/harvard_corpus/*.jsonl
 parser/frt_q_parser.c
 test/temp
 test/testdir/*
