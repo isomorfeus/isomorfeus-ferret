@@ -40,7 +40,6 @@ TestSuite *ts_symbol(TestSuite *suite);
 TestSuite *ts_term(TestSuite *suite);
 TestSuite *ts_term_vectors(TestSuite *suite);
 TestSuite *ts_test(TestSuite *suite);
-TestSuite *ts_threading(TestSuite *suite);
 
 const struct test_list
 {
@@ -80,8 +79,7 @@ const struct test_list
     {ts_sort},
     {ts_term},
     {ts_term_vectors},
-    {ts_test},
-    {ts_threading}
+    {ts_test}
 };
 
 #endif

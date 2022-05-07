@@ -755,7 +755,6 @@ static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(31)); }
 static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(32)); }
 static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(33)); }
 static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(34)); }
-static VALUE frb_ts_threading(VALUE v)    { return INT2FIX(execute_test(35)); }
 
 static VALUE frb_ts_posh(VALUE v) {
     const char *posh = POSH_GetArchString();
@@ -833,7 +832,6 @@ void Init_Test(void) {
     rb_define_singleton_method(mTest, "term",           frb_ts_term, 0);
     rb_define_singleton_method(mTest, "term_vectors",   frb_ts_term_vectors, 0);
     rb_define_singleton_method(mTest, "test",           frb_ts_test, 0);
-    rb_define_singleton_method(mTest, "threading",      frb_ts_threading, 0);
     rb_define_singleton_method(mTest, "posh",           frb_ts_posh, 0);
     rb_define_singleton_method(mTest, "run_all",        frb_ts_run_all, 0);
 }
