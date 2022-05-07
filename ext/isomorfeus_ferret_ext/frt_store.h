@@ -49,20 +49,17 @@ struct FrtOutStreamMethods {
     void (*close_i)(struct FrtOutStream *os);
 };
 
-typedef struct FrtRAMFile
-{
+typedef struct FrtRAMFile {
     char        *name;
     frt_uchar   **buffers;
     int         bufcnt;
-    frt_off_t       len;
+    frt_off_t   len;
     _Atomic unsigned int ref_cnt;
 } FrtRAMFile;
 
-struct FrtOutStream
-{
+struct FrtOutStream {
     FrtBuffer buf;
-    union
-    {
+    union {
         int fd;
         FrtRAMFile *rf;
     } file;

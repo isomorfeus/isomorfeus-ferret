@@ -258,8 +258,7 @@ static void fso_seek_i(FrtOutStream *os, frt_off_t pos) {
     }
 }
 
-static void fso_close_i(FrtOutStream *os)
-{
+static void fso_close_i(FrtOutStream *os) {
     if (close(os->file.fd)) {
         FRT_RAISE(FRT_IO_ERROR, "closing file: <%s>", strerror(errno));
     }
@@ -271,8 +270,7 @@ static const struct FrtOutStreamMethods FS_OUT_STREAM_METHODS = {
     fso_close_i
 };
 
-static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
-{
+static FrtOutStream *fs_new_output(FrtStore *store, const char *filename) {
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
     if (fd < 0) {

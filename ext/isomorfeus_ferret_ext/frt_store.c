@@ -113,8 +113,7 @@ void frt_os_flush(FrtOutStream *os)
     os->buf.pos = 0;
 }
 
-void frt_os_close(FrtOutStream *os)
-{
+void frt_os_close(FrtOutStream *os) {
     frt_os_flush(os);
     os->m->close_i(os);
     free(os);

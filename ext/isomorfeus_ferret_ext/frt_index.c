@@ -6140,13 +6140,11 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     iw_maybe_merge_segments(iw);
 }
 
-void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc)
-{
+void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc) {
     frt_mutex_lock(&iw->mutex);
     if (NULL == iw->dw) {
         iw->dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
-    }
-    else if (NULL == iw->dw->fw) {
+    } else if (NULL == iw->dw->fw) {
         frt_dw_new_segment(iw->dw, frt_sis_new_segment(iw->sis, 0, iw->store));
     }
     frt_dw_add_doc(iw->dw, doc);
