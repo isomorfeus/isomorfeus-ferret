@@ -26,7 +26,7 @@ typedef posh_i32_t frt_i32;
 typedef posh_u64_t frt_u64;
 typedef posh_i64_t frt_i64;
 
-#if defined POSH_OS_WIN64
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
 typedef off64_t frt_off_t;
 #else
 typedef off_t frt_off_t;
