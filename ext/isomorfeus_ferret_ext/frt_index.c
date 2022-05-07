@@ -1565,7 +1565,7 @@ static void frt_fr_read_compressed_fields(FrtFieldsReader *fr, FrtDocField *df, 
 FrtDocument *frt_fr_get_doc(FrtFieldsReader *fr, int doc_num)
 {
     int i, j;
-    off_t pos;
+    frt_off_t pos;
     int stored_cnt;
     FrtDocument *doc = frt_doc_new();
     FrtInStream *fdx_in = fr->fdx_in;
@@ -1612,7 +1612,7 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
 {
     int start = 0;
     int i, j;
-    off_t pos;
+    frt_off_t pos;
     int stored_cnt;
     FrtLazyDoc *lazy_doc;
     FrtInStream *fdx_in = fr->fdx_in;
@@ -1642,7 +1642,7 @@ FrtLazyDoc *frt_fr_get_lazy_doc(FrtFieldsReader *fr, int doc_num)
         lazy_doc_add_field(lazy_doc, lazy_df, i);
     }
     /* correct the starts to their correct absolute positions */
-    const off_t abs_start = frt_is_pos(fdt_in);
+    const frt_off_t abs_start = frt_is_pos(fdt_in);
     for (i = 0; i < stored_cnt; i++) {
         FrtLazyDocField *lazy_df = lazy_doc->fields[i];
         const int df_size = lazy_df->size;
@@ -1719,7 +1719,7 @@ FrtHash *frt_fr_get_tv(FrtFieldsReader *fr, int doc_num)
     int i;
     FrtInStream *fdx_in = fr->fdx_in;
     FrtInStream *fdt_in = fr->fdt_in;
-    off_t data_ptr, field_index_ptr;
+    frt_off_t data_ptr, field_index_ptr;
     int field_cnt;
     int *field_nums;
 
@@ -1757,7 +1757,7 @@ FrtTermVector *frt_fr_get_field_tv(FrtFieldsReader *fr, int doc_num, int field_n
 
     if (doc_num >= 0 && doc_num < fr->size) {
         int i, fnum = -1;
-        off_t field_index_ptr;
+        frt_off_t field_index_ptr;
         int field_cnt;
         int offset = 0;
         FrtInStream *fdx_in = fr->fdx_in;
@@ -2038,7 +2038,7 @@ void frt_fw_add_postings(FrtFieldsWriter *fw,
     int i, delta_start, delta_length;
     const char *last_term = FRT_EMPTY_STRING;
     FrtOutStream *fdt_out = fw->fdt_out;
-    off_t fdt_start_pos = frt_os_pos(fdt_out);
+    frt_off_t fdt_start_pos = frt_os_pos(fdt_out);
     FrtPostingList *plist;
     FrtPosting *posting;
     FrtOccurence *occ;
@@ -2152,7 +2152,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti, FrtTermEnum *inde
     if (NULL == sti->index_terms) {
         int i;
         int index_cnt = sti->index_cnt;
-        off_t index_ptr = 0;
+        frt_off_t index_ptr = 0;
         ste_reset(index_te);
         frt_is_seek(STE(index_te)->is, sti->index_ptr);
         STE(index_te)->size = sti->index_cnt;
@@ -2789,7 +2789,7 @@ static void tw_add(FrtTermWriter *tw, const char *term, int term_len, FrtTermInf
 }
 
 void frt_tiw_add(FrtTermInfosWriter *tiw, const char *term, int term_len, FrtTermInfo *ti) {
-    off_t tis_pos;
+    frt_off_t tis_pos;
 
     if (0 == (tiw->tis_writer->counter % tiw->index_interval)) {
         /* add an index term */
@@ -2962,8 +2962,8 @@ static bool stde_skip_to(FrtTermDocEnum *tde, int target_doc_num) {
     if (stde->doc_freq >= stde->skip_interval
         && target_doc_num > stde->doc_num) {       /* optimized case */
         int last_skip_doc;
-        off_t last_frq_ptr;
-        off_t last_prx_ptr;
+        frt_off_t last_frq_ptr;
+        frt_off_t last_prx_ptr;
         int num_skipped;
 
         if (NULL == stde->skip_in) {
@@ -3034,7 +3034,7 @@ static void stde_skip_prox(FrtSegmentTermDocEnum *stde) {
     (void)stde;
 }
 
-static void stde_seek_prox(FrtSegmentTermDocEnum *stde, off_t prx_ptr) {
+static void stde_seek_prox(FrtSegmentTermDocEnum *stde, frt_off_t prx_ptr) {
     (void)stde;
     (void)prx_ptr;
 }
@@ -3130,7 +3130,7 @@ static void stpe_skip_prox(FrtSegmentTermDocEnum *stde)
     frt_is_skip_vints(stde->prx_in, stde->freq);
 }
 
-static void stpe_seek_prox(FrtSegmentTermDocEnum *stde, off_t prx_ptr)
+static void stpe_seek_prox(FrtSegmentTermDocEnum *stde, frt_off_t prx_ptr)
 {
     frt_is_seek(stde->prx_in, prx_ptr);
     stde->prx_cnt = 0;
@@ -5108,8 +5108,8 @@ typedef struct SkipBuffer
     FrtOutStream *frq_out;
     FrtOutStream *prx_out;
     int last_doc;
-    off_t last_frq_ptr;
-    off_t last_prx_ptr;
+    frt_off_t last_frq_ptr;
+    frt_off_t last_prx_ptr;
 } SkipBuffer;
 
 static void skip_buf_reset(SkipBuffer *skip_buf)
@@ -5131,8 +5131,8 @@ static SkipBuffer *skip_buf_new(FrtOutStream *frq_out, FrtOutStream *prx_out)
 
 static void skip_buf_add(SkipBuffer *skip_buf, int doc)
 {
-    off_t frq_ptr = frt_os_pos(skip_buf->frq_out);
-    off_t prx_ptr = frt_os_pos(skip_buf->prx_out);
+    frt_off_t frq_ptr = frt_os_pos(skip_buf->frq_out);
+    frt_off_t prx_ptr = frt_os_pos(skip_buf->prx_out);
 
     frt_os_write_vint(skip_buf->buf, doc - skip_buf->last_doc);
     frt_os_write_vint(skip_buf->buf, frq_ptr - skip_buf->last_frq_ptr);
@@ -5143,9 +5143,9 @@ static void skip_buf_add(SkipBuffer *skip_buf, int doc)
     skip_buf->last_prx_ptr = prx_ptr;
 }
 
-static off_t skip_buf_write(SkipBuffer *skip_buf)
+static frt_off_t skip_buf_write(SkipBuffer *skip_buf)
 {
-  off_t skip_ptr = frt_os_pos(skip_buf->frq_out);
+  frt_off_t skip_ptr = frt_os_pos(skip_buf->frq_out);
   frt_ramo_write_to(skip_buf->buf, skip_buf->frq_out);
   return skip_ptr;
 }
@@ -5378,7 +5378,7 @@ static void dw_add_posting(FrtMemoryPool *mp,
     }
 }
 
-static void dw_add_offsets(FrtDocWriter *dw, int pos, off_t start, off_t end)
+static void dw_add_offsets(FrtDocWriter *dw, int pos, frt_off_t start, frt_off_t end)
 {
     if (pos >= dw->offsets_capa) {
         int old_capa = dw->offsets_capa;
@@ -5402,7 +5402,7 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw, FrtFieldInverter *fld_inv, FrtDoc
     int doc_num = dw->doc_num;
     int i;
     const int df_size = df->size;
-    off_t start_offset = 0;
+    frt_off_t start_offset = 0;
 
     if (fld_inv->is_tokenized) {
         FrtToken *tk;
@@ -5701,7 +5701,7 @@ static void sm_destroy(SegmentMerger *sm)
 static void sm_merge_fields(SegmentMerger *sm)
 {
     int i, j;
-    off_t start, end = 0;
+    frt_off_t start, end = 0;
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtOutStream *fdt_out, *fdx_out;
     FrtStore *store = sm->store;
@@ -5818,12 +5818,12 @@ static char *sm_cache_term(SegmentMerger *sm, char *term, int term_len)
 static void sm_merge_term_info(SegmentMerger *sm, SegmentMergeInfo **matches,
                                int match_size)
 {
-    off_t frq_ptr = frt_os_pos(sm->frq_out);
-    off_t prx_ptr = frt_os_pos(sm->prx_out);
+    frt_off_t frq_ptr = frt_os_pos(sm->frq_out);
+    frt_off_t prx_ptr = frt_os_pos(sm->prx_out);
 
     int df = sm_append_postings(sm, matches, match_size); /* append posting data */
 
-    off_t skip_ptr = skip_buf_write(sm->skip_buf);
+    frt_off_t skip_ptr = skip_buf_write(sm->skip_buf);
 
     if (df > 0) {
         /* add an entry to the dictionary with ptrs to prox and freq files */
@@ -6370,7 +6370,7 @@ static void iw_cp_fields(FrtIndexWriter *iw, FrtSegmentReader *sr, const char *s
             int j, data_len = 0;
             const int field_cnt = frt_is_read_vint(fdt_in);
             int tv_cnt;
-            off_t doc_start_ptr = frt_os_pos(fdt_out);
+            frt_off_t doc_start_ptr = frt_os_pos(fdt_out);
 
             frt_os_write_u64(fdx_out, doc_start_ptr);
             frt_os_write_vint(fdt_out, field_cnt);

@@ -225,7 +225,7 @@ static void fs_destroy(FrtStore *store)
     free(store->dir.path);
 }
 
-static off_t fs_length(FrtStore *store, const char *filename)
+static frt_off_t fs_length(FrtStore *store, const char *filename)
 {
     char path[FRT_MAX_FILE_PATH];
     struct stat stt;
@@ -247,9 +247,12 @@ static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
     }
 }
 
-static void fso_seek_i(FrtOutStream *os, off_t pos)
-{
+static void fso_seek_i(FrtOutStream *os, frt_off_t pos) {
+#if defined POSH_OS_WIN64
+    if (_lseeki64(os->file.fd, pos, SEEK_SET) < 0) {
+#else
     if (lseek(os->file.fd, pos, SEEK_SET) < 0) {
+#endif
         FRT_RAISE(FRT_IO_ERROR, "seeking position %"FRT_OFF_T_PFX"d: <%s>",
               pos, strerror(errno));
     }
@@ -286,7 +289,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename)
 static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 {
     int fd = is->f->file.fd;
-    off_t pos = frt_is_pos(is);
+    frt_off_t pos = frt_is_pos(is);
     if (pos != lseek(fd, 0, SEEK_CUR)) {
         lseek(fd, pos, SEEK_SET);
     }
@@ -299,9 +302,13 @@ static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
     }
 }
 
-static void fsi_seek_i(FrtInStream *is, off_t pos)
+static void fsi_seek_i(FrtInStream *is, frt_off_t pos)
 {
+#if defined POSH_OS_WIN64
+    if (_lseeki64(is->f->file.fd, pos, SEEK_SET) < 0) {
+#else
     if (lseek(is->f->file.fd, pos, SEEK_SET) < 0) {
+#endif
         FRT_RAISE(FRT_IO_ERROR, "seeking pos %"FRT_OFF_T_PFX"d: <%s>",
               pos, strerror(errno));
     }
@@ -315,7 +322,7 @@ static void fsi_close_i(FrtInStream *is)
     if (is->d.path) free(is->d.path);
 }
 
-static off_t fsi_length_i(FrtInStream *is)
+static frt_off_t fsi_length_i(FrtInStream *is)
 {
     struct stat stt;
     if (fstat(is->f->file.fd, &stt)) {

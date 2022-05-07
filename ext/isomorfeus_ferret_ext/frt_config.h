@@ -1,6 +1,8 @@
 #ifndef FRT_DEFINES_H
 #define FRT_DEFINES_H
 
+#define _FILE_OFFSET_BITS 64
+
 #include <sys/types.h>
 #include <limits.h>
 #include "frt_posh.h"
@@ -23,6 +25,12 @@ typedef posh_u32_t frt_u32;
 typedef posh_i32_t frt_i32;
 typedef posh_u64_t frt_u64;
 typedef posh_i64_t frt_i64;
+
+#if defined POSH_OS_WIN64
+typedef off64_t frt_off_t;
+#else
+typedef frt_off_t frt_off_t;
+#endif
 
 #if ( LONG_MAX == 2147483647 ) && defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64)
 #define FRT_OFF_T_PFX "ll"

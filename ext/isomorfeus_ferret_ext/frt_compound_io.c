@@ -12,8 +12,8 @@ extern FrtStore *frt_store_new();
  ****************************************************************************/
 
 typedef struct FileEntry {
-    off_t offset;
-    off_t length;
+    frt_off_t offset;
+    frt_off_t length;
 } FileEntry;
 
 static void cmpd_touch(FrtStore *store, const char *file_name) {
@@ -76,7 +76,7 @@ static void cmpd_close_i(FrtStore *store) {
     free(store->dir.cmpd);
 }
 
-static off_t cmpd_length(FrtStore *store, const char *file_name) {
+static frt_off_t cmpd_length(FrtStore *store, const char *file_name) {
     FileEntry *fe = (FileEntry *)frt_h_get(store->dir.cmpd->entries, file_name);
     if (fe != NULL) {
         return fe->length;
@@ -85,7 +85,7 @@ static off_t cmpd_length(FrtStore *store, const char *file_name) {
     }
 }
 
-static void cmpdi_seek_i(FrtInStream *is, off_t pos) {
+static void cmpdi_seek_i(FrtInStream *is, frt_off_t pos) {
     (void)is;
     (void)pos;
 }
@@ -95,7 +95,7 @@ static void cmpdi_close_i(FrtInStream *is) {
     free(is->d.cis);
 }
 
-static off_t cmpdi_length_i(FrtInStream *is) {
+static frt_off_t cmpdi_length_i(FrtInStream *is) {
     return (is->d.cis->length);
 }
 
@@ -104,7 +104,7 @@ static off_t cmpdi_length_i(FrtInStream *is) {
  */
 static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len) {
     FrtCompoundInStream *cis = is->d.cis;
-    off_t start = frt_is_pos(is);
+    frt_off_t start = frt_is_pos(is);
 
     if ((start + len) > cis->length) {
         FRT_RAISE(FRT_EOF_ERROR, "Tried to read past end of file. File length is "
@@ -123,7 +123,7 @@ static const struct FrtInStreamMethods CMPD_IN_STREAM_METHODS = {
     cmpdi_close_i
 };
 
-static FrtInStream *cmpd_create_input(FrtInStream *sub_is, off_t offset, off_t length) {
+static FrtInStream *cmpd_create_input(FrtInStream *sub_is, frt_off_t offset, frt_off_t length) {
     FrtInStream *is = frt_is_new();
     FrtCompoundInStream *cis = FRT_ALLOC(FrtCompoundInStream);
 
@@ -182,7 +182,7 @@ static void cmpd_close_lock_i(FrtLock *lock) {
 
 FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name) {
     int count, i;
-    off_t offset;
+    frt_off_t offset;
     char *fname;
     FileEntry *volatile entry = NULL;
     FrtStore *new_store = NULL;
@@ -273,9 +273,9 @@ void frt_cw_add_file(FrtCompoundWriter *cw, char *id) {
 }
 
 static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStream *os) {
-    off_t start_ptr = frt_os_pos(os);
-    off_t end_ptr;
-    off_t remainder, length, len;
+    frt_off_t start_ptr = frt_os_pos(os);
+    frt_off_t end_ptr;
+    frt_off_t remainder, length, len;
     frt_uchar buffer[FRT_BUFFER_SIZE];
 
     FrtInStream *is = cw->store->open_input(cw->store, src->name);

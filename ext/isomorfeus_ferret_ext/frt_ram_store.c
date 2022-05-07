@@ -136,7 +136,7 @@ static void ram_clear_all(FrtStore *store) {
     }
 }
 
-static off_t ram_length(FrtStore *store, const char *filename) {
+static frt_off_t ram_length(FrtStore *store, const char *filename) {
     FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
     if (rf != NULL) {
         return rf->len;
@@ -151,7 +151,7 @@ static void ramo_flush_i(FrtOutStream *os, const frt_uchar *src, int len) {
     FrtRAMFile *rf = os->file.rf;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
     int src_offset;
-    off_t pointer = os->pointer;
+    frt_off_t pointer = os->pointer;
 
     buffer_number = (int)(pointer / FRT_BUFFER_SIZE);
     buffer_offset = pointer % FRT_BUFFER_SIZE;
@@ -179,7 +179,7 @@ static void ramo_flush_i(FrtOutStream *os, const frt_uchar *src, int len) {
     }
 }
 
-static void ramo_seek_i(FrtOutStream *os, off_t pos) {
+static void ramo_seek_i(FrtOutStream *os, frt_off_t pos) {
     os->pointer = pos;
 }
 
@@ -248,7 +248,7 @@ static void rami_read_i(FrtInStream *is, frt_uchar *b, int len) {
     int offset = 0;
     int buffer_number, buffer_offset, bytes_in_buffer, bytes_to_copy;
     int remainder = len;
-    off_t start = is->d.pointer;
+    frt_off_t start = is->d.pointer;
     frt_uchar *buffer;
 
     while (remainder > 0) {
@@ -271,11 +271,11 @@ static void rami_read_i(FrtInStream *is, frt_uchar *b, int len) {
     is->d.pointer += len;
 }
 
-static off_t rami_length_i(FrtInStream *is) {
+static frt_off_t rami_length_i(FrtInStream *is) {
     return is->f->file.rf->len;
 }
 
-static void rami_seek_i(FrtInStream *is, off_t pos) {
+static void rami_seek_i(FrtInStream *is, frt_off_t pos) {
     is->d.pointer = pos;
 }
 

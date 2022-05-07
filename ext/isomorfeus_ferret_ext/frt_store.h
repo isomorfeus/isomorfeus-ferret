@@ -13,9 +13,9 @@
 typedef struct FrtBuffer
 {
     frt_uchar buf[FRT_BUFFER_SIZE];
-    off_t start;
-    off_t pos;
-    off_t len;
+    frt_off_t start;
+    frt_off_t pos;
+    frt_off_t len;
 } FrtBuffer;
 
 typedef struct FrtOutStream FrtOutStream;
@@ -38,7 +38,7 @@ struct FrtOutStreamMethods {
      * @param pos the position to seek in the stream
      * @raise FRT_IO_ERROR if there is an error seeking in the output stream
      */
-    void (*seek_i)(struct FrtOutStream *os, off_t pos);
+    void (*seek_i)(struct FrtOutStream *os, frt_off_t pos);
 
     /**
      * Close any resources used by the output stream +os+
@@ -54,7 +54,7 @@ typedef struct FrtRAMFile
     char        *name;
     frt_uchar   **buffers;
     int         bufcnt;
-    off_t       len;
+    frt_off_t       len;
     _Atomic unsigned int ref_cnt;
 } FrtRAMFile;
 
@@ -66,7 +66,7 @@ struct FrtOutStream
         int fd;
         FrtRAMFile *rf;
     } file;
-    off_t  pointer;             /* only used by RAMOut */
+    frt_off_t  pointer;             /* only used by RAMOut */
     const struct FrtOutStreamMethods *m;
 };
 
@@ -95,7 +95,7 @@ struct FrtInStreamMethods
      * @param pos the position to seek
      * @raise FRT_IO_ERROR if the seek fails
      */
-    void (*seek_i)(struct FrtInStream *is, off_t pos);
+    void (*seek_i)(struct FrtInStream *is, frt_off_t pos);
 
     /**
      * Returns the length of the input stream +is+
@@ -103,7 +103,7 @@ struct FrtInStreamMethods
      * @param is self
      * @raise FRT_IO_ERROR if there is an error getting the file length
      */
-    off_t (*length_i)(struct FrtInStream *is);
+    frt_off_t (*length_i)(struct FrtInStream *is);
 
     /**
      * Close the resources allocated to the inputstream +is+
@@ -126,7 +126,7 @@ struct FrtInStream {
     FrtBuffer buf;
     struct FrtInStreamFile *f;
     union {
-        off_t pointer;          /* only used by RAMIn */
+        frt_off_t pointer;      /* only used by RAMIn */
         char *path;             /* only used by FSIn */
         FrtCompoundInStream *cis;
     } d;
@@ -137,8 +137,8 @@ struct FrtInStream {
 struct FrtCompoundInStream
 {
     FrtInStream *sub;
-    off_t offset;
-    off_t length;
+    frt_off_t offset;
+    frt_off_t length;
 };
 
 #define frt_is_length(mis) mis->m->length_i(mis)
@@ -274,7 +274,7 @@ struct FrtStore {
      * @return the length of the file in bytes
      * @raise FRT_IO_ERROR if there is an error checking the file length
      */
-    off_t (*length)(FrtStore *store, const char *filename);
+    frt_off_t (*length)(FrtStore *store, const char *filename);
 
     /**
      * Allocate the resources needed for the output stream in the +store+ with
@@ -465,7 +465,7 @@ extern void frt_os_close(FrtOutStream *os);
  * @param os the FrtOutStream to get the position from
  * @return the current position in FrtOutStream +os+
  */
-extern off_t frt_os_pos(FrtOutStream *os);
+extern frt_off_t frt_os_pos(FrtOutStream *os);
 
 /**
  * Set the current position in FrtOutStream +os+.
@@ -474,7 +474,7 @@ extern off_t frt_os_pos(FrtOutStream *os);
  * @param pos the new position in the FrtOutStream
  * @raise FRT_IO_ERROR if there is a file-system IO error seeking the file
  */
-extern void frt_os_seek(FrtOutStream *os, off_t new_pos);
+extern void frt_os_seek(FrtOutStream *os, frt_off_t new_pos);
 
 /**
  * Write a single byte +b+ to the FrtOutStream +os+
@@ -541,14 +541,14 @@ extern void frt_os_write_u64(FrtOutStream *os, frt_u64 num);
 extern void frt_os_write_vint(FrtOutStream *os, register unsigned int num);
 
 /**
- * Write an unsigned off_t to FrtOutStream in compressed VINT format.
+ * Write an unsigned frt_off_t to FrtOutStream in compressed VINT format.
  * TODO: describe VINT format
  *
  * @param os FrtOutStream to write to
- * @param num the off_t to write
+ * @param num the frt_off_t to write
  * @raise FRT_IO_ERROR if there is an error writing to the file-system
  */
-extern void frt_os_write_voff_t(FrtOutStream *os, register off_t num);
+extern void frt_os_write_voff_t(FrtOutStream *os, register frt_off_t num);
 
 /**
  * Write an unsigned 64bit int to FrtOutStream in compressed VINT format.
@@ -591,7 +591,7 @@ extern void frt_os_write_string(FrtOutStream *os, const char *str);
  * @param is the FrtInStream to get the current position from
  * @return the current position within the FrtInStream +is+
  */
-extern off_t frt_is_pos(FrtInStream *is);
+extern frt_off_t frt_is_pos(FrtInStream *is);
 
 /**
  * Set the current position in FrtInStream +is+ to +pos+.
@@ -601,7 +601,7 @@ extern off_t frt_is_pos(FrtInStream *is);
  * @raise FRT_IO_ERROR if there is a error seeking from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to seek past the end of the file
  */
-extern void frt_is_seek(FrtInStream *is, off_t pos);
+extern void frt_is_seek(FrtInStream *is, frt_off_t pos);
 
 /**
  * Close the FrtInStream freeing all allocated resources.
@@ -705,15 +705,15 @@ extern unsigned int frt_is_read_vint(FrtInStream *is);
 extern void frt_is_skip_vints(FrtInStream *is, register int cnt);
 
 /**
- * Read a compressed (VINT) unsigned off_t from the FrtInStream.
+ * Read a compressed (VINT) unsigned frt_off_t from the FrtInStream.
  * TODO: describe VINT format
  *
  * @param is the FrtInStream to read from
- * @return a off_t
+ * @return a frt_off_t
  * @raise FRT_IO_ERROR if there is a error reading from the file-system
  * @raise FRT_EOF_ERROR if there is an attempt to read past the end of the file
  */
-extern off_t frt_is_read_voff_t(FrtInStream *is);
+extern frt_off_t frt_is_read_voff_t(FrtInStream *is);
 
 /**
  * Read a compressed (VINT) unsigned 64bit int from the FrtInStream.

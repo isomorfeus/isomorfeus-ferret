@@ -224,9 +224,9 @@ extern void frt_sis_put(FrtSegmentInfos *sis, FILE *stream);
 
 typedef struct FrtTermInfo {
     int   doc_freq;
-    off_t frq_ptr;
-    off_t prx_ptr;
-    off_t skip_offset;
+    frt_off_t frq_ptr;
+    frt_off_t prx_ptr;
+    frt_off_t skip_offset;
 } FrtTermInfo;
 
 #define frt_ti_set(ti, mdf, mfp, mpp, mso) do {\
@@ -265,14 +265,14 @@ FrtTermInfo *frt_te_get_ti(struct FrtTermEnum *te);
 /* FrtSegmentTermIndex */
 
 typedef struct FrtSegmentTermIndex {
-    off_t       index_ptr;
-    off_t       ptr;
+    frt_off_t       index_ptr;
+    frt_off_t       ptr;
     int         index_cnt;
     int         size;
     char        **index_terms;
     int         *index_term_lens;
     FrtTermInfo *index_term_infos;
-    off_t       *index_ptrs;
+    frt_off_t       *index_ptrs;
 } FrtSegmentTermIndex;
 
 /* FrtSegmentFieldIndex */
@@ -281,7 +281,7 @@ typedef struct FrtSegmentFieldIndex {
     frt_mutex_t mutex;
     int         skip_interval;
     int         index_interval;
-    off_t       index_ptr;
+    frt_off_t       index_ptr;
     FrtTermEnum *index_te;
     FrtHash     *field_dict;
 } FrtSegmentFieldIndex;
@@ -349,7 +349,7 @@ typedef struct FrtTermInfosWriter {
     int           field_count;
     int           index_interval;
     int           skip_interval;
-    off_t         last_index_ptr;
+    frt_off_t         last_index_ptr;
     FrtOutStream  *tfx_out;
     FrtTermWriter *tix_writer;
     FrtTermWriter *tis_writer;
@@ -385,7 +385,7 @@ struct FrtTermDocEnum {
 typedef struct FrtSegmentTermDocEnum FrtSegmentTermDocEnum;
 struct FrtSegmentTermDocEnum {
     FrtTermDocEnum tde;
-    void (*seek_prox)(FrtSegmentTermDocEnum *stde, off_t prx_ptr);
+    void (*seek_prox)(FrtSegmentTermDocEnum *stde, frt_off_t prx_ptr);
     void (*skip_prox)(FrtSegmentTermDocEnum *stde);
     FrtTermInfosReader *tir;
     FrtInStream        *frq_in;
@@ -402,9 +402,9 @@ struct FrtSegmentTermDocEnum {
     int skip_doc;
     int prx_cnt;
     int position;
-    off_t frq_ptr;
-    off_t prx_ptr;
-    off_t skip_ptr;
+    frt_off_t frq_ptr;
+    frt_off_t prx_ptr;
+    frt_off_t skip_ptr;
     bool have_skipped : 1;
 };
 
@@ -429,8 +429,8 @@ extern FrtTermDocEnum *frt_mtdpe_new(FrtIndexReader *ir, int field_num, char **t
  ****************************************************************************/
 
 typedef struct FrtOffset {
-    off_t start;
-    off_t end;
+    frt_off_t start;
+    frt_off_t end;
 } FrtOffset;
 
 /****************************************************************************
@@ -529,7 +529,7 @@ extern FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term);
 
 /* * * FrtLazyDocField * * */
 typedef struct FrtLazyDocFieldData {
-    off_t              start;
+    frt_off_t              start;
     int                length;
     rb_encoding        *encoding;
     FrtCompressionType compression; /* as stored */
@@ -595,7 +595,7 @@ typedef struct FrtFieldsWriter {
     FrtOutStream  *fdx_out;
     FrtOutStream  *buffer;
     FrtTVField    *tv_fields;
-    off_t         start_ptr;
+    frt_off_t         start_ptr;
 } FrtFieldsWriter;
 
 extern FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis);
@@ -846,8 +846,8 @@ extern void frt_iw_add_readers(FrtIndexWriter *iw, FrtIndexReader **readers, con
 #define FRT_CW_INIT_CAPA 16
 typedef struct FrtCWFileEntry {
     char  *name;
-    off_t dir_offset;
-    off_t data_offset;
+    frt_off_t dir_offset;
+    frt_off_t data_offset;
 } FrtCWFileEntry;
 
 typedef struct FrtCompoundWriter {

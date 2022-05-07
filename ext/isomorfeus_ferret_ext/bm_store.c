@@ -6,7 +6,7 @@
 #define N 10
 #define write_byte(os, b) os->buf.buf[os->buf.pos++] = (frt_uchar)b
 
-void my_os_write_voff_t(FrtOutStream *os, register off_t num) {
+void my_os_write_voff_t(FrtOutStream *os, register frt_off_t num) {
     if (!(num&0x7f)) {
         if (os->buf.pos >= FRT_BUFFER_SIZE) {
             frt_os_write_byte(os, (frt_uchar)num);
@@ -48,7 +48,7 @@ void my_os_write_voff_t(FrtOutStream *os, register off_t num) {
 
 static void vint_out(void) {
     int n;
-    off_t i;
+    frt_off_t i;
     FrtOutStream *os;
 
     for (n = 0; n < N; n++) {
@@ -63,7 +63,7 @@ static void vint_out(void) {
 
 static void unrolled_vint_out(void) {
     int n;
-    off_t i;
+    frt_off_t i;
     FrtOutStream *os;
 
     for (n = 0; n < N; n++) {

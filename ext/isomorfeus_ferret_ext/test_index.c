@@ -998,7 +998,7 @@ static void test_simulated_crashed_writer(TestCase *tc, void *data)
 {
     int i;
     long gen;
-    off_t length;
+    frt_off_t length;
     FrtStore *store = (FrtStore *)data;
     FrtIndexWriter *iw;
     FrtIndexReader *ir;
@@ -1059,7 +1059,7 @@ static void test_simulated_corrupt_index1(TestCase *tc, void *data)
 {
     int i;
     long gen;
-    off_t length;
+    frt_off_t length;
     FrtStore *store = (FrtStore *)data;
     FrtIndexWriter *iw;
     FrtIndexReader *ir;

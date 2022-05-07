@@ -125,7 +125,7 @@ off_t frt_os_pos(FrtOutStream *os)
     return os->buf.start + os->buf.pos;
 }
 
-void frt_os_seek(FrtOutStream *os, off_t new_pos)
+void frt_os_seek(FrtOutStream *os, frt_off_t new_pos)
 {
     frt_os_flush(os);
     os->buf.start = new_pos;
@@ -202,9 +202,9 @@ FrtInStream *frt_is_new(void) {
  */
 static void is_refill(FrtInStream *is)
 {
-    off_t start = is->buf.start + is->buf.pos;
-    off_t last = start + FRT_BUFFER_SIZE;
-    off_t flen = is->m->length_i(is);
+    frt_off_t start = is->buf.start + is->buf.pos;
+    frt_off_t last = start + FRT_BUFFER_SIZE;
+    frt_off_t flen = is->m->length_i(is);
 
     if (last > flen) {          /* don't read past EOF */
         last = flen;
@@ -254,7 +254,7 @@ off_t frt_is_pos(FrtInStream *is)
 frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
 {
     int i;
-    off_t start;
+    frt_off_t start;
 
     if ((is->buf.pos + len) < is->buf.len) {
         for (i = 0; i < len; i++) {
@@ -273,7 +273,7 @@ frt_uchar *frt_is_read_bytes(FrtInStream *is, frt_uchar *buf, int len)
     return buf;
 }
 
-void frt_is_seek(FrtInStream *is, off_t pos) {
+void frt_is_seek(FrtInStream *is, frt_off_t pos) {
     if (pos >= is->buf.start && pos < (is->buf.start + is->buf.len)) {
         is->buf.pos = pos - is->buf.start;  /* seek within buffer */
     } else {
@@ -384,7 +384,7 @@ unsigned int frt_is_read_vint(FrtInStream *is)
 /* optimized to use unchecked read_byte if there is definitely space */
 off_t frt_is_read_voff_t(FrtInStream *is)
 {
-    register off_t res, b;
+    register frt_off_t res, b;
     register int shift = 7;
 
     if (is->buf.pos > (is->buf.len - VINT_MAX_LEN)) {
@@ -553,7 +553,7 @@ void frt_os_write_vint(FrtOutStream *os, register unsigned int num)
 }
 
 /* optimized to use an unchecked write if there is space */
-void frt_os_write_voff_t(FrtOutStream *os, register off_t num)
+void frt_os_write_voff_t(FrtOutStream *os, register frt_off_t num)
 {
     if (os->buf.pos > VINT_END) {
         while (num > 127) {

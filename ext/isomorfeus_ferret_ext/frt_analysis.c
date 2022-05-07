@@ -64,7 +64,7 @@ static inline int get_cp(char *start, char *end, int *cp_len, rb_encoding *enc) 
 /*** FrtToken ****************************************************************/
 /*****************************************************************************/
 
-FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, off_t start, off_t end, int pos_inc, rb_encoding *encoding) {
+FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, frt_off_t start, frt_off_t end, int pos_inc, rb_encoding *encoding) {
     if (tlen >= FRT_MAX_WORD_SIZE) {
         tlen = FRT_MAX_WORD_SIZE - 1; // TODO: this may invalidate mbc's
     }
@@ -92,7 +92,7 @@ static FrtToken *frt_tk_set_ts(FrtToken *tk, char *start, char *end, char *text,
     return frt_tk_set(tk, start, (int)(end - start), (off_t)(start - text), (off_t)(end - text), pos_inc, encoding);
 }
 
-FrtToken *frt_tk_set_no_len(FrtToken *tk, char *text, off_t start, off_t end, int pos_inc, rb_encoding *encoding) {
+FrtToken *frt_tk_set_no_len(FrtToken *tk, char *text, frt_off_t start, frt_off_t end, int pos_inc, rb_encoding *encoding) {
     return frt_tk_set(tk, text, (int)strlen(text), start, end, pos_inc, encoding);
 }
 
