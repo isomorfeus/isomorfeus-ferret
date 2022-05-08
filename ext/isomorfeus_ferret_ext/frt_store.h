@@ -10,8 +10,9 @@
 #define FRT_LOCK_PREFIX "ferret-"
 #define FRT_LOCK_EXT ".lck"
 
-typedef struct FrtBuffer
-{
+extern VALUE cFileNotFoundError;
+
+typedef struct FrtBuffer {
     frt_uchar buf[FRT_BUFFER_SIZE];
     frt_off_t start;
     frt_off_t pos;
@@ -293,6 +294,15 @@ struct FrtStore {
      * @raise FRT_FILE_NOT_FOUND_ERROR if the input stream cannot be opened
      */
     FrtInStream *(*open_input)(FrtStore *store, const char *filename);
+
+    /**
+     * Open an input stream in the +store+ with the name +filename+
+     *
+     * @param store self
+     * @param filename the name of the input stream
+     * @returns NULL on failure or the new FrtInStream
+     */
+    FrtInStream *(*open_input_stream)(FrtStore *store, const char *filename);
 
     /**
      * Obtain a lock on the lock +lock+

@@ -352,22 +352,26 @@ static const struct FrtInStreamMethods FS_IN_STREAM_METHODS = {
     fsi_close_i
 };
 
-static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
-{
+static FrtInStream *fs_open_input_stream(FrtStore *store, const char *filename) {
     FrtInStream *is;
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
-    if (fd < 0) {
-        FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR,
-              "fs_open_input: tried to open \"%s\", but it doesn't exist: <%s> ",
-              path, strerror(errno));
-    }
+    if (fd < 0) return NULL;
     is = frt_is_new();
     is->f->file.fd = fd;
     is->f->ref_cnt = 1;
     is->d.path = frt_estrdup(path);
     is->m = &FS_IN_STREAM_METHODS;
     return is;
+}
+
+static FrtInStream *fs_open_input_ex(FrtStore *store, const char *filename) {
+    FrtInStream *is = fs_open_input_stream(store, filename);
+    if (is != NULL) return is;
+    char path[FRT_MAX_FILE_PATH];
+    join_path(path, store->dir.path, filename);
+    rb_raise(cFileNotFoundError, "fs_open_input_ex: tried to open \"%s\", but it doesn't exist: <%s>",
+        path, strerror(errno));
 }
 
 #define LOCK_OBTAIN_TIMEOUT 50
@@ -491,7 +495,8 @@ static FrtStore *fs_store_new(const char *pathname)
     new_store->length        = &fs_length;
     new_store->each          = &fs_each;
     new_store->new_output    = &fs_new_output;
-    new_store->open_input    = &fs_open_input;
+    new_store->open_input    = &fs_open_input_ex;
+    new_store->open_input_stream = &fs_open_input_stream;
     new_store->open_lock_i   = &fs_open_lock_i;
     new_store->close_lock_i  = &fs_close_lock_i;
     return new_store;

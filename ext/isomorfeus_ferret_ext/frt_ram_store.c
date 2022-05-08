@@ -291,21 +291,23 @@ static const struct FrtInStreamMethods RAM_IN_STREAM_METHODS = {
     rami_close_i
 };
 
-static FrtInStream *ram_open_input(FrtStore *store, const char *filename) {
+static FrtInStream *ram_open_input_stream(FrtStore *store, const char *filename) {
     FrtRAMFile *rf = (FrtRAMFile *)frt_h_get(store->dir.ht, filename);
-    FrtInStream *is = NULL;
-
-    if (rf == NULL) {
-        rb_raise(rb_eIOError, "ram_open_input: tried to open file \"%s\" but it doesn't exist", filename);
-    }
+    if (rf == NULL) return NULL;
     FRT_REF(rf);
-    is = frt_is_new();
+    FrtInStream *is = frt_is_new();
     is->f->file.rf = rf;
     is->f->ref_cnt = 1;
     is->d.pointer = 0;
     is->m = &RAM_IN_STREAM_METHODS;
 
     return is;
+}
+
+static FrtInStream *ram_open_input_ex(FrtStore *store, const char *filename) {
+    FrtInStream *is = ram_open_input_stream(store, filename);
+    if (is != NULL) return is;
+    rb_raise(cFileNotFoundError, "ram_open_input_ex: tried to open file \"%s\" but it doesn't exist", filename);
 }
 
 #define LOCK_OBTAIN_TIMEOUT 5
@@ -364,7 +366,8 @@ FrtStore *frt_open_ram_store(FrtStore *new_store) {
     new_store->length       = &ram_length;
     new_store->each         = &ram_each;
     new_store->new_output   = &ram_new_output;
-    new_store->open_input   = &ram_open_input;
+    new_store->open_input   = &ram_open_input_ex;
+    new_store->open_input_stream = &ram_open_input_stream;
     new_store->open_lock_i  = &ram_open_lock_i;
     new_store->close_lock_i = &ram_close_lock_i;
     new_store->close_i      = &ram_close_i;

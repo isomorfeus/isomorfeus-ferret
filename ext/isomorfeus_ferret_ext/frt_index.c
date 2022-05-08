@@ -868,13 +868,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf, void 
             method = 1;
             for (i = 0; i < GEN_FILE_RETRY_COUNT; i++) {
                 FrtInStream *gen_is;
-                gen_is = NULL;
-                FRT_TRY
-                    gen_is = store->open_input(store, SEGMENTS_GEN_FILE_NAME);
-                FRT_XCATCHALL
-                    FRT_HANDLED();
-                    /* TODO:LOG "segments open: FRT_IO_ERROR"*/
-                FRT_XENDTRY
+                gen_is = store->open_input_stream(store, SEGMENTS_GEN_FILE_NAME);
 
                 if (NULL != gen_is) {
                     volatile frt_i64 gen0 = -1, gen1 = -1;
