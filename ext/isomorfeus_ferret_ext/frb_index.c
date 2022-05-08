@@ -229,7 +229,7 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
  */
 static VALUE frb_fi_name(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return rb_str_new_cstr(rb_id2name(fi->name));
+    return ID2SYM(fi->name);
 }
 
 /*
@@ -2170,7 +2170,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                         } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
                             store = DATA_PTR(rdir);
                         } else {
-                            FRT_RAISE(FRT_ARG_ERROR, "A Multi-IndexReader can only "
+                            rb_raise(rb_eArgError, "A Multi-IndexReader can only "
                                     "be created from other IndexReaders, "
                                     "Directory objects or file-system paths. "
                                     "Not %s",
@@ -2182,7 +2182,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                         store = frt_open_fs_store(rs2s(rdir));
                         break;
                     default:
-                        FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory "
+                        rb_raise(rb_eArgError, "%s isn't a valid directory "
                                 "argument. You should use either a String or "
                                 "a Directory",
                                 rs2s(rb_obj_as_string(rdir)));
@@ -2203,7 +2203,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                     store = frt_open_fs_store(rs2s(rdir));
                     break;
                 default:
-                    FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory argument. "
+                    rb_raise(rb_eArgError, "%s isn't a valid directory argument. "
                             "You should use either a String or a Directory",
                             rs2s(rb_obj_as_string(rdir)));
                     break;
