@@ -47,63 +47,6 @@ void field_prop_test(TestCase *tc,
  *
  ****************************************************************************/
 
-static void test_fis_basic(TestCase *tc, void *data)
-{
-    FrtFieldInfos *fis;
-    FrtFieldInfo *fi;
-    volatile bool arg_error = false;
-    (void)data; /* suppress unused argument warning */
-
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
-
-    fi = frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    FRT_TRY
-        Apnull(frt_fis_add_field(fis, fi));
-    case FRT_ARG_ERROR:
-        arg_error = true;
-        FRT_HANDLED();
-    FRT_XENDTRY
-    Assert(arg_error, "exception should have been thrown");
-
-    frt_fi_deref(fi);
-
-    Apequal(frt_fis_get_field(fis, rb_intern("FFFFFFFF")), fis->fields[0]);
-    Apequal(frt_fis_get_field(fis, rb_intern("TFTTFTFF")), fis->fields[1]);
-    Apequal(frt_fis_get_field(fis, rb_intern("TTTFFTTF")), fis->fields[2]);
-    Apequal(frt_fis_get_field(fis, rb_intern("FFTTTTFT")), fis->fields[3]);
-    Apequal(frt_fis_get_field(fis, rb_intern("FFTFTTTT")), fis->fields[4]);
-
-    Aiequal(0, frt_fis_get_field(fis, rb_intern("FFFFFFFF"))->number);
-    Aiequal(1, frt_fis_get_field(fis, rb_intern("TFTTFTFF"))->number);
-    Aiequal(2, frt_fis_get_field(fis, rb_intern("TTTFFTTF"))->number);
-    Aiequal(3, frt_fis_get_field(fis, rb_intern("FFTTTTFT"))->number);
-    Aiequal(4, frt_fis_get_field(fis, rb_intern("FFTFTTTT"))->number);
-
-    Asequal("FFFFFFFF", rb_id2name(fis->fields[0]->name));
-    Asequal("TFTTFTFF", rb_id2name(fis->fields[1]->name));
-    Asequal("TTTFFTTF", rb_id2name(fis->fields[2]->name));
-    Asequal("FFTTTTFT", rb_id2name(fis->fields[3]->name));
-    Asequal("FFTFTTTT", rb_id2name(fis->fields[4]->name));
-
-    fis->fields[1]->boost = 2.0;
-    fis->fields[2]->boost = 3.0;
-    fis->fields[3]->boost = 4.0;
-    fis->fields[4]->boost = 5.0;
-
-    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, F, T, T, F, T, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("TTTFFTTF"), 3.0, T, T, T, F, F, T, T, F);
-    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTTTTFT"), 4.0, F, F, T, T, T, T, F, T);
-    do_field_prop_test(tc, fis->fields[4], rb_intern("FFTFTTTT"), 5.0, F, F, T, F, T, T, T, T);
-
-    frt_fis_deref(fis);
-}
-
 static void test_fis_with_default(TestCase *tc, void *data)
 {
     FrtFieldInfos *fis;
@@ -499,7 +442,6 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
 TestSuite *ts_fields(TestSuite *suite)
 {
     suite = ADD_SUITE(suite);
-    tst_run_test(suite, test_fis_basic, NULL);
     tst_run_test(suite, test_fis_with_default, NULL);
     tst_run_test(suite, test_fis_rw, NULL);
     tst_run_test(suite, test_fields_rw_single, NULL);
