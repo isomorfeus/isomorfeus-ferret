@@ -44,7 +44,7 @@ struct FrtOutStreamMethods {
      * Close any resources used by the output stream +os+
      *
      * @param os self
-     * @raise FRT_IO_ERROR if there is an closing the file
+     * @raise FRT_IO_ERROR if there is an error closing the file
      */
     void (*close_i)(struct FrtOutStream *os);
 };
