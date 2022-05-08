@@ -47,101 +47,6 @@ void field_prop_test(TestCase *tc,
  *
  ****************************************************************************/
 
-static void test_fis_rw(TestCase *tc, void *data)
-{
-    char *str;
-    FrtFieldInfos *fis;
-    FrtStore *store = frt_open_ram_store(NULL);
-    FrtInStream *is;
-    FrtOutStream *os;
-    (void)data; /* suppress unused argument warning */
-
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
-    fis->fields[1]->boost = 2.0;
-    fis->fields[2]->boost = 3.0;
-    fis->fields[3]->boost = 4.0;
-    fis->fields[4]->boost = 5.0;
-    os = store->new_output(store, "fields");
-    frt_fis_write(fis, os);
-    frt_os_close(os);
-
-    /* these fields won't be saved be will added again later */
-    Aiequal(5, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, F, T, F, T, T, T, T);
-    Aiequal(6, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, F, T, F, T, T, T, T);
-    Aiequal(7, fis->size);
-
-    frt_fis_deref(fis);
-
-    is = store->open_input(store, "fields");
-    fis = frt_fis_read(is);
-    frt_is_close(is);
-    Aiequal(FRT_STORE_YES, fis->store_val);
-    Aiequal(FRT_INDEX_UNTOKENIZED_OMIT_NORMS, fis->index);
-    Aiequal(FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS, fis->term_vector);
-
-    do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, F, T, T, F, T, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("TTTFFTTF"), 3.0, T, T, T, F, F, T, T, F);
-    do_field_prop_test(tc, fis->fields[3], rb_intern("FFTTTTFT"), 4.0, F, F, T, T, T, T, F, T);
-    do_field_prop_test(tc, fis->fields[4], rb_intern("FFTFTTTT"), 5.0, F, F, T, F, T, T, T, T);
-    Aiequal(5, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("new_field")), rb_intern("new_field"), 1.0, T, F, T, F, T, T, T, T);
-    Aiequal(6, fis->size);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("another")), rb_intern("another"), 1.0, T, F, T, F, T, T, T, T);
-    Aiequal(7, fis->size);
-    str = frt_fis_to_s(fis);
-    Asequal("default:\n"
-            "  store: :yes\n"
-            "  index: :untokenized_omit_norms\n"
-            "  term_vector: :with_positions_offsets\n"
-            "fields:\n"
-            "  FFFFFFFF:\n"
-            "    boost: 1.000000\n"
-            "    store: :no\n"
-            "    index: :no\n"
-            "    term_vector: :no\n"
-            "  TFTTFTFF:\n"
-            "    boost: 2.000000\n"
-            "    store: :yes\n"
-            "    index: :yes\n"
-            "    term_vector: :yes\n"
-            "  TTTFFTTF:\n"
-            "    boost: 3.000000\n"
-            "    store: :compressed\n"
-            "    index: :untokenized\n"
-            "    term_vector: :with_positions\n"
-            "  FFTTTTFT:\n"
-            "    boost: 4.000000\n"
-            "    store: :no\n"
-            "    index: :omit_norms\n"
-            "    term_vector: :with_offsets\n"
-            "  FFTFTTTT:\n"
-            "    boost: 5.000000\n"
-            "    store: :no\n"
-            "    index: :untokenized_omit_norms\n"
-            "    term_vector: :with_positions_offsets\n"
-            "  new_field:\n"
-            "    boost: 1.000000\n"
-            "    store: :yes\n"
-            "    index: :untokenized_omit_norms\n"
-            "    term_vector: :with_positions_offsets\n"
-            "  another:\n"
-            "    boost: 1.000000\n"
-            "    store: :yes\n"
-            "    index: :untokenized_omit_norms\n"
-            "    term_vector: :with_positions_offsets\n", str);
-    free(str);
-    frt_fis_deref(fis);
-    frt_store_close(store);
-}
-
 /****************************************************************************
  *
  * FrtFieldsReader/FieldsWriter
@@ -225,7 +130,7 @@ static void test_fields_rw_single(TestCase *tc, void *data)
     frt_fw_add_doc(fw, doc);
     frt_fw_write_tv_index(fw);
     frt_fw_close(fw);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
 
     Aiequal(6, fis->size);
     do_field_prop_test(tc, frt_fis_get_field(fis, rb_intern("binary")), rb_intern("binary"), 1.0, T, F, T, T, F, F, F, F);
@@ -299,7 +204,7 @@ static void test_fields_rw_multi(TestCase *tc, void *data)
     doc = prepare_doc();
     frt_fw_add_doc(fw, doc);
     frt_fw_write_tv_index(fw);
-   frt_doc_destroy(doc);
+    frt_doc_destroy(doc);
     frt_fw_close(fw);
 
     Aiequal(106, fis->size);
@@ -410,10 +315,8 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
     frt_lazy_doc_close(lazy_doc);
 }
 
-TestSuite *ts_fields(TestSuite *suite)
-{
+TestSuite *ts_fields(TestSuite *suite) {
     suite = ADD_SUITE(suite);
-    tst_run_test(suite, test_fis_rw, NULL);
     tst_run_test(suite, test_fields_rw_single, NULL);
     tst_run_test(suite, test_fields_rw_multi, NULL);
     tst_run_test(suite, test_lazy_field_loading, NULL);
