@@ -296,8 +296,7 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename) {
     FrtInStream *is = NULL;
 
     if (rf == NULL) {
-        fprintf(stderr, "ram_open_input: tried to open file \"%s\" but it doesn't exist", filename);
-        return NULL;
+        rb_raise(rb_eIOError, "ram_open_input: tried to open file \"%s\" but it doesn't exist", filename);
     }
     FRT_REF(rf);
     is = frt_is_new();
