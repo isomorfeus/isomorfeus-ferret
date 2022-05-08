@@ -61,7 +61,7 @@ static void ram_rename(FrtStore *store, const char *from, const char *to) {
     FrtRAMFile *tmp;
 
     if (rf == NULL) {
-        FRT_RAISE(FRT_IO_ERROR, "couldn't rename \"%s\" to \"%s\". \"%s\""
+        rb_raise(rb_eIOError, "ram_rename: couldn't rename \"%s\" to \"%s\". \"%s\""
               " doesn't exist", from, to, from);
     }
 
@@ -296,7 +296,8 @@ static FrtInStream *ram_open_input(FrtStore *store, const char *filename) {
     FrtInStream *is = NULL;
 
     if (rf == NULL) {
-        FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR, "tried to open \"%s\" but it doesn't exist", filename);
+        fprintf(stderr, "ram_open_file: tried to open file \"%s\" but it doesn't exist", filename);
+        return NULL;
     }
     FRT_REF(rf);
     is = frt_is_new();

@@ -282,10 +282,10 @@ static void fi_set_term_vector(FrtFieldInfo *fi, FrtTermVectorValue term_vector)
 static void fi_check_params(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
     (void)store;
     if ((index == FRT_INDEX_NO) && (term_vector != FRT_TERM_VECTOR_NO)) {
-        FRT_RAISE(FRT_ARG_ERROR, "You can't store the term vectors of an unindexed field.");
+        rb_raise(rb_eArgError, "You can't store the term vectors of an unindexed field.");
     }
     if ((compression != FRT_COMPRESSION_NONE) && (store == FRT_STORE_NO)) {
-        FRT_RAISE(FRT_ARG_ERROR, "Field must be stored for compression to be useful.");
+        rb_raise(rb_eArgError, "Field must be stored for compression to be useful.");
     }
 }
 
@@ -392,7 +392,7 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi) {
         FRT_REALLOC_N(fis->fields, FrtFieldInfo *, fis->capa);
     }
     if (!frt_h_set_safe(fis->field_dict, (void *)fi->name, fi)) {
-        FRT_RAISE(FRT_ARG_ERROR, "Field :%s already exists", rb_id2name(fi->name));
+        rb_raise(rb_eArgError, "Field :%s already exists", rb_id2name(fi->name));
     }
     fi->number = fis->size;
     fis->fields[fis->size] = fi;
@@ -923,8 +923,8 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf, void 
                 strncpy(listing_buffer, listing, 1023);
                 listing_buffer[1023] = '\0';
                 free(listing);
-                FRT_RAISE(FRT_IO_ERROR,
-                      "Error reading the segment infos. Store:\n %s\n",
+                rb_raise(rb_eIOError,
+                      "sis_find_segments_file: Error reading the segment infos. Store:\n %s\n",
                       listing_buffer);
             } else {
                 frt_micro_sleep(50000);
@@ -1223,33 +1223,33 @@ static void zraise(int ret) {
     switch (ret) {
     case BZ_IO_ERROR:
         if (ferror(stdin))
-            FRT_RAISE(FRT_IO_ERROR, "bzlib: error reading stdin");
+            rb_raise(rb_eIOError, "bzlib: error reading stdin");
         if (ferror(stdout))
-            FRT_RAISE(FRT_IO_ERROR, "bzlib: error writing stdout");
+            rb_raise(rb_eIOError, "bzlib: error writing stdout");
         break;
     case BZ_CONFIG_ERROR:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: system configuration error");
+        rb_raise(rb_eIOError, "bzlib: system configuration error");
         break;
     case BZ_SEQUENCE_ERROR: /* shouldn't occur if code is correct */
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: !!BUG!! sequence error");
+        rb_raise(rb_eIOError, "bzlib: !!BUG!! sequence error");
         break;
     case BZ_PARAM_ERROR:    /* shouldn't occur if code is correct */
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: !!BUG!! parameter error");
+        rb_raise(rb_eIOError, "bzlib: !!BUG!! parameter error");
         break;
     case BZ_MEM_ERROR:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: memory error");
+        rb_raise(rb_eIOError, "bzlib: memory error");
         break;
     case BZ_DATA_ERROR:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: data integrity check error");
+        rb_raise(rb_eIOError, "bzlib: data integrity check error");
         break;
     case BZ_DATA_ERROR_MAGIC:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: data integrity check - non-matching magic");
+        rb_raise(rb_eIOError, "bzlib: data integrity check - non-matching magic");
         break;
     case BZ_UNEXPECTED_EOF:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: unexpected end-of-file");
+        rb_raise(rb_eIOError, "bzlib: unexpected end-of-file");
         break;
     case BZ_OUTBUFF_FULL:
-        FRT_RAISE(FRT_IO_ERROR, "bzlib: output buffer full");
+        rb_raise(rb_eIOError, "bzlib: output buffer full");
         break;
     default:
         FRT_RAISE(FRT_EXCEPTION, "bzlib: unknown error");
@@ -1416,14 +1416,14 @@ void frt_lazy_df_get_bytes(FrtLazyDocField *self, char *buf, int start, int len)
         self->decompressed = true;
     }
     if (start < 0 || start >= self->len) {
-        FRT_RAISE(FRT_IO_ERROR, "start out of range in LazyDocField#get_bytes. %d "
+        rb_raise(rb_eIOError, "start out of range in LazyDocField#get_bytes. %d "
               "is not between 0 and %d", start, self->len);
     }
     if (len <= 0) {
-        FRT_RAISE(FRT_IO_ERROR, "len = %d, but should be greater than 0", len);
+        rb_raise(rb_eIOError, "frt_lazy_ddf_get_bytes: len = %d, but should be greater than 0", len);
     }
     if (start + len > self->len) {
-        FRT_RAISE(FRT_IO_ERROR, "Tried to read past end of field. Field is only %d "
+        rb_raise(rb_eIOError, "frt_lazy_def_get_bytes: Tried to read past end of field. Field is only %d "
               "bytes long but tried to read to %d", self->len, start + len);
     }
     if (self->compression != FRT_COMPRESSION_NONE) {
@@ -2885,7 +2885,7 @@ static void stde_seek(FrtTermDocEnum *tde, int field_num, const char *term) {
 static void stde_seek_te(FrtTermDocEnum *tde, FrtTermEnum *te) {
 #ifdef DEBUG
     if (te->set_field != &ste_set_field) {
-        FRT_RAISE(FRT_ARG_ERROR, "Passed an incorrect TermEnum type");
+        rb_raise(rb_eArgError, "Passed an incorrect TermEnum type");
     }
 #endif
     stde_seek_ti(STDE(tde), &(te->curr_ti));
@@ -3106,7 +3106,7 @@ static bool stpe_next(FrtTermDocEnum *tde) {
 static int stpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
 {
     (void)tde; (void)docs; (void)freqs; (void)req_num;
-    FRT_RAISE(FRT_ARG_ERROR, "TermPosEnum does not handle processing multiple documents"
+    rb_raise(rb_eArgError, "TermPosEnum does not handle processing multiple documents"
                      " in one call. Use TermDocEnum instead.");
     return -1;
 }

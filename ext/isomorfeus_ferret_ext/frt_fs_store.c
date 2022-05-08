@@ -51,7 +51,7 @@ static void fs_touch(FrtStore *store, const char *filename)
     char path[FRT_MAX_FILE_PATH];
     join_path(path, store->dir.path, filename);
     if ((f = creat(path, store->file_mode)) == 0) {
-        FRT_RAISE(FRT_IO_ERROR, "couldn't create file %s: <%s>", path,
+        rb_raise(rb_eIOError, "fs_touch: couldn't create file %s: <%s>", path,
               strerror(errno));
     }
     close(f);
@@ -65,7 +65,7 @@ static int fs_exists(FrtStore *store, const char *filename)
     fd = open(path, 0);
     if (fd < 0) {
         if (errno != ENOENT) {
-            FRT_RAISE(FRT_IO_ERROR, "checking existance of %s: <%s>", path,
+            rb_raise(rb_eIOError, "fs_exists: checking existance of %s: <%s>", path,
                   strerror(errno));
         }
         return false;
@@ -90,7 +90,7 @@ static void fs_rename(FrtStore *store, const char *from, const char *to)
 
     if (rename(join_path(path1, store->dir.path, from),
                join_path(path2, store->dir.path, to)) < 0) {
-        FRT_RAISE(FRT_IO_ERROR, "couldn't rename file \"%s\" to \"%s\": <%s>",
+        rb_raise(rb_eIOError, "fs_rename: couldn't rename file \"%s\" to \"%s\": <%s>",
               path1, path2, strerror(errno));
     }
 }
@@ -102,7 +102,7 @@ static int fs_count(FrtStore *store)
     DIR *d = opendir(store->dir.path);
 
     if (!d) {
-        FRT_RAISE(FRT_IO_ERROR, "counting files in %s: <%s>",
+        rb_raise(rb_eIOError, "fs_count: counting files in %s: <%s>",
               store->dir.path, strerror(errno));
     }
 
@@ -122,7 +122,7 @@ static void fs_each(FrtStore *store, void (*func)(const char *fname, void *arg),
     DIR *d = opendir(store->dir.path);
 
     if (!d) {
-        FRT_RAISE(FRT_IO_ERROR, "doing 'each' in %s: <%s>",
+        rb_raise(rb_eIOError, "fs_each: in %s: <%s>",
               store->dir.path, strerror(errno));
     }
 
@@ -141,7 +141,7 @@ static void fs_clear_locks(FrtStore *store)
     DIR *d = opendir(store->dir.path);
 
     if (!d) {
-        FRT_RAISE(FRT_IO_ERROR, "clearing locks in %s: <%s>",
+        rb_raise(rb_eIOError, "fs_clear_locks: in %s: <%s>",
               store->dir.path, strerror(errno));
     }
 
@@ -174,7 +174,7 @@ static void fs_clear(FrtStore *store)
     DIR *d = opendir(store->dir.path);
 
     if (!d) {
-        FRT_RAISE(FRT_IO_ERROR, "clearing files in %s: <%s>",
+        rb_raise(rb_eIOError, "fs_clear: in %s: <%s>",
               store->dir.path, strerror(errno));
     }
 
@@ -197,7 +197,7 @@ static void fs_clear_all(FrtStore *store)
     DIR *d = opendir(store->dir.path);
 
     if (!d) {
-        FRT_RAISE(FRT_IO_ERROR, "clearing all files in %s: <%s>",
+        rb_raise(rb_eIOError, "fs_clear_all: in %s: <%s>",
               store->dir.path, strerror(errno));
     }
 
@@ -231,7 +231,7 @@ static frt_off_t fs_length(FrtStore *store, const char *filename)
     struct stat stt;
 
     if (stat(join_path(path, store->dir.path, filename), &stt)) {
-        FRT_RAISE(FRT_IO_ERROR, "getting lenth of %s: <%s>", path,
+        rb_raise(rb_eIOError, "fs_length: %s: <%s>", path,
               strerror(errno));
     }
 
@@ -242,7 +242,7 @@ static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 {
     if (len == 0) { return; }
     if (len != write(os->file.fd, src, len)) {
-        FRT_RAISE(FRT_IO_ERROR, "flushing src of length %d, <%s>", len,
+        rb_raise(rb_eIOError, "fso_flush: of length %d, <%s>", len,
               strerror(errno));
     }
 }
@@ -250,17 +250,20 @@ static void fso_flush_i(FrtOutStream *os, const frt_uchar *src, int len)
 static void fso_seek_i(FrtOutStream *os, frt_off_t pos) {
 #if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
     if (_lseeki64(os->file.fd, pos, SEEK_SET) < 0) {
+        rb_raise(rb_eIOError, "fso_seek_i: seeking position %"FRT_OFF_T_PFX"d: <%s>",
+            pos, strerror(errno));
+    }
 #else
     if (lseek(os->file.fd, pos, SEEK_SET) < 0) {
-#endif
-        FRT_RAISE(FRT_IO_ERROR, "seeking position %"FRT_OFF_T_PFX"d: <%s>",
-              pos, strerror(errno));
+        rb_raise(rb_eIOError, "fso_seek_i: seeking position %"FRT_OFF_T_PFX"d: <%s>",
+            pos, strerror(errno));
     }
+#endif
 }
 
 static void fso_close_i(FrtOutStream *os) {
     if (close(os->file.fd)) {
-        FRT_RAISE(FRT_IO_ERROR, "closing file: <%s>", strerror(errno));
+        rb_raise(rb_eIOError, "fso_close_i: <%s>", strerror(errno));
     }
 }
 
@@ -274,7 +277,7 @@ static FrtOutStream *fs_new_output(FrtStore *store, const char *filename) {
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_WRONLY | O_CREAT | O_BINARY, store->file_mode);
     if (fd < 0) {
-        FRT_RAISE(FRT_IO_ERROR, "couldn't create OutStream %s: <%s>",
+        rb_raise(rb_eIOError, "fs_new_output: couldn't create OutStream %s: <%s>",
               path, strerror(errno));
     }
 
@@ -288,33 +291,47 @@ static void fsi_read_i(FrtInStream *is, frt_uchar *path, int len)
 {
     int fd = is->f->file.fd;
     frt_off_t pos = frt_is_pos(is);
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
+    if (pos != _lseeki64(fd, 0, SEEK_CUR)) {
+        _lseeki64(fd, pos, SEEK_SET);
+    }
+#else
     if (pos != lseek(fd, 0, SEEK_CUR)) {
         lseek(fd, pos, SEEK_SET);
     }
+#endif
     if (read(fd, path, len) != len) {
+#if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
         /* win: the wrong value can be returned for some reason so double check */
-        if (lseek(fd, 0, SEEK_CUR) != (pos + len)) {
-            FRT_RAISE(FRT_IO_ERROR, "couldn't read %d chars from %s: <%s>",
-                  len, path, strerror(errno));
+        if (_lseeki64(fd, 0, SEEK_CUR) != (pos + len)) {
+            rb_raise(rb_eIOError, "fsi_read_i: couldn't read %d chars from %s: <%s>",
+                len, path, strerror(errno));
         }
+#else
+        rb_raise(rb_eIOError, "fsi_read_i: couldn't read %d chars from %s: <%s>",
+            len, path, strerror(errno));
+#endif
     }
 }
 
 static void fsi_seek_i(FrtInStream *is, frt_off_t pos) {
 #if (defined POSH_OS_WIN32 || defined POSH_OS_WIN64)
     if (_lseeki64(is->f->file.fd, pos, SEEK_SET) < 0) {
+        rb_raise(rb_eIOError, "fsi_seek_i: seeking pos %"FRT_OFF_T_PFX"d: <%s>",
+            pos, strerror(errno));
+    }
 #else
     if (lseek(is->f->file.fd, pos, SEEK_SET) < 0) {
-#endif
-        FRT_RAISE(FRT_IO_ERROR, "seeking pos %"FRT_OFF_T_PFX"d: <%s>",
-              pos, strerror(errno));
+        rb_raise(rb_eIOError, "fsi_seek_i: seeking pos %"FRT_OFF_T_PFX"d: <%s>",
+            pos, strerror(errno));
     }
+#endif
 }
 
 static void fsi_close_i(FrtInStream *is)
 {
     if (close(is->f->file.fd)) {
-        FRT_RAISE(FRT_IO_ERROR, "%s", strerror(errno));
+        rb_raise(rb_eIOError, "fsi_close_i: <%s>", strerror(errno));
     }
     if (is->d.path) free(is->d.path);
 }
@@ -323,7 +340,7 @@ static frt_off_t fsi_length_i(FrtInStream *is)
 {
     struct stat stt;
     if (fstat(is->f->file.fd, &stt)) {
-        FRT_RAISE(FRT_IO_ERROR, "fstat failed: <%s>", strerror(errno));
+        rb_raise(rb_eIOError, "fsi_length_i: fstat failed: <%s>", strerror(errno));
     }
     return stt.st_size;
 }
@@ -342,7 +359,7 @@ static FrtInStream *fs_open_input(FrtStore *store, const char *filename)
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
     if (fd < 0) {
         FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR,
-              "tried to open \"%s\", but it doesn't exist: <%s> ",
+              "fs_open_input: tried to open \"%s\", but it doesn't exist: <%s> ",
               path, strerror(errno));
     }
     is = frt_is_new();
@@ -381,7 +398,7 @@ static int fs_lock_is_locked(FrtLock *lock)
     int f = open(lock->name, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
     if (f >= 0) {
         if (close(f) || remove(lock->name)) {
-            FRT_RAISE(FRT_IO_ERROR, "couldn't close lock \"%s\": <%s>", lock->name,
+            rb_raise(rb_eIOError, "fs_lock_is_locked: couldn't close lock \"%s\": <%s>", lock->name,
                   strerror(errno));
         }
         return false;
