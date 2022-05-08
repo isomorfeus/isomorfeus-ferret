@@ -250,8 +250,7 @@ static void fi_set_index(FrtFieldInfo *fi, FrtIndexValue index) {
             fi->bits |= FRT_FI_IS_INDEXED_BM;
             break;
         case FRT_INDEX_YES_OMIT_NORMS:
-            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM |
-                FRT_FI_IS_TOKENIZED_BM;
+            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM;
             break;
         case FRT_INDEX_UNTOKENIZED_OMIT_NORMS:
             fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM;
