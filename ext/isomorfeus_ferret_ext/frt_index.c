@@ -303,6 +303,7 @@ FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtCom
     fi_set_compression(fi, compression);
     fi_set_index(fi, index);
     fi_set_term_vector(fi, term_vector);
+    fi->number = 0;
     fi->ref_cnt = 1;
     fi->rfi = Qnil;
     return fi;
@@ -394,6 +395,7 @@ FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi) {
     if (!frt_h_set_safe(fis->field_dict, (void *)fi->name, fi)) {
         rb_raise(rb_eArgError, "Field :%s already exists", rb_id2name(fi->name));
     }
+    FRT_REF(fi);
     fi->number = fis->size;
     fis->fields[fis->size] = fi;
     fis->size++;
