@@ -14,4 +14,13 @@ module FieldAssertions
     assert_equal(store_positions, fi.store_positions?)
     assert_equal(store_offsets, fi.store_offsets?)
   end
+
+  def fis_get_or_add_field(fis, name)
+    field = fis[name]
+    unless field
+      fis.add_field(name)
+      field = fis[name]
+    end
+    field
+  end
 end

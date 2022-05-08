@@ -47,35 +47,6 @@ void field_prop_test(TestCase *tc,
  *
  ****************************************************************************/
 
-static void test_fis_with_default(TestCase *tc, void *data)
-{
-    FrtFieldInfos *fis;
-    (void)data; /* suppress unused argument warning */
-
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("dave")), rb_intern("dave"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("wert")), rb_intern("wert"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[0], rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[1], rb_intern("dave"), 1.0, F, F, F, F, F, F, F, F);
-    do_field_prop_test(tc, fis->fields[2], rb_intern("wert"), 1.0, F, F, F, F, F, F, F, F);
-    Apnull(frt_fis_get_field(fis, rb_intern("random")));
-    frt_fis_deref(fis);
-
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
-    frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
-    frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
-    frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, F, T, T, T, T);
-    frt_fis_deref(fis);
-}
-
 static void test_fis_rw(TestCase *tc, void *data)
 {
     char *str;
@@ -442,7 +413,6 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
 TestSuite *ts_fields(TestSuite *suite)
 {
     suite = ADD_SUITE(suite);
-    tst_run_test(suite, test_fis_with_default, NULL);
     tst_run_test(suite, test_fis_rw, NULL);
     tst_run_test(suite, test_fields_rw_single, NULL);
     tst_run_test(suite, test_fields_rw_multi, NULL);
