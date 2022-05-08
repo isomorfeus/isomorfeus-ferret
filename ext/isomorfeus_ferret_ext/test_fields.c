@@ -41,28 +41,6 @@ void field_prop_test(TestCase *tc,
  *
  ****************************************************************************/
 
-static void test_fi_new(TestCase *tc, void *data)
-{
-    FrtFieldInfo *fi;
-    (void)data; /* suppress unused argument warning */
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
-    frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
-    frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
-    frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
-    do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
-    frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    fi->boost = 1000.0;
-    do_field_prop_test(tc, fi, rb_intern("name"), 1000.0, F, F, T, F, T, T, T, T);
-    frt_fi_deref(fi);
-}
-
 /****************************************************************************
  *
  * FrtFieldInfos
@@ -521,7 +499,6 @@ static void test_lazy_field_loading(TestCase *tc, void *data)
 TestSuite *ts_fields(TestSuite *suite)
 {
     suite = ADD_SUITE(suite);
-    tst_run_test(suite, test_fi_new, NULL);
     tst_run_test(suite, test_fis_basic, NULL);
     tst_run_test(suite, test_fis_with_default, NULL);
     tst_run_test(suite, test_fis_rw, NULL);
