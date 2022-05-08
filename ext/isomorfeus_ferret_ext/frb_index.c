@@ -356,6 +356,29 @@ static VALUE frb_fi_boost(VALUE self) {
 
 /*
  *  call-seq:
+ *     fi.boost= -> boost
+ *
+ *  Return the default boost for this field
+ */
+static VALUE frb_fi_set_boost(VALUE self, VALUE rboost) {
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
+    fi->boost = (float)NUM2DBL(rboost);
+    return rb_float_new((double)fi->boost);
+}
+
+/*
+ *  call-seq:
+ *     fi.number -> number
+ *
+ *  Return the number within the fieldonfos this field is associated to.
+ */
+static VALUE frb_fi_number(VALUE self) {
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
+    return INT2FIX((double)fi->number);
+}
+
+/*
+ *  call-seq:
  *     fi.to_s -> string
  *
  *  Return a string representation of the FieldInfo object.
@@ -518,9 +541,9 @@ static VALUE frb_fis_get(VALUE self, VALUE ridx) {
  */
 static VALUE frb_fis_add(VALUE self, VALUE rfi) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
-    FrtFieldInfo *fi = (FrtFieldInfo *)frb_rb_data_ptr(rfi);
+    FrtFieldInfo *fi;
+    TypedData_Get_Struct(rfi, FrtFieldInfo, &frb_field_info_t, fi);
     frt_fis_add_field(fis, fi);
-    FRT_REF(fi);
     return self;
 }
 
@@ -2911,19 +2934,18 @@ Init_FieldInfo(void)
 
     rb_define_method(cFieldInfo, "initialize",  frb_fi_init, -1);
     rb_define_method(cFieldInfo, "name",        frb_fi_name, 0);
+    rb_define_method(cFieldInfo, "number",      frb_fi_number, 0);
     rb_define_method(cFieldInfo, "stored?",     frb_fi_is_stored, 0);
     rb_define_method(cFieldInfo, "compressed?", frb_fi_is_compressed, 0);
     rb_define_method(cFieldInfo, "indexed?",    frb_fi_is_indexed, 0);
     rb_define_method(cFieldInfo, "tokenized?",  frb_fi_is_tokenized, 0);
     rb_define_method(cFieldInfo, "omit_norms?", frb_fi_omit_norms, 0);
-    rb_define_method(cFieldInfo, "store_term_vector?",
-                                                frb_fi_store_term_vector, 0);
-    rb_define_method(cFieldInfo, "store_positions?",
-                                                frb_fi_store_positions, 0);
-    rb_define_method(cFieldInfo, "store_offsets?",
-                                                frb_fi_store_offsets, 0);
+    rb_define_method(cFieldInfo, "store_term_vector?", frb_fi_store_term_vector, 0);
+    rb_define_method(cFieldInfo, "store_positions?", frb_fi_store_positions, 0);
+    rb_define_method(cFieldInfo, "store_offsets?", frb_fi_store_offsets, 0);
     rb_define_method(cFieldInfo, "has_norms?",  frb_fi_has_norms, 0);
     rb_define_method(cFieldInfo, "boost",       frb_fi_boost, 0);
+    rb_define_method(cFieldInfo, "boost=",      frb_fi_set_boost, 1);
     rb_define_method(cFieldInfo, "to_s",        frb_fi_to_s, 0);
 }
 
@@ -2982,8 +3004,7 @@ static void Init_FieldInfos(void) {
     rb_define_method(cFieldInfos, "each",       frb_fis_each, 0);
     rb_define_method(cFieldInfos, "to_s",       frb_fis_to_s, 0);
     rb_define_method(cFieldInfos, "size",       frb_fis_size, 0);
-    rb_define_method(cFieldInfos, "create_index",
-                                                frb_fis_create_index, 1);
+    rb_define_method(cFieldInfos, "create_index", frb_fis_create_index, 1);
     rb_define_method(cFieldInfos, "fields",     frb_fis_get_fields, 0);
     rb_define_method(cFieldInfos, "tokenized_fields", frb_fis_get_tk_fields, 0);
 }
