@@ -116,7 +116,7 @@ char *frt_fn_for_generation(char *buf, const char *base, const char *ext, frt_i6
     } else {
         char b[FRT_SEGMENT_NAME_MAX_LENGTH];
         char *u = u64_to_str36(b, FRT_SEGMENT_NAME_MAX_LENGTH, (frt_u64)gen);
-        if (ext == NULL) {
+        if (ext == NULL || (strcmp(ext, "") == 0)) {
             sprintf(buf, "%s_%s", base, u);
         } else {
             sprintf(buf, "%s_%s.%s", base, u, ext);
