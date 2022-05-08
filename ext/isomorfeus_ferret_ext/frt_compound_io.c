@@ -277,8 +277,16 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     frt_off_t end_ptr;
     frt_off_t remainder, length, len;
     frt_uchar buffer[FRT_BUFFER_SIZE];
+    FrtInStream *is;
 
-    FrtInStream *is = cw->store->open_input(cw->store, src->name);
+try_open:
+    FRT_TRY
+        is = cw->store->open_input(cw->store, src->name);
+    FRT_XCATCHALL
+        fprintf(stderr, "cw_copy_file, trying again to open %s\n", src->name);
+        frt_micro_sleep(10000);
+        goto try_open;
+    FRT_XENDTRY
 
     remainder = length = frt_is_length(is);
 
