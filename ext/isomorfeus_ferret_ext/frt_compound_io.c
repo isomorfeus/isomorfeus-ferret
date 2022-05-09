@@ -316,35 +316,40 @@ void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr) {
         FRT_RAISE(FRT_STATE_ERROR, "Tried to merge compound file with no entries");
     }
 
-    os = cw->store->new_output(cw->store, cw->name);
+    FrtLock *lock = frt_open_lock(cw->store, cw->name);
+    if (lock->obtain(lock)) {
+        os = cw->store->new_output(cw->store, cw->name);
 
-    frt_os_write_vint(os, frt_ary_size(cw->file_entries));
+        frt_os_write_vint(os, frt_ary_size(cw->file_entries));
 
-    /* Write the directory with all offsets at 0.
-     * Remember the positions of directory entries so that we can adjust the
-     * offsets later */
-    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        cw->file_entries[i].dir_offset = frt_os_pos(os);
-        frt_os_write_u64(os, 0);  /* for now */
-        frt_os_write_string(os, cw->file_entries[i].name);
-    }
-
-    /* Open the files and copy their data into the stream.  Remember the
-     * locations of each file's data section. */
-    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        cw->file_entries[i].data_offset = frt_os_pos(os);
-        cw_copy_file(cw, &cw->file_entries[i], os);
-        if (dlr) {
-            frt_deleter_queue_file(dlr, cw->file_entries[i].name);
+        /* Write the directory with all offsets at 0.
+        * Remember the positions of directory entries so that we can adjust the
+        * offsets later */
+        for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
+            cw->file_entries[i].dir_offset = frt_os_pos(os);
+            frt_os_write_u64(os, 0);  /* for now */
+            frt_os_write_string(os, cw->file_entries[i].name);
         }
-    }
 
-    /* Write the data offsets into the directory of the compound stream */
-    for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
-        frt_os_seek(os, cw->file_entries[i].dir_offset);
-        frt_os_write_u64(os, cw->file_entries[i].data_offset);
+        /* Open the files and copy their data into the stream.  Remember the
+        * locations of each file's data section. */
+        for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
+            cw->file_entries[i].data_offset = frt_os_pos(os);
+            cw_copy_file(cw, &cw->file_entries[i], os);
+            if (dlr) {
+                frt_deleter_queue_file(dlr, cw->file_entries[i].name);
+            }
+        }
+
+        /* Write the data offsets into the directory of the compound stream */
+        for (i = 0; i < frt_ary_size(cw->file_entries); i++) {
+            frt_os_seek(os, cw->file_entries[i].dir_offset);
+            frt_os_write_u64(os, cw->file_entries[i].data_offset);
+        }
+        frt_os_close(os);
+        lock->release(lock);
     }
-    frt_os_close(os);
+    frt_close_lock(lock);
     frt_hs_destroy(cw->ids);
     frt_ary_free(cw->file_entries);
     frt_store_close(cw->store);
