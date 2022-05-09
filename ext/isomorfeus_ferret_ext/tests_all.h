@@ -7,7 +7,6 @@
 TestSuite *ts_1710(TestSuite *suite);
 TestSuite *ts_analysis(TestSuite *suite);
 TestSuite *ts_array(TestSuite *suite);
-TestSuite *ts_bitvector(TestSuite *suite);
 TestSuite *ts_compound_io(TestSuite *suite);
 TestSuite *ts_document(TestSuite *suite);
 TestSuite *ts_except(TestSuite *suite);
@@ -41,14 +40,12 @@ TestSuite *ts_term(TestSuite *suite);
 TestSuite *ts_term_vectors(TestSuite *suite);
 TestSuite *ts_test(TestSuite *suite);
 
-const struct test_list
-{
+const struct test_list {
     TestSuite *(*func)(TestSuite *suite);
 } all_tests[] = {
     {ts_1710},
     {ts_analysis},
     {ts_array},
-    {ts_bitvector},
     {ts_compound_io},
     {ts_document},
     {ts_except},

@@ -3,6 +3,84 @@ require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "test_hel
 class BitVectorTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Utils
 
+  BV_SIZE = 1000
+  BV_INT = 33
+  BV_COUNT = 500
+  SCAN_SIZE = 200
+  SCAN_INC = 97
+
+  def test_bv
+    bv = BitVector.new
+    assert_equal 0, bv.size
+    assert_equal 0, bv.count
+
+    bv.set 10
+    assert bv.get(10)
+    assert bv[10]
+    assert_equal 11, bv.size
+    assert_equal 1, bv.count
+
+    bv.set 10
+    assert bv.get(10)
+    assert bv[10]
+    assert_equal 11, bv.size
+    assert_equal 1, bv.count
+
+    bv.set 20
+    assert bv.get(20)
+    assert bv[20]
+    assert_equal 21, bv.size
+    assert_equal 2, bv.count
+
+    bv.unset(21)
+    assert ! bv[21]
+    assert_equal 22, bv.size
+    assert_equal 2, bv.count
+
+    bv.unset(20);
+    assert ! bv[20]
+    assert_equal 22, bv.size
+    assert_equal 1, bv.count
+    assert bv[10]
+
+    bv.set(100);
+    assert bv[100]
+    assert_equal 101, bv.size
+    assert_equal 2, bv.count
+
+    bv.clear
+    assert ! bv[10]
+    assert_equal 0, bv.size
+    assert_equal 0, bv.count
+    bv.unset 20
+    assert_equal 21, bv.size
+
+    # test setting bits at intervals for a large number of bits
+    bv.clear
+    (BV_INT..BV_SIZE).step(BV_INT) { |i| bv.set(i) }
+
+    (BV_INT..BV_SIZE).step(BV_INT) do |i|
+      assert bv[i]
+      assert ! bv[i - 1]
+      assert ! bv[i + 1]
+    end
+
+    # test setting all bits
+    bv.clear
+    (0..BV_SIZE).each { |i| bv.set(i) }
+
+    (0..BV_SIZE).each { |i| assert bv[i] }
+
+    # test random bits
+    bv.clear
+    (0..BV_SIZE).each do |i|
+      if (rand > 0.5)
+        bv.set(i)
+        assert bv[i]
+      end
+    end
+  end
+
   def test_bv_get_set
     bv = BitVector.new
     assert_equal 0, bv.count
@@ -66,6 +144,7 @@ class BitVectorTest < Test::Unit::TestCase
   def test_bv_eql_hash
     bv1 = BitVector.new
     bv2 = BitVector.new
+    assert_equal(bv1, bv1) # should work
     assert_equal(bv1, bv2)
     assert_equal(bv1.hash, bv2.hash)
 
@@ -93,9 +172,6 @@ class BitVectorTest < Test::Unit::TestCase
     assert_equal(bv1, bv2)
     assert_equal(bv1.hash, bv2.hash)
   end
-
-  BV_COUNT = 500
-  BV_SIZE = 1000
 
   def test_bv_and
     bv1 = BitVector.new
@@ -231,10 +307,6 @@ class BitVectorTest < Test::Unit::TestCase
     assert_equal(bv, not_bv)
   end
 
-
-  SCAN_SIZE = 200
-  SCAN_INC = 97
-
   def test_scan
     bv = BitVector.new
 
@@ -283,6 +355,46 @@ class BitVectorTest < Test::Unit::TestCase
     bit = 0
     not_bv.each {|i| assert_equal(bit, i); bit += 1 }
     assert_equal(bit, SCAN_SIZE)
+  end
+
+  def test_combined_boolean_ops
+    bv1 = BitVector.new
+    bv2 = BitVector.new
+    bv5 = BitVector.new
+    frt_bv_empty = BitVector.new
+
+    [1, 5, 7].each { |i| bv1.set(i) }
+    [1, 8, 20].each { |i| bv2.set(i) }
+    [8, 20].each { |i| bv5.set(i) }
+
+    bv3 = bv1.not
+    assert_equal(bv3.size, bv1.size)
+
+    bv4 = bv1 & bv3
+    assert_equal(bv4, frt_bv_empty) # bv1 & ~bv3 == empty FrtBitVector
+
+    bv4 = bv2 & bv3
+    assert_equal(bv4, bv5) # ~[1,5,7] & [1,8,20] == [8,20]
+
+    bv4 = bv1 | bv3
+    bv5 = frt_bv_empty.not
+    assert_equal(bv4, bv5) # bv | ~bv == all 1s
+
+    bv4 = bv2 | bv3
+    bv5 = BitVector.new
+    [5, 7].each { |i| bv5.set(i) }
+    bv5 = bv5.not!
+    assert_equal(bv4, bv5) # ~[1,5,7] | [1,8,20] == ~[5, 7]
+
+    bv4 = bv1 ^ bv3
+    bv5 = frt_bv_empty.not
+    assert_equal(bv4, bv5) # bv ^ ~bv == full FrtBitVector
+
+    bv4 = bv2 ^ bv3
+    bv5 = BitVector.new
+    [5, 7, 8, 20].each { |i| bv5.set(i) }
+    bv5 = bv5.not!
+    assert_equal(bv4, bv5) # ~[1,5,7] ^ [1,8,20] == ~[5, 7, 8, 20]
   end
 
   def test_to_a
