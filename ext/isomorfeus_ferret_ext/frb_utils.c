@@ -1,13 +1,55 @@
+#include "frt_array.h"
 #include "frt_bitvector.h"
 #include "frt_multimapper.h"
 #include "isomorfeus_ferret.h"
 #include <ruby.h>
 
-/*****************
- *** Array ***
- *****************/
+static VALUE mUtils;
 
-static void Init_Array(void) {
+/*************
+ *** Ary ***
+ *************/
+static VALUE cAry;
+
+static void frb_ary_free(void *p) {
+    // frt_ary_destroy_i(*p, dummy_free);
+}
+
+static size_t frb_ary_t_size(const void *p) {
+    return sizeof(void **);
+    (void)p;
+}
+
+const rb_data_type_t frb_ary_t = {
+    .wrap_struct_name = "FrbAry",
+    .function = {
+        .dmark = NULL,
+        .dfree = frb_ary_free,
+        .dsize = frb_ary_t_size,
+        .dcompact = NULL,
+        .reserved = {0},
+    },
+    .parent = NULL,
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
+static void Init_Ary(void) {
+    cAry = rb_define_class_under(mUtils, "Ary", rb_cObject);
+    // rb_define_alloc_func(cAry, frb_ary_alloc);
+
+    // rb_define_method(cAry, "initialize", frb_ary_init, -1);
+    // rb_define_method(cAry, "set", frb_ary_set, 2);
+    // rb_define_method(cAry, "[]=", frb_ary_set, 2);
+    // rb_define_method(cAry, "get", frb_ary_get, 1);
+    // rb_define_method(cAry, "[]", frb_ary_get, 1);
+    // rb_define_method(cAry, "push", frb_ary_push, 1);
+    // rb_define_method(cAry, "pop", frb_ary_pop, 0);
+    // rb_define_method(cAry, "unshift", frb_ary_unshift, 1);
+    // rb_define_method(cAry, "shift", frb_ary_shift, 1);
+    // rb_define_method(cAry, "delete", frb_ary_delete, 1);
+    // rb_define_method(cAry, "==", frb_ary_equal, 0);
+    // rb_define_method(cAry, "to_a", frb_ary_to_a, 0);
 }
 
 /*****************
@@ -459,8 +501,6 @@ VALUE frb_bv_to_a(VALUE self) {
     }
     return ary;
 }
-
-static VALUE mUtils;
 
 /*
  * Document-class: Ferret::Utils::BitVector
@@ -1083,7 +1123,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
 void Init_Utils(void) {
     mUtils = rb_define_module_under(mFerret, "Utils");
 
-    Init_Array();
+    Init_Ary();
     Init_BitVector();
     Init_MultiMapper();
     Init_PriorityQueue();
