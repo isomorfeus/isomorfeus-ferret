@@ -11,9 +11,7 @@
 #include "bzlib.h"
 #include "lz4frame.h"
 
-// #undef close
-// #undef read
-
+extern VALUE cUnsupportedError;
 extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);
 
@@ -75,8 +73,7 @@ static char *u64_to_str36(char *buf, int buf_size, frt_u64 u)
         }
     }
     if (0 < u) {
-        FRT_RAISE(FRT_INDEX_ERROR, "Max length of segment filename has been reached. "
-              "Perhaps it's time to re-index.\n");
+        rb_raise(rb_eIndexError, "Max length of segment filename has been reached. Perhaps it's time to re-index.");
     }
     return buf + i;
 }
@@ -170,18 +167,15 @@ static char *fn_for_gen_field(char *buf,
  *
  ***************************************************************************/
 
-static unsigned long long co_hash(const void *key)
-{
-    return (unsigned long long)key;
+static unsigned long co_hash(const void *key) {
+    return (unsigned long)key;
 }
 
-static int co_eq(const void *key1, const void *key2)
-{
+static int co_eq(const void *key1, const void *key2) {
     return (key1 == key2);
 }
 
-static void co_destroy(FrtCacheObject *self)
-{
+static void co_destroy(FrtCacheObject *self) {
     frt_h_rem(self->ref_tab1, self->ref2, false);
     frt_h_rem(self->ref_tab2, self->ref1, false);
     self->destroy(self->obj);
@@ -867,8 +861,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf, void 
         if (1 == method || (0 == method && last_gen == gen && retry)) {
             method = 1;
             for (i = 0; i < GEN_FILE_RETRY_COUNT; i++) {
-                FrtInStream *gen_is;
-                gen_is = store->open_input_stream(store, SEGMENTS_GEN_FILE_NAME);
+                FrtInStream *gen_is = store->open_input_stream(store, SEGMENTS_GEN_FILE_NAME);
 
                 if (NULL != gen_is) {
                     volatile frt_i64 gen0 = -1, gen1 = -1;
@@ -2160,7 +2153,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti, FrtTermEnum *inde
         for (i = 0; NULL != ste_next(index_te); i++) {
 #ifdef DEBUG
             if (i >= index_cnt) {
-                FRT_RAISE(FRT_INDEX_ERROR, "index term enum read too many terms");
+                rb_raise(rb_eIndexError, "index term enum read too many terms");
             }
 #endif
             sti->index_terms[i] = frt_te_get_term(index_te);
@@ -3410,8 +3403,7 @@ static void mtdpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
     (void)tde;
     (void)field_num;
     (void)term;
-    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support "
-          " the #seek operation");
+    rb_raise(cUnsupportedError, "MultipleTermDocPosEnum does not support the #seek operation");
 }
 
 static int mtdpe_doc_num(FrtTermDocEnum *tde)
@@ -3499,8 +3491,7 @@ static int mtdpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
     (void)tde;
     (void)docs;
     (void)freqs;
-    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support "
-          " the #read operation");
+    rb_raise(cUnsupportedError, "MultipleTermDocPosEnum does not support the #read operation");
     return req_num;
 }
 
