@@ -83,10 +83,10 @@ static int point_eq(const void *q1, const void *q2)
     return p1->x == p2->x && p1->y == p2->y;
 }
 
-static unsigned long long point_hash(const void *q)
+static unsigned long point_hash(const void *q)
 {
     Point *p = (Point *)q;
-    return p->x * p->y;
+    return (unsigned long)(p->x * p->y);
 }
 
 static Point *point_new(int x, int y)
