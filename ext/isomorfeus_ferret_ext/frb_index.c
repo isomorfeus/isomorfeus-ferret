@@ -2,8 +2,6 @@
 #include "isomorfeus_ferret.h"
 #include <ruby.h>
 
-// #undef close
-
 VALUE mIndex;
 
 VALUE cFieldInfo;
@@ -20,6 +18,8 @@ VALUE cLazyDoc;
 VALUE cLazyDocData;
 VALUE cIndexWriter;
 VALUE cIndexReader;
+
+VALUE cUnsupportedError;
 
 VALUE sym_analyzer;
 static VALUE sym_close_dir;
@@ -3487,6 +3487,8 @@ void Init_Index(void) {
     sym_analyzer  = ID2SYM(rb_intern("analyzer"));
     sym_close_dir = ID2SYM(rb_intern("close_dir"));
     fsym_content  = rb_intern("content");
+
+    cUnsupportedError = rb_define_class_under(mIndex, "UnsupportedError", rb_eStandardError);
 
     Init_TermVector();
     Init_TermEnum();
