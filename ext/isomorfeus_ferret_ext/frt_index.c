@@ -6101,8 +6101,7 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     FrtSegmentInfo *si;
     si = sis->segs[sis->size - 1];
     si->doc_cnt = iw->dw->doc_num;
-    frt_dw_close(iw->dw);
-    iw->dw = NULL;
+    dw_flush(iw->dw);
     frt_mutex_lock(&iw->store->mutex);
     if (iw->config.use_compound_file) {
         iw_commit_compound_file(iw, si);
@@ -6218,6 +6217,11 @@ static void iw_optimize_i(FrtIndexWriter *iw)
 {
     int min_segment;
     iw_commit_i(iw);
+    if (iw->dw) {
+        /* ensure iw->dw gets reopened with new segment info later on */
+        frt_dw_close(iw->dw);
+        iw->dw = NULL;
+    }
     while (iw->sis->size > 1
            || (iw->sis->size == 1
                && (frt_si_has_deletions(iw->sis->segs[0])
