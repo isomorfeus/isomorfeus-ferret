@@ -300,7 +300,6 @@ static FrtInStream *ram_open_input_stream(FrtStore *store, const char *filename)
     is->f->ref_cnt = 1;
     is->d.pointer = 0;
     is->m = &RAM_IN_STREAM_METHODS;
-
     return is;
 }
 
