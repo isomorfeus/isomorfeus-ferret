@@ -6101,7 +6101,8 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     FrtSegmentInfo *si;
     si = sis->segs[sis->size - 1];
     si->doc_cnt = iw->dw->doc_num;
-    dw_flush(iw->dw);
+    frt_dw_close(iw->dw);
+    iw->dw = NULL;
     frt_mutex_lock(&iw->store->mutex);
     if (iw->config.use_compound_file) {
         iw_commit_compound_file(iw, si);
@@ -6294,8 +6295,7 @@ FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *vo
     FRT_XENDTRY
 
     iw->similarity = frt_sim_create_default();
-    iw->analyzer = analyzer ? (FrtAnalyzer *)analyzer
-                            : frt_standard_analyzer_new(true);
+    iw->analyzer = analyzer ? (FrtAnalyzer *)analyzer : frt_standard_analyzer_new(true);
 
     iw->deleter = frt_deleter_new(iw->sis, store);
     deleter_delete_deletable_files(iw->deleter);
