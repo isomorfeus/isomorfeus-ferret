@@ -9,22 +9,19 @@
  *
  ***************************************************************************/
 
-static unsigned long long field_index_hash(const void *p)
-{
+static unsigned long field_index_hash(const void *p) {
     FrtFieldIndex *self = (FrtFieldIndex *)p;
-    return frt_str_hash(rb_id2name(self->field)) ^ (unsigned long long)(self->klass);
+    return frt_str_hash(rb_id2name(self->field)) ^ (unsigned long)(self->klass);
 }
 
-static int field_index_eq(const void *p1, const void *p2)
-{
+static int field_index_eq(const void *p1, const void *p2) {
     FrtFieldIndex *fi1 = (FrtFieldIndex *)p1;
     FrtFieldIndex *fi2 = (FrtFieldIndex *)p2;
     return (fi1->field == fi2->field) &&
         (fi1->klass->type == fi2->klass->type);
 }
 
-static void field_index_destroy(void *p)
-{
+static void field_index_destroy(void *p) {
     FrtFieldIndex *self = (FrtFieldIndex *)p;
     if (self->index) {
         self->klass->destroy_index(self->index);
