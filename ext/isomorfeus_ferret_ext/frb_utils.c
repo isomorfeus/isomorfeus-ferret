@@ -4,6 +4,13 @@
 #include <ruby.h>
 
 /*****************
+ *** Array ***
+ *****************/
+
+static void Init_Array(void) {
+}
+
+/*****************
  *** BitVector ***
  *****************/
 static VALUE cBitVector;
@@ -12,7 +19,7 @@ static void frb_bv_free(void *p) {
     frt_bv_destroy((FrtBitVector *)p);
 }
 
-static size_t frb_bv_size(const void *p) {
+static size_t frb_bv_t_size(const void *p) {
     return sizeof(FrtBitVector);
     (void)p;
 }
@@ -22,7 +29,7 @@ const rb_data_type_t frb_bv_t = {
     .function = {
         .dmark = NULL,
         .dfree = frb_bv_free,
-        .dsize = frb_bv_size,
+        .dsize = frb_bv_t_size,
         .dcompact = NULL,
         .reserved = {0},
     },
@@ -132,6 +139,17 @@ VALUE frb_bv_count(VALUE self) {
     FrtBitVector *bv;
     GET_BV(bv, self);
     return INT2FIX(bv->count);
+}
+
+/*
+ *  call-seq:
+ *     bv._size -> allocated bits
+ *
+ */
+VALUE frb_bv_size(VALUE self) {
+    FrtBitVector *bv;
+    GET_BV(bv, self);
+    return INT2FIX(bv->size);
 }
 
 /*
@@ -502,6 +520,7 @@ static void Init_BitVector(void) {
     rb_define_method(cBitVector, "get", frb_bv_get, 1);
     rb_define_method(cBitVector, "[]", frb_bv_get, 1);
     rb_define_method(cBitVector, "count", frb_bv_count, 0);
+    rb_define_method(cBitVector, "size", frb_bv_size, 0);
     rb_define_method(cBitVector, "clear", frb_bv_clear, 0);
     rb_define_method(cBitVector, "eql?", frb_bv_eql, 1);
     rb_define_method(cBitVector, "==", frb_bv_eql, 1);
@@ -837,24 +856,18 @@ static VALUE frb_pq_init(int argc, VALUE *argv, VALUE self) {
                 }
                 break;
             default:
-                rb_raise(rb_eArgError,
-                         "PriorityQueue#initialize only takes a Hash or "
-                         "an integer");
-
+                rb_raise(rb_eArgError, "PriorityQueue#initialize only takes a Hash or an integer");
                 break;
         }
         if (capa < 0) {
-            rb_raise(rb_eIndexError,
-                     "PriorityQueue must have a capacity > 0. %d < 0",
-                     capa);
+            rb_raise(rb_eIndexError, "PriorityQueue must have a capacity > 0. %d < 0", capa);
         }
         pq->capa = capa;
         if (rb_block_given_p()) {
             pq->proc = rb_block_proc();
         }
         if (argc > 1) {
-            rb_raise(rb_eArgError,
-                     "PriorityQueue#initialize only takes one parameter");
+            rb_raise(rb_eArgError, "PriorityQueue#initialize only takes one parameter");
         }
     }
 
@@ -904,8 +917,7 @@ static VALUE frb_pq_insert(VALUE self, VALUE elem) {
     GET_PQ(pq, self);
     if (pq->size < pq->capa) {
         frb_pq_push(pq, elem);
-    }
-    else if (pq->size > 0 && frb_pq_lt(pq->proc, pq->heap[1], elem)) {
+    } else if (pq->size > 0 && frb_pq_lt(pq->proc, pq->heap[1], elem)) {
         pq->heap[1] = elem;
         frb_pq_down(pq);
     }
@@ -957,8 +969,7 @@ static VALUE frb_pq_pop(VALUE self) {
         pq->size--;
         frb_pq_down(pq);                      /* adjust heap */
         return result;
-    }
-    else {
+    } else {
         return Qnil;
     }
 }
@@ -1072,6 +1083,7 @@ extern VALUE mFerret = rb_define_module("Ferret");
 void Init_Utils(void) {
     mUtils = rb_define_module_under(mFerret, "Utils");
 
+    Init_Array();
     Init_BitVector();
     Init_MultiMapper();
     Init_PriorityQueue();

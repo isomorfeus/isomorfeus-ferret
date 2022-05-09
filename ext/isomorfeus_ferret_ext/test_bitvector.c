@@ -18,110 +18,6 @@ static FrtBitVector *set_bits(FrtBitVector *bv, const char *bits)
     return bv;
 }
 
-/*
-static FrtBitVector *unset_bits(FrtBitVector *bv, char *bits)
-{
-    static int bit_array[SET_BITS_MAX_CNT];
-    const int bit_cnt = s2l(bits, bit_array);
-    int i;
-    for (i = 0; i < bit_cnt; i++) {
-        frt_bv_unset(bv, bit_array[i]);
-    }
-    return bv;
-}
-*/
-
-/**
- * Test basic FrtBitVector get/set/unset operations
- */
-static void test_bv(TestCase *tc, void *data)
-{
-    int i;
-    FrtBitVector *bv = frt_bv_new();
-    (void)data; /* suppress unused argument warning */
-
-    Aiequal(0, bv->size);
-    Aiequal(0, bv->count);
-    Aiequal(0, frt_bv_recount(bv));
-
-    frt_bv_set(bv, 10);
-    Aiequal(1, frt_bv_get(bv, 10));
-    Aiequal(11, bv->size);
-    Aiequal(1, bv->count);
-    Aiequal(1, frt_bv_recount(bv));
-
-    frt_bv_set(bv, 10);
-    Aiequal(1, frt_bv_get(bv, 10));
-    Aiequal(11, bv->size);
-    Aiequal(1, bv->count);
-    Aiequal(1, frt_bv_recount(bv));
-
-    frt_bv_set(bv, 20);
-    Aiequal(1, frt_bv_get(bv, 20));
-    Aiequal(21, bv->size);
-    Aiequal(2, bv->count);
-    Aiequal(2, frt_bv_recount(bv));
-
-    frt_bv_unset(bv, 21);
-    Aiequal(0, frt_bv_get(bv, 21));
-    Aiequal(22, bv->size);
-    Aiequal(2, bv->count);
-    Aiequal(2, frt_bv_recount(bv));
-
-    frt_bv_unset(bv, 20);
-    Aiequal(0, frt_bv_get(bv, 20));
-    Aiequal(22, bv->size);
-    Aiequal(1, bv->count);
-    Aiequal(1, frt_bv_recount(bv));
-    Aiequal(1, frt_bv_get(bv, 10));
-
-    frt_bv_set(bv, 100);
-    Aiequal(1, frt_bv_get(bv, 100));
-    Aiequal(101, bv->size);
-    Aiequal(2, bv->count);
-    Aiequal(2, frt_bv_recount(bv));
-    Aiequal(1, frt_bv_get(bv, 10));
-
-    frt_bv_clear(bv);
-    Aiequal(0, frt_bv_get(bv, 10));
-    Aiequal(0, bv->size);
-    Aiequal(0, bv->count);
-    Aiequal(0, frt_bv_recount(bv));
-    frt_bv_unset(bv, 20);
-    Aiequal(21, bv->size);
-
-    /* test setting bits at intervals for a large number of bits */
-    frt_bv_clear(bv);
-    for (i = BV_INT; i < BV_SIZE; i += BV_INT) {
-        frt_bv_set(bv, i);
-    }
-    for (i = BV_INT; i < BV_SIZE; i += BV_INT) {
-        Aiequal(1, frt_bv_get(bv, i));
-        Aiequal(0, frt_bv_get(bv, i - 1));
-        Aiequal(0, frt_bv_get(bv, i + 1));
-    }
-
-    /* test setting all bits */
-    frt_bv_clear(bv);
-    for (i = 0; i < BV_SIZE; i++) {
-        frt_bv_set(bv, i);
-    }
-    for (i = 0; i < BV_SIZE; i++) {
-        Aiequal(1, frt_bv_get(bv, i));
-    }
-
-    /* test random bits */
-    frt_bv_clear(bv);
-    for (i = 0; i < BV_SIZE; i++) {
-        if ((rand() % 2) == 0) {
-            frt_bv_set(bv, i);
-            Aiequal(1, frt_bv_get(bv, i));
-        }
-    }
-
-    frt_bv_destroy(bv);
-}
-
 /**
  * Test simple FrtBitVector scanning
  */
@@ -586,7 +482,6 @@ TestSuite *ts_bitvector(TestSuite *suite)
 {
     suite = ADD_SUITE(suite);
 
-    tst_run_test(suite, test_bv, NULL);
     tst_run_test(suite, test_bv_eq_hash, NULL);
     tst_run_test(suite, test_bv_and, NULL);
     tst_run_test(suite, test_bv_or, NULL);
