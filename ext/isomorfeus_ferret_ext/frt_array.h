@@ -17,8 +17,7 @@
 #define frt_ary_start(ary)     ((void **)&(((int *)ary)[-FRT_ARY_META_CNT]))
 #define frt_ary_free(ary)      free(frt_ary_start(ary))
 
-#define frt_ary_new_type_capa(type, init_capa)\
-                                (type *)frt_ary_new_i(sizeof(type), init_capa)
+#define frt_ary_new_type_capa(type, init_capa) (type *)frt_ary_new_i(sizeof(type), init_capa)
 #define frt_ary_new_type(type)      (type *)frt_ary_new_i(sizeof(type), 0)
 #define frt_ary_new_capa(init_capa) frt_ary_new_i(sizeof(void *), init_capa)
 #define frt_ary_new()               frt_ary_new_i(sizeof(void *), 0)
