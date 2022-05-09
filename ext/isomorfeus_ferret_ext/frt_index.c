@@ -15,18 +15,6 @@ extern VALUE cUnsupportedError;
 extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);
 
-#define GET_LOCK(lock, name, store, err_msg) do {\
-    lock = store->frt_open_lock(store, name);\
-    if (!lock->obtain(lock)) {\
-        FRT_RAISE(FRT_LOCK_ERROR, err_msg);\
-    }\
-} while(0)
-
-#define RELEASE_LOCK(lock, store) do {\
-    lock->release(lock);\
-    store->close_lock(lock);\
-} while (0)
-
 const FrtConfig frt_default_config = {
     0x100000,       /* chunk size is 1Mb */
     0x1000000,      /* Max memory used for buffer is 16 Mb */
@@ -3697,11 +3685,21 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
             do_delete = true;
         } else {
             char tmp_fn[FRT_SEGMENT_NAME_MAX_LENGTH];
+            char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
             /* OK, segment is referenced, but file may still be orphan'd: */
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {
                 /* This file is stored in a CFS file for this segment: */
-                do_delete = true;
+                strcpy(buf, file_name);
+                char *p = strrchr(file_name, '.');
+                p++;
+                strcpy(p, FRT_LOCK_EXT);
+                if (!(dfa->dlr->store->exists(dfa->dlr->store, buf))) {
+                    fprintf(stderr, "not existing %s\n", buf);
+                    do_delete = true;
+                } else {
+                    fprintf(stderr, "existing %s\n", buf);
+                }
             } else if (0 == strcmp("del", extension)) {
                 /* This is a _segmentName_N.del file: */
                 if (!frt_fn_for_generation(tmp_fn, segment_name, "del", si->del_gen)
@@ -4006,12 +4004,11 @@ static void ir_commit_i(FrtIndexReader *ir)
                 frt_close_lock(ir->write_lock);
                 ir->write_lock = NULL;
             }
-        }
-        else {
+        } else {
             ir->commit_i(ir);
         }
+        ir->has_changes = false;
     }
-    ir->has_changes = false;
 }
 
 void frt_ir_commit(FrtIndexReader *ir)
