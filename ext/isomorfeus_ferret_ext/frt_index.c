@@ -3716,7 +3716,6 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
         }
 
         if (do_delete) {
-            fprintf(stderr, "queue %s\n", file_name);
             frt_deleter_queue_file(dlr, file_name);
         }
     }
