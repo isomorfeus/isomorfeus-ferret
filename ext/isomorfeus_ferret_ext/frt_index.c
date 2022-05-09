@@ -3690,16 +3690,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {
                 /* This file is stored in a CFS file for this segment: */
-                strcpy(buf, file_name);
-                char *p = strrchr(file_name, '.');
-                p++;
-                strcpy(p, FRT_LOCK_EXT);
-                if (!(dfa->dlr->store->exists(dfa->dlr->store, buf))) {
-                    fprintf(stderr, "not existing %s\n", buf);
-                    do_delete = true;
-                } else {
-                    fprintf(stderr, "existing %s\n", buf);
-                }
+                do_delete = true;
             } else if (0 == strcmp("del", extension)) {
                 /* This is a _segmentName_N.del file: */
                 if (!frt_fn_for_generation(tmp_fn, segment_name, "del", si->del_gen)
@@ -3725,6 +3716,7 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
         }
 
         if (do_delete) {
+            fprintf(stderr, "queue %s\n", file_name);
             frt_deleter_queue_file(dlr, file_name);
         }
     }
