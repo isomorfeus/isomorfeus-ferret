@@ -6085,6 +6085,11 @@ static void iw_maybe_merge_segments(FrtIndexWriter *iw)
         }
 
         if (merge_docs >= target_merge_docs) { /* found a merge to do */
+            if (iw->dw) {
+                /* ensure iw->dw gets reopened with new segment info later on */
+                frt_dw_close(iw->dw);
+                iw->dw = NULL;
+            }
             iw_merge_segments_from(iw, min_segment + 1);
         }
         else if (min_segment <= 0) {
