@@ -353,11 +353,10 @@ static const struct FrtInStreamMethods FS_IN_STREAM_METHODS = {
 };
 
 static FrtInStream *fs_open_input_stream(FrtStore *store, const char *filename) {
-    FrtInStream *is;
     char path[FRT_MAX_FILE_PATH];
     int fd = open(join_path(path, store->dir.path, filename), O_RDONLY | O_BINARY);
     if (fd < 0) return NULL;
-    is = frt_is_new();
+    FrtInStream *is = frt_is_new();
     is->f->file.fd = fd;
     is->f->ref_cnt = 1;
     is->d.path = frt_estrdup(path);
