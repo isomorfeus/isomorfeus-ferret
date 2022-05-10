@@ -6011,12 +6011,14 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis, FrtSegm
     cw = frt_open_cw(store, cfs_file_name);
     for (i = 0; i < FRT_NELEMS(COMPOUND_EXTENSIONS); i++) {
         memcpy(ext, COMPOUND_EXTENSIONS[i], 4);
+        fprintf(stderr, "iw_create_compound_file cw_add seg %s file %s\n", si->name, file_name);
         frt_cw_add_file(cw, file_name);
     }
 
     /* Field norm file_names */
     for (i = fis->size - 1; i >= 0; i--) {
         if (fi_has_norms(fis->fields[i]) && si_norm_file_name(si, file_name, i)) {
+            fprintf(stderr, "iw_create_compound_file cw_add seg %s file %s\n", si->name, file_name);
             frt_cw_add_file(cw, file_name);
         }
     }
