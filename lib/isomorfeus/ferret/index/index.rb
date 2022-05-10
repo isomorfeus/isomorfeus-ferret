@@ -112,8 +112,7 @@ module Isomorfeus
             begin
               @dir = FSDirectory.new(options[:path], options[:create])
             rescue IOError
-              @dir = FSDirectory.new(options[:path],
-                                    options[:create_if_missing] != false)
+              @dir = FSDirectory.new(options[:path], options[:create_if_missing] != false)
             end
           elsif options[:dir]
             @dir = options[:dir]
