@@ -1008,8 +1008,12 @@ void frt_sis_del_at(FrtSegmentInfos *sis, int at)
 void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
 {
     int i, num_to_del = to - from;
-    const int sis_size = sis->size -= num_to_del;
+    int o = sis->size;
+    sis->size -= num_to_del;
+    const int sis_size = sis->size;
+    fprintf(stderr, "frt_sis_del_from_to from %i to %i del %i sis %i o %i\n", from, to, num_to_del, sis_size, o);
     for (i = from; i < to; i++) {
+        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
         frt_si_close(sis->segs[i]);
     }
     for (i = from; i < sis_size; i++) {
@@ -6031,8 +6035,16 @@ static void iw_commit_compound_file(FrtIndexWriter *iw, FrtSegmentInfo *si)
 static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int max_seg) {
     int i;
     FrtSegmentInfos *sis = iw->sis;
+    fprintf(stderr, "iw_merge_segments before:\n");
+    for (i = 0; i < sis->size; i++) {
+        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
+    }
     FrtSegmentInfo *si = frt_sis_new_segment(sis, 0, iw->store);
 
+    fprintf(stderr, "iw_merge_segments with new segment:\n");
+    for (i = 0; i < sis->size; i++) {
+        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
+    }
     SegmentMerger *merger = sm_create(iw, si, &sis->segs[min_seg], max_seg - min_seg);
 
     /* This is where all the action happens. */
@@ -6054,6 +6066,10 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int m
     frt_sis_write(sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
 
+    fprintf(stderr, "iw_merge_segments after merge:\n");
+    for (i = 0; i < sis->size; i++) {
+        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
+    }
     frt_mutex_unlock(&iw->store->mutex);
 
     sm_destroy(merger);
