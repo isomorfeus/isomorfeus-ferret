@@ -5275,7 +5275,7 @@ FrtDocWriter *frt_dw_open(FrtIndexWriter *iw, FrtSegmentInfo *si)
     FRT_REF(store);
     dw->fw          = frt_fw_open(store, si->name, iw->fis);
     dw->si          = si;
-
+    fprintf(stderr, "dw_open %llu si %s\n", dw, si->name);
     dw->curr_plists = frt_h_new_str(NULL, NULL);
     dw->fields      = frt_h_new_int((frt_free_ft)fld_inv_destroy);
     dw->doc_num     = 0;
@@ -5301,6 +5301,7 @@ void frt_dw_new_segment(FrtDocWriter *dw, FrtSegmentInfo *si)
 
 void frt_dw_close(FrtDocWriter *dw)
 {
+    fprintf(stderr, "dw_close %llu si %s\n", dw, si->name);
     if (dw->doc_num) {
         dw_flush(dw);
     }
