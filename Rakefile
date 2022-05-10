@@ -154,4 +154,4 @@ Rake::TestTask.new(:units => :compile) do |t|
 end
 task :unit => :units
 
-task :default => [:compile, :thread_safety]
+task :default => [:compile, :specs]

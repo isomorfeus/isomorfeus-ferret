@@ -12,18 +12,28 @@ static VALUE mUtils;
 static VALUE cAry;
 
 static void frb_ary_free(void *p) {
-    // frt_ary_destroy_i(*p, dummy_free);
+    frt_ary_free(p);
 }
 
 static size_t frb_ary_t_size(const void *p) {
-    return sizeof(void **);
-    (void)p;
+    return sizeof(VALUE) * frt_ary_capa(p);
+}
+
+static void frb_ary_mark(void *p) {
+    void **ary = p;
+    int size = frt_ary_size(ary);
+    int i;
+    VALUE rvalue;
+    for (i = 0; i < size; i++) {
+        rvalue = frt_ary_get(ary, i);
+        rb_gc_mark(rvalue);
+    }
 }
 
 const rb_data_type_t frb_ary_t = {
     .wrap_struct_name = "FrbAry",
     .function = {
-        .dmark = NULL,
+        .dmark = frb_ary_mark,
         .dfree = frb_ary_free,
         .dsize = frb_ary_t_size,
         .dcompact = NULL,
@@ -34,22 +44,125 @@ const rb_data_type_t frb_ary_t = {
     .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
+static VALUE frb_ary_alloc(VALUE rclass) {
+    void **ary = frt_ary_new_type_capa(VALUE, FRT_ARY_INIT_CAPA);
+    return TypedData_Wrap_Struct(rclass, &frb_ary_t, ary);
+}
+
+static VALUE frb_ary_init(int argc, VALUE *argv, VALUE self) {
+    if (argc == 1) {
+        VALUE rcapa = argv[0];
+        int capa = FRT_ARY_INIT_CAPA;
+        if (TYPE(rcapa) == T_FIXNUM) {
+            capa = FIX2INT(rcapa);
+        } else {
+            rb_raise(rb_eArgError, "Ary#initialize only takes an integer");
+        }
+        if (capa < 0)
+            rb_raise(rb_eIndexError, "Ary must have a capacity > 0. %d < 0", capa);
+        void **ary;
+        TypedData_Get_Struct(self, void *, &frb_ary_t, ary);
+        frt_ary_free(ary);
+        ary = frt_ary_new_type_capa(VALUE, capa);
+        ((struct RData *)(self))->data = ary;
+    } else if (argc > 1) {
+        rb_raise(rb_eArgError, "Ary#initialize only takes one argument");
+    }
+    return self;
+}
+
+static VALUE frb_ary_set(VALUE self, VALUE rindex, VALUE rvalue) {
+    void **ary = DATA_PTR(self);
+    frt_ary_set(ary, FIX2INT(rindex), rvalue); // will raise if index is negative
+    ((struct RData *)(self))->data = ary;
+    VALUE r = frt_ary_get(ary, FIX2INT(rindex));
+    return rvalue;
+}
+
+static VALUE frb_ary_get(VALUE self, VALUE rindex) {
+    void **ary = DATA_PTR(self);
+    VALUE rvalue = frt_ary_get(ary, FIX2INT(rindex));
+    if (rvalue == NULL) return Qnil;
+    return rvalue;
+}
+
+static VALUE frb_ary_push(VALUE self, VALUE rvalue) {
+    void **ary = DATA_PTR(self);
+    frt_ary_push(ary, rvalue);
+    ((struct RData *)(self))->data = ary;
+    return rvalue;
+}
+
+static VALUE frb_ary_pop(VALUE self) {
+    void **ary = DATA_PTR(self);
+    VALUE rvalue = frt_ary_pop(ary);
+    if (rvalue == NULL) return Qnil;
+    return rvalue;
+}
+
+static VALUE frb_ary_unshift(VALUE self, VALUE rvalue) {
+    void **ary = DATA_PTR(self);
+    frt_ary_unshift(ary, rvalue);
+    ((struct RData *)(self))->data = ary;
+    return rvalue;
+}
+
+static VALUE frb_ary_shift(VALUE self) {
+    void **ary = DATA_PTR(self);
+    VALUE rvalue = frt_ary_shift(ary);
+    if (rvalue == NULL) return Qnil;
+    return rvalue;
+}
+
+static VALUE frb_ary_remove(VALUE self, VALUE rindex) {
+    int index = FIX2INT(rindex);
+    if (index < 0) rb_raise(rb_eIndexError, "%d < 0", index);
+    void **ary = DATA_PTR(self);
+    VALUE rvalue = frt_ary_remove(ary, index);
+    if (rvalue == NULL) return Qnil;
+    return rvalue;
+}
+
+static VALUE frb_ary_to_a(VALUE self) {
+    void **ary = DATA_PTR(self);
+    int size = frt_ary_size(ary);
+    int i;
+    VALUE rary = rb_ary_new();
+    VALUE rvalue;
+    for (i = 0; i < size; i++) {
+        rvalue = frt_ary_get(ary, i);
+        rb_ary_push(rary, rvalue);
+    }
+    return rary;
+}
+
+static VALUE frb_ary_size(VALUE self) {
+    void **ary = DATA_PTR(self);
+    return INT2FIX(frt_ary_size(ary));
+}
+
+static VALUE frb_ary_capa(VALUE self) {
+    void **ary = DATA_PTR(self);
+    return INT2FIX(frt_ary_capa(ary));
+}
+
 static void Init_Ary(void) {
     cAry = rb_define_class_under(mUtils, "Ary", rb_cObject);
-    // rb_define_alloc_func(cAry, frb_ary_alloc);
-
-    // rb_define_method(cAry, "initialize", frb_ary_init, -1);
-    // rb_define_method(cAry, "set", frb_ary_set, 2);
-    // rb_define_method(cAry, "[]=", frb_ary_set, 2);
-    // rb_define_method(cAry, "get", frb_ary_get, 1);
-    // rb_define_method(cAry, "[]", frb_ary_get, 1);
-    // rb_define_method(cAry, "push", frb_ary_push, 1);
-    // rb_define_method(cAry, "pop", frb_ary_pop, 0);
-    // rb_define_method(cAry, "unshift", frb_ary_unshift, 1);
-    // rb_define_method(cAry, "shift", frb_ary_shift, 1);
-    // rb_define_method(cAry, "delete", frb_ary_delete, 1);
+    rb_define_alloc_func(cAry, frb_ary_alloc);
+    rb_define_method(cAry, "initialize", frb_ary_init, -1);
+    rb_define_method(cAry, "set", frb_ary_set, 2);
+    rb_define_method(cAry, "[]=", frb_ary_set, 2);
+    rb_define_method(cAry, "get", frb_ary_get, 1);
+    rb_define_method(cAry, "[]", frb_ary_get, 1);
+    rb_define_method(cAry, "push", frb_ary_push, 1);
+    rb_define_method(cAry, "pop", frb_ary_pop, 0);
+    rb_define_method(cAry, "unshift", frb_ary_unshift, 1);
+    rb_define_method(cAry, "shift", frb_ary_shift, 0);
+    rb_define_method(cAry, "remove", frb_ary_remove, 1);
+    rb_define_method(cAry, "size", frb_ary_size, 0);
+    rb_define_method(cAry, "capa", frb_ary_capa, 0);
     // rb_define_method(cAry, "==", frb_ary_equal, 0);
-    // rb_define_method(cAry, "to_a", frb_ary_to_a, 0);
+    rb_define_method(cAry, "to_a", frb_ary_to_a, 0);
 }
 
 /*****************
