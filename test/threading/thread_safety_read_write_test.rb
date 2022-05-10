@@ -5,7 +5,7 @@ require 'thread'
 class IndexThreadSafetyReadWriteTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Index
 
-  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".." , "temp", "threading"))
+  INDEX_DIR = File.expand_path(File.join(File.dirname(__FILE__), ".." , "temp", "threading_rw"))
   ITERATIONS = 100
   NUM_THREADS = 3
   ANALYZER = Isomorfeus::Ferret::Analysis::Analyzer.new
