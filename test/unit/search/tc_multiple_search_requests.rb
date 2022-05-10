@@ -7,8 +7,7 @@ class MultipleSearchRequestsTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Index
 
   def setup
-    dpath = File.expand_path(File.join(File.dirname(__FILE__),
-                       '../../temp/fsdir'))
+    dpath = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/multisearch'))
     fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(dpath, true)
 
     iw = IndexWriter.new(:dir => fs_dir, :create => true, :key => [:id])
