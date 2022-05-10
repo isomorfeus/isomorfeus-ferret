@@ -532,8 +532,7 @@ class MultiExternalReaderPathTest < Test::Unit::TestCase
   end
 
   def setup
-    base_dir = File.expand_path(File.join(File.dirname(__FILE__),
-                       '../../temp/multidir'))
+    base_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/multidir'))
     FileUtils.mkdir_p(base_dir)
     @paths = [
       File.join(base_dir, "i1"),
