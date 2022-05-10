@@ -279,7 +279,6 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     frt_off_t remainder, length, len;
     frt_uchar buffer[FRT_BUFFER_SIZE];
 
-    fprintf(stderr, "cw_copy %s\n", src->name);
     FrtInStream *is = cw->store->open_input(cw->store, src->name);
 
     remainder = length = frt_is_length(is);

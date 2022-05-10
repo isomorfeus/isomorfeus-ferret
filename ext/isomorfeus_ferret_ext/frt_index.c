@@ -1011,9 +1011,7 @@ void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
     int o = sis->size;
     sis->size -= num_to_del;
     const int sis_size = sis->size;
-    fprintf(stderr, "frt_sis_del_from_to from %i to %i del %i sis %i o %i\n", from, to, num_to_del, sis_size, o);
     for (i = from; i < to; i++) {
-        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
         frt_si_close(sis->segs[i]);
     }
     for (i = from; i < sis_size; i++) {
@@ -5275,7 +5273,6 @@ FrtDocWriter *frt_dw_open(FrtIndexWriter *iw, FrtSegmentInfo *si)
     FRT_REF(store);
     dw->fw          = frt_fw_open(store, si->name, iw->fis);
     dw->si          = si;
-    fprintf(stderr, "dw_open %llu si %s\n", dw, si->name);
     dw->curr_plists = frt_h_new_str(NULL, NULL);
     dw->fields      = frt_h_new_int((frt_free_ft)fld_inv_destroy);
     dw->doc_num     = 0;
@@ -5299,9 +5296,7 @@ void frt_dw_new_segment(FrtDocWriter *dw, FrtSegmentInfo *si)
     dw->si = si;
 }
 
-void frt_dw_close(FrtDocWriter *dw)
-{
-    fprintf(stderr, "dw_close %llu si %s\n", dw, dw->si->name);
+void frt_dw_close(FrtDocWriter *dw) {
     if (dw->doc_num) {
         dw_flush(dw);
     }
@@ -6011,14 +6006,12 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis, FrtSegm
     cw = frt_open_cw(store, cfs_file_name);
     for (i = 0; i < FRT_NELEMS(COMPOUND_EXTENSIONS); i++) {
         memcpy(ext, COMPOUND_EXTENSIONS[i], 4);
-        fprintf(stderr, "iw_create_compound_file cw_add seg %s file %s\n", si->name, file_name);
         frt_cw_add_file(cw, file_name);
     }
 
     /* Field norm file_names */
     for (i = fis->size - 1; i >= 0; i--) {
         if (fi_has_norms(fis->fields[i]) && si_norm_file_name(si, file_name, i)) {
-            fprintf(stderr, "iw_create_compound_file cw_add seg %s file %s\n", si->name, file_name);
             frt_cw_add_file(cw, file_name);
         }
     }
@@ -6038,16 +6031,9 @@ static void iw_commit_compound_file(FrtIndexWriter *iw, FrtSegmentInfo *si)
 static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int max_seg) {
     int i;
     FrtSegmentInfos *sis = iw->sis;
-    fprintf(stderr, "iw_merge_segments before:\n");
-    for (i = 0; i < sis->size; i++) {
-        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
-    }
+
     FrtSegmentInfo *si = frt_sis_new_segment(sis, 0, iw->store);
 
-    fprintf(stderr, "iw_merge_segments with new segment:\n");
-    for (i = 0; i < sis->size; i++) {
-        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
-    }
     SegmentMerger *merger = sm_create(iw, si, &sis->segs[min_seg], max_seg - min_seg);
 
     /* This is where all the action happens. */
@@ -6069,10 +6055,6 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int m
     frt_sis_write(sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
 
-    fprintf(stderr, "iw_merge_segments after merge:\n");
-    for (i = 0; i < sis->size; i++) {
-        fprintf(stderr, "%i name %s\n", i, sis->segs[i]->name);
-    }
     frt_mutex_unlock(&iw->store->mutex);
 
     sm_destroy(merger);
