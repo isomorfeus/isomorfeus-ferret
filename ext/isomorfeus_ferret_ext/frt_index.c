@@ -5301,7 +5301,7 @@ void frt_dw_new_segment(FrtDocWriter *dw, FrtSegmentInfo *si)
 
 void frt_dw_close(FrtDocWriter *dw)
 {
-    fprintf(stderr, "dw_close %llu si %s\n", dw, si->name);
+    fprintf(stderr, "dw_close %llu si %s\n", dw, dw->si->name);
     if (dw->doc_num) {
         dw_flush(dw);
     }
