@@ -10,7 +10,7 @@ class AryTest < Test::Unit::TestCase
     ary = Ary.new
     raised = 0
     assert_equal(0, ary.size)
-    assert_equal(FRT_ARY_INIT_CAPA, ary.capa)
+    assert_equal(FRT_ARY_INIT_CAPA, ary.capacity)
 
     ary = Ary.new
     ary.push("one")
@@ -30,7 +30,7 @@ class AryTest < Test::Unit::TestCase
 
     ary = Ary.new(10)
     assert_equal(0, ary.size)
-    assert_equal(10, ary.capa)
+    assert_equal(10, ary.capacity)
     ary.set(1, "one")
     assert_equal(2, ary.size)
     assert_equal("one", ary[1])

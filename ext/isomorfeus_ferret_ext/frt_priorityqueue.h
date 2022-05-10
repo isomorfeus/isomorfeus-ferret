@@ -3,20 +3,23 @@
 
 #include "frt_global.h"
 
-typedef bool (*frt_lt_ft)(const void *p1, const void *p2);
+#define FRT_PQ_START_CAPA 127
+
+typedef bool (*frt_lt_ft)(const void *p1, const void *p2, VALUE proc);
 
 /**
  * A PriorityQueue has a fixed size and contains a less_than function and a
  * free_elem function specific to the data type to be stored in the queue.
  */
-typedef struct FrtPriorityQueue
-{
+typedef struct FrtPriorityQueue {
+    int type_size;
     int size;
     int capa;
     int mem_capa;
     void **heap;
     frt_lt_ft less_than_i;
     frt_free_ft free_elem_i;
+    VALUE proc;
 } FrtPriorityQueue;
 
 /**
@@ -31,9 +34,7 @@ typedef struct FrtPriorityQueue
  *   when it is destroyed or there is insertion overflow
  * @return a newly allocated PriorityQueue
  */
-extern FrtPriorityQueue *frt_pq_new(int capa,
-                                       frt_lt_ft less_than,
-                                       frt_free_ft free_elem);
+extern FrtPriorityQueue *frt_pq_new(int type_size, int capa, frt_lt_ft less_than, frt_free_ft free_elem);
 
 /**
  * Allocate a clone of the PriorityQueue. This can be used if you want to scan
@@ -117,8 +118,7 @@ typedef enum {
  *                          element was dropped and destroyed
  *   </pre>
  */
-extern FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *self,
-                                                   void *elem);
+extern FrtPriorityQueueInsertEnum frt_pq_insert(FrtPriorityQueue *self, void *elem);
 
 /**
  * Get the top element in the PriorityQueue.

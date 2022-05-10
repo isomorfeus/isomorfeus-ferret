@@ -1,6 +1,7 @@
 #include "frt_array.h"
 #include "frt_bitvector.h"
 #include "frt_multimapper.h"
+#include "frt_priorityqueue.h"
 #include "isomorfeus_ferret.h"
 #include <ruby.h>
 
@@ -20,12 +21,12 @@ static size_t frb_ary_t_size(const void *p) {
 }
 
 static void frb_ary_mark(void *p) {
-    void **ary = p;
+    VALUE **ary = p;
     int size = frt_ary_size(ary);
     int i;
     VALUE rvalue;
     for (i = 0; i < size; i++) {
-        rvalue = frt_ary_get(ary, i);
+        rvalue = (VALUE)frt_ary_get(ary, i);
         rb_gc_mark(rvalue);
     }
 }
@@ -45,7 +46,7 @@ const rb_data_type_t frb_ary_t = {
 };
 
 static VALUE frb_ary_alloc(VALUE rclass) {
-    void **ary = frt_ary_new_type_capa(VALUE, FRT_ARY_INIT_CAPA);
+    VALUE **ary = (VALUE **)frt_ary_new_type_capa(VALUE, FRT_ARY_INIT_CAPA);
     return TypedData_Wrap_Struct(rclass, &frb_ary_t, ary);
 }
 
@@ -60,10 +61,10 @@ static VALUE frb_ary_init(int argc, VALUE *argv, VALUE self) {
         }
         if (capa < 0)
             rb_raise(rb_eIndexError, "Ary must have a capacity > 0. %d < 0", capa);
-        void **ary;
-        TypedData_Get_Struct(self, void *, &frb_ary_t, ary);
+        VALUE **ary;
+        TypedData_Get_Struct(self, VALUE *, &frb_ary_t, ary);
         frt_ary_free(ary);
-        ary = frt_ary_new_type_capa(VALUE, capa);
+        ary = (VALUE **)frt_ary_new_type_capa(VALUE, capa);
         ((struct RData *)(self))->data = ary;
     } else if (argc > 1) {
         rb_raise(rb_eArgError, "Ary#initialize only takes one argument");
@@ -72,77 +73,76 @@ static VALUE frb_ary_init(int argc, VALUE *argv, VALUE self) {
 }
 
 static VALUE frb_ary_set(VALUE self, VALUE rindex, VALUE rvalue) {
-    void **ary = DATA_PTR(self);
-    frt_ary_set(ary, FIX2INT(rindex), rvalue); // will raise if index is negative
+    VALUE **ary = DATA_PTR(self);
+    frt_ary_set(ary, FIX2INT(rindex), (void *)rvalue); // will raise if index is negative
     ((struct RData *)(self))->data = ary;
-    VALUE r = frt_ary_get(ary, FIX2INT(rindex));
     return rvalue;
 }
 
 static VALUE frb_ary_get(VALUE self, VALUE rindex) {
-    void **ary = DATA_PTR(self);
-    VALUE rvalue = frt_ary_get(ary, FIX2INT(rindex));
-    if (rvalue == NULL) return Qnil;
+    VALUE **ary = DATA_PTR(self);
+    VALUE rvalue = (VALUE)frt_ary_get(ary, FIX2INT(rindex));
+    if (rvalue == 0) return Qnil;
     return rvalue;
 }
 
 static VALUE frb_ary_push(VALUE self, VALUE rvalue) {
-    void **ary = DATA_PTR(self);
-    frt_ary_push(ary, rvalue);
+    VALUE **ary = DATA_PTR(self);
+    frt_ary_push(ary, (void *)rvalue);
     ((struct RData *)(self))->data = ary;
     return rvalue;
 }
 
 static VALUE frb_ary_pop(VALUE self) {
-    void **ary = DATA_PTR(self);
-    VALUE rvalue = frt_ary_pop(ary);
-    if (rvalue == NULL) return Qnil;
+    VALUE **ary = DATA_PTR(self);
+    VALUE rvalue = (VALUE)frt_ary_pop(ary);
+    if (rvalue == 0) return Qnil;
     return rvalue;
 }
 
 static VALUE frb_ary_unshift(VALUE self, VALUE rvalue) {
-    void **ary = DATA_PTR(self);
-    frt_ary_unshift(ary, rvalue);
+    VALUE **ary = DATA_PTR(self);
+    frt_ary_unshift(ary, (void *)rvalue);
     ((struct RData *)(self))->data = ary;
     return rvalue;
 }
 
 static VALUE frb_ary_shift(VALUE self) {
-    void **ary = DATA_PTR(self);
-    VALUE rvalue = frt_ary_shift(ary);
-    if (rvalue == NULL) return Qnil;
+    VALUE **ary = DATA_PTR(self);
+    VALUE rvalue = (VALUE)frt_ary_shift(ary);
+    if (rvalue == 0) return Qnil;
     return rvalue;
 }
 
 static VALUE frb_ary_remove(VALUE self, VALUE rindex) {
     int index = FIX2INT(rindex);
     if (index < 0) rb_raise(rb_eIndexError, "%d < 0", index);
-    void **ary = DATA_PTR(self);
-    VALUE rvalue = frt_ary_remove(ary, index);
-    if (rvalue == NULL) return Qnil;
+    VALUE **ary = DATA_PTR(self);
+    VALUE rvalue = (VALUE)frt_ary_remove(ary, index);
+    if (rvalue == 0) return Qnil;
     return rvalue;
 }
 
 static VALUE frb_ary_to_a(VALUE self) {
-    void **ary = DATA_PTR(self);
+    VALUE **ary = DATA_PTR(self);
     int size = frt_ary_size(ary);
     int i;
     VALUE rary = rb_ary_new();
     VALUE rvalue;
     for (i = 0; i < size; i++) {
-        rvalue = frt_ary_get(ary, i);
+        rvalue = (VALUE)frt_ary_get(ary, i);
         rb_ary_push(rary, rvalue);
     }
     return rary;
 }
 
 static VALUE frb_ary_size(VALUE self) {
-    void **ary = DATA_PTR(self);
+    VALUE **ary = DATA_PTR(self);
     return INT2FIX(frt_ary_size(ary));
 }
 
 static VALUE frb_ary_capa(VALUE self) {
-    void **ary = DATA_PTR(self);
+    VALUE **ary = DATA_PTR(self);
     return INT2FIX(frt_ary_capa(ary));
 }
 
@@ -160,7 +160,7 @@ static void Init_Ary(void) {
     rb_define_method(cAry, "shift", frb_ary_shift, 0);
     rb_define_method(cAry, "remove", frb_ary_remove, 1);
     rb_define_method(cAry, "size", frb_ary_size, 0);
-    rb_define_method(cAry, "capa", frb_ary_capa, 0);
+    rb_define_method(cAry, "capacity", frb_ary_capa, 0);
     // rb_define_method(cAry, "==", frb_ary_equal, 0);
     rb_define_method(cAry, "to_a", frb_ary_to_a, 0);
 }
@@ -861,93 +861,32 @@ static void Init_MultiMapper(void) {
 /*********************
  *** PriorityQueue ***
  *********************/
-typedef struct PriQ {
-    int size;
-    int capa;
-    int mem_capa;
-    VALUE *heap;
-    VALUE proc;
-} PriQ;
-
-#define PQ_START_CAPA 32
-
-static bool frb_pq_lt(VALUE proc, VALUE v1, VALUE v2) {
-    if (proc == Qnil) {
-        return RTEST(rb_funcall(v1, id_lt, 1, v2));
-    } else {
-        return RTEST(rb_funcall(proc, id_call, 2, v1, v2));
-    }
-}
-
-static void frb_pq_up(PriQ *pq) {
-    VALUE *heap = pq->heap;
-    VALUE node;
-    int i = pq->size;
-    int j = i >> 1;
-
-    node = heap[i];
-
-    while ((j > 0) && frb_pq_lt(pq->proc, node, heap[j])) {
-        heap[i] = heap[j];
-        i = j;
-        j = j >> 1;
-    }
-    heap[i] = node;
-}
-
-static void frb_pq_down(PriQ *pq) {
-    register int i = 1;
-    register int j = 2;         /* i << 1; */
-    register int k = 3;         /* j + 1;  */
-    register int size = pq->size;
-    VALUE *heap = pq->heap;
-    VALUE node = heap[i];       /* save top node */
-
-    if ((k <= size) && (frb_pq_lt(pq->proc, heap[k], heap[j]))) {
-        j = k;
-    }
-
-    while ((j <= size) && frb_pq_lt(pq->proc, heap[j], node)) {
-        heap[i] = heap[j];      /* shift up child */
-        i = j;
-        j = i << 1;
-        k = j + 1;
-        if ((k <= size) && frb_pq_lt(pq->proc, heap[k], heap[j])) {
-            j = k;
-        }
-    }
-    heap[i] = node;
-}
-
-static void frb_pq_push(PriQ *pq, VALUE elem) {
-    pq->size++;
-    if (pq->size >= pq->mem_capa) {
-        pq->mem_capa <<= 1;
-        FRT_REALLOC_N(pq->heap, VALUE, pq->mem_capa);
-    }
-    pq->heap[pq->size] = elem;
-    frb_pq_up(pq);
-}
 
 static VALUE cPriorityQueue;
 
+static bool frb_pq_lt(const void *v1, const void * v2, VALUE proc) {
+    if (proc == Qnil) {
+        return RTEST(rb_funcall((VALUE)v1, id_lt, 1, (VALUE)v2));
+    } else {
+        return RTEST(rb_funcall(proc, id_call, 2, (VALUE)v1, (VALUE)v2));
+    }
+}
+
 static void frb_pq_mark(void *p) {
-    PriQ *pq = (PriQ *)p;
+    FrtPriorityQueue *pq = (FrtPriorityQueue *)p;
     int i;
     for (i = pq->size; i > 0; i--) {
         if (pq->heap[i])
-            rb_gc_mark_maybe(pq->heap[i]);
+            rb_gc_mark_maybe((VALUE)pq->heap[i]);
     }
 }
 
 static void frb_pq_free(void *p) {
-    PriQ *pq = (PriQ *)p;
-    free(pq->heap);
-    free(pq);
+    frt_pq_free((FrtPriorityQueue *)p);
 }
 
 static size_t frb_pq_t_size(const void *p) {
-    return sizeof(PriQ);
+    return sizeof(FrtPriorityQueue);
     (void)p;
 }
 
@@ -966,15 +905,10 @@ const rb_data_type_t frb_pq_t = {
 };
 
 static VALUE frb_pq_alloc(VALUE klass) {
-    PriQ *pq = FRT_ALLOC_AND_ZERO(PriQ);
-    pq->capa = PQ_START_CAPA;
-    pq->mem_capa = PQ_START_CAPA;
-    pq->heap = FRT_ALLOC_N(VALUE, PQ_START_CAPA);
-    pq->proc = Qnil;
+    FrtPriorityQueue *pq = frt_pq_new(sizeof(VALUE), FRT_PQ_START_CAPA, &frb_pq_lt, NULL);
     return TypedData_Wrap_Struct(klass, &frb_pq_t, pq);
 }
 
-#define GET_PQ(pq, self) TypedData_Get_Struct(self, PriQ, &frb_pq_t, pq)
 /*
  *  call-seq:
  *     PriorityQueue.new(capacity = 32) -> new_pq
@@ -989,22 +923,19 @@ static VALUE frb_pq_alloc(VALUE klass) {
  */
 static VALUE frb_pq_init(int argc, VALUE *argv, VALUE self) {
     if (argc >= 1) {
-        PriQ *pq;
+        FrtPriorityQueue *pq = DATA_PTR(self);
         VALUE options = argv[0];
         VALUE param;
-        int capa = PQ_START_CAPA;
-        GET_PQ(pq, self);
+        int capa = FRT_PQ_START_CAPA;
         switch (TYPE(options)) {
             case T_FIXNUM:
                 capa = FIX2INT(options);
                 break;
             case T_HASH:
-                if (!NIL_P(param = rb_hash_aref(options,
-                                                ID2SYM(id_capacity)))) {
+                if (!NIL_P(param = rb_hash_aref(options, ID2SYM(id_capacity)))) {
                     capa = FIX2INT(param);
                 }
-                if (!NIL_P(param = rb_hash_aref(options,
-                                                ID2SYM(id_less_than)))) {
+                if (!NIL_P(param = rb_hash_aref(options, ID2SYM(id_less_than)))) {
                     pq->proc = param;
                 }
                 break;
@@ -1035,12 +966,8 @@ static VALUE frb_pq_init(int argc, VALUE *argv, VALUE self) {
  *  queue is cloned, its contents are not cloned.
  */
 static VALUE frb_pq_clone(VALUE self) {
-    PriQ *pq, *new_pq = ALLOC(PriQ);
-    GET_PQ(pq, self);
-    memcpy(new_pq, pq, sizeof(PriQ));
-    new_pq->heap = FRT_ALLOC_N(VALUE, new_pq->mem_capa);
-    memcpy(new_pq->heap, pq->heap, sizeof(VALUE) * (new_pq->size + 1));
-
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    FrtPriorityQueue *new_pq = frt_pq_clone(pq);
     return TypedData_Wrap_Struct(cPriorityQueue, &frb_pq_t, new_pq);
 }
 
@@ -1051,31 +978,26 @@ static VALUE frb_pq_clone(VALUE self) {
  *  Clears all elements from the priority queue. The size will be reset to 0.
  */
 static VALUE frb_pq_clear(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
-    pq->size = 0;
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    frt_pq_clear(pq);
     return self;
 }
 
 /*
  *  call-seq:
- *     pq.insert(elem) -> self
- *     pq << elem -> self
+ *     pq.insert(elem) -> integer
+ *          FRT_PQ_DROPPED 0
+ *          FRT_PQ_ADDED 1
+ *          FRT_PQ_INSERTED 2
+ *     pq << elem -> integer
  *
  *  Insert an element into a queue. It will be inserted into the correct
  *  position in the queue according to its priority.
  */
 static VALUE frb_pq_insert(VALUE self, VALUE elem) {
-    PriQ *pq;
-    GET_PQ(pq, self);
-    if (pq->size < pq->capa) {
-        frb_pq_push(pq, elem);
-    } else if (pq->size > 0 && frb_pq_lt(pq->proc, pq->heap[1], elem)) {
-        pq->heap[1] = elem;
-        frb_pq_down(pq);
-    }
-    /* else ignore the element */
-    return self;
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    int ins = frt_pq_insert(pq, (void *)elem);
+    return INT2FIX(ins);
 }
 
 /*
@@ -1087,9 +1009,8 @@ static VALUE frb_pq_insert(VALUE self, VALUE elem) {
  *  do this by calling the adjust method.
  */
 static VALUE frb_pq_adjust(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
-    frb_pq_down(pq);
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    frt_pq_down(pq);
     return self;
 }
 
@@ -1101,9 +1022,10 @@ static VALUE frb_pq_adjust(VALUE self) {
  *  queue.
  */
 static VALUE frb_pq_top(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
-    return (pq->size > 0) ? pq->heap[1] : Qnil;
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    VALUE elem = (VALUE)frt_pq_top(pq);
+    if (elem == 0) return Qnil;
+    return elem;
 }
 
 /*
@@ -1113,18 +1035,22 @@ static VALUE frb_pq_top(VALUE self) {
  *  Returns the top element in the queue removing it from the queue.
  */
 static VALUE frb_pq_pop(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
-    if (pq->size > 0) {
-        VALUE result = pq->heap[1];       /* save first value */
-        pq->heap[1] = pq->heap[pq->size]; /* move last to first */
-        pq->heap[pq->size] = Qnil;
-        pq->size--;
-        frb_pq_down(pq);                      /* adjust heap */
-        return result;
-    } else {
-        return Qnil;
-    }
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    VALUE elem = (VALUE)frt_pq_pop(pq);
+    if (elem == 0) return Qnil;
+    return elem;
+}
+
+/*
+ *  call-seq:
+ *     pq.push(elem) -> self
+ *
+ *  Push element to the queue.
+ */
+static VALUE frb_pq_push(VALUE self, VALUE elem) {
+    FrtPriorityQueue *pq = DATA_PTR(self);
+    frt_pq_push(pq, (void *)elem);
+    return self;
 }
 
 /*
@@ -1136,8 +1062,7 @@ static VALUE frb_pq_pop(VALUE self) {
  *  its _capacity_
  */
 static VALUE frb_pq_size(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
+    FrtPriorityQueue *pq = DATA_PTR(self);
     return INT2FIX(pq->size);
 }
 
@@ -1151,8 +1076,7 @@ static VALUE frb_pq_size(VALUE self) {
  *  _capacity_
  */
 static VALUE frb_pq_capa(VALUE self) {
-    PriQ *pq;
-    GET_PQ(pq, self);
+    FrtPriorityQueue *pq = DATA_PTR(self);
     return INT2FIX(pq->capa);
 }
 
@@ -1201,6 +1125,10 @@ static VALUE frb_pq_capa(VALUE self) {
 static void Init_PriorityQueue(void) {
     /* PriorityQueue */
     cPriorityQueue = rb_define_class_under(mUtils, "PriorityQueue", rb_cObject);
+    rb_const_set(cPriorityQueue, rb_intern_const("DROPPED"), INT2FIX(FRT_PQ_DROPPED));
+    rb_const_set(cPriorityQueue, rb_intern_const("ADDED"), INT2FIX(FRT_PQ_ADDED));
+    rb_const_set(cPriorityQueue, rb_intern_const("INSERTED"), INT2FIX(FRT_PQ_INSERTED));
+
     rb_define_alloc_func(cPriorityQueue, frb_pq_alloc);
 
     rb_define_method(cPriorityQueue, "initialize", frb_pq_init, -1);
@@ -1210,6 +1138,7 @@ static void Init_PriorityQueue(void) {
     rb_define_method(cPriorityQueue, "<<", frb_pq_insert, 1);
     rb_define_method(cPriorityQueue, "top", frb_pq_top, 0);
     rb_define_method(cPriorityQueue, "pop", frb_pq_pop, 0);
+    rb_define_method(cPriorityQueue, "push", frb_pq_push, 1);
     rb_define_method(cPriorityQueue, "size", frb_pq_size, 0);
     rb_define_method(cPriorityQueue, "capacity", frb_pq_capa, 0);
     rb_define_method(cPriorityQueue, "adjust", frb_pq_adjust, 0);

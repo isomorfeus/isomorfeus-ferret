@@ -157,7 +157,7 @@ static bool multi_tsc_next(FrtScorer *self) {
     if (tdew_pq == NULL) {
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
+        tdew_pq = frt_pq_new(sizeof(TermDocEnumWrapper *), mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_next(tdew_a[i])) {
                 frt_pq_push(tdew_pq, tdew_a[i]);
@@ -199,7 +199,7 @@ static bool multi_tsc_advance_to(FrtScorer *self, int target_doc_num) {
         MultiTermScorer *mtsc = MTSc(self);
         TermDocEnumWrapper **tdew_a = mtsc->tdew_a;
         int i;
-        tdew_pq = frt_pq_new(mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
+        tdew_pq = frt_pq_new(sizeof(TermDocEnumWrapper *), mtsc->tdew_cnt, (frt_lt_ft)tdew_less_than, (frt_free_ft)NULL);
         for (i = mtsc->tdew_cnt - 1; i >= 0; i--) {
             if (tdew_skip_to(tdew_a[i], target_doc_num)) {
                 frt_pq_push(tdew_pq, tdew_a[i]);
@@ -593,7 +593,7 @@ FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, ID field, int max_terms, float 
     }
 
     MTQ(self)->field         = field;
-    MTQ(self)->boosted_terms = frt_pq_new(max_terms,
+    MTQ(self)->boosted_terms = frt_pq_new(sizeof(BoostedTerm *), max_terms,
                                       (frt_lt_ft)&boosted_term_less_than,
                                       (frt_free_ft)&boosted_term_destroy);
     MTQ(self)->min_boost     = min_boost;

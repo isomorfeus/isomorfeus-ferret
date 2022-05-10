@@ -45,6 +45,56 @@ class PriorityQueueTest < Test::Unit::TestCase
     assert_nil(pq.pop)
   end
 
+  def test_pq_insert_overflow
+    word1 = "word1"
+    word2 = "word2"
+    word3 = "word3"
+    word4 = "word4"
+    word5 = "word5"
+    word6 = "word6"
+    pq = PriorityQueue.new(3) { |a, b| a < b }
+
+    assert_equal(PriorityQueue::ADDED, pq.insert(word2))
+    assert_equal(PriorityQueue::ADDED, pq.insert(word3))
+    assert_equal(PriorityQueue::ADDED, pq.insert(word4))
+    assert_equal(PriorityQueue::INSERTED, pq.insert(word5))
+    assert_equal(PriorityQueue::INSERTED, pq.insert(word6))
+    assert_equal(PriorityQueue::DROPPED, pq.insert(word1))
+    assert_equal(3, pq.size)
+
+    pq.clear
+
+    assert_equal(0, pq.size)
+  end
+
+  def test_pq_reverse
+    pq = PriorityQueue.new(4) { |a, b| a > b }
+
+    assert_equal(0, pq.size);
+    assert_equal(4, pq.capacity);
+    pq.push("bword")
+    assert_equal(1, pq.size);
+    assert_equal("bword", pq.top);
+    pq.push("cword")
+    assert_equal(2, pq.size);
+    assert_equal("cword", pq.top);
+    pq.push("aword")
+    assert_equal(3, pq.size);
+    assert_equal("cword", pq.top);
+    pq.push("dword")
+    assert_equal(4, pq.size);
+    assert_equal("dword", pq.top);
+    assert_equal("dword", pq.pop);
+    assert_equal(3, pq.size);
+
+    assert_equal("cword", pq.pop);
+    assert_equal(2, pq.size);
+    assert_equal("bword", pq.pop);
+    assert_equal(1, pq.size);
+    assert_equal("aword", pq.pop);
+    assert_equal(0, pq.size);
+  end
+
   def test_pq_clear
     pq = PriorityQueue.new(3)
     pq << "word1"
@@ -57,7 +107,6 @@ class PriorityQueueTest < Test::Unit::TestCase
     assert_nil(pq.pop)
   end
 
-  #define PQ_STRESS_SIZE 1000
   def test_stress_pq
     pq = PriorityQueue.new(PQ_STRESS_SIZE)
     PQ_STRESS_SIZE.times do

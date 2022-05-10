@@ -402,7 +402,7 @@ static Sorter *sorter_new(FrtSort *sort) {
  * FieldSortedHitQueue
  ***************************************************************************/
 
-static bool fshq_less_than(const void *hit1, const void *hit2) {
+static bool fshq_less_than(const void *hit1, const void *hit2, VALUE proc_) {
     int cmp = 0;
     printf("Whoops, shouldn't call this.\n");
     if (cmp != 0) {
@@ -412,7 +412,7 @@ static bool fshq_less_than(const void *hit1, const void *hit2) {
     }
 }
 
-static bool fshq_lt(Sorter *sorter, FrtHit *hit1, FrtHit *hit2) {
+static bool fshq_lt(Sorter *sorter, FrtHit *hit1, FrtHit *hit2, VALUE proc_) {
     Comparator *comp;
     int diff = 0, i;
     for (i = 0; i < sorter->c_cnt && diff == 0; i++) {
@@ -439,16 +439,16 @@ void fshq_pq_down(FrtPriorityQueue *pq) {
     FrtHit *node = heap[i];    /* save top node */
     Sorter *sorter = (Sorter *)heap[0];
 
-    if ((k <= pq->size) && fshq_lt(sorter, heap[k], heap[j])) {
+    if ((k <= pq->size) && fshq_lt(sorter, heap[k], heap[j], Qnil)) {
         j = k;
     }
 
-    while ((j <= pq->size) && fshq_lt(sorter, heap[j], node)) {
+    while ((j <= pq->size) && fshq_lt(sorter, heap[j], node, Qnil)) {
         heap[i] = heap[j];  /* shift up child */
         i = j;
         j = i << 1;
         k = j + 1;
-        if ((k <= pq->size) && fshq_lt(sorter, heap[k], heap[j])) {
+        if ((k <= pq->size) && fshq_lt(sorter, heap[k], heap[j], Qnil)) {
             j = k;
         }
     }
@@ -476,7 +476,7 @@ static void fshq_pq_up(FrtPriorityQueue *pq) {
     Sorter *sorter = (Sorter *)heap[0];
     node = heap[i];
 
-    while ((j > 0) && fshq_lt(sorter, node, heap[j])) {
+    while ((j > 0) && fshq_lt(sorter, node, heap[j], Qnil)) {
         heap[i] = heap[j];
         i = j;
         j = j >> 1;
@@ -496,7 +496,7 @@ void frt_fshq_pq_insert(FrtPriorityQueue *pq, FrtHit *hit) {
         pq->heap[pq->size] = new_hit;
         fshq_pq_up(pq);
     } else if (pq->size > 0
-               && fshq_lt((Sorter *)pq->heap[0], (FrtHit *)pq->heap[1], hit)) {
+               && fshq_lt((Sorter *)pq->heap[0], (FrtHit *)pq->heap[1], hit, Qnil)) {
         memcpy(pq->heap[1], hit, sizeof(FrtHit));
         fshq_pq_down(pq);
     }
@@ -509,7 +509,7 @@ void frt_fshq_pq_destroy(FrtPriorityQueue *self) {
 }
 
 FrtPriorityQueue *frt_fshq_pq_new(int size, FrtSort *sort, FrtIndexReader *ir) {
-    FrtPriorityQueue *self = frt_pq_new(size, &fshq_less_than, &free);
+    FrtPriorityQueue *self = frt_pq_new(sizeof(FrtHit *), size, &fshq_less_than, &free);
     int i;
     Sorter *sorter = sorter_new(sort);
     FrtSortField *sf;
@@ -561,7 +561,7 @@ FrtHit *frt_fshq_pq_pop_fd(FrtPriorityQueue *pq) {
  * FieldDocSortedHitQueue
  ***************************************************************************/
 
-bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2) {
+bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2, VALUE proc_) {
     int i;
     bool c = false;
     bool all_equal = false;

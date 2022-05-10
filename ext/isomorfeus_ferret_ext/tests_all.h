@@ -23,7 +23,6 @@ TestSuite *ts_index(TestSuite *suite);
 TestSuite *ts_lang(TestSuite *suite);
 TestSuite *ts_mem_pool(TestSuite *suite);
 TestSuite *ts_multimapper(TestSuite *suite);
-TestSuite *ts_priorityqueue(TestSuite *suite);
 TestSuite *ts_q_const_score(TestSuite *suite);
 TestSuite *ts_q_filtered(TestSuite *suite);
 TestSuite *ts_q_fuzzy(TestSuite *suite);
@@ -62,7 +61,6 @@ const struct test_list {
     {ts_lang},
     {ts_mem_pool},
     {ts_multimapper},
-    {ts_priorityqueue},
     {ts_q_const_score},
     {ts_q_filtered},
     {ts_q_fuzzy},

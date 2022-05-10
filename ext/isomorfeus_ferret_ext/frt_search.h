@@ -776,7 +776,7 @@ typedef struct FrtFieldDoc {
  * FieldDocSortedHitQueue
  ***************************************************************************/
 
-extern bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2);
+extern bool frt_fdshq_lt(FrtFieldDoc *fd1, FrtFieldDoc *fd2, VALUE proc_);
 
 /***************************************************************************
  *

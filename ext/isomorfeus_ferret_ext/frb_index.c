@@ -2918,7 +2918,7 @@ Init_FieldInfo(void)
     sym_brotli = ID2SYM(rb_intern("brotli"));
     sym_bz2 = ID2SYM(rb_intern("bz2"));
     sym_lz4 = ID2SYM(rb_intern("lz4"));
-    // sym_level = ID2SYM(rb_intern("level"));
+    // todo later on compression level: sym_level = ID2SYM(rb_intern("level"));
     sym_compression = ID2SYM(rb_intern("compression"));
 
     sym_untokenized = ID2SYM(rb_intern("untokenized"));

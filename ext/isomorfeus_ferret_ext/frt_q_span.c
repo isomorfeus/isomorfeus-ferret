@@ -521,7 +521,7 @@ static bool spanmte_next(FrtSpanEnum *self)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
+        tpew_pq = frt_pq_new(sizeof(TermPosEnumWrapper *), mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             if (tpew_next(tpews[i])) {
                 frt_pq_push(tpew_pq, tpews[i]);
@@ -558,7 +558,7 @@ static bool spanmte_skip_to(FrtSpanEnum *self, int target)
     if (tpew_pq == NULL) {
         TermPosEnumWrapper **tpews = mte->tpews;
         int i;
-        tpew_pq = frt_pq_new(mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
+        tpew_pq = frt_pq_new(sizeof(TermPosEnumWrapper *), mte->tpew_cnt, (frt_lt_ft)tpew_less_than, (frt_free_ft)NULL);
         for (i = mte->tpew_cnt - 1; i >= 0; i--) {
             tpew_skip_to(tpews[i], target);
             frt_pq_push(tpew_pq, tpews[i]);
@@ -906,7 +906,7 @@ static FrtSpanEnum *spanoe_new(FrtQuery *query, FrtIndexReader *ir)
         SpOEn(self)->span_enums[i] = SpQ(clause)->get_spans(clause, ir);
     }
 
-    SpOEn(self)->queue      = frt_pq_new(SpOEn(self)->s_cnt, (frt_lt_ft)&span_less_than,
+    SpOEn(self)->queue      = frt_pq_new(sizeof(FrtSpanEnum *), SpOEn(self)->s_cnt, (frt_lt_ft)&span_less_than,
                                      (frt_free_ft)NULL);
 
     self->query             = query;

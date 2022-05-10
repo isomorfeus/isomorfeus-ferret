@@ -739,21 +739,20 @@ static VALUE frb_ts_index(VALUE v)        { return INT2FIX(execute_test(15)); }
 static VALUE frb_ts_lang(VALUE v)         { return INT2FIX(execute_test(16)); }
 static VALUE frb_ts_mem_pool(VALUE v)     { return INT2FIX(execute_test(17)); }
 static VALUE frb_ts_multimapper(VALUE v)  { return INT2FIX(execute_test(18)); }
-static VALUE frb_ts_priorityqueue(VALUE v){ return INT2FIX(execute_test(19)); }
-static VALUE frb_ts_q_const_score(VALUE v){ return INT2FIX(execute_test(20)); }
-static VALUE frb_ts_q_filtered(VALUE v)   { return INT2FIX(execute_test(21)); }
-static VALUE frb_ts_q_fuzzy(VALUE v)      { return INT2FIX(execute_test(22)); }
-static VALUE frb_ts_q_parser(VALUE v)     { return INT2FIX(execute_test(23)); }
-static VALUE frb_ts_q_span(VALUE v)       { return INT2FIX(execute_test(24)); }
-static VALUE frb_ts_ram_store(VALUE v)    { return INT2FIX(execute_test(25)); }
-static VALUE frb_ts_search(VALUE v)       { return INT2FIX(execute_test(26)); }
-static VALUE frb_ts_multi_search(VALUE v) { return INT2FIX(execute_test(27)); }
-static VALUE frb_ts_segments(VALUE v)     { return INT2FIX(execute_test(28)); }
-static VALUE frb_ts_similarity(VALUE v)   { return INT2FIX(execute_test(19)); }
-static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(30)); }
-static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(31)); }
-static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(32)); }
-static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(33)); }
+static VALUE frb_ts_q_const_score(VALUE v){ return INT2FIX(execute_test(19)); }
+static VALUE frb_ts_q_filtered(VALUE v)   { return INT2FIX(execute_test(20)); }
+static VALUE frb_ts_q_fuzzy(VALUE v)      { return INT2FIX(execute_test(21)); }
+static VALUE frb_ts_q_parser(VALUE v)     { return INT2FIX(execute_test(22)); }
+static VALUE frb_ts_q_span(VALUE v)       { return INT2FIX(execute_test(23)); }
+static VALUE frb_ts_ram_store(VALUE v)    { return INT2FIX(execute_test(24)); }
+static VALUE frb_ts_search(VALUE v)       { return INT2FIX(execute_test(25)); }
+static VALUE frb_ts_multi_search(VALUE v) { return INT2FIX(execute_test(26)); }
+static VALUE frb_ts_segments(VALUE v)     { return INT2FIX(execute_test(27)); }
+static VALUE frb_ts_similarity(VALUE v)   { return INT2FIX(execute_test(28)); }
+static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(29)); }
+static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(30)); }
+static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(31)); }
+static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(32)); }
 
 static VALUE frb_ts_posh(VALUE v) {
     const char *posh = POSH_GetArchString();
@@ -816,7 +815,6 @@ void Init_Test(void) {
     rb_define_singleton_method(mTest, "lang",           frb_ts_lang, 0);
     rb_define_singleton_method(mTest, "mem_pool",       frb_ts_mem_pool, 0);
     rb_define_singleton_method(mTest, "multimapper",    frb_ts_multimapper, 0);
-    rb_define_singleton_method(mTest, "priorityqueue",  frb_ts_priorityqueue, 0);
     rb_define_singleton_method(mTest, "q_const_score",  frb_ts_q_const_score, 0);
     rb_define_singleton_method(mTest, "q_filtered",     frb_ts_q_filtered, 0);
     rb_define_singleton_method(mTest, "q_fuzzy",        frb_ts_q_fuzzy, 0);

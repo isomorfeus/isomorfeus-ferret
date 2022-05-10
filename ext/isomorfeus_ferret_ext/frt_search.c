@@ -79,8 +79,7 @@ char *frt_expl_to_html(FrtExplanation *expl)
  *
  ***************************************************************************/
 
-static bool hit_lt(FrtHit *hit1, FrtHit *hit2)
-{
+static bool hit_lt(FrtHit *hit1, FrtHit *hit2, VALUE proc_) {
     if (hit1->score == hit2->score) {
         return hit1->doc > hit2->doc;
     } else {
@@ -88,24 +87,23 @@ static bool hit_lt(FrtHit *hit1, FrtHit *hit2)
     }
 }
 
-static void hit_pq_down(FrtPriorityQueue *pq)
-{
+static void hit_pq_down(FrtPriorityQueue *pq) {
     register int i = 1;
     register int j = 2;     /* i << 1; */
     register int k = 3;     /* j + 1;  */
     FrtHit **heap = (FrtHit **)pq->heap;
     FrtHit *node = heap[i];    /* save top node */
 
-    if ((k <= pq->size) && hit_lt(heap[k], heap[j])) {
+    if ((k <= pq->size) && hit_lt(heap[k], heap[j], Qnil)) {
         j = k;
     }
 
-    while ((j <= pq->size) && hit_lt(heap[j], node)) {
+    while ((j <= pq->size) && hit_lt(heap[j], node, Qnil)) {
         heap[i] = heap[j];  /* shift up child */
         i = j;
         j = i << 1;
         k = j + 1;
-        if ((k <= pq->size) && hit_lt(heap[k], heap[j])) {
+        if ((k <= pq->size) && hit_lt(heap[k], heap[j], Qnil)) {
             j = k;
         }
     }
@@ -136,7 +134,7 @@ static void hit_pq_up(FrtPriorityQueue *pq)
     int j = i >> 1;
     node = heap[i];
 
-    while ((j > 0) && hit_lt(node, heap[j])) {
+    while ((j > 0) && hit_lt(node, heap[j], Qnil)) {
         heap[i] = heap[j];
         i = j;
         j = j >> 1;
@@ -156,7 +154,7 @@ static void hit_pq_insert(FrtPriorityQueue *pq, FrtHit *hit)
         }
         pq->heap[pq->size] = new_hit;
         hit_pq_up(pq);
-    } else if (pq->size > 0 && hit_lt((FrtHit *)pq->heap[1], hit)) {
+    } else if (pq->size > 0 && hit_lt((FrtHit *)pq->heap[1], hit, Qnil)) {
         memcpy(pq->heap[1], hit, sizeof(FrtHit));
         hit_pq_down(pq);
     }
@@ -620,18 +618,15 @@ static int excerpt_cmp(const void *p1, const void *p2)
 }
 */
 
-static int excerpt_start_cmp(const void *p1, const void *p2)
-{
+static int excerpt_start_cmp(const void *p1, const void *p2) {
     return (*((Excerpt **)p1))->start - (*((Excerpt **)p2))->start;
 }
 
-static int excerpt_lt(Excerpt *e1, Excerpt *e2)
-{
+static int excerpt_lt(Excerpt *e1, Excerpt *e2, VALUE proc_) {
     return e1->score > e2->score; /* want the highest score at top */
 }
 
-static Excerpt *excerpt_new(int start, int end, double score)
-{
+static Excerpt *excerpt_new(int start, int end, double score) {
     Excerpt *excerpt = FRT_ALLOC_AND_ZERO(Excerpt);
     excerpt->start = start;
     excerpt->end = end;
@@ -639,8 +634,7 @@ static Excerpt *excerpt_new(int start, int end, double score)
     return excerpt;
 }
 
-static Excerpt *excerpt_recalc_score(Excerpt *e, FrtMatchVector *mv)
-{
+static Excerpt *excerpt_recalc_score(Excerpt *e, FrtMatchVector *mv) {
     int i;
     double score = 0.0;
     for (i = e->start; i <= e->end; i++) {
@@ -826,7 +820,7 @@ char **frt_searcher_highlight(FrtSearcher *self,
 
             frt_matchv_compact_with_breaks(mv);
             matchv_set_offsets(mv, offsets);
-            excerpt_pq = frt_pq_new(mv->size, (frt_lt_ft)&excerpt_lt, &free);
+            excerpt_pq = frt_pq_new(sizeof(Excerpt *), mv->size, (frt_lt_ft)&excerpt_lt, &free);
             /* add all possible excerpts to the priority queue */
 
             for (e_start = e_end = 0; e_start < mv->size; e_start++) {
@@ -1018,7 +1012,7 @@ static FrtTopDocs *isea_search_w(FrtSearcher *self,
             hq_pop = &frt_fshq_pq_pop;
         }
     } else {
-        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_lt, &free);
+        hq = frt_pq_new(sizeof(FrtHit *), max_size, (frt_lt_ft)&hit_lt, &free);
         hq_insert = &hit_pq_insert;
         hq_destroy = &frt_pq_destroy;
         hq_pop = &hit_pq_pop;
@@ -1614,11 +1608,11 @@ static FrtTopDocs *msea_search_w(FrtSearcher *self,
     sea_check_args(num_docs, first_doc);
 
     if (sort) {
-        hq = frt_pq_new(max_size, (frt_lt_ft)&frt_fdshq_lt, &free);
+        hq = frt_pq_new(sizeof(FrtHit *), max_size, (frt_lt_ft)&frt_fdshq_lt, &free);
         hq_insert = (void (*)(FrtPriorityQueue *pq, FrtHit *hit))&frt_pq_insert;
         hq_pop = (FrtHit *(*)(FrtPriorityQueue *pq))&frt_pq_pop;
     } else {
-        hq = frt_pq_new(max_size, (frt_lt_ft)&hit_lt, &free);
+        hq = frt_pq_new(sizeof(FrtHit *), max_size, (frt_lt_ft)&hit_lt, &free);
         hq_insert = &hit_pq_multi_insert;
         hq_pop = &hit_pq_pop;
     }

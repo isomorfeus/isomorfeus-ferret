@@ -2414,8 +2414,7 @@ typedef struct MultiTermEnum
     int *ti_indexes;
 } MultiTermEnum;
 
-static bool tew_lt(const TermEnumWrapper *tew1, const TermEnumWrapper *tew2)
-{
+static bool tew_lt(const TermEnumWrapper *tew1, const TermEnumWrapper *tew2, VALUE proc_) {
     int cmpres = strcmp(tew1->term, tew2->term);
     if (0 == cmpres) {
         return tew1->index < tew2->index;
@@ -2558,7 +2557,7 @@ FrtTermEnum *frt_mte_new(FrtMultiReader *mr, int field_num, const char *term) {
     mte->tis            = FRT_ALLOC_AND_ZERO_N(FrtTermInfo, r_cnt);
     mte->ti_indexes     = FRT_ALLOC_AND_ZERO_N(int, r_cnt);
     mte->tews           = FRT_ALLOC_AND_ZERO_N(TermEnumWrapper, r_cnt);
-    mte->tew_queue      = frt_pq_new(r_cnt, (frt_lt_ft)&tew_lt, (frt_free_ft)NULL);
+    mte->tew_queue      = frt_pq_new(sizeof(TermEnumWrapper *), r_cnt, (frt_lt_ft)&tew_lt, (frt_free_ft)NULL);
     mte->field_num_map  = mr->field_num_map;
 
     for (i = 0; i < r_cnt; i++) {
@@ -3505,7 +3504,7 @@ FrtTermDocEnum *frt_mtdpe_new(FrtIndexReader *ir, int field_num, char **terms, i
     FrtTermDocEnum *tde = TDE(mtdpe);
     FrtPriorityQueue *pq;
 
-    pq = mtdpe->pq = frt_pq_new(t_cnt, (frt_lt_ft)&tdpe_less_than, (frt_free_ft)&tde_destroy);
+    pq = mtdpe->pq = frt_pq_new(sizeof(FrtTermDocEnum *), t_cnt, (frt_lt_ft)&tdpe_less_than, (frt_free_ft)&tde_destroy);
     mtdpe->pos_queue_capa = MTDPE_POS_QUEUE_INIT_CAPA;
     mtdpe->pos_queue = FRT_ALLOC_N(int, MTDPE_POS_QUEUE_INIT_CAPA);
     mtdpe->field_num = field_num;
@@ -5518,8 +5517,7 @@ typedef struct SegmentMergeInfo {
     FrtInStream *prx_in;
 } SegmentMergeInfo;
 
-static bool smi_lt(const SegmentMergeInfo *smi1, const SegmentMergeInfo *smi2)
-{
+static bool smi_lt(const SegmentMergeInfo *smi1, const SegmentMergeInfo *smi2, VALUE proc_) {
     int cmpres = strcmp(smi1->term, smi2->term);
     if (0 == cmpres) {
         return smi1->base < smi2->base;
@@ -5884,7 +5882,7 @@ static void sm_merge_terms(SegmentMerger *sm)
     sm->term_buf_size = (sm->config->index_interval + 1) * FRT_MAX_WORD_SIZE;
     sm->term_buf = FRT_ALLOC_N(char, sm->term_buf_size + FRT_MAX_WORD_SIZE);
 
-    sm->queue = frt_pq_new(sm->seg_cnt, (frt_lt_ft)&smi_lt, NULL);
+    sm->queue = frt_pq_new(sizeof(SegmentMergeInfo *), sm->seg_cnt, (frt_lt_ft)&smi_lt, NULL);
 
     sm_merge_term_infos(sm);
 
