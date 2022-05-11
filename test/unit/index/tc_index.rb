@@ -6,12 +6,6 @@ class IndexTest < Test::Unit::TestCase
   include Isomorfeus::Ferret::Analysis
   include Isomorfeus::Ferret::Store
 
-  def setup
-  end
-
-  def teardown
-  end
-
   def check_results(index, query, expected)
     cnt = 0
     # puts "#{query} - #{expected.inspect}"
@@ -147,7 +141,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_fs_index
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index1'))
 
     Dir[File.join(fs_path, "*")].each {|path| begin File.delete(path) rescue nil end}
     assert_raise(Isomorfeus::Ferret::FileNotFoundError) do
@@ -172,7 +166,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_fs_index_is_persistant
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index2'))
     index = Index.new(:path => fs_path, :default_field => :xxx, :create => true)
 
     [
@@ -195,7 +189,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_key_used_for_id_field
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir2'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index3'))
 
     index = Index.new(:path => fs_path, :key => :my_id, :create => true)
     [
@@ -299,7 +293,7 @@ class IndexTest < Test::Unit::TestCase
     ]
     index = Index.new(:default_field => :f)
     data.each {|doc| index << doc }
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index4'))
 
     index.persist(fs_path, true)
     assert_equal(3, index.size)
@@ -335,7 +329,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_auto_update_when_externally_modified
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index5'))
     index = Index.new(:path => fs_path, :default_field => :f, :create => true)
     index << "document 1"
     assert_equal(1, index.size)
@@ -635,7 +629,7 @@ class IndexTest < Test::Unit::TestCase
   # this test has been corrected to work as intended
   # it now fails the same way on both 1.8 and 1.9 -- sds
   def test_auto_flush
-    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    fs_path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index6'))
     Dir[File.join(fs_path, "*")].each {|path| begin File.delete(path) rescue nil end}
 
     data = %w(one two three four five six seven eight nine ten eleven twelve)
@@ -700,7 +694,7 @@ class IndexTest < Test::Unit::TestCase
   end
 
   def test_threading
-    path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
+    path = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/index7'))
     index = Isomorfeus::Ferret::Index::Index.new(:path => path, :create => true)
 
     100.times do |i|
