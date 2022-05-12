@@ -37,7 +37,7 @@ FrtHashSet *frt_hs_new_ptr(frt_free_ft free_func)
     return hs;
 }
 
-static void clear(FrtHashSet *hs, bool destroy)
+static void hs_clear(FrtHashSet *hs, bool destroy)
 {
     FrtHashSetEntry *curr, *next = hs->first;
     frt_free_ft do_free = destroy ? hs->free_elem_i : &frt_dummy_free;
@@ -52,20 +52,20 @@ static void clear(FrtHashSet *hs, bool destroy)
 
 void frt_hs_clear(FrtHashSet *hs)
 {
-    clear(hs, true);
+    hs_clear(hs, true);
     frt_h_clear(hs->ht);
 }
 
 void frt_hs_free(FrtHashSet *hs)
 {
-    clear(hs, false);
+    hs_clear(hs, false);
     frt_h_destroy(hs->ht);
     free(hs);
 }
 
 void frt_hs_destroy(FrtHashSet *hs)
 {
-    clear(hs, true);
+    hs_clear(hs, true);
     frt_h_destroy(hs->ht);
     free(hs);
 }
