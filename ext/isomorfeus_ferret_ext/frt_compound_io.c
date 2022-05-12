@@ -1,6 +1,7 @@
 #include "frt_index.h"
 #include "frt_array.h"
 
+extern VALUE cStateError;
 extern VALUE cUnsupportedError;
 extern void frt_store_close(FrtStore *store);
 extern FrtInStream *frt_is_new();
@@ -314,7 +315,7 @@ void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr) {
     int i;
 
     if (cw->ids->size <= 0) {
-        FRT_RAISE(FRT_STATE_ERROR, "Tried to merge compound file with no entries");
+        rb_raise(cStateError, "Tried to merge compound file with no entries");
     }
 
     FrtLock *lock = frt_open_lock(cw->store, cw->name);

@@ -4,12 +4,15 @@
 #define VINT_MAX_LEN 10
 #define VINT_END FRT_BUFFER_SIZE - VINT_MAX_LEN
 
+extern VALUE cLockError;
+extern VALUE cStateError;
+
 /*
  * TODO: add try finally
  */
 void frt_with_lock(FrtLock *lock, void (*func)(void *arg), void *arg) {
     if (!lock->obtain(lock)) {
-        FRT_RAISE(FRT_LOCK_ERROR, "couldn't obtain lock \"%s\"", lock->name);
+        rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
     }
     func(arg);
     lock->release(lock);
@@ -21,7 +24,7 @@ void frt_with_lock(FrtLock *lock, void (*func)(void *arg), void *arg) {
 void frt_with_lock_name(FrtStore *store, const char *lock_name, void (*func)(void *arg), void *arg) {
     FrtLock *lock = store->open_lock_i(store, lock_name);
     if (!lock->obtain(lock)) {
-        FRT_RAISE(FRT_LOCK_ERROR, "couldn't obtain lock \"%s\"", lock->name);
+        rb_raise(cLockError, "couldn't obtain lock \"%s\"", lock->name);
     }
     func(arg);
     lock->release(lock);
@@ -74,7 +77,7 @@ FrtStore *frt_store_new(void) {
 void frt_store_close(FrtStore *store) {
     if (store->ref_cnt == 0) {
         fprintf(stderr, "store ref_cnt to low\n");
-        FRT_RAISE(FRT_STATE_ERROR, "store ref_cnt to low\n");
+        rb_raise(cStateError, "store ref_cnt to low\n");
     }
 
     if (FRT_DEREF(store) == 0) {
@@ -285,8 +288,9 @@ void frt_is_seek(FrtInStream *is, frt_off_t pos) {
 
 void frt_is_close(FrtInStream *is) {
     if (is->ref_cnt == 0) {
+        // TODO remove this, not necessary
         fprintf(stderr, "is ref_cnt to low\n");
-        FRT_RAISE(FRT_STATE_ERROR, "is ref_cnt to low\n");
+        rb_raise(cStateError, "is ref_cnt to low\n");
     }
 
     if (FRT_DEREF(is) == 0) {

@@ -86,11 +86,6 @@
 #define FRT_FILE_NOT_FOUND_ERROR 4
 #define FRT_ARG_ERROR 5
 #define FRT_EOF_ERROR 6
-#define FRT_STATE_ERROR 8
-#define FRT_PARSE_ERROR 9
-#define FRT_MEM_ERROR 10
-#define FRT_INDEX_ERROR 11
-#define FRT_LOCK_ERROR 12
 
 #define FRT_EM_EXCEPTION "Exception"
 #define FRT_EM_IO_ERROR "IO Error"

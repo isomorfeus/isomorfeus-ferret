@@ -8,37 +8,31 @@
 #include "frt_global.h"
 
 /* emalloc: malloc and report if error */
-void *frt_emalloc(size_t size)
-{
+void *frt_emalloc(size_t size) {
     void *p = malloc(size);
 
-    if (p == NULL) {
-        FRT_RAISE(FRT_MEM_ERROR, "failed to allocate %d bytes", (int)size);
-    }
+    if (p == NULL)
+        rb_raise(rb_eNoMemError, "failed to allocate %d bytes", (int)size); // this will possibly allocate mem
 
     return p;
 }
 
 /* frt_ecalloc: malloc, zeroset and report if error */
-void *frt_ecalloc(size_t size)
-{
+void *frt_ecalloc(size_t size) {
     void *p = calloc(1, size);
 
-    if (p == NULL) {
-        FRT_RAISE(FRT_MEM_ERROR, "failed to allocate %d bytes", (int)size);
-    }
+    if (p == NULL)
+        rb_raise(rb_eNoMemError, "failed to allocate %d bytes", (int)size); // this will possibly allocate mem
 
     return p;
 }
 
 /* frt_erealloc: realloc and report if error */
-void *frt_erealloc(void *ptr, size_t size)
-{
+void *frt_erealloc(void *ptr, size_t size) {
     void *p = realloc(ptr, size);
 
-    if (p == NULL) {
-        FRT_RAISE(FRT_MEM_ERROR, "failed to reallocate %d bytes", (int)size);
-    }
+    if (p == NULL)
+        rb_raise(rb_eNoMemError, "failed to reallocate %d bytes", (int)size); // this will possibly allocate mem
 
     return p;
 }

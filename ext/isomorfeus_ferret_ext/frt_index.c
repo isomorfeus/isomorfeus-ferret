@@ -11,6 +11,8 @@
 #include "bzlib.h"
 #include "lz4frame.h"
 
+extern VALUE cLockError;
+extern VALUE cStateError;
 extern VALUE cUnsupportedError;
 extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);
@@ -840,7 +842,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf, void 
         if (0 == method) {
             gen = frt_sis_current_segment_generation(store);
             if (gen == -1) {
-                FRT_RAISE(FRT_FILE_NOT_FOUND_ERROR, "couldn't find segments file");
+                rb_raise(cFileNotFoundError, "couldn't find segments file");
             }
         }
 
@@ -1008,7 +1010,6 @@ void frt_sis_del_at(FrtSegmentInfos *sis, int at)
 void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
 {
     int i, num_to_del = to - from;
-    int o = sis->size;
     sis->size -= num_to_del;
     const int sis_size = sis->size;
     for (i = from; i < to; i++) {
@@ -2740,15 +2741,15 @@ static void tw_add(FrtTermWriter *tw, const char *term, int term_len, FrtTermInf
 
 #ifdef DEBUG
     if (strcmp(tw->last_term, term) > 0) {
-        FRT_RAISE(FRT_STATE_ERROR, "\"%s\" > \"%s\" %d > %d",
+        rb_raise(cStateError, "\"%s\" > \"%s\" %d > %d",
               tw->last_term, term, *tw->last_term, *term);
     }
     if (ti->frq_ptr < tw->last_term_info.frq_ptr) {
-        FRT_RAISE(FRT_STATE_ERROR, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->frq_ptr,
+        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->frq_ptr,
               tw->last_term_info.frq_ptr);
     }
     if (ti->prx_ptr < tw->last_term_info.prx_ptr) {
-        FRT_RAISE(FRT_STATE_ERROR, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->prx_ptr,
+        rb_raise(cStateError, "%"FRT_OFF_T_PFX"d > %"FRT_OFF_T_PFX"d", ti->prx_ptr,
               tw->last_term_info.prx_ptr);
     }
 #endif
@@ -2831,8 +2832,7 @@ void frt_tiw_close(FrtTermInfosWriter *tiw) {
 
 #define CHECK_STATE(method) do {\
     if (0 == STDE(tde)->count) {\
-        FRT_RAISE(FRT_STATE_ERROR, "Illegal state of TermDocEnum. You must call #next "\
-              "before you call #"method);\
+        rb_raise(cStateError, "Illegal state of TermDocEnum. You must call #next before you call #"method);\
     }\
 } while (0)
 
@@ -3179,8 +3179,7 @@ static FrtTermDocEnum *mtde_next_tde(MultiTermDocEnum *mtde)
 
 #define CHECK_CURR_TDE(method) do {\
     if (NULL == MTDE(tde)->curr_tde) {\
-        FRT_RAISE(FRT_STATE_ERROR, "Illegal state of TermDocEnum. You must call #next "\
-              "before you call #"method);\
+        rb_raise(cStateError, "Illegal state of TermDocEnum. You must call #next before you call #"method);\
     }\
 } while (0)
 
@@ -3686,7 +3685,6 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
             do_delete = true;
         } else {
             char tmp_fn[FRT_SEGMENT_NAME_MAX_LENGTH];
-            char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
             /* OK, segment is referenced, but file may still be orphan'd: */
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {
@@ -3783,21 +3781,21 @@ static void ir_acquire_not_necessary(FrtIndexReader *ir)
 static void ir_acquire_write_lock(FrtIndexReader *ir)
 {
     if (ir->is_stale) {
-        FRT_RAISE(FRT_STATE_ERROR, "IndexReader out of date and no longer valid for "
-                           "delete, undelete, or set_norm operations. To "
-                           "perform any of these operations on the index you "
-                           "need to close and reopen the index");
+        rb_raise(cStateError, "IndexReader out of date and no longer valid for "
+                              "delete, undelete, or set_norm operations. To "
+                              "perform any of these operations on the index you "
+                              "need to close and reopen the index");
     }
 
     if (NULL == ir->write_lock) {
         ir->write_lock = frt_open_lock(ir->store, FRT_WRITE_LOCK_NAME);
         if (!ir->write_lock->obtain(ir->write_lock)) {/* obtain write lock */
-            FRT_RAISE(FRT_LOCK_ERROR, "Could not obtain write lock when trying to "
-                              "write changes to the index. Check that there "
-                              "are no stale locks in the index. Look for "
-                              "files with the \".lck\" prefix. If you know "
-                              "there are no processes writing to the index "
-                              "you can safely delete these files.");
+            rb_raise(cLockError, "Could not obtain write lock when trying to "
+                                 "write changes to the index. Check that there "
+                                 "are no stale locks in the index. Look for "
+                                 "files with the \".lck\" prefix. If you know "
+                                 "there are no processes writing to the index "
+                                 "you can safely delete these files.");
         }
 
         /* we have to check whether index has changed since this reader was
@@ -3807,14 +3805,14 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
             ir->write_lock->release(ir->write_lock);
             frt_close_lock(ir->write_lock);
             ir->write_lock = NULL;
-            FRT_RAISE(FRT_STATE_ERROR, "IndexReader out of date and no longer valid "
-                               "for delete, undelete, or set_norm operations. "
-                               "The current version is <%"I64_PFX"d>, but this "
-                               "readers version is <%"I64_PFX"d>. To perform "
-                               "any of these operations on the index you need "
-                               "to close and reopen the index",
-                               frt_sis_read_current_version(ir->store),
-                               ir->sis->version);
+            rb_raise(cStateError, "IndexReader out of date and no longer valid "
+                                  "for delete, undelete, or set_norm operations. "
+                                  "The current version is <%"I64_PFX"d>, but this "
+                                  "readers version is <%"I64_PFX"d>. To perform "
+                                  "any of these operations on the index you need "
+                                  "to close and reopen the index",
+                                  frt_sis_read_current_version(ir->store),
+                                  ir->sis->version);
         }
     }
 }
@@ -4012,8 +4010,9 @@ void frt_ir_commit(FrtIndexReader *ir)
 
 void frt_ir_close(FrtIndexReader *ir) {
     if (ir->ref_cnt == 0) {
+        // TODO remove later on, not needed
         fprintf(stderr, "ir ref_cnt to low\n");
-        FRT_RAISE(FRT_STATE_ERROR, "ir ref_cnt to low\n");
+        rb_raise(cStateError, "ir ref_cnt to low\n");
     }
 
     if (FRT_DEREF(ir) == 0) {
@@ -4308,7 +4307,7 @@ static FrtDocument *sr_get_doc(FrtIndexReader *ir, int doc_num)
     frt_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         frt_mutex_unlock(&ir->mutex);
-        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
+        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
     doc = frt_fr_get_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
@@ -4321,7 +4320,7 @@ static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
     frt_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         frt_mutex_unlock(&ir->mutex);
-        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
+        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
     lazy_doc = frt_fr_get_lazy_doc(SR(ir)->fr, doc_num);
     frt_mutex_unlock(&ir->mutex);
@@ -6284,7 +6283,7 @@ FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *vo
     FRT_TRY
         iw->write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
         if (!iw->write_lock->obtain(iw->write_lock)) {
-            FRT_RAISE(FRT_LOCK_ERROR, "Couldn't obtain write lock when opening IndexWriter");
+            rb_raise(cLockError, "Couldn't obtain write lock when opening IndexWriter");
         }
 
         iw->sis = frt_sis_read(store);
