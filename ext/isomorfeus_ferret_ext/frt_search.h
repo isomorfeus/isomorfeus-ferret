@@ -891,7 +891,7 @@ typedef struct FrtFieldStack {
 
 typedef struct FrtQueryParser {
     pthread_mutex_t mutex;
-    int           def_slop;
+    int            def_slop;
     int            max_clauses;
     int            phq_pos_inc;
     char           *qstr;
