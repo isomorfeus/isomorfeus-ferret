@@ -3,29 +3,25 @@
 
 #include "frt_hash.h"
 
-typedef struct FrtState
-{
+typedef struct FrtState {
     int  (*next)(struct FrtState *self, int c, int *states);
     void (*destroy_i)(struct FrtState *self);
     int  (*is_match)(struct FrtState *self, char **mapping);
 } FrtState;
 
-typedef struct FrtDeterministicState
-{
+typedef struct FrtDeterministicState {
     struct FrtDeterministicState *next[256];
     int longest_match;
     char *mapping;
     int mapping_len;
 } FrtDeterministicState;
 
-typedef struct FrtMapping
-{
+typedef struct FrtMapping {
     char *pattern;
     char *replacement;
 } FrtMapping;
 
-typedef struct FrtMultiMapper
-{
+typedef struct FrtMultiMapper {
     FrtMapping **mappings;
     int size;
     int capa;
