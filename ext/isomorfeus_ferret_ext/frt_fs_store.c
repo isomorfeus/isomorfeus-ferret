@@ -442,13 +442,13 @@ static void fs_close_lock_i(FrtLock *lock)
 
 static FrtHash *stores = NULL;
 
-static frt_mutex_t stores_mutex = FRT_MUTEX_INITIALIZER;
+static pthread_mutex_t stores_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void fs_close_i(FrtStore *store)
 {
-    frt_mutex_lock(&stores_mutex);
+    pthread_mutex_lock(&stores_mutex);
     frt_h_del(stores, store->dir.path);
-    frt_mutex_unlock(&stores_mutex);
+    pthread_mutex_unlock(&stores_mutex);
 }
 
 static FrtStore *fs_store_new(const char *pathname)
@@ -501,8 +501,7 @@ static FrtStore *fs_store_new(const char *pathname)
     return new_store;
 }
 
-FrtStore *frt_open_fs_store(const char *pathname)
-{
+FrtStore *frt_open_fs_store(const char *pathname) {
     FrtStore *store = NULL;
 
     if (!stores) {
@@ -510,7 +509,7 @@ FrtStore *frt_open_fs_store(const char *pathname)
         frt_register_for_cleanup(stores, (frt_free_ft)frt_h_destroy);
     }
 
-    frt_mutex_lock(&stores_mutex);
+    pthread_mutex_lock(&stores_mutex);
     store = (FrtStore *)frt_h_get(stores, pathname);
     if (store) {
         FRT_REF(store);
@@ -518,7 +517,7 @@ FrtStore *frt_open_fs_store(const char *pathname)
         store = fs_store_new(pathname);
         frt_h_set(stores, store->dir.path, store);
     }
-    frt_mutex_unlock(&stores_mutex);
+    pthread_mutex_unlock(&stores_mutex);
 
     return store;
 }

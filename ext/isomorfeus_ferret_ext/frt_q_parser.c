@@ -2115,7 +2115,7 @@ static int yyerror(FrtQParser *qp, rb_encoding *encoding, char const *msg)
         if (qp->clean_str) {
             free(qp->qstr);
         }
-        frt_mutex_unlock(&qp->mutex);
+        pthread_mutex_unlock(&qp->mutex);
         snprintf(frt_xmsg_buffer, FRT_XMSG_BUFFER_SIZE,
                  "couldn't parse query ``%s''. Error message "
                  " was %s", buf, (char *)msg);
@@ -2805,7 +2805,7 @@ FrtQParser *frt_qp_init(FrtQParser *self, FrtAnalyzer *analyzer) {
     self->buf_index = 0;
     self->dynbuf = NULL;
     self->non_tokenizer = frt_non_tokenizer_new();
-    frt_mutex_init(&self->mutex, NULL);
+    pthread_mutex_init(&self->mutex, NULL);
     return self;
 }
 
@@ -2973,7 +2973,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *query_string, rb_encoding *encoding)
     char *qstr;
     unsigned char *dp_start = NULL;
 
-    frt_mutex_lock(&self->mutex);
+    pthread_mutex_lock(&self->mutex);
     /* if qp->fields_top->next is not NULL we have a left over field-stack
      * object that was not popped during the last query parse */
     assert(NULL == self->fields_top->next);
@@ -3024,6 +3024,6 @@ FrtQuery *qp_parse(FrtQParser *self, char *query_string, rb_encoding *encoding)
     if (dp_start)
         free(dp_start);
 
-    frt_mutex_unlock(&self->mutex);
+    pthread_mutex_unlock(&self->mutex);
     return result;
 }

@@ -372,9 +372,9 @@ static Comparator *sorter_get_comparator(FrtSortField *sf, FrtIndexReader *ir) {
                 te->close(te);
             }
         }
-        frt_mutex_lock(&ir->field_index_mutex);
+        pthread_mutex_lock(&ir->field_index_mutex);
         field_index = frt_field_index_get(ir, sf->field, sf->field_index_class);
-        frt_mutex_unlock(&ir->field_index_mutex);
+        pthread_mutex_unlock(&ir->field_index_mutex);
         index = field_index->index;
     }
     return comparator_new(index, sf->reverse, sf->compare);

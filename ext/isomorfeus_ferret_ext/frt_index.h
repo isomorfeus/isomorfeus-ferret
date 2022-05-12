@@ -223,7 +223,7 @@ extern void frt_sis_put(FrtSegmentInfos *sis, FILE *stream);
  ****************************************************************************/
 
 typedef struct FrtTermInfo {
-    int   doc_freq;
+    int       doc_freq;
     frt_off_t frq_ptr;
     frt_off_t prx_ptr;
     frt_off_t skip_offset;
@@ -265,23 +265,23 @@ FrtTermInfo *frt_te_get_ti(struct FrtTermEnum *te);
 /* FrtSegmentTermIndex */
 
 typedef struct FrtSegmentTermIndex {
-    frt_off_t       index_ptr;
-    frt_off_t       ptr;
+    frt_off_t   index_ptr;
+    frt_off_t   ptr;
     int         index_cnt;
     int         size;
     char        **index_terms;
     int         *index_term_lens;
     FrtTermInfo *index_term_infos;
-    frt_off_t       *index_ptrs;
+    frt_off_t   *index_ptrs;
 } FrtSegmentTermIndex;
 
 /* FrtSegmentFieldIndex */
 
 typedef struct FrtSegmentFieldIndex {
-    frt_mutex_t mutex;
+    pthread_mutex_t mutex;
     int         skip_interval;
     int         index_interval;
-    frt_off_t       index_ptr;
+    frt_off_t   index_ptr;
     FrtTermEnum *index_te;
     FrtHash     *field_dict;
 } FrtSegmentFieldIndex;
@@ -349,7 +349,7 @@ typedef struct FrtTermInfosWriter {
     int           field_count;
     int           index_interval;
     int           skip_interval;
-    frt_off_t         last_index_ptr;
+    frt_off_t     last_index_ptr;
     FrtOutStream  *tfx_out;
     FrtTermWriter *tix_writer;
     FrtTermWriter *tis_writer;
@@ -529,7 +529,7 @@ extern FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term);
 
 /* * * FrtLazyDocField * * */
 typedef struct FrtLazyDocFieldData {
-    frt_off_t              start;
+    frt_off_t          start;
     int                length;
     rb_encoding        *encoding;
     FrtCompressionType compression; /* as stored */
@@ -595,7 +595,7 @@ typedef struct FrtFieldsWriter {
     FrtOutStream  *fdx_out;
     FrtOutStream  *buffer;
     FrtTVField    *tv_fields;
-    frt_off_t         start_ptr;
+    frt_off_t     start_ptr;
 } FrtFieldsWriter;
 
 extern FrtFieldsWriter *frt_fw_open(FrtStore *store, const char *segment, FrtFieldInfos *fis);
@@ -679,9 +679,9 @@ struct FrtIndexReader {
     FrtFieldInfos   *fis;
     FrtHash         *cache;
     FrtHash         *field_index_cache;
-    frt_mutex_t     field_index_mutex;
+    pthread_mutex_t field_index_mutex;
     frt_uchar       *fake_norms;
-    frt_mutex_t     mutex;
+    pthread_mutex_t mutex;
     bool            has_changes : 1;
     bool            is_stale    : 1;
     bool            is_owner    : 1;
@@ -813,7 +813,7 @@ extern void frt_dw_reset_postings(FrtHash *postings);
 
 struct FrtIndexWriter {
     FrtConfig       config;
-    frt_mutex_t     mutex;
+    pthread_mutex_t mutex;
     FrtStore        *store;
     FrtAnalyzer     *analyzer;
     FrtSegmentInfos *sis;

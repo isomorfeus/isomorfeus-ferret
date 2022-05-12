@@ -57,8 +57,8 @@ FrtStore *frt_store_alloc(void) {
 
 FrtStore *frt_store_init(FrtStore *store) {
     store->ref_cnt = 1;
-    frt_mutex_init(&store->mutex_i, NULL);
-    frt_mutex_init(&store->mutex, NULL);
+    pthread_mutex_init(&store->mutex_i, NULL);
+    pthread_mutex_init(&store->mutex, NULL);
     store->locks = frt_hs_new_ptr((frt_free_ft)&frt_close_lock_i);
     store->rstore = Qnil;
     return store;
@@ -81,12 +81,12 @@ void frt_store_close(FrtStore *store) {
     }
 
     if (FRT_DEREF(store) == 0) {
-        frt_mutex_lock(&store->mutex_i);
+        pthread_mutex_lock(&store->mutex_i);
         store->close_i(store);
         frt_hs_destroy(store->locks);
-        frt_mutex_destroy(&store->mutex);
-        frt_mutex_unlock(&store->mutex_i);
-        frt_mutex_destroy(&store->mutex_i);
+        pthread_mutex_destroy(&store->mutex);
+        pthread_mutex_unlock(&store->mutex_i);
+        pthread_mutex_destroy(&store->mutex_i);
         free(store);
     }
 }

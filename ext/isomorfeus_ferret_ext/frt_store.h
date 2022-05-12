@@ -163,8 +163,8 @@ typedef struct FrtCompoundStore
 
 struct FrtStore {
     _Atomic unsigned int ref_cnt;
-    frt_mutex_t mutex_i;        /* for internal use only */
-    frt_mutex_t mutex;          /* external mutex for use outside */
+    pthread_mutex_t mutex_i;        /* for internal use only */
+    pthread_mutex_t mutex;          /* external mutex for use outside */
     union {
         char             *path; /* for fs_store only */
         FrtHash          *ht;   /* for ram_store only */

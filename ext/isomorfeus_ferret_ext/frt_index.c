@@ -2185,9 +2185,9 @@ static int sti_get_index_offset(FrtSegmentTermIndex *sti, const char *term)
 
 #define SFI_ENSURE_INDEX_IS_READ(sfi, sti) do {\
     if (NULL == sti->index_terms) {\
-        frt_mutex_lock(&sfi->mutex);\
+        pthread_mutex_lock(&sfi->mutex);\
         sti_ensure_index_is_read(sti, sfi->index_te);\
-        frt_mutex_unlock(&sfi->mutex);\
+        pthread_mutex_unlock(&sfi->mutex);\
     }\
 } while (0)
 
@@ -2197,7 +2197,7 @@ FrtSegmentFieldIndex *frt_sfi_open(FrtStore *store, const char *segment) {
     char file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtInStream *is;
 
-    frt_mutex_init(&sfi->mutex, NULL);
+    pthread_mutex_init(&sfi->mutex, NULL);
 
     sprintf(file_name, "%s.tfx", segment);
     is = store->open_input(store, file_name);
@@ -2226,7 +2226,7 @@ FrtSegmentFieldIndex *frt_sfi_open(FrtStore *store, const char *segment) {
 }
 
 void frt_sfi_close(FrtSegmentFieldIndex *sfi) {
-    frt_mutex_destroy(&sfi->mutex);
+    pthread_mutex_destroy(&sfi->mutex);
     frt_ste_close(sfi->index_te);
     frt_h_destroy(sfi->field_dict);
     free(sfi);
@@ -3819,8 +3819,8 @@ static void ir_acquire_write_lock(FrtIndexReader *ir)
 
 static FrtIndexReader *ir_setup(FrtIndexReader *ir, FrtStore *store, FrtSegmentInfos *sis, FrtFieldInfos *fis, int is_owner) {
     ir->type = FRT_INDEX_READER;
-    frt_mutex_init(&ir->mutex, NULL);
-    frt_mutex_init(&ir->field_index_mutex, NULL);
+    pthread_mutex_init(&ir->mutex, NULL);
+    pthread_mutex_init(&ir->field_index_mutex, NULL);
 
     if (store) {
         ir->store = store;
@@ -3853,11 +3853,11 @@ int frt_ir_doc_freq(FrtIndexReader *ir, ID field, const char *term) {
 }
 
 static void ir_set_norm_i(FrtIndexReader *ir, int doc_num, int field_num, frt_uchar val) {
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     ir->acquire_write_lock(ir);
     ir->set_norm_i(ir, doc_num, field_num, val);
     ir->has_changes = true;
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 }
 
 void frt_ir_set_norm(FrtIndexReader *ir, int doc_num, ID field, frt_uchar val) {
@@ -3900,21 +3900,21 @@ frt_uchar *frt_ir_get_norms_into(FrtIndexReader *ir, ID field, frt_uchar *buf) {
 
 void frt_ir_undelete_all(FrtIndexReader *ir)
 {
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     ir->acquire_write_lock(ir);
     ir->undelete_all_i(ir);
     ir->has_changes = true;
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 }
 
 void frt_ir_delete_doc(FrtIndexReader *ir, int doc_num)
 {
     if (doc_num >= 0 && doc_num < ir->max_doc(ir)) {
-        frt_mutex_lock(&ir->mutex);
+        pthread_mutex_lock(&ir->mutex);
         ir->acquire_write_lock(ir);
         ir->delete_doc_i(ir, doc_num);
         ir->has_changes = true;
-        frt_mutex_unlock(&ir->mutex);
+        pthread_mutex_unlock(&ir->mutex);
     }
 }
 
@@ -3977,7 +3977,7 @@ static void ir_commit_i(FrtIndexReader *ir)
         }
         if (ir->is_owner) {
             char curr_seg_fn[FRT_MAX_FILE_PATH];
-            frt_mutex_lock(&ir->store->mutex);
+            pthread_mutex_lock(&ir->store->mutex);
 
             frt_sis_curr_seg_file_name(curr_seg_fn, ir->store);
 
@@ -3986,7 +3986,7 @@ static void ir_commit_i(FrtIndexReader *ir)
 
             if (ir->deleter) frt_deleter_delete_file(ir->deleter, curr_seg_fn);
 
-            frt_mutex_unlock(&ir->store->mutex);
+            pthread_mutex_unlock(&ir->store->mutex);
 
             if (NULL != ir->write_lock) {
                 /* release write lock */
@@ -4003,9 +4003,9 @@ static void ir_commit_i(FrtIndexReader *ir)
 
 void frt_ir_commit(FrtIndexReader *ir)
 {
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     ir_commit_i(ir);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 }
 
 void frt_ir_close(FrtIndexReader *ir) {
@@ -4016,7 +4016,7 @@ void frt_ir_close(FrtIndexReader *ir) {
     }
 
     if (FRT_DEREF(ir) == 0) {
-        frt_mutex_lock(&ir->mutex);
+        pthread_mutex_lock(&ir->mutex);
         ir_commit_i(ir);
         ir->close_i(ir);
         if (ir->store) frt_store_close(ir->store);
@@ -4026,9 +4026,9 @@ void frt_ir_close(FrtIndexReader *ir) {
         if (ir->deleter && ir->is_owner) frt_deleter_destroy(ir->deleter);
         free(ir->fake_norms);
 
-        frt_mutex_destroy(&ir->field_index_mutex);
-        frt_mutex_unlock(&ir->mutex);
-        frt_mutex_destroy(&ir->mutex);
+        pthread_mutex_destroy(&ir->field_index_mutex);
+        pthread_mutex_unlock(&ir->mutex);
+        pthread_mutex_destroy(&ir->mutex);
         free(ir);
     }
 }
@@ -4287,12 +4287,12 @@ static int sr_num_docs(FrtIndexReader *ir)
 {
     int num_docs;
 
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     num_docs = SR(ir)->fr->size;
     if (NULL != SR(ir)->deleted_docs) {
         num_docs -= SR(ir)->deleted_docs->count;
     }
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return num_docs;
 }
 
@@ -4304,44 +4304,44 @@ static int sr_max_doc(FrtIndexReader *ir)
 static FrtDocument *sr_get_doc(FrtIndexReader *ir, int doc_num)
 {
     FrtDocument *doc;
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
-        frt_mutex_unlock(&ir->mutex);
+        pthread_mutex_unlock(&ir->mutex);
         rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
     doc = frt_fr_get_doc(SR(ir)->fr, doc_num);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return doc;
 }
 
 static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
 {
     FrtLazyDoc *lazy_doc;
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
-        frt_mutex_unlock(&ir->mutex);
+        pthread_mutex_unlock(&ir->mutex);
         rb_raise(cStateError, "Document %d has already been deleted", doc_num);
     }
     lazy_doc = frt_fr_get_lazy_doc(SR(ir)->fr, doc_num);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return lazy_doc;
 }
 
 static frt_uchar *sr_get_norms(FrtIndexReader *ir, int field_num)
 {
     frt_uchar *norms;
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     norms = sr_get_norms_i(SR(ir), field_num);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return norms;
 }
 
 static frt_uchar *sr_get_norms_into(FrtIndexReader *ir, int field_num,
                               frt_uchar *buf)
 {
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     sr_get_norms_into_i(SR(ir), field_num, buf);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return buf;
 }
 
@@ -4405,9 +4405,9 @@ static bool sr_is_deleted(FrtIndexReader *ir, int doc_num)
 {
     bool is_del;
 
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     is_del = sr_is_deleted_i(SR(ir), doc_num);
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 
     return is_del;
 }
@@ -4555,7 +4555,7 @@ static int mr_reader_index_i(FrtMultiReader *mr, int doc_num)
 static int mr_num_docs(FrtIndexReader *ir)
 {
     int i, num_docs;
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     if (MR(ir)->num_docs_cache == -1) {
         const int mr_reader_cnt = MR(ir)->r_cnt;
         MR(ir)->num_docs_cache = 0;
@@ -4565,7 +4565,7 @@ static int mr_num_docs(FrtIndexReader *ir)
         }
     }
     num_docs = MR(ir)->num_docs_cache;
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 
     return num_docs;
 }
@@ -4605,7 +4605,7 @@ static frt_uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
 {
     frt_uchar *bytes;
 
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     bytes = (frt_uchar *)frt_h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL == bytes) {
         int i;
@@ -4622,7 +4622,7 @@ static frt_uchar *mr_get_norms(FrtIndexReader *ir, int field_num)
         }
         frt_h_set_int(MR(ir)->norms_cache, field_num, bytes); /* update cache */
     }
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
 
     return bytes;
 }
@@ -4631,7 +4631,7 @@ static frt_uchar *mr_get_norms_into(FrtIndexReader *ir, int field_num, frt_uchar
 {
     frt_uchar *bytes;
 
-    frt_mutex_lock(&ir->mutex);
+    pthread_mutex_lock(&ir->mutex);
     bytes = (frt_uchar *)frt_h_get_int(MR(ir)->norms_cache, field_num);
     if (NULL != bytes) {
         memcpy(buf, bytes, MR(ir)->max_doc);
@@ -4647,7 +4647,7 @@ static frt_uchar *mr_get_norms_into(FrtIndexReader *ir, int field_num, frt_uchar
             }
         }
     }
-    frt_mutex_unlock(&ir->mutex);
+    pthread_mutex_unlock(&ir->mutex);
     return buf;
 }
 
@@ -4926,7 +4926,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReader *ir
     FRT_TRY
     do {
         FrtFieldInfos *fis;
-        frt_mutex_lock(&store->mutex);
+        pthread_mutex_lock(&store->mutex);
         frt_sis_read_i(store, fsf, NULL);
         sis = fsf->ret.sis;
         fis = sis->fis;
@@ -4963,7 +4963,7 @@ static void ir_open_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReader *ir
                 frt_sis_destroy(sis);
             }
         }
-        frt_mutex_unlock(&store->mutex);
+        pthread_mutex_unlock(&store->mutex);
     FRT_XENDTRY
 }
 
@@ -5978,14 +5978,14 @@ bool frt_index_is_locked(FrtStore *store) {
 int frt_iw_doc_count(FrtIndexWriter *iw)
 {
     int i, doc_cnt = 0;
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     for (i = iw->sis->size - 1; i >= 0; i--) {
         doc_cnt += iw->sis->segs[i]->doc_cnt;
     }
     if (iw->dw) {
         doc_cnt += iw->dw->doc_num;
     }
-    frt_mutex_unlock(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
     return doc_cnt;
 }
 
@@ -6036,7 +6036,7 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int m
     /* This is where all the action happens. */
     si->doc_cnt = sm_merge(merger);
 
-    frt_mutex_lock(&iw->store->mutex);
+    pthread_mutex_lock(&iw->store->mutex);
     /* delete merged segments */
     for (i = min_seg; i < max_seg; i++) {
         si_delete_files(sis->segs[i], iw->fis, iw->deleter);
@@ -6052,7 +6052,7 @@ static void iw_merge_segments(FrtIndexWriter *iw, const int min_seg, const int m
     frt_sis_write(sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
 
-    frt_mutex_unlock(&iw->store->mutex);
+    pthread_mutex_unlock(&iw->store->mutex);
 
     sm_destroy(merger);
 }
@@ -6105,7 +6105,7 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     si = sis->segs[sis->size - 1];
     si->doc_cnt = iw->dw->doc_num;
     dw_flush(iw->dw);
-    frt_mutex_lock(&iw->store->mutex);
+    pthread_mutex_lock(&iw->store->mutex);
     if (iw->config.use_compound_file) {
         iw_commit_compound_file(iw, si);
         si->use_compound_file = true;
@@ -6113,12 +6113,12 @@ static void iw_flush_ram_segment(FrtIndexWriter *iw)
     /* commit the segments file and the fields file */
     frt_sis_write(iw->sis, iw->store, iw->deleter);
     deleter_commit_pending_deletions(iw->deleter);
-    frt_mutex_unlock(&iw->store->mutex);
+    pthread_mutex_unlock(&iw->store->mutex);
     iw_maybe_merge_segments(iw);
 }
 
 void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc) {
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     if (NULL == iw->dw) {
         iw->dw = frt_dw_open(iw, frt_sis_new_segment(iw->sis, 0, iw->store));
     } else if (NULL == iw->dw->fw) {
@@ -6129,7 +6129,7 @@ void frt_iw_add_doc(FrtIndexWriter *iw, FrtDocument *doc) {
         || iw->dw->doc_num >= iw->config.max_buffered_docs) {
         iw_flush_ram_segment(iw);
     }
-    frt_mutex_unlock(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
 }
 
 static void iw_commit_i(FrtIndexWriter *iw)
@@ -6141,16 +6141,16 @@ static void iw_commit_i(FrtIndexWriter *iw)
 
 void frt_iw_commit(FrtIndexWriter *iw)
 {
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     iw_commit_i(iw);
-    frt_mutex_unlock(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
 }
 
 void frt_iw_delete_term(FrtIndexWriter *iw, ID field, const char *term) {
     int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;
-        frt_mutex_lock(&iw->mutex);
+        pthread_mutex_lock(&iw->mutex);
         iw_commit_i(iw);
         do {
             FrtSegmentInfos *sis = iw->sis;
@@ -6170,12 +6170,12 @@ void frt_iw_delete_term(FrtIndexWriter *iw, ID field, const char *term) {
                 frt_ir_close(ir);
             }
             if (did_delete) {
-                frt_mutex_lock(&iw->store->mutex);
+                pthread_mutex_lock(&iw->store->mutex);
                 frt_sis_write(iw->sis, iw->store, iw->deleter);
-                frt_mutex_unlock(&iw->store->mutex);
+                pthread_mutex_unlock(&iw->store->mutex);
             }
         } while (0);
-        frt_mutex_unlock(&iw->mutex);
+        pthread_mutex_unlock(&iw->mutex);
     }
 }
 
@@ -6183,7 +6183,7 @@ void frt_iw_delete_terms(FrtIndexWriter *iw, ID field, char **terms, const int t
     int field_num = frt_fis_get_field_num(iw->fis, field);
     if (field_num >= 0) {
         int i;
-        frt_mutex_lock(&iw->mutex);
+        pthread_mutex_lock(&iw->mutex);
         iw_commit_i(iw);
         do {
             FrtSegmentInfos *sis = iw->sis;
@@ -6207,12 +6207,12 @@ void frt_iw_delete_terms(FrtIndexWriter *iw, ID field, char **terms, const int t
                 frt_ir_close(ir);
             }
             if (did_delete) {
-                frt_mutex_lock(&iw->store->mutex);
+                pthread_mutex_lock(&iw->store->mutex);
                 frt_sis_write(iw->sis, iw->store, iw->deleter);
-                frt_mutex_unlock(&iw->store->mutex);
+                pthread_mutex_unlock(&iw->store->mutex);
             }
         } while (0);
-        frt_mutex_unlock(&iw->mutex);
+        pthread_mutex_unlock(&iw->mutex);
     }
 }
 
@@ -6239,14 +6239,14 @@ static void iw_optimize_i(FrtIndexWriter *iw)
 
 void frt_iw_optimize(FrtIndexWriter *iw)
 {
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     iw_optimize_i(iw);
-    frt_mutex_unlock(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
 }
 
 void frt_iw_close(FrtIndexWriter *iw)
 {
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     iw_commit_i(iw);
     if (iw->dw) {
         frt_dw_close(iw->dw);
@@ -6260,8 +6260,8 @@ void frt_iw_close(FrtIndexWriter *iw)
     iw->write_lock = NULL;
     frt_store_close(iw->store);
     frt_deleter_destroy(iw->deleter);
-    frt_mutex_unlock(&iw->mutex);
-    frt_mutex_destroy(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
+    pthread_mutex_destroy(&iw->mutex);
     free(iw);
 }
 
@@ -6272,7 +6272,7 @@ FrtIndexWriter *frt_iw_alloc(void) {
 FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *volatile analyzer, const FrtConfig *config) {
     if (iw == NULL)
         iw = frt_iw_alloc();
-    frt_mutex_init(&iw->mutex, NULL);
+    pthread_mutex_init(&iw->mutex, NULL);
     iw->store = store;
     FRT_REF(store);
     if (!config) {
@@ -6577,19 +6577,19 @@ static void iw_add_segments(FrtIndexWriter *iw, FrtIndexReader *ir)
 void frt_iw_add_readers(FrtIndexWriter *iw, FrtIndexReader **readers, const int r_cnt)
 {
     int i;
-    frt_mutex_lock(&iw->mutex);
+    pthread_mutex_lock(&iw->mutex);
     iw_optimize_i(iw);
 
     for (i = 0; i < r_cnt; i++) {
         iw_add_segments(iw, readers[i]);
     }
 
-    frt_mutex_lock(&iw->store->mutex);
+    pthread_mutex_lock(&iw->store->mutex);
 
     /* commit the segments file and the fields file */
     frt_sis_write(iw->sis, iw->store, iw->deleter);
-    frt_mutex_unlock(&iw->store->mutex);
+    pthread_mutex_unlock(&iw->store->mutex);
 
     iw_optimize_i(iw);
-    frt_mutex_unlock(&iw->mutex);
+    pthread_mutex_unlock(&iw->mutex);
 }

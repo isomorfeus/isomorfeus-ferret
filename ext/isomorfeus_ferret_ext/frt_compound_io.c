@@ -142,7 +142,7 @@ static FrtInStream *cmpd_create_input(FrtInStream *sub_is, frt_off_t offset, frt
 static FrtInStream *cmpd_open_input_stream(FrtStore *store, const char *filename) {
     FrtInStream *is = NULL;
 
-    frt_mutex_lock(&store->mutex);
+    pthread_mutex_lock(&store->mutex);
 
     FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) goto retis;
@@ -152,7 +152,7 @@ static FrtInStream *cmpd_open_input_stream(FrtStore *store, const char *filename
 
     is = cmpd_create_input(cmpd->stream, entry->offset, entry->length);
 retis:
-    frt_mutex_unlock(&store->mutex);
+    pthread_mutex_unlock(&store->mutex);
     return is;
 }
 
