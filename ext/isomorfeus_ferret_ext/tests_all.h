@@ -9,7 +9,6 @@ TestSuite *ts_analysis(TestSuite *suite);
 TestSuite *ts_array(TestSuite *suite);
 TestSuite *ts_compound_io(TestSuite *suite);
 TestSuite *ts_document(TestSuite *suite);
-TestSuite *ts_except(TestSuite *suite);
 TestSuite *ts_fields(TestSuite *suite);
 TestSuite *ts_file_deleter(TestSuite *suite);
 TestSuite *ts_filter(TestSuite *suite);
@@ -46,7 +45,6 @@ const struct test_list {
     {ts_array},
     {ts_compound_io},
     {ts_document},
-    {ts_except},
     {ts_fields},
     {ts_file_deleter},
     {ts_filter},

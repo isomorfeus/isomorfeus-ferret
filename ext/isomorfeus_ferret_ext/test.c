@@ -1,6 +1,5 @@
 #include <time.h>
 #include "ruby.h"
-#include "frt_except.h"
 #include "tests_all.h"
 #include "test.h"
 
@@ -725,33 +724,32 @@ static VALUE frb_ts_analysis(VALUE v)     { return INT2FIX(execute_test(1)); }
 static VALUE frb_ts_array(VALUE v)        { return INT2FIX(execute_test(2)); }
 static VALUE frb_ts_compound_io(VALUE v)  { return INT2FIX(execute_test(3)); }
 static VALUE frb_ts_document(VALUE v)     { return INT2FIX(execute_test(4)); }
-static VALUE frb_ts_except(VALUE v)       { return INT2FIX(execute_test(5)); }
-static VALUE frb_ts_fields(VALUE v)       { return INT2FIX(execute_test(6)); }
-static VALUE frb_ts_file_deleter(VALUE v) { return INT2FIX(execute_test(7)); }
-static VALUE frb_ts_filter(VALUE v)       { return INT2FIX(execute_test(8)); }
-static VALUE frb_ts_fs_store(VALUE v)     { return INT2FIX(execute_test(9)); }
-static VALUE frb_ts_global(VALUE v)       { return INT2FIX(execute_test(10)); }
-static VALUE frb_ts_hash(VALUE v)         { return INT2FIX(execute_test(11)); }
-static VALUE frb_ts_hashset(VALUE v)      { return INT2FIX(execute_test(12)); }
-static VALUE frb_ts_helper(VALUE v)       { return INT2FIX(execute_test(13)); }
-static VALUE frb_ts_highlighter(VALUE v)  { return INT2FIX(execute_test(14)); }
-static VALUE frb_ts_index(VALUE v)        { return INT2FIX(execute_test(15)); }
-static VALUE frb_ts_lang(VALUE v)         { return INT2FIX(execute_test(16)); }
-static VALUE frb_ts_mem_pool(VALUE v)     { return INT2FIX(execute_test(17)); }
-static VALUE frb_ts_q_const_score(VALUE v){ return INT2FIX(execute_test(18)); }
-static VALUE frb_ts_q_filtered(VALUE v)   { return INT2FIX(execute_test(19)); }
-static VALUE frb_ts_q_fuzzy(VALUE v)      { return INT2FIX(execute_test(20)); }
-static VALUE frb_ts_q_parser(VALUE v)     { return INT2FIX(execute_test(21)); }
-static VALUE frb_ts_q_span(VALUE v)       { return INT2FIX(execute_test(22)); }
-static VALUE frb_ts_ram_store(VALUE v)    { return INT2FIX(execute_test(23)); }
-static VALUE frb_ts_search(VALUE v)       { return INT2FIX(execute_test(24)); }
-static VALUE frb_ts_multi_search(VALUE v) { return INT2FIX(execute_test(25)); }
-static VALUE frb_ts_segments(VALUE v)     { return INT2FIX(execute_test(26)); }
-static VALUE frb_ts_similarity(VALUE v)   { return INT2FIX(execute_test(27)); }
-static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(28)); }
-static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(29)); }
-static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(30)); }
-static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(31)); }
+static VALUE frb_ts_fields(VALUE v)       { return INT2FIX(execute_test(5)); }
+static VALUE frb_ts_file_deleter(VALUE v) { return INT2FIX(execute_test(6)); }
+static VALUE frb_ts_filter(VALUE v)       { return INT2FIX(execute_test(7)); }
+static VALUE frb_ts_fs_store(VALUE v)     { return INT2FIX(execute_test(8)); }
+static VALUE frb_ts_global(VALUE v)       { return INT2FIX(execute_test(9)); }
+static VALUE frb_ts_hash(VALUE v)         { return INT2FIX(execute_test(10)); }
+static VALUE frb_ts_hashset(VALUE v)      { return INT2FIX(execute_test(11)); }
+static VALUE frb_ts_helper(VALUE v)       { return INT2FIX(execute_test(12)); }
+static VALUE frb_ts_highlighter(VALUE v)  { return INT2FIX(execute_test(13)); }
+static VALUE frb_ts_index(VALUE v)        { return INT2FIX(execute_test(14)); }
+static VALUE frb_ts_lang(VALUE v)         { return INT2FIX(execute_test(15)); }
+static VALUE frb_ts_mem_pool(VALUE v)     { return INT2FIX(execute_test(16)); }
+static VALUE frb_ts_q_const_score(VALUE v){ return INT2FIX(execute_test(17)); }
+static VALUE frb_ts_q_filtered(VALUE v)   { return INT2FIX(execute_test(18)); }
+static VALUE frb_ts_q_fuzzy(VALUE v)      { return INT2FIX(execute_test(19)); }
+static VALUE frb_ts_q_parser(VALUE v)     { return INT2FIX(execute_test(20)); }
+static VALUE frb_ts_q_span(VALUE v)       { return INT2FIX(execute_test(21)); }
+static VALUE frb_ts_ram_store(VALUE v)    { return INT2FIX(execute_test(22)); }
+static VALUE frb_ts_search(VALUE v)       { return INT2FIX(execute_test(23)); }
+static VALUE frb_ts_multi_search(VALUE v) { return INT2FIX(execute_test(24)); }
+static VALUE frb_ts_segments(VALUE v)     { return INT2FIX(execute_test(25)); }
+static VALUE frb_ts_similarity(VALUE v)   { return INT2FIX(execute_test(26)); }
+static VALUE frb_ts_sort(VALUE v)         { return INT2FIX(execute_test(27)); }
+static VALUE frb_ts_term(VALUE v)         { return INT2FIX(execute_test(28)); }
+static VALUE frb_ts_term_vectors(VALUE v) { return INT2FIX(execute_test(29)); }
+static VALUE frb_ts_test(VALUE v)         { return INT2FIX(execute_test(30)); }
 
 static VALUE frb_ts_posh(VALUE v) {
     const char *posh = POSH_GetArchString();

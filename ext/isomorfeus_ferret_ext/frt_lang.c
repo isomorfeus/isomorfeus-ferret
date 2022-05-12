@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include "frt_lang.h"
-#include "frt_except.h"
 #include "frt_global.h"
 
 /* emalloc: malloc and report if error */

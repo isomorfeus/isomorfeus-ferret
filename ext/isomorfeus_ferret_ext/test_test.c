@@ -1,4 +1,3 @@
-#include "frt_except.h"
 #include "test.h"
 
 static void raise_eof(void) {

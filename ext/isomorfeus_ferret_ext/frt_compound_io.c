@@ -109,7 +109,7 @@ static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len) {
     frt_off_t start = frt_is_pos(is);
 
     if ((start + len) > cis->length) {
-        FRT_RAISE(FRT_EOF_ERROR, "Tried to read past end of file. File length is "
+        rb_raise(rb_eEOFError, "Tried to read past end of file. File length is "
               "<%"FRT_OFF_T_PFX"d> and tried to read to <%"FRT_OFF_T_PFX"d>",
               cis->length, start + len);
     }
