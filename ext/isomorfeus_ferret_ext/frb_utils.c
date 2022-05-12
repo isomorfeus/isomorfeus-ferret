@@ -771,8 +771,7 @@ static int frb_mulmap_add_mappings_i(VALUE key, VALUE value, VALUE arg) {
             for (i = RARRAY_LEN(key) - 1; i >= 0; i--) {
                 frb_mulmap_add_mapping_i(mulmap, RARRAY_PTR(key)[i], to);
             }
-        }
-        else {
+        } else {
             frb_mulmap_add_mapping_i(mulmap, key, to);
         }
     }
@@ -787,10 +786,14 @@ static int frb_mulmap_add_mappings_i(VALUE key, VALUE value, VALUE arg) {
  *
  *  Note that MultiMapper is immutable.
  */
-static VALUE frb_mulmap_init(VALUE self, VALUE rmappings) {
+static VALUE frb_mulmap_init(int argc, VALUE *argv, VALUE self) {
     FrtMultiMapper *mulmap = DATA_PTR(self);
-    rb_hash_foreach(rmappings, frb_mulmap_add_mappings_i, (VALUE)mulmap);
-    frt_mulmap_compile(mulmap);
+    if (argc == 1) {
+        rb_hash_foreach(argv[0], frb_mulmap_add_mappings_i, (VALUE)mulmap);
+        frt_mulmap_compile(mulmap);
+    } else if (argc > 1) {
+        rb_raise(rb_eArgError, "MultiMappere#initialize takes one Hash argument or none at all");
+    }
 
     return self;
 }
@@ -801,13 +804,57 @@ static VALUE frb_mulmap_init(VALUE self, VALUE rmappings) {
  *
  *  Performs all the mappings on the string.
  */
-VALUE frb_mulmap_map(VALUE self, VALUE rstring) {
+VALUE frb_mulmap_map(int argc, VALUE *argv, VALUE self) {
     FrtMultiMapper *mulmap = DATA_PTR(self);
-    char *string = rs2s(rb_obj_as_string(rstring));
-    char *mapped_string = frt_mulmap_dynamic_map(mulmap, string);
-    VALUE rmapped_string = rb_str_new2(mapped_string);
-    free(mapped_string);
+    char *text;
+    char *mapped_string;
+    int mlen;
+    VALUE rmapped_string;
+    if (argc == 2) {
+        text = rs2s(rb_obj_as_string(argv[0]));
+        mlen = FIX2INT(argv[1]);
+        mapped_string = frt_ecalloc(mlen);
+        frt_mulmap_map_len(mulmap, mapped_string, text, mlen);
+        rmapped_string = rb_str_new2(mapped_string);
+        free(mapped_string);
+    } else if (argc == 1) {
+        text = rs2s(rb_obj_as_string(argv[0]));
+        mapped_string = frt_mulmap_dynamic_map(mulmap, text);
+        rmapped_string = rb_str_new2(mapped_string);
+        free(mapped_string);
+    } else {
+        rb_raise(rb_eArgError, "MultiMappere#map takes one argument (text) or two (text, length)");
+    }
     return rmapped_string;
+}
+
+VALUE frb_mulmap_add_mapping(VALUE self, VALUE rkey, VALUE rto) {
+    FrtMultiMapper *mulmap = DATA_PTR(self);
+    const char *to = rs2s(rto);
+    if (TYPE(rkey) == T_ARRAY) {
+        int i;
+        for (i = RARRAY_LEN(rkey) - 1; i >= 0; i--) {
+            frb_mulmap_add_mapping_i(mulmap, RARRAY_PTR(rkey)[i], to);
+        }
+    } else {
+        frb_mulmap_add_mapping_i(mulmap, rkey, to);
+    }
+    return self;
+}
+
+VALUE frb_mulmap_compile(VALUE self) {
+    frt_mulmap_compile(DATA_PTR(self));
+    return self;
+}
+
+VALUE frb_mulmap_map_length(VALUE self, VALUE rtext, VALUE rlen) {
+    FrtMultiMapper *mulmap = DATA_PTR(self);
+    size_t mlen = FIX2INT(rlen);
+    char *text = rs2s(rtext);
+    char *dest = frt_ecalloc(mlen);
+    int len = frt_mulmap_map_len(mulmap, dest, text, mlen);
+    free(dest);
+    return INT2FIX(len);
 }
 
 /*
@@ -854,8 +901,11 @@ static void Init_MultiMapper(void) {
     /* MultiMapper */
     cMultiMapper = rb_define_class_under(mUtils, "MultiMapper", rb_cObject);
     rb_define_alloc_func(cMultiMapper, frb_mulmap_alloc);
-    rb_define_method(cMultiMapper, "initialize", frb_mulmap_init, 1);
-    rb_define_method(cMultiMapper, "map", frb_mulmap_map, 1);
+    rb_define_method(cMultiMapper, "initialize", frb_mulmap_init, -1);
+    rb_define_method(cMultiMapper, "map", frb_mulmap_map, -1);
+    rb_define_method(cMultiMapper, "add_mapping", frb_mulmap_add_mapping, 2);
+    rb_define_method(cMultiMapper, "compile", frb_mulmap_compile, 0);
+    rb_define_method(cMultiMapper, "map_length", frb_mulmap_map_length, 2);
 }
 
 /*********************
