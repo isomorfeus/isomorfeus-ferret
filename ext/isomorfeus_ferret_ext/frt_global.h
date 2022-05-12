@@ -259,13 +259,6 @@ extern bool frt_x_abort_on_exception;
 extern bool frt_x_has_aborted;
 extern FILE *frt_x_exception_stream;
 
-/**
- * The convenience macro +EXCEPTION_STREAM+ returns stderr when
- * +frt_x_exception_stream+ isn't explicitely set.
- */
-#define EXCEPTION 2
-#define EXCEPTION_STREAM (frt_x_exception_stream ? frt_x_exception_stream : stderr)
-
 extern void frt_init(int arc, const char *const argv[]);
 extern void frt_micro_sleep(const int micro_seconds);
 

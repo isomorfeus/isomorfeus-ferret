@@ -67,18 +67,18 @@ void FRT_VEXIT(const char *err_type, const char *fmt, va_list args)
     fflush(stdout);
 
 # ifdef FRT_HAS_VARARGS
-    fprintf(EXCEPTION_STREAM, "%s occurred at <%s>:%d in %s\n",
+    fprintf(stderr, "%s occurred at <%s>:%d in %s\n",
             err_type, file, line_num, func);
 # else
-    fprintf(EXCEPTION_STREAM, "%s occurred:\n", err_type);
+    fprintf(stderr, "%s occurred:\n", err_type);
 # endif
-    vfprintf(EXCEPTION_STREAM, fmt, args);
+    vfprintf(stderr, fmt, args);
 
     if (fmt[0] != '\0' && fmt[strlen(fmt) - 1] == ':') {
-        fprintf(EXCEPTION_STREAM, " %s", strerror(errno));
+        fprintf(stderr, " %s", strerror(errno));
     }
 
-    fprintf(EXCEPTION_STREAM, "\n");
+    fprintf(stderr, "\n");
     if (frt_x_abort_on_exception) {
         exit(2);                 /* conventional value for failed execution */
     }

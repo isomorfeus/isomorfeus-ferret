@@ -106,8 +106,7 @@ FrtDocument *frt_doc_new(void) {
 
 FrtDocField *frt_doc_add_field(FrtDocument *doc, FrtDocField *df) {
     if (!frt_h_set_safe(doc->field_dict, (void *)df->name, df)) {
-        FRT_RAISE(FRT_EXCEPTION, "tried to add %s field which alread existed\n",
-              rb_id2name(df->name));
+        rb_raise(rb_eException, "tried to add %s field which alread existed\n", rb_id2name(df->name));
     }
     if (doc->size >= doc->capa) {
         doc->capa <<= 1;
