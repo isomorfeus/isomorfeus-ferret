@@ -65,8 +65,8 @@ static void test_failures(TestCase *tc, void *data)
     Assert(1 == 2, "%d != %d", 1, 2);
     Atrue(0);
     free(p);
-    Araise(FRT_EXCEPTION, &raise_eof, NULL);
-    Araise(FRT_EXCEPTION, &raise_nothing, NULL);
+    Araise(rb_eException, &raise_eof, NULL);
+    Araise(rb_eException, &raise_nothing, NULL);
 }
 
 TestSuite *ts_test(TestSuite *suite)
