@@ -132,7 +132,7 @@ static void mulmap_free_dstates(FrtMultiMapper *self)
 void frt_mulmap_add_mapping(FrtMultiMapper *self, const char *pattern, const char *rep)
 {
     if (pattern == NULL || pattern[0] == '\0') {
-        rb_raise(rb_eArgError, "Tried to add empty pattern to multi_mapper");
+        FRT_RAISE(FRT_ARG_ERROR, "Tried to add empty pattern to multi_mapper");
     } else {
         FrtMapping *mapping = FRT_ALLOC(FrtMapping);
         if (self->size >= self->capa) {

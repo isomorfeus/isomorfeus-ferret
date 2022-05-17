@@ -588,7 +588,7 @@ FrtQuery *frt_multi_tq_alloc(void) {
 
 FrtQuery *frt_multi_tq_init_conf(FrtQuery *self, ID field, int max_terms, float min_boost) {
     if (max_terms <= 0) {
-        rb_raise(rb_eArgError, ":max_terms must be greater than or equal to zero. %d < 0. ", max_terms);
+        FRT_RAISE(FRT_ARG_ERROR, ":max_terms must be greater than or equal to zero. %d < 0. ", max_terms);
         free(self);
     }
 

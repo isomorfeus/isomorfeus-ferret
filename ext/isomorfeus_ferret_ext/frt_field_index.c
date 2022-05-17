@@ -39,8 +39,8 @@ FrtFieldIndex *frt_field_index_get(FrtIndexReader *ir, ID field, const FrtFieldI
     FrtFieldIndex key;
 
     if (field_num < 0) {
-        rb_raise(rb_eArgError,
-              "frt_field_index_get: Cannot sort by field \"%s\". It doesn't exist in the index.",
+        FRT_RAISE(FRT_ARG_ERROR,
+              "Cannot sort by field \"%s\". It doesn't exist in the index.",
               rb_id2name(field));
     }
 

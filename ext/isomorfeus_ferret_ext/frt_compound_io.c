@@ -67,7 +67,7 @@ static void cmpd_clear(FrtStore *store) {
 static void cmpd_close_i(FrtStore *store) {
     FrtCompoundStore *cmpd = store->dir.cmpd;
     if (cmpd->stream == NULL) {
-        rb_raise(rb_eIOError, "cmpd_clear: Tried to close already closed compound store");
+        FRT_RAISE(FRT_IO_ERROR, "Tried to close already closed compound store");
     }
 
     frt_h_destroy(cmpd->entries);
@@ -147,14 +147,14 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name) {
     pthread_mutex_lock(&store->mutex);
     if (cmpd->stream == NULL) {
         frt_mutex_unlock(&store->mutex);
-        rb_raise(rb_eIOError, "cmpd_open_input: Can't open compound file input stream. Parent "
+        FRT_RAISE(FRT_IO_ERROR, "Can't open compound file input stream. Parent "
               "stream is closed.");
     }
 
     entry = (FileEntry *)frt_h_get(cmpd->entries, file_name);
     if (entry == NULL) {
         frt_mutex_unlock(&store->mutex);
-        rb_raise(rb_eIOError, "cmpd_open_input: File %s does not exist: ", file_name);
+        FRT_RAISE(FRT_IO_ERROR, "File %s does not exist: ", file_name);
     }
 
     is = cmpd_create_input(cmpd->stream, entry->offset, entry->length);
@@ -266,7 +266,7 @@ FrtCompoundWriter *frt_open_cw(FrtStore *store, char *name) {
 void frt_cw_add_file(FrtCompoundWriter *cw, char *id) {
     id = frt_estrdup(id);
     if (frt_hs_add(cw->ids, id) != FRT_HASH_KEY_DOES_NOT_EXIST) {
-        rb_raise(rb_eIOError, "frt_cw_add_file: Tried to add file \"%s\" which has already been "
+        FRT_RAISE(FRT_IO_ERROR, "Tried to add file \"%s\" which has already been "
               "added to the compound store", id);
     }
 
@@ -293,7 +293,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
 
     /* Verify that remainder is 0 */
     if (remainder != 0) {
-        rb_raise(rb_eIOError, "cw_copy_file: There seems to be an error in the compound file "
+        FRT_RAISE(FRT_IO_ERROR, "There seems to be an error in the compound file "
               "should have read to the end but there are <%"FRT_OFF_T_PFX"d> "
               "bytes left", remainder);
     }
@@ -302,7 +302,7 @@ static void cw_copy_file(FrtCompoundWriter *cw, FrtCWFileEntry *src, FrtOutStrea
     end_ptr = frt_os_pos(os);
     len = end_ptr - start_ptr;
     if (len != length) {
-        rb_raise(rb_eIOError, "cw_copy_file: Difference in compound file output file offsets "
+        FRT_RAISE(FRT_IO_ERROR, "Difference in compound file output file offsets "
               "<%"FRT_OFF_T_PFX"d> does not match the original file lenght "
               "<%"FRT_OFF_T_PFX"d>", len, length);
     }

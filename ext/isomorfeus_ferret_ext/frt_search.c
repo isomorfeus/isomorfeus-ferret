@@ -246,7 +246,7 @@ FrtWeight *frt_w_create(size_t size, FrtQuery *query)
     FrtWeight *self                    = (FrtWeight *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtWeight)) {
-        rb_raise(rb_eArgError, "size of weight <%d> should be at least <%d>",
+        FRT_RAISE(FRT_ARG_ERROR, "size of weight <%d> should be at least <%d>",
               (int)size, (int)sizeof(FrtWeight));
     }
 #endif
@@ -414,7 +414,7 @@ FrtQuery *frt_q_create(size_t size) {
     FrtQuery *self = (FrtQuery *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtQuery)) {
-        rb_raise(rb_eArgError, "Size of a query <%d> should never be smaller than "
+        FRT_RAISE(FRT_ARG_ERROR, "Size of a query <%d> should never be smaller than "
               "the size of a Query struct <%d>", (int)size, (int)sizeof(FrtQuery));
     }
 #endif
@@ -443,7 +443,7 @@ FrtScorer *frt_scorer_create(size_t size, FrtSimilarity *similarity) {
     FrtScorer *self     = (FrtScorer *)frt_ecalloc(size);
 #ifdef DEBUG
     if (size < sizeof(FrtScorer)) {
-        rb_raise(rb_eArgError, "size of scorer <%d> should be at least <%d>",
+        FRT_RAISE(FRT_ARG_ERROR, "size of scorer <%d> should be at least <%d>",
               (int)size, (int)sizeof(FrtScorer));
     }
 #endif
@@ -920,12 +920,12 @@ static FrtWeight *sea_create_weight(FrtSearcher *self, FrtQuery *query)
 static void sea_check_args(int num_docs, int first_doc)
 {
     if (num_docs <= 0) {
-        rb_raise(rb_eArgError, ":num_docs was set to %d but should be greater "
+        FRT_RAISE(FRT_ARG_ERROR, ":num_docs was set to %d but should be greater "
               "than 0 : %d <= 0", num_docs, num_docs);
     }
 
     if (first_doc < 0) {
-        rb_raise(rb_eArgError, ":first_doc was set to %d but should be greater "
+        FRT_RAISE(FRT_ARG_ERROR, ":first_doc was set to %d but should be greater "
               "than or equal to 0 : %d < 0", first_doc, first_doc);
     }
 }

@@ -211,11 +211,11 @@ static FrtScorer *disjunction_sum_scorer_new(FrtScorer **sub_scorers, int ss_cnt
 
 #ifdef DEBUG
     if (min_num_matches <= 0) {
-        rb_raise(rb_eArgError, "The min_num_matches value <%d> should not be less "
+        FRT_RAISE(FRT_ARG_ERROR, "The min_num_matches value <%d> should not be less "
               "than 0\n", min_num_matches);
     }
     if (ss_cnt <= 1) {
-        rb_raise(rb_eArgError, "There should be at least 2 sub_scorers in a "
+        FRT_RAISE(FRT_ARG_ERROR, "There should be at least 2 sub_scorers in a "
               "DiscjunctionSumScorer. <%d> is not enough", ss_cnt);
     }
 #endif
@@ -975,7 +975,7 @@ static void bsc_add_scorer(FrtScorer *self, FrtScorer *scorer, unsigned int occu
             bsc->prohibited_scorers[bsc->ps_cnt++] = scorer;
             break;
         default:
-            rb_raise(rb_eArgError, "Invalid value for :occur. Try :should, :must or "
+            FRT_RAISE(FRT_ARG_ERROR, "Invalid value for :occur. Try :should, :must or "
                   ":must_not instead");
     }
 }
@@ -1259,7 +1259,7 @@ void frt_bc_set_occur(FrtBooleanClause *self, FrtBCType occur) {
             self->is_required = false;
             break;
         default:
-            rb_raise(rb_eArgError, "Invalid value for :occur. Try :occur => :should, "
+            FRT_RAISE(FRT_ARG_ERROR, "Invalid value for :occur. Try :occur => :should, "
                   ":must or :must_not instead");
     }
 }

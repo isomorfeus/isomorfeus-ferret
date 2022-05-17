@@ -1947,14 +1947,14 @@ FrtQuery *frt_spanoq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
 {
     const int curr_index = SpOQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
-        rb_raise(rb_eArgError, "Tried to add a %s to a SpanOrQuery. This is not a "
+        FRT_RAISE(FRT_ARG_ERROR, "Tried to add a %s to a SpanOrQuery. This is not a "
               "SpanQuery.", frt_q_get_query_name(clause->type));
     }
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
     }
     else if (SpQ(self)->field != SpQ(clause)->field) {
-        rb_raise(rb_eArgError, "All clauses in a SpanQuery must have the same field. "
+        FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" to a SpanOrQuery "
               "with field \"%s\"", rb_id2name(SpQ(clause)->field), rb_id2name(SpQ(self)->field));
     }
@@ -2142,14 +2142,14 @@ FrtQuery *frt_spannq_add_clause_nr(FrtQuery *self, FrtQuery *clause)
 {
     const int curr_index = SpNQ(self)->c_cnt++;
     if (clause->type < SPAN_TERM_QUERY || clause->type > SPAN_NEAR_QUERY) {
-        rb_raise(rb_eArgError, "Tried to add a %s to a SpanNearQuery. This is not a "
+        FRT_RAISE(FRT_ARG_ERROR, "Tried to add a %s to a SpanNearQuery. This is not a "
               "SpanQuery.", frt_q_get_query_name(clause->type));
     }
     if (curr_index == 0) {
         SpQ(self)->field = SpQ(clause)->field;
     }
     else if (SpQ(self)->field != SpQ(clause)->field) {
-        rb_raise(rb_eArgError, "All clauses in a SpanQuery must have the same field. "
+        FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" to SpanNearQuery "
               "with field \"%s\"", rb_id2name(SpQ(clause)->field), rb_id2name(SpQ(self)->field));
     }
@@ -2241,7 +2241,7 @@ FrtQuery *frt_spanxq_alloc(void) {
 FrtQuery *frt_spanxq_init_nr(FrtQuery *self, FrtQuery *inc, FrtQuery *exc) {
     if (SpQ(inc)->field != SpQ(exc)->field) {
         free(self);
-        rb_raise(rb_eArgError, "All clauses in a SpanQuery must have the same field. "
+        FRT_RAISE(FRT_ARG_ERROR, "All clauses in a SpanQuery must have the same field. "
               "Attempted to add a SpanQuery with field \"%s\" along with a "
               "SpanQuery with field \"%s\" to an SpanNotQuery",
               rb_id2name(SpQ(inc)->field), rb_id2name(SpQ(exc)->field));
