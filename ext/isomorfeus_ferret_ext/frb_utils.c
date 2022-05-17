@@ -73,9 +73,18 @@ static VALUE frb_ary_init(int argc, VALUE *argv, VALUE self) {
 }
 
 static VALUE frb_ary_set(VALUE self, VALUE rindex, VALUE rvalue) {
+    int excode = 0;
+    const char *msg = NULL;
     VALUE **ary = DATA_PTR(self);
-    frt_ary_set(ary, FIX2INT(rindex), (void *)rvalue); // will raise if index is negative
-    ((struct RData *)(self))->data = ary;
+    FRT_TRY
+        frt_ary_set(ary, FIX2INT(rindex), (void *)rvalue); // will raise if index is negative
+        ((struct RData *)(self))->data = ary;
+    FRT_XCATCHALL
+        excode = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+    if (excode) frb_raise(excode, msg);
     return rvalue;
 }
 
