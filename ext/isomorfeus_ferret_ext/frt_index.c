@@ -1155,7 +1155,7 @@ static void lazy_df_destroy(FrtLazyDocField *self) {
 }
 
 static void comp_raise(void) {
-    rb_raise(rb_eException, "Compression error");
+    FRT_RAISE(EXCEPTION, "Compression error");
 }
 
 static char *is_read_brotli_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
@@ -1231,7 +1231,7 @@ static void zraise(int ret) {
         rb_raise(rb_eIOError, "bzlib: output buffer full");
         break;
     default:
-        rb_raise(rb_eException, "bzlib: unknown error");
+        FRT_RAISE(FRT_EXCEPTION, "bzlib: unknown error");
     }
 }
 
