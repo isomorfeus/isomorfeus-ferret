@@ -327,7 +327,7 @@ void frt_q_deref(FrtQuery *q) {
 FrtWeight *frt_q_create_weight_unsup(FrtQuery *self, FrtSearcher *searcher) {
     (void)self;
     (void)searcher;
-    rb_raise(cUnsupportedError, "Create weight is unsupported for this type of query");
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "Create weight is unsupported for this type of query");
     return NULL;
 }
 
@@ -1243,7 +1243,7 @@ static int cdfsea_doc_freq(FrtSearcher *self, ID field, const char *text) {
 static FrtDocument *cdfsea_get_doc(FrtSearcher *self, int doc_num)
 {
     (void)self; (void)doc_num;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1256,7 +1256,7 @@ static int cdfsea_max_doc(FrtSearcher *self)
 static FrtWeight *cdfsea_create_weight(FrtSearcher *self, FrtQuery *query)
 {
     (void)self; (void)query;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1265,7 +1265,7 @@ static FrtTopDocs *cdfsea_search_w(FrtSearcher *self, FrtWeight *w, int fd, int 
 {
     (void)self; (void)w; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1274,7 +1274,7 @@ static FrtTopDocs *cdfsea_search(FrtSearcher *self, FrtQuery *q, int fd, int nd,
 {
     (void)self; (void)q; (void)fd; (void)nd;
     (void)f; (void)s; (void)pf; (void)load;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -1284,7 +1284,7 @@ static void cdfsea_search_each(FrtSearcher *self, FrtQuery *query, FrtFilter *fi
                                void *arg)
 {
     (void)self; (void)query; (void)filter; (void)pf; (void)fn; (void)arg;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static void cdfsea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *filter,
@@ -1293,7 +1293,7 @@ static void cdfsea_search_each_w(FrtSearcher *self, FrtWeight *w, FrtFilter *fil
                                  void *arg)
 {
     (void)self; (void)w; (void)filter; (void)pf; (void)fn; (void)arg;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static FrtQuery *cdfsea_rewrite(FrtSearcher *self, FrtQuery *original)
@@ -1306,20 +1306,20 @@ static FrtQuery *cdfsea_rewrite(FrtSearcher *self, FrtQuery *original)
 static FrtExplanation *cdfsea_explain(FrtSearcher *self, FrtQuery *query, int doc_num)
 {
     (void)self; (void)query; (void)doc_num;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static FrtExplanation *cdfsea_explain_w(FrtSearcher *self, FrtWeight *w, int doc_num)
 {
     (void)self; (void)w; (void)doc_num;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static FrtTermVector *cdfsea_get_term_vector(FrtSearcher *self, const int doc_num, ID field) {
     (void)self; (void)doc_num; (void)field;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
