@@ -4308,7 +4308,7 @@ static FrtDocument *sr_get_doc(FrtIndexReader *ir, int doc_num)
     pthread_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         pthread_mutex_unlock(&ir->mutex);
-        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
+        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
     }
     doc = frt_fr_get_doc(SR(ir)->fr, doc_num);
     pthread_mutex_unlock(&ir->mutex);
@@ -4321,7 +4321,7 @@ static FrtLazyDoc *sr_get_lazy_doc(FrtIndexReader *ir, int doc_num)
     pthread_mutex_lock(&ir->mutex);
     if (sr_is_deleted_i(SR(ir), doc_num)) {
         pthread_mutex_unlock(&ir->mutex);
-        rb_raise(cStateError, "Document %d has already been deleted", doc_num);
+        FRT_RAISE(FRT_STATE_ERROR, "Document %d has already been deleted", doc_num);
     }
     lazy_doc = frt_fr_get_lazy_doc(SR(ir)->fr, doc_num);
     pthread_mutex_unlock(&ir->mutex);
