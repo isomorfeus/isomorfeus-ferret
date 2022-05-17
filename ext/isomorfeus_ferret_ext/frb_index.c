@@ -2167,7 +2167,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                         } else if (RTEST(rb_obj_is_kind_of(rdir, cDirectory))) {
                             store = DATA_PTR(rdir);
                         } else {
-                            rb_raise(rb_eArgError, "A Multi-IndexReader can only "
+                            FRT_RAISE(FRT_ARG_ERROR, "A Multi-IndexReader can only "
                                     "be created from other IndexReaders, "
                                     "Directory objects or file-system paths. "
                                     "Not %s",
@@ -2179,7 +2179,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                         store = frt_open_fs_store(rs2s(rdir));
                         break;
                     default:
-                        rb_raise(rb_eArgError, "%s isn't a valid directory "
+                        FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory "
                                 "argument. You should use either a String or "
                                 "a Directory",
                                 rs2s(rb_obj_as_string(rdir)));
@@ -2200,7 +2200,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
                     store = frt_open_fs_store(rs2s(rdir));
                     break;
                 default:
-                    rb_raise(rb_eArgError, "%s isn't a valid directory argument. "
+                    FRT_RAISE(FRT_ARG_ERROR, "%s isn't a valid directory argument. "
                             "You should use either a String or a Directory",
                             rs2s(rb_obj_as_string(rdir)));
                     break;
