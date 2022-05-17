@@ -13,18 +13,17 @@ static VALUE mBenchmark;
 
 #define RUSAGE_SELF		0
 
-struct rusage
-{
+struct rusage {
 	struct timeval ru_utime;	/* user time used */
 	struct timeval ru_stime;	/* system time used */
 };
 
 int getrusage(int who, struct rusage *rusage)
 {
-	FILETIME	starttime;
-	FILETIME	exittime;
-	FILETIME	kerneltime;
-	FILETIME	usertime;
+	FILETIME starttime;
+	FILETIME exittime;
+	FILETIME kerneltime;
+	FILETIME usertime;
 	ULARGE_INTEGER li;
 
 	if (who != RUSAGE_SELF) {
@@ -58,8 +57,7 @@ int getrusage(int who, struct rusage *rusage)
 #include <sys/resource.h>
 #endif
 
-static int bmtcmp(const void *p1, const void *p2)
-{
+static int bmtcmp(const void *p1, const void *p2) {
     BenchMarkTimes *bmt1 = *(BenchMarkTimes **)p1;
     BenchMarkTimes *bmt2 = *(BenchMarkTimes **)p2;
 
@@ -68,11 +66,8 @@ static int bmtcmp(const void *p1, const void *p2)
     else return 0;
 }
 
-void bm_add(BenchMark *benchmark, bm_run_ft run, const char *name)
-{
-    BenchMarkUnit *unit =
-        (BenchMarkUnit *)frt_emalloc(sizeof(BenchMarkUnit) +
-                                 benchmark->count * sizeof(BenchMarkTimes *));
+void bm_add(BenchMark *benchmark, bm_run_ft run, const char *name) {
+    BenchMarkUnit *unit = (BenchMarkUnit *)frt_emalloc(sizeof(BenchMarkUnit) + benchmark->count * sizeof(BenchMarkTimes *));
     int i;
     unit->name = frt_estrdup(name);
     unit->run = run;
@@ -84,14 +79,12 @@ void bm_add(BenchMark *benchmark, bm_run_ft run, const char *name)
     }
     if (benchmark->tail) {
         benchmark->tail = benchmark->tail->next = unit;
-    }
-    else {
+    } else {
         benchmark->tail = benchmark->head = unit;
     }
 }
 
-static void bm_clear(BenchMark *benchmark)
-{
+static void bm_clear(BenchMark *benchmark) {
     BenchMarkUnit *unit, *next = benchmark->head;
     while (NULL != (unit = next)) {
         next = unit->next;
@@ -111,8 +104,7 @@ static void bm_clear(BenchMark *benchmark)
   ((double)after.tv_sec  + ((double)after.tv_usec/1000000)) - \
   ((double)before.tv_sec + ((double)before.tv_usec/1000000))
 
-static void bm_single_run(BenchMarkUnit *unit, BenchMarkTimes *bm_times)
-{
+static void bm_single_run(BenchMarkUnit *unit, BenchMarkTimes *bm_times) {
     struct timeval tv_before, tv_after;
     struct rusage ru_before, ru_after;
 
@@ -134,8 +126,7 @@ static void bm_single_run(BenchMarkUnit *unit, BenchMarkTimes *bm_times)
 #define DO_SETUP(bm) if (bm->setup) bm->setup();
 #define DO_TEARDOWN(bm) if (bm->teardown) bm->teardown();
 
-static void bm_run(BenchMark *benchmark)
-{
+static void bm_run(BenchMark *benchmark) {
     int i;
     BenchMarkUnit *unit;
     int max_name_len = 0;
@@ -171,8 +162,7 @@ static void bm_run(BenchMark *benchmark)
             unit->final_times.stime = stime/result_count;
             unit->final_times.rtime = rtime/result_count;
         }
-    }
-    else {
+    } else {
         DO_SETUP(benchmark);
         for (unit = benchmark->head; unit; unit = unit->next) {
             bm_single_run(unit, &(unit->final_times));
@@ -219,5 +209,5 @@ static VALUE frb_bm_run_all(VALUE v) {
 
 void Init_Benchmark(void) {
     mBenchmark = rb_define_module_under(mFerret, "Benchmark");
-    rb_define_singleton_method(mBenchmark, "run_all",                     frb_bm_run_all, 0);
+    rb_define_singleton_method(mBenchmark, "run_all", frb_bm_run_all, 0);
 }
