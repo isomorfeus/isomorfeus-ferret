@@ -28,7 +28,7 @@ const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
 char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
 char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_FINAL_SIZE];
 
-static pthread_key_t exception_stack_key;
+static frt_thread_key_t exception_stack_key;
 static pthread_once_t exception_stack_key_once = PTHREAD_ONCE_INIT;
 
 static void exception_stack_alloc(void) {
