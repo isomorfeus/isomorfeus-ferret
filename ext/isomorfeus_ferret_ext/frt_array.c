@@ -39,7 +39,7 @@ void frt_ary_set_i(void ***ary, int index, void *value) {
     if (index < 0) {
         index += frt_ary_sz(*ary);
         if (index < 0) {
-            FRT_RAISE(FRT_INDEX_ERROR, "frt_ary_set: index %d out array", index);
+            FRT_RAISE(FRT_INDEX_ERROR, "index %d out array", index);
         }
     }
     frt_ary_resize_i(ary, index);
