@@ -41,6 +41,7 @@ VALUE cTerm;
 VALUE cFileNotFoundError;
 VALUE cParseError;
 VALUE cStateError;
+VALUE cUnsupportedError;
 
 void Init_Benchmark(void);
 void Init_Test(void);
@@ -296,6 +297,7 @@ void Init_isomorfeus_ferret_ext(void) {
     cParseError = rb_define_class_under(mFerret, "ParseError", rb_eStandardError);
     cStateError = rb_define_class_under(mFerret, "StateError", rb_eStandardError);
     cFileNotFoundError = rb_define_class_under(mFerret, "FileNotFoundError", rb_eIOError);
+    cUnsupportedError = rb_define_class_under(mIndex, "UnsupportedError", rb_eStandardError);
 
     error_map = rb_hash_new();
     rb_hash_aset(error_map, rb_intern(ERROR_TYPES[2]), rb_eStandardError);
