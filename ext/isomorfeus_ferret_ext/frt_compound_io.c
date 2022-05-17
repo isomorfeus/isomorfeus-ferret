@@ -18,22 +18,22 @@ typedef struct FileEntry {
     frt_off_t length;
 } FileEntry;
 
-static void cmpd_touch(FrtStore *store, const char *filename) {
-    store->dir.cmpd->store->touch(store->dir.cmpd->store, filename);
+static void cmpd_touch(FrtStore *store, const char *file_name) {
+    store->dir.cmpd->store->touch(store->dir.cmpd->store, file_name);
 }
 
-static int cmpd_exists(FrtStore *store, const char *filename) {
-    if (frt_h_get(store->dir.cmpd->entries, filename) != NULL) {
+static int cmpd_exists(FrtStore *store, const char *file_name) {
+    if (frt_h_get(store->dir.cmpd->entries, file_name) != NULL) {
         return true;
     } else {
         return false;
     }
 }
 
-static int cmpd_remove(FrtStore *store, const char *filename) {
+static int cmpd_remove(FrtStore *store, const char *file_name) {
     (void)store;
-    (void)filename;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    (void)file_name;
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return 0;
 }
 
@@ -78,8 +78,8 @@ static void cmpd_close_i(FrtStore *store) {
     free(store->dir.cmpd);
 }
 
-static frt_off_t cmpd_length(FrtStore *store, const char *filename) {
-    FileEntry *fe = (FileEntry *)frt_h_get(store->dir.cmpd->entries, filename);
+static frt_off_t cmpd_length(FrtStore *store, const char *file_name) {
+    FileEntry *fe = (FileEntry *)frt_h_get(store->dir.cmpd->entries, file_name);
     if (fe != NULL) {
         return fe->length;
     } else {
@@ -139,33 +139,34 @@ static FrtInStream *cmpd_create_input(FrtInStream *sub_is, frt_off_t offset, frt
     return is;
 }
 
-static FrtInStream *cmpd_open_input_stream(FrtStore *store, const char *filename) {
-    FrtInStream *is = NULL;
+static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name) {
+    FileEntry *entry;
+    FrtCompoundStore *cmpd = store->dir.cmpd;
+    FrtInStream *is;
 
     pthread_mutex_lock(&store->mutex);
+    if (cmpd->stream == NULL) {
+        frt_mutex_unlock(&store->mutex);
+        rb_raise(rb_eIOError, "cmpd_open_input: Can't open compound file input stream. Parent "
+              "stream is closed.");
+    }
 
-    FrtCompoundStore *cmpd = store->dir.cmpd;
-    if (cmpd->stream == NULL) goto retis;
-
-    FileEntry *entry = (FileEntry *)frt_h_get(cmpd->entries, filename);
-    if (entry == NULL) goto retis;
+    entry = (FileEntry *)frt_h_get(cmpd->entries, file_name);
+    if (entry == NULL) {
+        frt_mutex_unlock(&store->mutex);
+        rb_raise(rb_eIOError, "cmpd_open_input: File %s does not exist: ", file_name);
+    }
 
     is = cmpd_create_input(cmpd->stream, entry->offset, entry->length);
-retis:
+
     pthread_mutex_unlock(&store->mutex);
     return is;
 }
 
-static FrtInStream *cmpd_open_input_ex(FrtStore *store, const char *filename) {
-    FrtInStream *is = cmpd_open_input_stream(store, filename);
-    if (is != NULL) return is;
-    rb_raise(rb_eIOError, "cmpd_open_input_ex: Can't open compound file '%s' as input stream.", filename);
-}
-
-static FrtOutStream *cmpd_new_output(FrtStore *store, const char *filename) {
+static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name) {
     (void)store;
-    (void)filename;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    (void)file_name;
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
@@ -239,8 +240,7 @@ FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name) {
     new_store->each         = &cmpd_each;
     new_store->close_i      = &cmpd_close_i;
     new_store->new_output   = &cmpd_new_output;
-    new_store->open_input   = &cmpd_open_input_ex;
-    new_store->open_input_stream = &cmpd_open_input_stream;
+    new_store->open_input   = &cmpd_open_input;
     new_store->open_lock_i  = &cmpd_open_lock_i;
     new_store->close_lock_i = &cmpd_close_lock_i;
 
