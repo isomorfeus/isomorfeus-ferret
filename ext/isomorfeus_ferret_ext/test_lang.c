@@ -31,7 +31,7 @@ static void test_emalloc(TestCase *tc, void *data)
     Apnotnull(p);
     free(p);
 
-    Araise(rb_eNoMemError, huge_emalloc, NULL);
+    Araise(FRT_MEM_ERROR, huge_emalloc, NULL);
 }
 
 static void test_ecalloc(TestCase *tc, void *data)
@@ -47,7 +47,7 @@ static void test_ecalloc(TestCase *tc, void *data)
     }
     free(p);
 
-    Araise(rb_eNoMemError, huge_ecalloc, NULL);
+    Araise(FRT_MEM_ERROR, huge_ecalloc, NULL);
 }
 
 static void test_erealloc(TestCase *tc, void *data)
@@ -59,7 +59,7 @@ static void test_erealloc(TestCase *tc, void *data)
     Apnotnull(p);
     free(p);
 
-    Araise(rb_eNoMemError, huge_erealloc, NULL);
+    Araise(FRT_MEM_ERROR, huge_erealloc, NULL);
 }
 
 TestSuite *ts_lang(TestSuite *suite)

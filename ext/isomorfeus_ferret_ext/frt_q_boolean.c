@@ -5,8 +5,6 @@
 #define BQ(query) ((FrtBooleanQuery *)(query))
 #define BW(weight) ((BooleanWeight *)(weight))
 
-extern VALUE cStateError;
-
 /***************************************************************************
  *
  * BooleanScorer
@@ -1552,7 +1550,7 @@ FrtQuery *frt_bq_new_max(bool coord_disabled, int max) {
 
 FrtBooleanClause *frt_bq_add_clause_nr(FrtQuery *self, FrtBooleanClause *bc) {
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
-        rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
+        FRT_RAISE(FRT_STATE_ERROR, "Two many clauses. The max clause limit is set to "
               "<%d> but your query has <%d> clauses. You can try increasing "
               ":max_clause_count for the BooleanQuery or using a different "
               "type of query.", BQ(self)->clause_cnt, BQ(self)->max_clause_cnt);
@@ -1574,7 +1572,7 @@ FrtBooleanClause *frt_bq_add_clause(FrtQuery *self, FrtBooleanClause *bc) {
 FrtBooleanClause *frt_bq_add_query_nr(FrtQuery *self, FrtQuery *sub_query, FrtBCType occur) {
     FrtBooleanClause *bc;
     if (BQ(self)->clause_cnt >= BQ(self)->max_clause_cnt) {
-        rb_raise(cStateError, "Two many clauses. The max clause limit is set to "
+        FRT_RAISE(FRT_STATE_ERROR, "Two many clauses. The max clause limit is set to "
               "<%d> but your query has <%d> clauses. You can try increasing "
               ":max_clause_count for the BooleanQuery or using a different "
               "type of query.", BQ(self)->clause_cnt, BQ(self)->max_clause_cnt);

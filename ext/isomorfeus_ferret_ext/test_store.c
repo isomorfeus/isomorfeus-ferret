@@ -7,9 +7,6 @@
 
 #define TEST_LOCK_NAME "test"
 
-extern VALUE cLockError;
-extern VALUE cStateError;
-
 typedef struct WithLockTestArg {
     FrtLock *lock;
     TestCase *tc;
@@ -74,7 +71,7 @@ static void test_lock(TestCase *tc, void *data)
         frt_with_lock(lock, &with_lock_test, &wlta);
         Assert(false, "A locking exception should have been raised");
         break;
-    case 2: // TODO cLockError
+    case FRT_LOCK_ERROR:
         handled = true;
         FRT_HANDLED();
         break;
@@ -100,7 +97,7 @@ static void test_lock(TestCase *tc, void *data)
         frt_with_lock_name(store, TEST_LOCK_NAME, &with_lock_name_test, &wlnta);
         Assert(false, "A locking exception should have been raised");
         break;
-    case 2: // TODO cLockError
+    case FRT_LOCK_ERROR:
         handled = true;
         FRT_HANDLED();
         break;
