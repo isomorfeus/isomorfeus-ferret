@@ -214,7 +214,7 @@ static void is_refill(FrtInStream *is)
 
     is->buf.len = last - start;
     if (is->buf.len <= 0) {
-        rb_raise(rb_eEOFError, "current pos = %"FRT_OFF_T_PFX"d, "
+        FRT_RAISE(FRT_EOF_ERROR, "current pos = %"FRT_OFF_T_PFX"d, "
               "file length = %"FRT_OFF_T_PFX"d", start, flen);
     }
 

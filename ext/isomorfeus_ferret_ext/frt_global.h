@@ -2,6 +2,7 @@
 #define FRT_GLOBAL_H
 
 #include "frt_config.h"
+#include "frt_except.h"
 #include "frt_lang.h"
 #include <stdlib.h>
 #include <stdio.h>

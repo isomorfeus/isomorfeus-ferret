@@ -893,7 +893,7 @@ static void test_multi_term_query(TestCase *tc, void *data)
     FrtQuery *mtq, *bq;
     FrtExplanation *exp;
 
-    Araise(rb_eArgError, &mtq_zero_max_terms, NULL);
+    Araise(FRT_ARG_ERROR, &mtq_zero_max_terms, NULL);
 
     mtq = frt_multi_tq_new_conf(field, 4, 0.5);
     tst_check_hits(tc, searcher, mtq, "", -1);
@@ -1074,10 +1074,10 @@ static void test_range_query(TestCase *tc, void *data)
     FrtSearcher *searcher = (FrtSearcher *)data;
     FrtQuery *rq;
 
-    Araise(rb_eArgError, &rq_new_lower_gt_upper, NULL);
-    Araise(rb_eArgError, &rq_new_include_lower_and_null_lower, NULL);
-    Araise(rb_eArgError, &rq_new_include_upper_and_null_upper, NULL);
-    Araise(rb_eArgError, &rq_new_null_lower_and_upper, NULL);
+    Araise(FRT_ARG_ERROR, &rq_new_lower_gt_upper, NULL);
+    Araise(FRT_ARG_ERROR, &rq_new_include_lower_and_null_lower, NULL);
+    Araise(FRT_ARG_ERROR, &rq_new_include_upper_and_null_upper, NULL);
+    Araise(FRT_ARG_ERROR, &rq_new_null_lower_and_upper, NULL);
 
     rq = frt_rq_new(date, "20051006", "20051010", true, true);
     tst_check_hits(tc, searcher, rq, "6,7,8,9,10", -1);
@@ -1251,12 +1251,12 @@ static void test_typed_range_query(TestCase *tc, void *data)
     FrtSearcher *searcher = (FrtSearcher *)data;
     FrtQuery *trq;
 
-    Araise(rb_eArgError, trq_new_int_lower_gt_upper, NULL);
-    Araise(rb_eArgError, trq_new_float_lower_gt_upper, NULL);
-    Araise(rb_eArgError, trq_new_string_lower_gt_upper, NULL);
-    Araise(rb_eArgError, trq_new_include_lower_and_null_lower, NULL);
-    Araise(rb_eArgError, trq_new_include_upper_and_null_upper, NULL);
-    Araise(rb_eArgError, trq_new_null_lower_and_upper, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_int_lower_gt_upper, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_float_lower_gt_upper, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_string_lower_gt_upper, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_include_lower_and_null_lower, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_include_upper_and_null_upper, NULL);
+    Araise(FRT_ARG_ERROR, trq_new_null_lower_and_upper, NULL);
 
     trq = frt_trq_new(number, "-1.0", "1.0", true, true);
     tst_check_hits(tc, searcher, trq, "0,1,4,10,15,17", -1);

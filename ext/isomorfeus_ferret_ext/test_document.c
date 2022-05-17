@@ -133,7 +133,7 @@ void test_double_field_exception(TestCase *tc, void *data)
     FRT_TRY
         df = frt_df_add_data_len(frt_df_new(rb_intern("title")), (char *)"title", 5, enc);
         frt_doc_add_field(doc, df);
-    case 8: // rb_eException
+    case FRT_EXCEPTION:
         exception_thrown = true;
         FRT_HANDLED();
         break;

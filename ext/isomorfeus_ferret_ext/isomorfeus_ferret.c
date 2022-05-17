@@ -1,6 +1,7 @@
 #include <errno.h>
 #include "isomorfeus_ferret.h"
 #include "frt_global.h"
+#include "frt_except.h"
 #include "frt_hash.h"
 #include "frt_hashset.h"
 #include "frt_threading.h"
