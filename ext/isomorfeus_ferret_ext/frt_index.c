@@ -11,7 +11,6 @@
 #include "bzlib.h"
 #include "lz4frame.h"
 
-extern VALUE cUnsupportedError;
 extern rb_encoding *utf8_encoding;
 extern void frt_micro_sleep(const int micro_seconds);
 
@@ -61,7 +60,7 @@ static char *u64_to_str36(char *buf, int buf_size, frt_u64 u)
         }
     }
     if (0 < u) {
-        rb_raise(rb_eIndexError, "Max length of segment filename has been reached. Perhaps it's time to re-index.");
+        FRT_RAISE(FRT_INDEX_ERROR, "Max length of segment filename has been reached. Perhaps it's time to re-index.");
     }
     return buf + i;
 }
@@ -2150,7 +2149,7 @@ static void sti_ensure_index_is_read(FrtSegmentTermIndex *sti, FrtTermEnum *inde
         for (i = 0; NULL != ste_next(index_te); i++) {
 #ifdef DEBUG
             if (i >= index_cnt) {
-                rb_raise(rb_eIndexError, "index term enum read too many terms");
+                FRT_RAISE(FRT_INDEX_ERROR, "index term enum read too many terms");
             }
 #endif
             sti->index_terms[i] = frt_te_get_term(index_te);
@@ -3399,7 +3398,7 @@ static void mtdpe_seek(FrtTermDocEnum *tde, int field_num, const char *term)
     (void)tde;
     (void)field_num;
     (void)term;
-    rb_raise(cUnsupportedError, "MultipleTermDocPosEnum does not support the #seek operation");
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support the #seek operation");
 }
 
 static int mtdpe_doc_num(FrtTermDocEnum *tde)
@@ -3487,7 +3486,7 @@ static int mtdpe_read(FrtTermDocEnum *tde, int *docs, int *freqs, int req_num)
     (void)tde;
     (void)docs;
     (void)freqs;
-    rb_raise(cUnsupportedError, "MultipleTermDocPosEnum does not support the #read operation");
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "MultipleTermDocPosEnum does not support the #read operation");
     return req_num;
 }
 

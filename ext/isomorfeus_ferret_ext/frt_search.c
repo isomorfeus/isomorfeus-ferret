@@ -3,8 +3,6 @@
 #include "frt_search.h"
 #include "frt_array.h"
 
-extern VALUE cUnsupportedError;
-
 /***************************************************************************
  *
  * FrtExplanation - Used to give details for query scores
