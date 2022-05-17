@@ -1014,7 +1014,6 @@ void frt_sis_del_at(FrtSegmentInfos *sis, int at)
 void frt_sis_del_from_to(FrtSegmentInfos *sis, int from, int to)
 {
     int i, num_to_del = to - from;
-    int o = sis->size;
     sis->size -= num_to_del;
     const int sis_size = sis->size;
     for (i = from; i < to; i++) {
@@ -1160,7 +1159,7 @@ static void lazy_df_destroy(FrtLazyDocField *self) {
 }
 
 static void comp_raise(void) {
-    FRT_RAISE(EXCEPTION, "Compression error");
+    FRT_RAISE(FRT_EXCEPTION, "Compression error");
 }
 
 static char *is_read_brotli_compressed_bytes(FrtInStream *is, int compressed_len, int *len) {
@@ -3692,7 +3691,6 @@ static void frt_deleter_find_deletable_files_i(const char *file_name, void *arg)
             do_delete = true;
         } else {
             char tmp_fn[FRT_SEGMENT_NAME_MAX_LENGTH];
-            char buf[FRT_SEGMENT_NAME_MAX_LENGTH];
             /* OK, segment is referenced, but file may still be orphan'd: */
             if (file_name_filter_is_cfs_file(file_name)
                 && si->use_compound_file) {

@@ -28,8 +28,8 @@ const char *const FRT_EOF_ERROR_MSG = "Read past end of file";
 char frt_xmsg_buffer[FRT_XMSG_BUFFER_SIZE];
 char frt_xmsg_buffer_final[FRT_XMSG_BUFFER_FINAL_SIZE];
 
-static frt_thread_key_t exception_stack_key;
-static frt_thread_once_t exception_stack_key_once = FRT_THREAD_ONCE_INIT;
+static pthread_key_t exception_stack_key;
+static pthread_once_t exception_stack_key_once = PTHREAD_ONCE_INIT;
 
 static void exception_stack_alloc(void) {
     frt_thread_key_create(&exception_stack_key, NULL);
@@ -38,7 +38,7 @@ static void exception_stack_alloc(void) {
 
 void frt_xpush_context(frt_xcontext_t *context) {
     frt_xcontext_t *top_context;
-    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    pthread_once(&exception_stack_key_once, *exception_stack_alloc);
     top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
     context->next = top_context;
     frt_thread_setspecific(exception_stack_key, context);
@@ -55,7 +55,7 @@ static void frt_xraise_context(frt_xcontext_t *context, volatile int excode, con
 
 void frt_xraise(int excode, const char *const msg) {
     frt_xcontext_t *top_context;
-    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    pthread_once(&exception_stack_key_once, *exception_stack_alloc);
     top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
 
     if (!top_context) {
@@ -73,7 +73,7 @@ void frt_xraise(int excode, const char *const msg) {
 
 void frt_xpop_context(void) {
     frt_xcontext_t *top_cxt, *context;
-    frt_thread_once(&exception_stack_key_once, *exception_stack_alloc);
+    pthread_once(&exception_stack_key_once, *exception_stack_alloc);
     top_cxt = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
     context = top_cxt->next;
     frt_thread_setspecific(exception_stack_key, context);

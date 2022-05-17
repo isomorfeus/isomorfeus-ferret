@@ -144,14 +144,14 @@ static FrtInStream *cmpd_open_input(FrtStore *store, const char *file_name) {
 
     pthread_mutex_lock(&store->mutex);
     if (cmpd->stream == NULL) {
-        frt_mutex_unlock(&store->mutex);
+        pthread_mutex_unlock(&store->mutex);
         FRT_RAISE(FRT_IO_ERROR, "Can't open compound file input stream. Parent "
               "stream is closed.");
     }
 
     entry = (FileEntry *)frt_h_get(cmpd->entries, file_name);
     if (entry == NULL) {
-        frt_mutex_unlock(&store->mutex);
+        pthread_mutex_unlock(&store->mutex);
         FRT_RAISE(FRT_IO_ERROR, "File %s does not exist: ", file_name);
     }
 

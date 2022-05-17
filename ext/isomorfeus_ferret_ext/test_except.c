@@ -136,7 +136,7 @@ static void try_xfinally1(TestCase *tc)
     FRT_TRY
         Assert(true, "No exception raised");
     FRT_XFINALLY
-        FRT_RAISE(EXCEPTION, "%s", msg1);
+        FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
         finally_handled = true;
     FRT_XENDTRY
     Assert(finally_handled, "Finally wasn't handled");
@@ -148,10 +148,10 @@ static void try_xfinally2(TestCase *tc)
     bool finally_handled = false;
 
     FRT_TRY
-        FRT_RAISE(EXCEPTION, "%s", msg1);
+        FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
         Assert(false, "Exception should have been raised");
     FRT_XFINALLY
-        FRT_RAISE(EXCEPTION, "%s", msg1);
+        FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
         finally_handled = true;
     FRT_XENDTRY
     Assert(finally_handled, "Finally wasn't handled");
@@ -163,11 +163,11 @@ static void try_xcatchall(TestCase *tc)
     bool catchall_handled = false;
 
     FRT_TRY
-        FRT_RAISE(EXCEPTION, "%s", msg1);
+        FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
         Assert(false, "Exception should have been raised");
     FRT_XCATCHALL
         FRT_HANDLED();
-        FRT_RAISE(EXCEPTION, "%s", msg1);
+        FRT_RAISE(FRT_EXCEPTION, "%s", msg1);
         catchall_handled = true;
     FRT_XENDTRY
     Assert(catchall_handled, "Finally wasn't handled");

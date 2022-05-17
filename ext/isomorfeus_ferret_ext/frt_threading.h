@@ -15,6 +15,5 @@ extern void *frb_thread_getspecific(frt_thread_key_t key);
 #define frt_thread_key_delete(a) frb_thread_key_delete(a)
 #define frt_thread_setspecific(a, b) frb_thread_setspecific(a, b)
 #define frt_thread_getspecific(a) frb_thread_getspecific(a)
-#define frt_thread_once(a, b) pthread_once(a, b)
 
 #endif
