@@ -540,10 +540,19 @@ static VALUE frb_fis_get(VALUE self, VALUE ridx) {
  *  possible.
  */
 static VALUE frb_fis_add(VALUE self, VALUE rfi) {
+    int excode = 0;
+    char *msg = NULL;
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
     TypedData_Get_Struct(rfi, FrtFieldInfo, &frb_field_info_t, fi);
-    frt_fis_add_field(fis, fi);
+    FRT_TRY
+        frt_fis_add_field(fis, fi);
+    FRT_XCATCHALL
+        excode = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+    if (excode) frb_raise(excode, msg);
     return self;
 }
 
@@ -563,14 +572,23 @@ static VALUE frb_fis_add_field(int argc, VALUE *argv, VALUE self) {
     FrtTermVectorValue term_vector = fis->term_vector;
     float boost = 1.0f;
     VALUE rname, roptions;
+    int excode = 0;
+    char *msg = NULL;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
-    if (argc > 1) {
-        frb_fi_get_params(roptions, &store_val, &compression, &index, &term_vector, &boost);
-    }
-    fi = frt_fi_new(frb_field(rname), store_val, compression, index, term_vector);
-    fi->boost = boost;
-    frt_fis_add_field(fis, fi);
+    FRT_TRY
+        if (argc > 1) {
+            frb_fi_get_params(roptions, &store_val, &compression, &index, &term_vector, &boost);
+        }
+        fi = frt_fi_new(frb_field(rname), store_val, compression, index, term_vector);
+        fi->boost = boost;
+        frt_fis_add_field(fis, fi);
+    FRT_XCATCHALL
+        excode = xcontext.excode;
+        msg = xcontext.msg;
+        FRT_HANDLED();
+    FRT_XENDTRY
+    if (excode) frb_raise(excode, msg);
     return self;
 }
 

@@ -2497,7 +2497,7 @@ static VALUE frb_rf_alloc(VALUE rclass) {
  *    f = RangeFilter.new(:date, :>= => "200501", :<= => 200502)
  */
 static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
-    int ex_code = 0;
+    int excode = 0;
     const char *msg = NULL;
     frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
     rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
@@ -2507,16 +2507,18 @@ static VALUE frb_rf_init(VALUE self, VALUE rfield, VALUE roptions) {
         frt_rfilt_init(f, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
         f->rfilter = self;
     FRT_XCATCHALL
-        ((struct RData *)(self))->data = NULL;
-        ((struct RData *)(self))->dmark = NULL;
-        ((struct RData *)(self))->dfree = NULL;
-        free(f);
-        ex_code = xcontext.excode;
+        excode = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
     FRT_XENDTRY
 
-    if (ex_code && msg) { frb_raise(ex_code, msg); }
+    if (excode) {
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        free(f);
+        frb_raise(excode, msg);
+    }
 
     return self;
 }
@@ -2575,7 +2577,7 @@ static VALUE frb_trf_alloc(VALUE rclass) {
  *    f = TypedRangeFilter.new(:date, :>= => "-132.2", :<= => -1.4)
  */
 static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
-    int ex_code = 0;
+    int excode = 0;
     const char *msg = NULL;
     frb_rq_args a = { .self = self, .rfield = rfield, .roptions = roptions };
     rb_rescue(frb_rq_init_2, (VALUE)&a, frb_q_init_r, (VALUE)&a);
@@ -2585,16 +2587,18 @@ static VALUE frb_trf_init(VALUE self, VALUE rfield, VALUE roptions) {
         frt_trfilt_init(f, a.field, a.lterm, a.uterm, a.include_lower, a.include_upper);
         f->rfilter = self;
     FRT_XCATCHALL
-        ((struct RData *)(self))->data = NULL;
-        ((struct RData *)(self))->dmark = NULL;
-        ((struct RData *)(self))->dfree = NULL;
-        free(f);
-        ex_code = xcontext.excode;
+        excode = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
     FRT_XENDTRY
 
-    if (ex_code && msg) { frb_raise(ex_code, msg); }
+    if (excode && msg) {
+        ((struct RData *)(self))->data = NULL;
+        ((struct RData *)(self))->dmark = NULL;
+        ((struct RData *)(self))->dfree = NULL;
+        free(f);
+        frb_raise(excode, msg);
+    }
 
     return self;
 }
@@ -3154,7 +3158,7 @@ static FrtTopDocs *frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtS
     FrtPostFilter post_filter_holder;
     FrtPostFilter *post_filter = NULL;
 
-    int ex_code = 0;
+    int excode = 0;
     const char *msg = NULL;
 
     if (Qnil != roptions) {
@@ -3209,12 +3213,12 @@ static FrtTopDocs *frb_sea_search_internal(FrtQuery *query, VALUE roptions, FrtS
         td = sea->search(sea, query, offset, limit, filter, sort, post_filter, 0);
         if (filter) frt_filt_deref(filter);
     FRT_XCATCHALL
-        ex_code = xcontext.excode;
+        excode = xcontext.excode;
         msg = xcontext.msg;
         FRT_HANDLED();
     FRT_XENDTRY
 
-    if (ex_code && msg) { frb_raise(ex_code, msg); }
+    if (excode && msg) { frb_raise(excode, msg); }
 
     return td;
 }
