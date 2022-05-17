@@ -21,12 +21,7 @@ class AryTest < Test::Unit::TestCase
     assert_equal("one", ary[1])
     assert_nil(ary.remove(2))
 
-    begin
-        ary.set(-3, "minusone")
-    rescue
-        raised = 1
-    end
-    assert_equal(1, raised)
+    assert_raise(IndexError) { ary.set(-3, "minusone") }
 
     ary = Ary.new(10)
     assert_equal(0, ary.size)
