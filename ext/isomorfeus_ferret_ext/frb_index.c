@@ -19,7 +19,7 @@ VALUE cLazyDocData;
 VALUE cIndexWriter;
 VALUE cIndexReader;
 
-VALUE cUnsupportedError;
+extern VALUE cUnsupportedError;
 
 VALUE sym_analyzer;
 static VALUE sym_close_dir;
@@ -554,9 +554,7 @@ static VALUE frb_fis_add(VALUE self, VALUE rfi) {
  *  Add a new field to the FieldInfos object. See FieldInfo for a description
  *  of the available properties.
  */
-static VALUE
-frb_fis_add_field(int argc, VALUE *argv, VALUE self)
-{
+static VALUE frb_fis_add_field(int argc, VALUE *argv, VALUE self) {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
     FrtStoreValue store_val = fis->store_val;
@@ -1083,7 +1081,6 @@ static VALUE frb_tde_each(VALUE self) {
         RARRAY_PTR(vals)[0] = INT2FIX(tde->doc_num(tde));
         RARRAY_PTR(vals)[1] = INT2FIX(tde->freq(tde));
         rb_yield(vals);
-
     }
     return INT2FIX(doc_cnt);
 }
@@ -1127,16 +1124,13 @@ static VALUE frb_tde_to_json(int argc, VALUE *argv, VALUE self) {
     if (do_positions) {
         if (argc == 0) {
             format = "{\"document\":%d,\"frequency\":%d,\"positions\":[";
-        }
-        else {
+        } else {
             format = "[%d,%d,[";
         }
-    }
-    else {
+    } else {
         if (argc == 0) {
             format = "{\"document\":%d,\"frequency\":%d},";
-        }
-        else {
+        } else {
             format = "[%d,%d],";
         }
     }
@@ -1467,9 +1461,7 @@ frb_iw_get_doc_count(VALUE self)
     return INT2FIX(frt_iw_doc_count(iw));
 }
 
-static int
-frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
-{
+static int frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg) {
     if (key == Qundef) {
         return ST_CONTINUE;
     } else {
@@ -1508,9 +1500,7 @@ frb_hash_to_doc_i(VALUE key, VALUE value, VALUE arg)
     return ST_CONTINUE;
 }
 
-static FrtDocument *
-frb_get_doc(VALUE rdoc)
-{
+static FrtDocument *frb_get_doc(VALUE rdoc) {
     VALUE val;
     FrtDocument *doc = frt_doc_new();
     FrtDocField *df;
@@ -1562,9 +1552,7 @@ frb_get_doc(VALUE rdoc)
  *  Add a document to the index. See Document. A document can also be a simple
  *  hash object.
  */
-static VALUE
-frb_iw_add_doc(VALUE self, VALUE rdoc)
-{
+static VALUE frb_iw_add_doc(VALUE self, VALUE rdoc) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     FrtDocument *doc = frb_get_doc(rdoc);
     frt_iw_add_doc(iw, doc);
@@ -1584,9 +1572,7 @@ frb_iw_add_doc(VALUE self, VALUE rdoc)
  *  indexing speed (except for the time taken to complete the optimization
  *  process).
  */
-static VALUE
-frb_iw_optimize(VALUE self)
-{
+static VALUE frb_iw_optimize(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     frt_iw_optimize(iw);
     return self;
@@ -1600,9 +1586,7 @@ frb_iw_optimize(VALUE self)
  *  memory. You should call this method if you want to read the latest index
  *  with an IndexWriter.
  */
-static VALUE
-frb_iw_commit(VALUE self)
-{
+static VALUE frb_iw_commit(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     frt_iw_commit(iw);
     return self;
@@ -1690,9 +1674,7 @@ static VALUE frb_iw_add_readers(VALUE self, VALUE rreaders) {
  *  in them. There are of course exceptions to this rule. For example, you may
  *  want to delete all documents with the term "viagra" when deleting spam.
  */
-static VALUE
-frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_iw_delete(VALUE self, VALUE rfield, VALUE rterm) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     if (TYPE(rterm) == T_ARRAY) {
         const int term_cnt = RARRAY_LEN(rterm);
@@ -1729,9 +1711,7 @@ static VALUE frb_iw_field_infos(VALUE self) {
  *  Get the FrtAnalyzer for this IndexWriter. This is useful if you need
  *  to use the same analyzer in a QueryParser.
  */
-static VALUE
-frb_iw_get_analyzer(VALUE self)
-{
+static VALUE frb_iw_get_analyzer(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return frb_get_analyzer(iw->analyzer);
 }
@@ -1744,9 +1724,7 @@ frb_iw_get_analyzer(VALUE self)
  *  change the analyzer for a special document. It is risky though as the
  *  same analyzer will be used for all documents during search.
  */
-static VALUE
-frb_iw_set_analyzer(VALUE self, VALUE ranalyzer)
-{
+static VALUE frb_iw_set_analyzer(VALUE self, VALUE ranalyzer) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
 
     frt_a_deref(iw->analyzer);
@@ -1760,9 +1738,7 @@ frb_iw_set_analyzer(VALUE self, VALUE ranalyzer)
  *
  *  Returns the current version of the index writer.
  */
-static VALUE
-frb_iw_version(VALUE self)
-{
+static VALUE frb_iw_version(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return ULL2NUM(iw->sis->version);
 }
@@ -1773,9 +1749,7 @@ frb_iw_version(VALUE self)
  *
  *  Return the current value of chunk_size
  */
-static VALUE
-frb_iw_get_chunk_size(VALUE self)
-{
+static VALUE frb_iw_get_chunk_size(VALUE self) {
     FrtIndexWriter *iw = (FrtIndexWriter *)DATA_PTR(self);
     return INT2FIX(iw->config.chunk_size);
 }
@@ -2248,14 +2222,12 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
     }
 
     ir->rir = self;
-
     fis = ir->fis;
     for (i = 0; i < fis->size; i++) {
         FrtFieldInfo *fi = fis->fields[i];
         rb_hash_aset(rfield_num_map, ID2SYM(fi->name), INT2FIX(fi->number));
     }
     rb_ivar_set(self, id_fld_num_map, rfield_num_map);
-
     return self;
 }
 
@@ -2267,9 +2239,7 @@ static VALUE frb_ir_init(VALUE self, VALUE rdir) {
  *  +val+ should be an integer in the range 0..255 which corresponds to an
  *  encoded float value.
  */
-static VALUE
-frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval)
-{
+static VALUE frb_ir_set_norm(VALUE self, VALUE rdoc_id, VALUE rfield, VALUE rval) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     frt_ir_set_norm(ir, FIX2INT(rdoc_id), frb_field(rfield), (frt_uchar)NUM2CHR(rval));
     return self;
@@ -2328,9 +2298,7 @@ frb_ir_get_norms_into(VALUE self, VALUE rfield, VALUE rnorms, VALUE roffset)
  *  Commit any deletes made by this particular IndexReader to the index. This
  *  will use open a Commit lock.
  */
-static VALUE
-frb_ir_commit(VALUE self)
-{
+static VALUE frb_ir_commit(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     frt_ir_commit(ir);
     return self;
@@ -2346,9 +2314,7 @@ frb_ir_commit(VALUE self)
  *  as possible and to close any locks held by the object to prevent locking
  *  errors.
  */
-static VALUE
-frb_ir_close(VALUE self)
-{
+static VALUE frb_ir_close(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     ((struct RData *)(self))->data = NULL;
     ((struct RData *)(self))->dmark = NULL;
@@ -2379,9 +2345,7 @@ frb_ir_has_deletions(VALUE self)
  *  document_id is the number used to reference documents in the index and is
  *  returned by search methods.
  */
-static VALUE
-frb_ir_delete(VALUE self, VALUE rdoc_id)
-{
+static VALUE frb_ir_delete(VALUE self, VALUE rdoc_id) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     frt_ir_delete_doc(ir, FIX2INT(rdoc_id));
     return self;
@@ -2440,17 +2404,13 @@ frb_ir_num_docs(VALUE self)
  *  during index, deletions will be committed and undelete_all will have no
  *  effect on these documents.
  */
-static VALUE
-frb_ir_undelete_all(VALUE self)
-{
+static VALUE frb_ir_undelete_all(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     frt_ir_undelete_all(ir);
     return self;
 }
 
-static VALUE
-frb_get_doc_range(FrtIndexReader *ir, int pos, int len, int max)
-{
+static VALUE frb_get_doc_range(FrtIndexReader *ir, int pos, int len, int max) {
     VALUE ary;
     int i;
     max = FRT_MIN(max, pos+len);
@@ -2518,9 +2478,7 @@ frb_ir_get_doc(int argc, VALUE *argv, VALUE self)
  *  latest version of the index. If it isn't you should close and reopen the
  *  index to search the latest documents added to the index.
  */
-static VALUE
-frb_ir_is_latest(VALUE self)
-{
+static VALUE frb_ir_is_latest(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frt_ir_is_latest(ir) ? Qtrue : Qfalse;
 }
@@ -2532,9 +2490,7 @@ frb_ir_is_latest(VALUE self)
  *  Return the TermVector for the field +field+ in the document at +doc_id+ in
  *  the index. Return nil if no such term_vector exists. See TermVector.
  */
-static VALUE
-frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
-{
+static VALUE frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtTermVector *tv;
     VALUE rtv;
@@ -2543,8 +2499,7 @@ frb_ir_term_vector(VALUE self, VALUE rdoc_id, VALUE rfield)
         rtv = frb_get_tv(tv);
         frt_tv_destroy(tv);
         return rtv;
-    }
-    else {
+    } else {
         return Qnil;
     }
 }
@@ -2596,9 +2551,7 @@ frb_ir_term_docs(VALUE self)
  *  Builds a TermDocEnum to iterate through the documents that contain the
  *  term +term+ in the field +field+. See TermDocEnum for more info.
  */
-static VALUE
-frb_ir_term_docs_for(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_ir_term_docs_for(VALUE self, VALUE rfield, VALUE rterm) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, ir_term_docs_for(ir,
                                               frb_field(rfield),
@@ -2628,9 +2581,7 @@ frb_ir_term_positions(VALUE self)
  *  also allow you to scan through the positions at which a term occurs. See
  *  TermDocEnum for more info.
  */
-static VALUE
-frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_tde(self, frt_ir_term_positions_for(ir,
                                                    frb_field(rfield),
@@ -2644,9 +2595,7 @@ frb_ir_t_pos_for(VALUE self, VALUE rfield, VALUE rterm)
  *  Return the number of documents in which the term +term+ appears in the
  *  field +field+.
  */
-static VALUE
-frb_ir_doc_freq(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_ir_doc_freq(VALUE self, VALUE rfield, VALUE rterm) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return INT2FIX(frt_ir_doc_freq(ir,
                                frb_field(rfield),
@@ -2674,9 +2623,7 @@ frb_ir_terms(VALUE self, VALUE rfield)
  *  Same as IndexReader#terms(fields) except that it starts the enumerator off
  *  at term +term+.
  */
-static VALUE
-frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm)
-{
+static VALUE frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return frb_get_te(self, frt_ir_terms_from(ir,
                                           frb_field(rfield),
@@ -2690,8 +2637,7 @@ frb_ir_terms_from(VALUE self, VALUE rfield, VALUE rterm)
  *  Same return a count of the number of terms in the field
  */
 static VALUE
-frb_ir_term_count(VALUE self, VALUE rfield)
-{
+frb_ir_term_count(VALUE self, VALUE rfield) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     FrtTermEnum *te = frt_ir_terms(ir, frb_field(rfield));
     int count = 0;
@@ -3487,8 +3433,6 @@ void Init_Index(void) {
     sym_analyzer  = ID2SYM(rb_intern("analyzer"));
     sym_close_dir = ID2SYM(rb_intern("close_dir"));
     fsym_content  = rb_intern("content");
-
-    cUnsupportedError = rb_define_class_under(mIndex, "UnsupportedError", rb_eStandardError);
 
     Init_TermVector();
     Init_TermEnum();
