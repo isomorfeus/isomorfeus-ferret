@@ -135,8 +135,7 @@ char *json_concat_string(char *s, char *field) {
             *(s++) = '\'';
             *(s++) = *(field++);
             *(s++) = '\'';
-        }
-        else {
+        } else {
             *(s++) = *(field++);
         }
     }
@@ -317,6 +316,7 @@ void Init_isomorfeus_ferret_ext(void) {
     rb_define_const(mFerret, "FIX_INT_MAX", INT2FIX(INT_MAX >> 1));
 }
 
-extern void frb_raise(int excode, const char *msg) {
+void frb_raise(int excode, const char *msg) {
+    if (msg == NULL) msg = "";
     rb_raise(frb_get_error(ERROR_TYPES[excode]), "%s", msg);
 }
