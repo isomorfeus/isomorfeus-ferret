@@ -650,8 +650,7 @@ static FrtTokenStream *rets_reset(FrtTokenStream *ts, char *text, rb_encoding *e
 }
 
 static FrtTokenStream *rets_clone_i(FrtTokenStream *orig_ts) {
-    FrtTokenStream *ts = frt_ts_clone_size(orig_ts, sizeof(RegExpTokenStream));
-    return ts;
+    return frt_ts_clone_size(orig_ts, sizeof(RegExpTokenStream));
 }
 
 FrtTokenStream *rets_alloc(void) {
@@ -1204,9 +1203,9 @@ static VALUE frb_analyzer_token_stream(VALUE self, VALUE rfield, VALUE rstring) 
 
 #define GET_LOWER(dflt) \
     bool lower;\
-VALUE rlower;\
-rb_scan_args(argc, argv, "01", &rlower);\
-lower = (argc ? RTEST(rlower) : dflt)
+    VALUE rlower;\
+    rb_scan_args(argc, argv, "01", &rlower);\
+    lower = (argc ? RTEST(rlower) : dflt)
 
 static VALUE frb_analyzer_alloc(VALUE rclass) {
     FrtAnalyzer *a = frt_letter_analyzer_alloc();
