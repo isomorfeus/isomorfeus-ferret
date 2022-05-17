@@ -1,8 +1,6 @@
 #include "frt_index.h"
 #include "frt_array.h"
 
-extern VALUE cStateError;
-extern VALUE cUnsupportedError;
 extern void frt_store_close(FrtStore *store);
 extern FrtInStream *frt_is_new();
 extern FrtStore *frt_store_new();
@@ -41,7 +39,7 @@ static void cmpd_rename(FrtStore *store, const char *from, const char *to) {
     (void)store;
     (void)from;
     (void)to;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static int cmpd_count(FrtStore *store) {
@@ -61,7 +59,7 @@ static void cmpd_each(FrtStore *store, void (*func)(const char *fname, void *arg
 
 static void cmpd_clear(FrtStore *store) {
     (void)store;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 static void cmpd_close_i(FrtStore *store) {
@@ -173,13 +171,13 @@ static FrtOutStream *cmpd_new_output(FrtStore *store, const char *file_name) {
 static FrtLock *cmpd_open_lock_i(FrtStore *store, const char *lock_name) {
     (void)store;
     (void)lock_name;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
     return NULL;
 }
 
 static void cmpd_close_lock_i(FrtLock *lock) {
     (void)lock;
-    rb_raise(cUnsupportedError, "%s", FRT_UNSUPPORTED_ERROR_MSG);
+    FRT_RAISE(FRT_UNSUPPORTED_ERROR, "%s", FRT_UNSUPPORTED_ERROR_MSG);
 }
 
 FrtStore *frt_open_cmpd_store(FrtStore *store, const char *name) {
