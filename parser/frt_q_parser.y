@@ -92,7 +92,6 @@
 #include "frt_array.h"
 #include <ruby/encoding.h>
 
-extern VALUE cParseError;
 extern rb_encoding *utf8_encoding;
 extern int utf8_mbmaxlen;
 
@@ -1357,7 +1356,7 @@ FrtQuery *qp_parse(FrtQParser *self, char *query_string, rb_encoding *encoding)
         result = qp_get_bad_query(self, self->qstr, encoding);
     }
     if (self->destruct && !self->handle_parse_errors)
-        rb_raise(cParseError, frt_xmsg_buffer);
+        FRT_RAISE(FRT_PARSE_ERROR, frt_xmsg_buffer);
 
     if (!result)
         result = frt_bq_new(false);
