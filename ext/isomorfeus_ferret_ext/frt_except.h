@@ -112,8 +112,7 @@ extern const char *frt_err_code_to_type(const int err_code);
 
 extern void frb_rb_raise(const char *file, int line_num, const char *func, const char *err_type, const char *fmt, ...);
 
-typedef struct frt_xcontext_t
-{
+typedef struct frt_xcontext_t {
     jmp_buf jbuf;
     struct frt_xcontext_t *next;
     const char *msg;
@@ -130,7 +129,6 @@ typedef struct frt_xcontext_t
     frt_xpush_context(&xcontext);\
     switch (setjmp(xcontext.jbuf)) {\
       case FRT_BODY:
-
 
 #define FRT_XENDTRY\
     }\

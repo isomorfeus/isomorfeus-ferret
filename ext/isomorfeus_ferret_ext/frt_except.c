@@ -57,14 +57,11 @@ void frt_xraise(int excode, const char *const msg) {
     frt_xcontext_t *top_context;
     pthread_once(&exception_stack_key_once, *exception_stack_alloc);
     top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
-
     if (!top_context) {
         FRT_XEXIT(ERROR_TYPES[excode], msg);
-    }
-    else if (!top_context->in_finally) {
+    } else if (!top_context->in_finally) {
         frt_xraise_context(top_context, excode, msg);
-    }
-    else if (top_context->handled) {
+    } else if (top_context->handled) {
         top_context->msg = msg;
         top_context->excode = excode;
         top_context->handled = false;
@@ -72,17 +69,16 @@ void frt_xraise(int excode, const char *const msg) {
 }
 
 void frt_xpop_context(void) {
-    frt_xcontext_t *top_cxt, *context;
+    frt_xcontext_t *top_context, *context;
     pthread_once(&exception_stack_key_once, *exception_stack_alloc);
-    top_cxt = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
-    context = top_cxt->next;
+    top_context = (frt_xcontext_t *)frt_thread_getspecific(exception_stack_key);
+    context = top_context->next;
     frt_thread_setspecific(exception_stack_key, context);
-    if (!top_cxt->handled) {
+    if (!top_context->handled) {
         if (context) {
-            frt_xraise_context(context, top_cxt->excode, top_cxt->msg);
-        }
-        else {
-            FRT_XEXIT(ERROR_TYPES[top_cxt->excode], top_cxt->msg);
+            frt_xraise_context(context, top_context->excode, top_context->msg);
+        } else {
+            FRT_XEXIT(ERROR_TYPES[top_context->excode], top_context->msg);
         }
     }
 }
