@@ -109,7 +109,7 @@ static void cmpdi_read_i(FrtInStream *is, frt_uchar *b, int len) {
     frt_off_t start = frt_is_pos(is);
 
     if ((start + len) > cis->length) {
-        rb_raise(rb_eEOFError, "Tried to read past end of file. File length is "
+        FRT_RAISE(FRT_EOF_ERROR, "Tried to read past end of file. File length is "
               "<%"FRT_OFF_T_PFX"d> and tried to read to <%"FRT_OFF_T_PFX"d>",
               cis->length, start + len);
     }
@@ -315,7 +315,7 @@ void frt_cw_close(FrtCompoundWriter *cw, FrtDeleter *dlr) {
     int i;
 
     if (cw->ids->size <= 0) {
-        rb_raise(cStateError, "Tried to merge compound file with no entries");
+        FRT_RAISE(FRT_STATE_ERROR, "Tried to merge compound file with no entries");
     }
 
     FrtLock *lock = frt_open_lock(cw->store, cw->name);
