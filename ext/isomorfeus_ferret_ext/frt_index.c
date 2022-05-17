@@ -6284,7 +6284,7 @@ FrtIndexWriter *frt_iw_open(FrtIndexWriter *iw, FrtStore *store, FrtAnalyzer *vo
     FRT_TRY
         iw->write_lock = frt_open_lock(store, FRT_WRITE_LOCK_NAME);
         if (!iw->write_lock->obtain(iw->write_lock)) {
-            rb_raise(cLockError, "Couldn't obtain write lock when opening IndexWriter");
+            FRT_RAISE(FRT_LOCK_ERROR, "Couldn't obtain write lock when opening IndexWriter");
         }
 
         iw->sis = frt_sis_read(store);
