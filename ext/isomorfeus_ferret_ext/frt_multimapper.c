@@ -320,7 +320,7 @@ char *frt_mulmap_dynamic_map(FrtMultiMapper *self, char *from)
         }
         if (*s) {
             capa += 1024;
-            frt_erealloc(to, capa);
+            to = frt_erealloc(to, capa);
             end = to + capa - 1;
         }
     } while(*s);
