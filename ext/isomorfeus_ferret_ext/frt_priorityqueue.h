@@ -3,7 +3,7 @@
 
 #include "frt_global.h"
 
-#define FRT_PQ_START_CAPA 127
+#define FRT_PQ_START_CAPA 128
 
 typedef bool (*frt_lt_ft)(const void *p1, const void *p2, VALUE proc);
 
@@ -13,6 +13,7 @@ typedef bool (*frt_lt_ft)(const void *p1, const void *p2, VALUE proc);
  */
 typedef struct FrtPriorityQueue {
     int type_size;
+    int void_size;
     int size;
     int capa;
     int mem_capa;
@@ -34,7 +35,7 @@ typedef struct FrtPriorityQueue {
  *   when it is destroyed or there is insertion overflow
  * @return a newly allocated PriorityQueue
  */
-extern FrtPriorityQueue *frt_pq_new(int type_size, int capa, frt_lt_ft less_than, frt_free_ft free_elem);
+extern FrtPriorityQueue *frt_pq_new(unsigned int type_size, int capa, frt_lt_ft less_than, frt_free_ft free_elem);
 
 /**
  * Allocate a clone of the PriorityQueue. This can be used if you want to scan
