@@ -27,7 +27,7 @@ static void frb_ary_mark(void *p) {
     VALUE rvalue;
     for (i = 0; i < size; i++) {
         rvalue = (VALUE)frt_ary_get(ary, i);
-        rb_gc_mark(rvalue);
+        if(rvalue) rb_gc_mark(rvalue);
     }
 }
 
@@ -926,8 +926,8 @@ static void frb_pq_mark(void *p) {
     FrtPriorityQueue *pq = (FrtPriorityQueue *)p;
     int i;
     for (i = pq->size; i > 0; i--) {
-        if (pq->heap[i])
-            rb_gc_mark_maybe((VALUE)pq->heap[i]);
+        if (pq->heap[pq->type_size * i])
+            rb_gc_mark((VALUE)pq->heap[pq->type_size * i]);
     }
 }
 
