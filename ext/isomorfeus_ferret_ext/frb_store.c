@@ -402,7 +402,7 @@ static VALUE frb_fsdir_new(int argc, VALUE *argv, VALUE klass) {
         frb_create_dir(rpath);
     }
     if (!rb_funcall(rb_cFile, id_is_directory, 1, rpath)) {
-        rb_raise(rb_eIOError, "No directory <%s> found. Use :create => true to create one.", rs2s(rpath));
+        rb_raise(cFileNotFoundError, "No directory <%s> found. Use :create => true to create one.", rs2s(rpath));
     }
     store = frt_open_fs_store(rs2s(rpath));
     if (create) store->clear_all(store);
