@@ -229,7 +229,7 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
  */
 static VALUE frb_fi_name(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return rb_str_new_cstr(rb_id2name(fi->name));
+    return ID2SYM(fi->name);
 }
 
 /*
@@ -659,7 +659,7 @@ frb_fis_get_tk_fields(VALUE self)
     int i;
     for (i = 0; i < fis->size; i++) {
         if (!fi_is_tokenized(fis->fields[i])) continue;
-        rb_ary_push(rfield_names, rb_str_new_cstr(rb_id2name(fis->fields[i]->name)));
+        rb_ary_push(rfield_names, ID2SYM(fis->fields[i]->name));
     }
     return rfield_names;
 }
