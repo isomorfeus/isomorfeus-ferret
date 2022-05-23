@@ -2743,10 +2743,27 @@ frb_ir_tk_fields(VALUE self)
  *  Returns the current version of the index reader.
  */
 static VALUE
-frb_ir_version(VALUE self)
-{
+frb_ir_version(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
     return ULL2NUM(ir->sis->version);
+}
+
+static VALUE frb_ir_each(VALUE self) {
+    FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
+    VALUE ret = Qnil;
+    if (rb_block_given_p()) {
+        long i;
+        long max_doc = ir->max_doc(ir);
+        VALUE rld;
+        for (i = 0; i < max_doc; i++) {
+            if (ir->is_deleted(ir, i)) continue;
+            rld = frb_get_lazy_doc(ir->get_lazy_doc(ir, i));
+            ret = rb_yield(rld);
+        }
+    } else {
+        rb_raise(rb_eArgError, "a block must be given");
+    }
+    return ret;
 }
 
 /****************************************************************************
@@ -3435,6 +3452,7 @@ void Init_IndexReader(void) {
     rb_define_method(cIndexReader, "field_infos",    frb_ir_field_infos, 0);
     rb_define_method(cIndexReader, "tokenized_fields", frb_ir_tk_fields, 0);
     rb_define_method(cIndexReader, "version",        frb_ir_version, 0);
+    rb_define_method(cIndexReader, "each",           frb_ir_each, 0);
 }
 
 /* rdoc hack
