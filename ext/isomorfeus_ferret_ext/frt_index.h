@@ -529,7 +529,7 @@ extern FrtTVTerm *frt_tv_get_tv_term(FrtTermVector *tv, const char *term);
 
 /* * * FrtLazyDocField * * */
 typedef struct FrtLazyDocFieldData {
-    frt_off_t              start;
+    frt_off_t          start;
     int                length;
     rb_encoding        *encoding;
     FrtCompressionType compression; /* as stored */
