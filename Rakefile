@@ -58,6 +58,22 @@ task :ferret_bench => :compile do
   Dir.chdir(pwd)
 end
 
+task :ferret_read_bench => :compile do
+  puts "\n\n\tFerret:\n\n"
+  pwd = Dir.pwd
+  Dir.chdir('misc/ferret_vs_lucene')
+
+  puts "\nTitle and content stored without indexing:"
+  FileUtils.rm_rf('ferret_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 --store -x')
+  system('bundle exec ruby ferret_search.rb -r 6')
+  system('bundle exec ruby ferret_reader.rb -r 6')
+  system('bundle exec ruby ferret_lazy_reader.rb -r 6')
+  system('bundle exec ruby ferret_native_reader.rb -r 6')
+  puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+  Dir.chdir(pwd)
+end
+
 task :ferret_compression_bench => :compile do
   puts "\n\n\tFerret:\n\n"
   pwd = Dir.pwd

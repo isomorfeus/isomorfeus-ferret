@@ -497,6 +497,21 @@ module Isomorfeus
           end
         end
 
+        def each_lazy
+          @dir.synchronize do
+            ensure_reader_open
+            (0...@reader.max_doc).each do |i|
+              yield @reader[i] unless @reader.deleted?(i)
+            end
+          end
+        end
+
+        def each_native(&block)
+          @dir.synchronize do
+            ensure_reader_open
+            @reader.each(&block)
+          end
+        end
         # Deletes a document/documents from the index. The method for determining
         # the document to delete depends on the type of the argument passed.
         #
