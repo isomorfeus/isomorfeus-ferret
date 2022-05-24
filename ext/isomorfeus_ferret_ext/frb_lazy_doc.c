@@ -15,16 +15,33 @@ static void frb_ld_free(void *p) {
   if (p && p != &empty_lazy_doc) frt_lazy_doc_close((FrtLazyDoc *)p);
 }
 
+static size_t frb_ld_size(const void *p) {
+  return sizeof(FrtLazyDoc);
+  (void)p;
+}
+
+const rb_data_type_t frb_ld_t = {
+  .wrap_struct_name = "FrbLazyDoc",
+  .function = {
+    .dmark = NULL,
+    .dfree = frb_ld_free,
+    .dsize = frb_ld_size,
+    .dcompact = NULL,
+    .reserved = {0},
+  },
+  .parent = NULL,
+  .data = NULL,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY
+};
+
 VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc) {
-  VALUE rld = rb_class_new_instance(0, NULL, cLazyDoc);
-  ((struct RData *)(rld))->data = lazy_doc;
-  return rld;
+  return TypedData_Wrap_Struct(cLazyDoc, &frb_ld_t, lazy_doc);
 }
 
 static VALUE frb_ld_init(VALUE self) {
   rb_call_super(0, NULL);
+  fprintf(stderr, "data %llu\n", ((struct RData *)(self))->data);
   ((struct RData *)(self))->data = &empty_lazy_doc;
-  ((struct RData *)(self))->dfree = frb_ld_free;
   return self;
 }
 
