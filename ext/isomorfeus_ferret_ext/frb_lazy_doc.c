@@ -417,7 +417,7 @@ void Init_LazyDoc(void) {
   rb_define_method(cLazyDoc, "each_pair", frb_ld_each,    0);
   rb_define_method(cLazyDoc, "each_value", frb_ld_each,   0);
   rb_define_method(cLazyDoc, "empty?",   frb_ld_empty,    0);
-  rb_define_method(cLazyDoc, "eql?",     frb_ld_eqlq,     0);
+  rb_define_method(cLazyDoc, "eql?",     frb_ld_eqlq,     1);
   rb_define_method(cLazyDoc, "except",   frb_ld_except,  -1);
   rb_define_method(cLazyDoc, "fetch",    frb_ld_fetch,   -1);
   rb_define_method(cLazyDoc, "fetch_values", frb_ld_fetch_values, -1);
@@ -426,7 +426,7 @@ void Init_LazyDoc(void) {
   rb_define_method(cLazyDoc, "flatten",  frb_ld_flatten,  0);
   rb_define_method(cLazyDoc, "has_key?", frb_ld_has_key,  1);
   rb_define_method(cLazyDoc, "has_value?", frb_ld_has_value, 1);
-  rb_define_method(cLazyDoc, "hash",     frb_ld_hash,     1);
+  rb_define_method(cLazyDoc, "hash",     frb_ld_hash,     0);
   rb_define_method(cLazyDoc, "include?", frb_ld_has_key,  1);
   rb_undef_method(cLazyDoc,  "initialize_copy");
   rb_define_method(cLazyDoc, "inspect",  frb_ld_inspect,  0);
@@ -461,5 +461,5 @@ void Init_LazyDoc(void) {
   rb_undef_method(cLazyDoc,  "update");
   rb_define_method(cLazyDoc, "value?",   frb_ld_has_value, 1);
   rb_define_method(cLazyDoc, "values",   frb_ld_values,   0);
-  rb_define_method(cLazyDoc, "values_at", frb_ld_values_at, 0);
+  rb_define_method(cLazyDoc, "values_at", frb_ld_values_at, -1);
 }
