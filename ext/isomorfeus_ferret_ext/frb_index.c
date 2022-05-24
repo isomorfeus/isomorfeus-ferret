@@ -1,6 +1,5 @@
 #include "frt_index.h"
 #include "isomorfeus_ferret.h"
-#include <ruby.h>
 
 // #undef close
 
@@ -16,8 +15,6 @@ VALUE cTermVector;
 VALUE cTermEnum;
 VALUE cTermDocEnum;
 
-VALUE cLazyDoc;
-VALUE cLazyDocData;
 VALUE cIndexWriter;
 VALUE cIndexReader;
 
@@ -59,7 +56,6 @@ static VALUE sym_with_positions_offsets;
 static ID fsym_content;
 
 static ID id_term;
-static ID id_fields;
 static ID id_fld_num_map;
 static ID id_field_num;
 static ID id_boost;
@@ -68,6 +64,8 @@ extern rb_encoding *utf8_encoding;
 extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
+extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
+extern void Init_LazyDoc(void);
 
 /****************************************************************************
  *
@@ -1989,125 +1987,6 @@ frb_iw_set_use_compound_file(VALUE self, VALUE rval)
 
 /****************************************************************************
  *
- * LazyDoc Methods
- *
- ****************************************************************************/
-
-static void frb_lzd_data_free(void *p) {
-    frt_lazy_doc_close((FrtLazyDoc *)p);
-}
-
-static size_t frb_lazy_doc_size(const void *p) {
-    return sizeof(FrtLazyDoc);
-    (void)p;
-}
-
-const rb_data_type_t frb_lazy_doc_t = {
-    .wrap_struct_name = "FrbLazyDoc",
-    .function = {
-        .dmark = NULL,
-        .dfree = frb_lzd_data_free,
-        .dsize = frb_lazy_doc_size,
-        .dcompact = NULL,
-        .reserved = {0},
-    },
-    .parent = NULL,
-    .data = NULL,
-    .flags = RUBY_TYPED_FREE_IMMEDIATELY
-};
-
-static VALUE frb_lzd_alloc(VALUE klass) {
-    FrtLazyDoc *ld = FRT_ALLOC(FrtLazyDoc);
-    return TypedData_Wrap_Struct(klass, &frb_lazy_doc_t, ld);
-}
-
-static VALUE frb_lazy_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df) {
-    VALUE rdata = Qnil;
-    if (lazy_df) {
-        if (lazy_df->size == 1) {
-            char *data = frt_lazy_df_get_data(lazy_df, 0);
-            rdata = rb_str_new(data, lazy_df->data[0].length);
-            rb_enc_associate(rdata, lazy_df->data[0].encoding);
-        } else {
-            int i;
-            VALUE rstr;
-            rdata = rb_ary_new2(lazy_df->size);
-            for (i = 0; i < lazy_df->size; i++) {
-                char *data = frt_lazy_df_get_data(lazy_df, i);
-                rstr = rb_str_new(data, lazy_df->data[i].length);
-                rb_enc_associate(rstr, lazy_df->data[i].encoding);
-                rb_ary_store(rdata, i, rstr);
-            }
-        }
-        rb_hash_aset(self, rkey, rdata);
-    }
-    return rdata;
-}
-
-/*
- *  call-seq:
- *     lazy_doc.default(key) -> string
- *
- *  This method is used internally to lazily load fields. You should never
- *  really need to call it yourself.
- */
-static VALUE frb_lzd_default(VALUE self, VALUE rkey) {
-    FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
-    ID field = frb_field(rkey);
-    VALUE rfield = ID2SYM(field);
-
-    return frb_lazy_df_load(self, rfield, frt_lazy_doc_get(lazy_doc, field));
-}
-
-/*
- *  call-seq:
- *     lazy_doc.fields -> array of available fields
- *
- *  Returns the list of fields stored for this particular document. If you try
- *  to access any of these fields in the document the field will be loaded.
- *  Try to access any other field an nil will be returned.
- */
-static VALUE frb_lzd_fields(VALUE self) {
-    return rb_ivar_get(self, id_fields);
-}
-
-/*
- *  call-seq:
- *     lazy_doc.load -> lazy_doc
- *
- *  Load all unloaded fields in the document from the index.
- */
-static VALUE frb_lzd_load(VALUE self) {
-    FrtLazyDoc *lazy_doc = (FrtLazyDoc *)DATA_PTR(rb_ivar_get(self, id_data));
-    int i;
-    for (i = 0; i < lazy_doc->size; i++) {
-        FrtLazyDocField *lazy_df = lazy_doc->fields[i];
-        frb_lazy_df_load(self, ID2SYM(lazy_df->name), lazy_df);
-    }
-    return self;
-}
-
-VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc) {
-    int i;
-    VALUE rfields = rb_ary_new2(lazy_doc->size);
-
-    VALUE self, rdata;
-    self = rb_hash_new();
-    OBJSETUP(self, cLazyDoc, T_HASH);
-
-    rdata = TypedData_Wrap_Struct(cLazyDocData, &frb_lazy_doc_t, lazy_doc);
-    rb_ivar_set(self, id_data, rdata);
-
-    for (i = 0; i < lazy_doc->size; i++) {
-        rb_ary_store(rfields, i, ID2SYM(lazy_doc->fields[i]->name));
-    }
-    rb_ivar_set(self, id_fields, rfields);
-
-    return self;
-}
-
-/****************************************************************************
- *
  * IndexReader Methods
  *
  ****************************************************************************/
@@ -3365,48 +3244,6 @@ void Init_IndexWriter(void) {
 
     rb_define_method(cIndexWriter, "use_compound_file",  frb_iw_get_use_compound_file, 0);
     rb_define_method(cIndexWriter, "use_compound_file=", frb_iw_set_use_compound_file, 1);
-}
-
-/*
- *  Document-class: Ferret::Index::LazyDoc
- *
- *  == Summary
- *
- *  When a document is retrieved from the index a LazyDoc is returned.
- *  Actually, LazyDoc is just a modified Hash object which lazily adds fields
- *  to itself when they are accessed. You should note that the keys method
- *  will return nothing until you actually access one of the fields. To see
- *  what fields are available use LazyDoc#fields rather than LazyDoc#keys. To
- *  load all fields use the LazyDoc#load method.
- *
- *  == Example
- *
- *    doc = index_reader[0]
- *
- *    doc.keys     #=> []
- *    doc.values   #=> []
- *    doc.fields   #=> [:title, :content]
- *
- *    title = doc[:title] #=> "the title"
- *    doc.keys     #=> [:title]
- *    doc.values   #=> ["the title"]
- *    doc.fields   #=> [:title, :content]
- *
- *    doc.load
- *    doc.keys     #=> [:title, :content]
- *    doc.values   #=> ["the title", "the content"]
- *    doc.fields   #=> [:title, :content]
- */
-void Init_LazyDoc(void) {
-    id_fields = rb_intern("@fields");
-
-    cLazyDoc = rb_define_class_under(mIndex, "LazyDoc", rb_cHash);
-    rb_define_method(cLazyDoc, "default", frb_lzd_default, 1);
-    rb_define_method(cLazyDoc, "load",    frb_lzd_load, 0);
-    rb_define_method(cLazyDoc, "fields",  frb_lzd_fields, 0);
-
-    cLazyDocData = rb_define_class_under(cLazyDoc, "LazyDocData", rb_cObject);
-    rb_define_alloc_func(cLazyDocData, frb_lzd_alloc);
 }
 
 /*

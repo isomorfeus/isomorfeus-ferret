@@ -1163,6 +1163,7 @@ static FrtLazyDocField *lazy_df_new(ID name, const int size, FrtCompressionType 
     self->data = FRT_ALLOC_AND_ZERO_N(FrtLazyDocFieldData, size);
     self->compression = compression;
     self->decompressed = false;
+    self->loaded = false;
     return self;
 }
 
@@ -1400,6 +1401,7 @@ char *frt_lazy_df_get_data(FrtLazyDocField *self, int i) {
                 frt_is_read_bytes(self->doc->fields_in, (frt_uchar *)text, read_len);
                 text[read_len - 1] = '\0';
             }
+            self->loaded = true;
         }
     }
 

@@ -545,6 +545,7 @@ typedef struct FrtLazyDocField {
     int                 len;  /* length of data elements concatenated */
     FrtCompressionType  compression; /* as configured */
     bool                decompressed;
+    bool                loaded;
 } FrtLazyDocField;
 
 extern char *frt_lazy_df_get_data(FrtLazyDocField *self, int i);
@@ -556,6 +557,7 @@ struct FrtLazyDoc {
     int             size;
     FrtLazyDocField **fields;
     FrtInStream     *fields_in;
+    bool            loaded;
 };
 
 extern void frt_lazy_doc_close(FrtLazyDoc *self);
