@@ -2,6 +2,7 @@
 #include "isomorfeus_ferret.h"
 
 static ID id_fields;
+FrtLazyDoc empty_lazy_doc = {0};
 VALUE cLazyDoc;
 
 /****************************************************************************
@@ -11,35 +12,20 @@ VALUE cLazyDoc;
  ****************************************************************************/
 
 static void frb_ld_free(void *p) {
-  frt_lazy_doc_close((FrtLazyDoc *)p);
+  if (p && p != &empty_lazy_doc) frt_lazy_doc_close((FrtLazyDoc *)p);
 }
-
-static size_t frb_ld_size(const void *p) {
-  return sizeof(FrtLazyDoc);
-  (void)p;
-}
-
-const rb_data_type_t frb_ld_t = {
-  .wrap_struct_name = "FrbLazyDoc",
-  .function = {
-    .dmark = NULL,
-    .dfree = frb_ld_free,
-    .dsize = frb_ld_size,
-    .dcompact = NULL,
-    .reserved = {0},
-  },
-  .parent = NULL,
-  .data = NULL,
-  .flags = RUBY_TYPED_FREE_IMMEDIATELY
-};
 
 VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc) {
-  return TypedData_Wrap_Struct(cLazyDoc, &frb_ld_t, lazy_doc);
+  VALUE rld = rb_class_new_instance(0, NULL, cLazyDoc);
+  ((struct RData *)(rld))->data = lazy_doc;
+  return rld;
 }
 
-static VALUE frb_ld_alloc(VALUE rclass) {
-  FrtLazyDoc *ld = FRT_ALLOC(FrtLazyDoc);
-  return TypedData_Wrap_Struct(rclass, &frb_ld_t, ld);
+static VALUE frb_ld_init(VALUE self) {
+  rb_call_super(0, NULL);
+  ((struct RData *)(self))->data = &empty_lazy_doc;
+  ((struct RData *)(self))->dfree = frb_ld_free;
+  return self;
 }
 
 static VALUE frb_ld_df_load(VALUE self, VALUE rkey, FrtLazyDocField *lazy_df) {
@@ -400,7 +386,7 @@ void Init_LazyDoc(void) {
   id_fields = rb_intern("@fields");
 
   cLazyDoc = rb_define_class_under(mIndex, "LazyDoc", rb_cHash);
-  rb_define_alloc_func(cLazyDoc, frb_ld_alloc);
+  rb_define_method(cLazyDoc, "initialize", frb_ld_init,   0);
   rb_define_method(cLazyDoc, "load",     frb_ld_load,     0);
   rb_define_method(cLazyDoc, "fields",   frb_ld_fields,   0);
   rb_define_method(cLazyDoc, "keys",     frb_ld_fields,   0);
