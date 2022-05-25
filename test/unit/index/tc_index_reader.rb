@@ -6,6 +6,8 @@ module IndexReaderCommon
   include Isomorfeus::Ferret::Analysis
 
   def test_index_reader
+    assert_equal(Enumerator, @ir.each.class)
+    assert_equal(Enumerator, @ir.to_enum.class)
     do_test_get_field_names
     do_test_term_enum
     do_test_term_doc_enum
