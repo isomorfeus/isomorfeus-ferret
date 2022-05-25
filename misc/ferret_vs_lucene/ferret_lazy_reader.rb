@@ -28,7 +28,7 @@ times = []
   10.times do
     index.each do |doc|
       docs += 1
-      doc.title
+      doc[:title]
     end
   end
   t = Time.now - start_time
