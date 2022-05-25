@@ -167,34 +167,40 @@ static VALUE frb_ld_to_h(VALUE self) {
 }
 
 static VALUE frb_ld_lt(VALUE self, VALUE other) {
-  FrtLazyDoc *ld = ((rLazyDoc *)DATA_PTR(self))->doc;
-  rLazyDoc *other_rld;
-  TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
-  if (ld->size < other_rld->doc->size) return Qtrue;
+  VALUE other_h;
+  if (TYPE(other) == T_HASH) {
+    other_h = other;
+  } else {
+    rLazyDoc *other_rld;
+    TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
+    other_h = frb_ld_to_h(other);
+  }
   VALUE self_h = frb_ld_to_h(self);
-  VALUE other_h = frb_ld_to_h(other);
   return rb_funcall(self_h, id_lt, 1, other_h);
 }
 
 static VALUE frb_ld_le(VALUE self, VALUE other) {
-  FrtLazyDoc *ld = ((rLazyDoc *)DATA_PTR(self))->doc;
-  rLazyDoc *other_rld;
-  TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
-  if (ld->size <= other_rld->doc->size) return Qtrue;
+  VALUE other_h;
+  if (TYPE(other) == T_HASH) {
+    other_h = other;
+  } else {
+    rLazyDoc *other_rld;
+    TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
+    other_h = frb_ld_to_h(other);
+  }
   VALUE self_h = frb_ld_to_h(self);
-  VALUE other_h = frb_ld_to_h(other);
   return rb_funcall(self_h, id_le, 1, other_h);
 }
 
 static VALUE frb_ld_equal(VALUE self, VALUE other) {
   FrtLazyDoc *ld = ((rLazyDoc *)DATA_PTR(self))->doc;
-  rLazyDoc *other_rld;
   int other_size;
   VALUE other_h;
   if (TYPE(other) == T_HASH) {
     other_h = other;
     other_size = FIX2INT(rb_funcall(other_h, id_size, 0));
   } else {
+    rLazyDoc *other_rld;
     TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
     other_h = frb_ld_to_h(other);
     other_size = other_rld->doc->size;
@@ -207,22 +213,28 @@ static VALUE frb_ld_equal(VALUE self, VALUE other) {
 }
 
 static VALUE frb_ld_gt(VALUE self, VALUE other) {
-  FrtLazyDoc *ld = ((rLazyDoc *)DATA_PTR(self))->doc;
-  rLazyDoc *other_rld;
-  TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
-  if (ld->size > other_rld->doc->size) return Qtrue;
+  VALUE other_h;
+  if (TYPE(other) == T_HASH) {
+    other_h = other;
+  } else {
+    rLazyDoc *other_rld;
+    TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
+    other_h = frb_ld_to_h(other);
+  }
   VALUE self_h = frb_ld_to_h(self);
-  VALUE other_h = frb_ld_to_h(other);
   return rb_funcall(self_h, id_gt, 1, other_h);
 }
 
 static VALUE frb_ld_ge(VALUE self, VALUE other) {
-  FrtLazyDoc *ld = ((rLazyDoc *)DATA_PTR(self))->doc;
-  rLazyDoc *other_rld;
-  TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
-  if (ld->size >= other_rld->doc->size) return Qtrue;
+  VALUE other_h;
+  if (TYPE(other) == T_HASH) {
+    other_h = other;
+  } else {
+    rLazyDoc *other_rld;
+    TypedData_Get_Struct(other, rLazyDoc, &frb_ld_t, other_rld);
+    other_h = frb_ld_to_h(other);
+  }
   VALUE self_h = frb_ld_to_h(self);
-  VALUE other_h = frb_ld_to_h(other);
   return rb_funcall(self_h, id_ge, 1, other_h);
 }
 
@@ -504,7 +516,7 @@ static VALUE frb_ld_to_proc(VALUE self) {
 
 static VALUE frb_ld_transform_keys(int argc, VALUE *argv, VALUE self) {
   VALUE hash = frb_ld_to_h(self);
-  return rb_funcallv(hash, id_transform_keys, argc, argv);
+  return rb_funcall_passing_block(hash, id_transform_keys, argc, argv);
 }
 
 static VALUE frb_ld_transform_values(VALUE self) {
