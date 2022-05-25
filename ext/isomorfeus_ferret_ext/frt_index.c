@@ -1475,6 +1475,7 @@ static FrtLazyDoc *lazy_doc_new(int size, FrtInStream *fdt_in)
     self->size = size;
     self->fields = FRT_ALLOC_AND_ZERO_N(FrtLazyDocField *, size);
     self->fields_in = frt_is_clone(fdt_in);
+    self->loaded = false;
     return self;
 }
 

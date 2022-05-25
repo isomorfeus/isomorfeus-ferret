@@ -694,7 +694,7 @@ module Isomorfeus
             docs_to_add = []
             query = do_process_query(query)
             @searcher.search_each(query, :limit => :all) do |id, score|
-              document = @searcher[id].load
+              document = @searcher[id].to_h
               if new_val.is_a?(Hash)
                 document.merge!(new_val)
               else new_val.is_a?(String) or new_val.is_a?(Symbol)

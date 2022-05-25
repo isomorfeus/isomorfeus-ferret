@@ -57,7 +57,7 @@ class IndexTest < Test::Unit::TestCase
     check_results(index, q, [0, 1, 3, 4, 6])
     q = "one OR field3:five"
     check_results(index, q, [0, 1, 3, 4, 6, 7])
-    assert_equal("four", index[5]["field3"])
+    assert_equal("four", index[5][:field3])
     q = "field3:f*"
     check_results(index, q, [5, 7])
     q = "*:(one AND NOT three)"
@@ -66,7 +66,7 @@ class IndexTest < Test::Unit::TestCase
     check_results(index, q, [0, 3, 4, 6])
     q = "two AND field3:f*"
     check_results(index, q, [5, 7])
-    assert_equal("five", index.doc(7)["field3"])
+    assert_equal("five", index.doc(7)[:field3])
     assert_equal("two", index.doc(7)[:xxx])
   end
 
@@ -95,7 +95,7 @@ class IndexTest < Test::Unit::TestCase
     q = "field2|field3:(multi OR multi2)"
     check_results(index, q, [1, 7])
     doc = index[5]
-    assert_equal("three", index[5]["field2"])
+    assert_equal("three", index[5][:field2])
     assert(!index.has_deletions?)
     assert(!index.deleted?(5))
     assert_equal(8, index.size)
@@ -106,9 +106,9 @@ class IndexTest < Test::Unit::TestCase
     q = "two AND (field3:f*)"
     check_results(index, q, [7])
 
-    doc.load
-    doc[:field2] = "dave"
-    index << doc
+    new_doc = doc.to_h
+    new_doc[:field2] = "dave"
+    index << new_doc
     check_results(index, q, [7, 8])
     check_results(index, "*:this", [])
     assert_equal(8, index.size)
@@ -184,7 +184,7 @@ class IndexTest < Test::Unit::TestCase
 
     index = Index.new(:path => fs_path, :create_if_missing => false)
     assert_equal(8, index.size)
-    assert_equal("four", index[5]["field3"])
+    assert_equal("four", index[5][:field3])
     index.close
   end
 
@@ -418,7 +418,7 @@ class IndexTest < Test::Unit::TestCase
     assert_equal("content nine", index["9"][:content])
     assert_equal("content0", index["0"][:content])
     assert_equal(nil, index["0"][:extra_content])
-    document = index[0].load
+    document = index[0].to_h
     document[:content] = "content zero"
     document[:extra_content] = "extra content"
     index.update(0, document)

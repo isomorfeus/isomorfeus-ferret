@@ -219,12 +219,11 @@ module IndexReaderCommon
     doc = @ir.get_document(3)
     [:author, :body, :title, :year].each {|fn| assert(doc.fields.include?(fn))}
     assert_equal(4, doc.fields.size)
-    assert_equal(0, doc.size)
-    assert_equal([], doc.keys)
+    assert_equal(4, doc.size)
+    assert_equal([:author, :body, :title, :year], doc.keys.sort)
 
     assert_equal("Leo Tolstoy", doc[:author])
-    assert_equal("word3 word4 word1 word2 word1 word3 word4 word1 word3 word3",
-                 doc[:body])
+    assert_equal("word3 word4 word1 word2 word1 word3 word4 word1 word3 word3", doc[:body])
     assert_equal("War And Peace", doc[:title])
     assert_equal("1865", doc[:year])
     assert_nil(doc[:text])
@@ -532,8 +531,7 @@ class MultiExternalReaderPathTest < Test::Unit::TestCase
   end
 
   def setup
-    base_dir = File.expand_path(File.join(File.dirname(__FILE__),
-                       '../../temp/multidir'))
+    base_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/multidir'))
     FileUtils.mkdir_p(base_dir)
     @paths = [
       File.join(base_dir, "i1"),
@@ -578,8 +576,7 @@ class IndexReaderTest < Test::Unit::TestCase
   end
 
   def test_ir_multivalue_fields
-    @fs_dpath = File.expand_path(File.join(File.dirname(__FILE__),
-                                           '../../temp/fsdir'))
+    @fs_dpath = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
     @fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(@fs_dpath, true)
 
     iw = IndexWriter.new(:dir => @fs_dir,
@@ -597,7 +594,7 @@ class IndexReaderTest < Test::Unit::TestCase
 
     @dir = Isomorfeus::Ferret::Store::RAMDirectory.new(@fs_dir)
     ir = IndexReader.new(@dir)
-    assert_equal(doc, ir.get_document(0).load)
+    assert_equal(doc, ir.get_document(0))
     ir.close
   end
 
@@ -659,16 +656,14 @@ class IndexReaderTest < Test::Unit::TestCase
   end
 
   def test_ir_read_while_optimizing_on_disk
-    dpath = File.expand_path(File.join(File.dirname(__FILE__),
-                       '../../temp/fsdir'))
+    dpath = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
     fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(dpath, true)
     do_test_ir_read_while_optimizing(fs_dir)
     fs_dir.close
   end
 
   def test_latest
-    dpath = File.expand_path(File.join(File.dirname(__FILE__),
-                       '../../temp/fsdir'))
+    dpath = File.expand_path(File.join(File.dirname(__FILE__), '../../temp/fsdir'))
     fs_dir = Isomorfeus::Ferret::Store::FSDirectory.new(dpath, true)
 
     iw = IndexWriter.new(:dir => fs_dir,
