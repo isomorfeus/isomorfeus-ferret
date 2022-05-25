@@ -5,6 +5,7 @@ module Isomorfeus
       # information on how to use this class.
       class Index
         include MonitorMixin
+        include Enumerable
         include Isomorfeus::Ferret::Store
         include Isomorfeus::Ferret::Search
 
@@ -846,6 +847,12 @@ module Isomorfeus
           end
         end
 
+        def to_enum
+          @dir.synchronize do
+            ensure_reader_open
+            @reader.to_enum
+          end
+        end
 
         protected
           def ensure_writer_open()
