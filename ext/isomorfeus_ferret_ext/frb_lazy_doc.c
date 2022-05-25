@@ -6,6 +6,8 @@ extern VALUE rb_hash_update(int argc, VALUE *argv, VALUE self);
 extern VALUE sym_each;
 extern ID id_eql;
 
+static VALUE sym_each_key;
+static VALUE sym_each_value;
 static ID id_compact;
 static ID id_equal;
 static ID id_except;
@@ -22,6 +24,7 @@ static ID id_reject;
 static ID id_select;
 static ID id_size;
 static ID id_slice;
+static ID id_to_h;
 static ID id_to_proc;
 static ID id_transform_keys;
 static ID id_transform_values;
@@ -310,6 +313,14 @@ static VALUE frb_ld_to_enum(VALUE self) {
   return rb_enumeratorize(self, sym_each, 0, NULL);
 }
 
+static VALUE frb_ld_to_key_enum(VALUE self) {
+  return rb_enumeratorize(self, sym_each_key, 0, NULL);
+}
+
+static VALUE frb_ld_to_value_enum(VALUE self) {
+  return rb_enumeratorize(self, sym_each_value, 0, NULL);
+}
+
 void rld_each(void *key, void *value, void *arg) {
   rb_yield_values(2, (VALUE)key, (VALUE)value);
 }
@@ -323,6 +334,38 @@ static VALUE frb_ld_each(VALUE self) {
     return self;
   } else {
     return frb_ld_to_enum(self);
+  }
+}
+
+void rld_each_key(void *key, void *value, void *arg) {
+  rb_yield((VALUE)key);
+}
+
+static VALUE frb_ld_each_key(VALUE self) {
+  rLazyDoc *rld = (rLazyDoc *)DATA_PTR(self);
+  FrtLazyDoc *ld = rld->doc;
+  if (!ld->loaded) frb_ld_load(self);
+  if (rb_block_given_p()) {
+    frt_h_each(rld->hash, rld_each_key, NULL);
+    return self;
+  } else {
+    return frb_ld_to_key_enum(self);
+  }
+}
+
+void rld_each_value(void *key, void *value, void *arg) {
+  rb_yield((VALUE)value);
+}
+
+static VALUE frb_ld_each_value(VALUE self) {
+  rLazyDoc *rld = (rLazyDoc *)DATA_PTR(self);
+  FrtLazyDoc *ld = rld->doc;
+  if (!ld->loaded) frb_ld_load(self);
+  if (rb_block_given_p()) {
+    frt_h_each(rld->hash, rld_each_value, NULL);
+    return self;
+  } else {
+    return frb_ld_to_value_enum(self);
   }
 }
 
@@ -391,7 +434,7 @@ static VALUE frb_ld_fetch_values(int argc, VALUE *argv, VALUE self) {
 
 static VALUE frb_ld_filter(VALUE self) {
   VALUE hash = frb_ld_to_h(self);
-  return rb_funcall(hash, id_select, 0);
+  return rb_funcall_passing_block(hash, id_select, 0, NULL);
 }
 
 void rld_flatten(void *key, void *value, void *arg) {
@@ -469,7 +512,7 @@ static VALUE frb_ld_merge(int argc, VALUE *argv, VALUE self) {
   rLazyDoc *rld = (rLazyDoc *)DATA_PTR(self);
   if (!rld->doc->loaded) frb_ld_load(self);
   VALUE hash = frb_ld_to_h(self);
-  return rb_funcallv(hash, id_merge_bang, argc, argv);
+  return rb_funcall_passing_block(hash, id_merge_bang, argc, argv);
 }
 
 static VALUE frb_ld_rassoc(VALUE self, VALUE value) {
@@ -479,14 +522,9 @@ static VALUE frb_ld_rassoc(VALUE self, VALUE value) {
   return rb_ary_new_from_values(2, a);
 }
 
-void rld_reject(void *key, void *value, void *arg) {
-  VALUE res = rb_yield_values(2, (VALUE)key, (VALUE)value);
-  if (!RTEST(res)) rb_hash_aset((VALUE)arg, (VALUE)key, (VALUE)value);
-}
-
 static VALUE frb_ld_reject(VALUE self) {
   VALUE hash = frb_ld_to_h(self);
-  return rb_funcall(hash, id_reject, 0);
+  return rb_funcall_passing_block(hash, id_reject, 0, NULL);
 }
 
 static VALUE frb_ld_slice(int argc, VALUE *argv, VALUE self) {
@@ -509,6 +547,12 @@ static VALUE frb_ld_to_a(VALUE self) {
   return ary;
 }
 
+static VALUE frb_ld_to_ha(VALUE self) {
+  VALUE hash = frb_ld_to_h(self);
+  if (!rb_block_given_p()) return hash;
+  return rb_funcall_passing_block(hash, id_to_h, 0, NULL);
+}
+
 static VALUE frb_ld_to_proc(VALUE self) {
   VALUE hash = frb_ld_to_h(self);
   return rb_funcall(hash, id_to_proc, 0);
@@ -521,7 +565,7 @@ static VALUE frb_ld_transform_keys(int argc, VALUE *argv, VALUE self) {
 
 static VALUE frb_ld_transform_values(VALUE self) {
   VALUE hash = frb_ld_to_h(self);
-  return rb_funcall(hash, id_transform_values, 0);
+  return rb_funcall_passing_block(hash, id_transform_values, 0, NULL);
 }
 
 void rld_values(void *key, void *value, void *arg) {
@@ -582,6 +626,8 @@ static VALUE frb_ld_values_at(int argc, VALUE *argv, VALUE self) {
  *    doc.fields   #=> [:title, :content]
  */
 void Init_LazyDoc(void) {
+  sym_each_key = ID2SYM(rb_intern("each_key"));
+  sym_each_value = ID2SYM(rb_intern("each_value"));
   id_compact = rb_intern("compact");
   id_equal = rb_intern("==");
   id_except = rb_intern("except");
@@ -598,6 +644,7 @@ void Init_LazyDoc(void) {
   id_select = rb_intern("select");
   id_size = rb_intern("size");
   id_slice = rb_intern("slice");
+  id_to_h = rb_intern("to_h");
   id_to_proc = rb_intern("to_proc");
   id_transform_keys = rb_intern("transform_keys");
   id_transform_values = rb_intern("transform_values");
@@ -619,9 +666,9 @@ void Init_LazyDoc(void) {
   rb_define_method(cLazyDoc, "compact",  frb_ld_compact,  0);
   rb_define_method(cLazyDoc, "dig",      frb_ld_dig,     -1);
   rb_define_method(cLazyDoc, "each",     frb_ld_each,     0);
-  rb_define_method(cLazyDoc, "each_key", frb_ld_each,     0);
+  rb_define_method(cLazyDoc, "each_key", frb_ld_each_key, 0);
   rb_define_method(cLazyDoc, "each_pair", frb_ld_each,    0);
-  rb_define_method(cLazyDoc, "each_value", frb_ld_each,   0);
+  rb_define_method(cLazyDoc, "each_value", frb_ld_each_value, 0);
   rb_define_method(cLazyDoc, "empty?",   frb_ld_empty,    0);
   rb_define_method(cLazyDoc, "eql?",     frb_ld_eql,      1);
   rb_define_method(cLazyDoc, "except",   frb_ld_except,  -1);
@@ -646,7 +693,7 @@ void Init_LazyDoc(void) {
   rb_define_method(cLazyDoc, "slice",    frb_ld_slice,   -1);
   rb_define_method(cLazyDoc, "to_a",     frb_ld_to_a,     0);
   rb_define_method(cLazyDoc, "to_enum",  frb_ld_to_enum,  0);
-  rb_define_method(cLazyDoc, "to_h",     frb_ld_to_h,     0);
+  rb_define_method(cLazyDoc, "to_h",     frb_ld_to_ha,     0);
   rb_define_method(cLazyDoc, "to_hash",  frb_ld_to_h,     0);
   rb_define_method(cLazyDoc, "to_proc",  frb_ld_to_proc,  0);
   rb_define_method(cLazyDoc, "to_s",     frb_ld_inspect,  0);

@@ -44,7 +44,12 @@ class LazyDocTest < Test::Unit::TestCase
     ld = index[0]
     assert_equal(Enumerator, ld.each.class)
     assert_equal([[:field2, "three"], [:field3, "four"], [:xxx, "two"]], ld.each.to_a.sort)
-    assert_equal({"xxx" => "two", "field2" => "three", "field3" => "four"},  ld.transform_keys {|k|k.to_s})
+    h = {}
+    ld.each{|k,v| h[k.to_s] = v}
+    assert_equal({"xxx" => "two", "field2" => "three", "field3" => "four"}.sort, h.sort)
+    assert_equal([:field2, :field3, :xxx], ld.each_key.to_a.sort)
+    assert_equal(["four", "three", "two"], ld.each_value.to_a.sort)
+    assert_equal({"xxx" => "two", "field2" => "three", "field3" => "four"}.sort, ld.transform_keys {|k|k.to_s}.sort)
     ld = index[0]
     assert(hd_lt < ld)
     assert(ld > hd_lt)
@@ -54,5 +59,24 @@ class LazyDocTest < Test::Unit::TestCase
     assert(ld < hd_gt)
     assert(!(hd_gtx > ld))
     assert(!(ld < hd_gtx))
+    assert(ld.any?)
+    assert(!ld.empty?)
+    assert_equal([:field2, "three"], ld.assoc(:field2))
+    assert_equal(hd, ld.compact)
+    assert_equal("three", ld.dig(:field2))
+    assert_equal(nil, ld.dig(:field2, 1))
+    assert(ld.eql?(ld))
+    assert_equal(hd_lt, ld.except(:field3))
+    assert_equal("two", ld.fetch(:xxx))
+    assert_equal(["two"], ld.fetch_values(:xxx))
+    assert_equal(hd_lt, ld.filter {|k,v| k!=:field3})
+    assert_equal(6, ld.flatten.size)
+    assert(ld.has_key?(:xxx))
+    assert(ld.has_value?("three"))
+    assert(ld.include?(:xxx))
+    assert_equal(:xxx, ld.key("two"))
+    assert(ld.key?(:xxx))
+    assert_equal(3, ld.length)
+    assert(ld.member?(:xxx))
   end
 end
