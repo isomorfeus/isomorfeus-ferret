@@ -68,7 +68,6 @@ task :ferret_read_bench => :compile do
   system('bundle exec ruby ferret_indexer.rb -r 6 --store -x')
   system('bundle exec ruby ferret_reader.rb -r 6')
   system('bundle exec ruby ferret_lazy_reader.rb -r 6')
-  system('bundle exec ruby ferret_native_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
   Dir.chdir(pwd)
 end

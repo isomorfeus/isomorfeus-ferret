@@ -26,9 +26,9 @@ times = []
   start_time = Time.now
   docs = 0
   10.times do
-    index.each_lazy do |doc|
+    index.each do |doc|
       docs += 1
-      doc
+      doc.title
     end
   end
   t = Time.now - start_time
