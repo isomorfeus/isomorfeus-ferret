@@ -488,7 +488,7 @@ module Isomorfeus
         # iterate through all documents in the index. This method preloads the
         # documents so you don't need to call #load on the document to load all the
         # fields.
-        def each
+        def each(&block)
           @dir.synchronize do
             ensure_reader_open
             @reader.each(&block)
