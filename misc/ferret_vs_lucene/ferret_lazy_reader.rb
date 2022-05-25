@@ -301,7 +301,7 @@ times = []
 
 @reps.times do |i|
   start_time = Time.now
-  docs = 1_000_000
+  docs = 10_000_000
   doc = index[0].load
   docs.times do
     doc[:title]
@@ -338,7 +338,7 @@ times = []
 
 @reps.times do |i|
   start_time = Time.now
-  docs = 1_000_000
+  docs = 10_000_000
   doc = index[0].to_h
   docs.times do
     doc[:title]
