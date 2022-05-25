@@ -60,6 +60,7 @@ static ID id_fld_num_map;
 static ID id_field_num;
 static ID id_boost;
 
+extern VALUE sym_each;
 extern rb_encoding *utf8_encoding;
 extern void frb_set_term(VALUE rterm, FrtTerm *t);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
@@ -2627,9 +2628,12 @@ frb_ir_version(VALUE self) {
     return ULL2NUM(ir->sis->version);
 }
 
+static VALUE frb_ir_to_enum(VALUE self) {
+    return rb_enumeratorize(self, sym_each, 0, NULL);
+}
+
 static VALUE frb_ir_each(VALUE self) {
     FrtIndexReader *ir = (FrtIndexReader *)DATA_PTR(self);
-    VALUE ret = Qnil;
     if (rb_block_given_p()) {
         long i;
         long max_doc = ir->max_doc(ir);
@@ -2637,12 +2641,13 @@ static VALUE frb_ir_each(VALUE self) {
         for (i = 0; i < max_doc; i++) {
             if (ir->is_deleted(ir, i)) continue;
             rld = frb_get_lazy_doc(ir->get_lazy_doc(ir, i));
-            ret = rb_yield(rld);
+            rb_yield(rld);
         }
+        return self;
     } else {
-        rb_raise(rb_eArgError, "a block must be given");
+        return frb_ir_to_enum(self);
     }
-    return ret;
+
 }
 
 /****************************************************************************
@@ -3259,37 +3264,38 @@ void Init_IndexWriter(void) {
 void Init_IndexReader(void) {
     cIndexReader = rb_define_class_under(mIndex, "IndexReader", rb_cObject);
     rb_define_alloc_func(cIndexReader, frb_ir_alloc);
-    rb_define_method(cIndexReader, "initialize",     frb_ir_init, 1);
-    rb_define_method(cIndexReader, "set_norm",       frb_ir_set_norm, 3);
-    rb_define_method(cIndexReader, "norms",          frb_ir_norms, 1);
+    rb_define_method(cIndexReader, "initialize",     frb_ir_init,          1);
+    rb_define_method(cIndexReader, "set_norm",       frb_ir_set_norm,      3);
+    rb_define_method(cIndexReader, "norms",          frb_ir_norms,         1);
     rb_define_method(cIndexReader, "get_norms_into", frb_ir_get_norms_into, 3);
-    rb_define_method(cIndexReader, "commit",         frb_ir_commit, 0);
-    rb_define_method(cIndexReader, "close",          frb_ir_close, 0);
+    rb_define_method(cIndexReader, "commit",         frb_ir_commit,        0);
+    rb_define_method(cIndexReader, "close",          frb_ir_close,         0);
     rb_define_method(cIndexReader, "has_deletions?", frb_ir_has_deletions, 0);
-    rb_define_method(cIndexReader, "delete",         frb_ir_delete, 1);
-    rb_define_method(cIndexReader, "deleted?",       frb_ir_is_deleted, 1);
-    rb_define_method(cIndexReader, "max_doc",        frb_ir_max_doc, 0);
-    rb_define_method(cIndexReader, "num_docs",       frb_ir_num_docs, 0);
-    rb_define_method(cIndexReader, "undelete_all",   frb_ir_undelete_all, 0);
-    rb_define_method(cIndexReader, "latest?",        frb_ir_is_latest, 0);
-    rb_define_method(cIndexReader, "get_document",   frb_ir_get_doc, -1);
-    rb_define_method(cIndexReader, "[]",             frb_ir_get_doc, -1);
-    rb_define_method(cIndexReader, "term_vector",    frb_ir_term_vector, 2);
-    rb_define_method(cIndexReader, "term_vectors",   frb_ir_term_vectors, 1);
-    rb_define_method(cIndexReader, "term_docs",      frb_ir_term_docs, 0);
+    rb_define_method(cIndexReader, "delete",         frb_ir_delete,        1);
+    rb_define_method(cIndexReader, "deleted?",       frb_ir_is_deleted,    1);
+    rb_define_method(cIndexReader, "max_doc",        frb_ir_max_doc,       0);
+    rb_define_method(cIndexReader, "num_docs",       frb_ir_num_docs,      0);
+    rb_define_method(cIndexReader, "undelete_all",   frb_ir_undelete_all,  0);
+    rb_define_method(cIndexReader, "latest?",        frb_ir_is_latest,     0);
+    rb_define_method(cIndexReader, "get_document",   frb_ir_get_doc,      -1);
+    rb_define_method(cIndexReader, "[]",             frb_ir_get_doc,      -1);
+    rb_define_method(cIndexReader, "term_vector",    frb_ir_term_vector,   2);
+    rb_define_method(cIndexReader, "term_vectors",   frb_ir_term_vectors,  1);
+    rb_define_method(cIndexReader, "term_docs",      frb_ir_term_docs,     0);
     rb_define_method(cIndexReader, "term_positions", frb_ir_term_positions, 0);
     rb_define_method(cIndexReader, "term_docs_for",  frb_ir_term_docs_for, 2);
     rb_define_method(cIndexReader, "term_positions_for", frb_ir_t_pos_for, 2);
-    rb_define_method(cIndexReader, "doc_freq",       frb_ir_doc_freq, 2);
-    rb_define_method(cIndexReader, "terms",          frb_ir_terms, 1);
-    rb_define_method(cIndexReader, "terms_from",     frb_ir_terms_from, 2);
-    rb_define_method(cIndexReader, "term_count",     frb_ir_term_count, 1);
-    rb_define_method(cIndexReader, "fields",         frb_ir_fields, 0);
-    rb_define_method(cIndexReader, "field_names",    frb_ir_fields, 0);
-    rb_define_method(cIndexReader, "field_infos",    frb_ir_field_infos, 0);
-    rb_define_method(cIndexReader, "tokenized_fields", frb_ir_tk_fields, 0);
-    rb_define_method(cIndexReader, "version",        frb_ir_version, 0);
-    rb_define_method(cIndexReader, "each",           frb_ir_each, 0);
+    rb_define_method(cIndexReader, "doc_freq",       frb_ir_doc_freq,      2);
+    rb_define_method(cIndexReader, "terms",          frb_ir_terms,         1);
+    rb_define_method(cIndexReader, "terms_from",     frb_ir_terms_from,    2);
+    rb_define_method(cIndexReader, "term_count",     frb_ir_term_count,    1);
+    rb_define_method(cIndexReader, "fields",         frb_ir_fields,        0);
+    rb_define_method(cIndexReader, "field_names",    frb_ir_fields,        0);
+    rb_define_method(cIndexReader, "field_infos",    frb_ir_field_infos,   0);
+    rb_define_method(cIndexReader, "tokenized_fields", frb_ir_tk_fields,   0);
+    rb_define_method(cIndexReader, "version",        frb_ir_version,       0);
+    rb_define_method(cIndexReader, "each",           frb_ir_each,          0);
+    rb_define_method(cIndexReader, "to_enum",        frb_ir_to_enum,       0);
 }
 
 /* rdoc hack
