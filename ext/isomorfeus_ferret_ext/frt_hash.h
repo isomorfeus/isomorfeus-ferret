@@ -58,10 +58,10 @@ typedef struct FrtHash {
      * used outside of the Hash methods */
     FrtHashEntry *(*lookup_i)(struct FrtHash *self,
                               register const void *key);
-    unsigned long  (*hash_i)(const void *key);
-    int                 (*eq_i)(const void *key1, const void *key2);
-    void                (*free_key_i)(void *p);
-    void                (*free_value_i)(void *p);
+    unsigned long (*hash_i)(const void *key);
+    int           (*eq_i)(const void *key1, const void *key2);
+    void          (*free_key_i)(void *p);
+    void          (*free_value_i)(void *p);
 } FrtHash;
 
 /**
@@ -140,8 +140,7 @@ extern FrtHash *frt_h_new(frt_hash_ft hash,
  *    pass NULL in place of this parameter the value will not be destroyed.
  * @return A newly allocated Hash
  */
-extern FrtHash *frt_h_new_str(frt_free_ft free_key,
-                              frt_free_ft free_value);
+extern FrtHash *frt_h_new_str(frt_free_ft free_key, frt_free_ft free_value);
 
 /**
  * Create a new Hash that uses integers as its keys. The Hash will store all
@@ -258,8 +257,7 @@ extern void *frt_h_rem(FrtHash *self, const void *key, bool del_key);
  *                                  the existing key so no key was freed
  *   </pre>
  */
-extern FrtHashKeyStatus frt_h_set(FrtHash *self,
-                                     const void *key, void *value);
+extern FrtHashKeyStatus frt_h_set(FrtHash *self, const void *key, void *value);
 
 /**
  * Add the value +value+ to the Hash referencing it with key +key+. If
