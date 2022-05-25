@@ -229,14 +229,11 @@ static VALUE frb_ld_ge(VALUE self, VALUE other) {
 static VALUE frb_ld_get(VALUE self, VALUE key) {
   rLazyDoc *rld = (rLazyDoc *)DATA_PTR(self);
   VALUE rval = (VALUE)frt_h_get(rld->hash, (void *)key);
-  if (!rval) {
-    FrtLazyDoc *ld = rld->doc;
-    if (TYPE(key) != T_SYMBOL) rb_raise(rb_eArgError, "key, must be a symbol");
-    FrtLazyDocField *df = frt_h_get(ld->field_dictionary, (void *)SYM2ID(key));
-    if (df) return frb_ld_df_load(self, key, df);
-    else return Qnil;
-  }
-  return rval;
+  if (rval) return rval;
+  if (TYPE(key) != T_SYMBOL) rb_raise(rb_eArgError, "key, must be a symbol");
+  FrtLazyDocField *df = frt_h_get(rld->doc->field_dictionary, (void *)SYM2ID(key));
+  if (df) return frb_ld_df_load(self, key, df);
+  return Qnil;
 }
 
 void rld_any(void *key, void *value, void *arg) {
