@@ -29,6 +29,7 @@ VALUE sym_true;
 VALUE sym_false;
 VALUE sym_path;
 VALUE sym_dir;
+VALUE sym_each;
 
 /* Modules */
 VALUE mIsomorfeus;
@@ -272,12 +273,13 @@ void Init_isomorfeus_ferret_ext(void) {
     id_data = rb_intern("@data");
 
     /* Symbols */
-    sym_yes = ID2SYM(rb_intern("yes"));;
-    sym_no = ID2SYM(rb_intern("no"));;
-    sym_true = ID2SYM(rb_intern("true"));;
-    sym_false = ID2SYM(rb_intern("false"));;
-    sym_path = ID2SYM(rb_intern("path"));;
-    sym_dir = ID2SYM(rb_intern("dir"));;
+    sym_yes = ID2SYM(rb_intern("yes"));
+    sym_no = ID2SYM(rb_intern("no"));
+    sym_true = ID2SYM(rb_intern("true"));
+    sym_false = ID2SYM(rb_intern("false"));
+    sym_path = ID2SYM(rb_intern("path"));
+    sym_dir = ID2SYM(rb_intern("dir"));
+    sym_each = ID2SYM(rb_intern("each"));
 
     mIsomorfeus = rb_define_module("Isomorfeus");
     mFerret = rb_define_module_under(mIsomorfeus, "Ferret");
