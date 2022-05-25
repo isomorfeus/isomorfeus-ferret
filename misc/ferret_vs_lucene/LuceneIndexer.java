@@ -35,7 +35,7 @@ import java.util.Arrays;
  * Recommended options: -server -Xmx500M -XX:CompileThreshold=100
  */
 public class LuceneIndexer {
-  static File corpusDir = new File("corpus");
+  static File corpusDir = new File("reuters_corpus");
   static Path indexPath = Paths.get("lucene_index");
   static String[] fileList;
 
