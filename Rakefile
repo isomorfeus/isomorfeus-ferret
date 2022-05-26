@@ -77,7 +77,7 @@ task :ferret_read_bench => :compile do
 
   puts "\nTitle and content stored without indexing:"
   FileUtils.rm_rf('ferret_index')
-  system('bundle exec ruby ferret_indexer.rb -r 6 --store -x')
+  system('bundle exec ruby ferret_indexer.rb -r 1 --store -x')
   system('bundle exec ruby ferret_lazy_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
   Dir.chdir(pwd)
