@@ -170,9 +170,9 @@ static char *fn_for_gen_field(char *buf,
  *
  ***************************************************************************/
 
-static unsigned long long co_hash(const void *key)
+static unsigned long co_hash(const void *key)
 {
-    return (unsigned long long)key;
+    return (unsigned long)key;
 }
 
 static int co_eq(const void *key1, const void *key2)
