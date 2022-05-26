@@ -18,7 +18,7 @@ end
 
 opts.parse(ARGV)
 docs = 0
-puts "Ferret Reader"
+puts "Ferret Reader doc[:title]"
 puts "-" * 63
 times = []
 
@@ -28,7 +28,7 @@ times = []
   10.times do
     index.each do |doc|
       docs += 1
-      doc
+      doc[:title]
     end
   end
   t = Time.now - start_time
