@@ -177,7 +177,7 @@ public class LuceneIndexer {
                                          int numIndexed) {
     DecimalFormat secsFormat = new DecimalFormat("#,##0.00");
     String secString = secsFormat.format(secs);
-    System.out.println(rep + "   Secs: " + secString +
+    System.out.println("WhitespaceAnalyzer\t" + rep + "  Secs: " + secString +
                        "  Docs: " + numIndexed + ", " +
                        String.valueOf((int)(numIndexed/secs)) + " docs/s");
   }
@@ -208,7 +208,7 @@ public class LuceneIndexer {
     // get the Lucene version
     String luceneVersion = org.apache.lucene.util.Version.getPackageImplementationVersion();
 
-    System.out.println("---------------------------------------------------");
+    System.out.println("---------------------------------------------------------------");
     System.out.println("Lucene " +  luceneVersion);
     System.out.println("JVM " + System.getProperty("java.version") +
                        " (" + System.getProperty("java.vendor") + ")");
