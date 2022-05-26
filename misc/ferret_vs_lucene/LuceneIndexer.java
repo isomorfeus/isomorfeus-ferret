@@ -64,7 +64,7 @@ public class LuceneIndexer {
 
     // start the output
     System.out.println("\nLucene Indexer:");
-    System.out.println("---------------------------------------------------");
+    System.out.println("---------------------------------------------------------------");
 
     // build the index numReps times, then print a final report
     float[] times = new float[numReps];
@@ -220,6 +220,6 @@ public class LuceneIndexer {
                         numKept + " kept, " +
                         numDiscarded + " discarded): " +
                         truncatedMeanString + " secs");
-    System.out.println("---------------------------------------------------");
+    System.out.println("---------------------------------------------------------------");
   }
 }
