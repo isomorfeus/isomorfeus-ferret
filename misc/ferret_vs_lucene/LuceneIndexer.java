@@ -68,10 +68,11 @@ public class LuceneIndexer {
 
     // build the index numReps times, then print a final report
     float[] times = new float[numReps];
+    int numIndexed = 0;
     for (int rep = 1; rep <= numReps; rep++) {
       // start the clock and build the index
       long start = new Date().getTime();
-      int numIndexed = buildIndex(fileList, maxToIndex, increment);
+      numIndexed = buildIndex(fileList, maxToIndex, increment);
 
       // stop the clock and print a report
       long end = new Date().getTime();
@@ -79,7 +80,7 @@ public class LuceneIndexer {
       times[rep - 1] = secs;
       printInterimReport(rep, secs, numIndexed);
     }
-    printFinalReport(times);
+    printFinalReport(times, numIndexed);
   }
 
   // Return a lexically sorted list of all article files from all subdirs.
@@ -173,8 +174,7 @@ public class LuceneIndexer {
   }
 
   // Print out stats for one run.
-  private static void printInterimReport(int rep, float secs,
-                                         int numIndexed) {
+  private static void printInterimReport(int rep, float secs, int numIndexed) {
     DecimalFormat secsFormat = new DecimalFormat("#,##0.00");
     String secString = secsFormat.format(secs);
     System.out.println("WhitespaceAnalyzer\t" + rep + "  Secs: " + secString +
@@ -183,7 +183,7 @@ public class LuceneIndexer {
   }
 
   // Print out aggregate stats
-  private static void printFinalReport(float[] times) {
+  private static void printFinalReport(float[] times, int numIndexed) {
     // produce mean and truncated mean
     Arrays.sort(times);
     float meanTime = 0.0f;
@@ -219,7 +219,8 @@ public class LuceneIndexer {
     System.out.println("Truncated mean (" +
                         numKept + " kept, " +
                         numDiscarded + " discarded): " +
-                        truncatedMeanString + " secs");
+                        truncatedMeanString + " secs, " +
+                        String.valueOf((int)(numIndexed/truncatedMeanTime)) + " docs/s");
     System.out.println("---------------------------------------------------------------");
   }
 }

@@ -33,11 +33,12 @@ class LuceneSearch {
 
     // start the output
     System.out.println("Lucene Search");
-    System.out.println("---------------------------------------------------");
+    System.out.println("---------------------------------------------------------------");
 
     float[] times = new float[numReps];
+    int q = 0;
     for (int rep = 1; rep <= numReps; rep++) {
-      int q = 0;
+      q = 0;
       int res = 0;
       long start = new Date().getTime();
       for (i = 0; i < 1000; i++) {
@@ -55,7 +56,7 @@ class LuceneSearch {
       times[rep - 1] = secs;
       printInterimReport(rep, secs, q);
     }
-    printFinalReport(times);
+    printFinalReport(times, q);
   }
 
   // Print out stats for one run.
@@ -68,7 +69,7 @@ class LuceneSearch {
   }
 
     // Print out aggregate stats
-  private static void printFinalReport(float[] times) {
+  private static void printFinalReport(float[] times, int q) {
     // produce mean and truncated mean
     Arrays.sort(times);
     float meanTime = 0.0f;
@@ -93,7 +94,7 @@ class LuceneSearch {
     // get the Lucene version
     String luceneVersion = org.apache.lucene.util.Version.getPackageImplementationVersion();
 
-    System.out.println("---------------------------------------------------");
+    System.out.println("---------------------------------------------------------------");
     System.out.println("Lucene " +  luceneVersion);
     System.out.println("JVM " + System.getProperty("java.version") +
                        " (" + System.getProperty("java.vendor") + ")");
@@ -104,7 +105,8 @@ class LuceneSearch {
     System.out.println("Truncated mean (" +
                         numKept + " kept, " +
                         numDiscarded + " discarded): " +
-                        truncatedMeanString + " secs");
-    System.out.println("---------------------------------------------------");
+                        truncatedMeanString + " secs"+
+                        String.valueOf((int)(q/truncatedMeanTime)) + " queries/s");
+    System.out.println("---------------------------------------------------------------");
   }
 }
