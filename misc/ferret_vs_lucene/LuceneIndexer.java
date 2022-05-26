@@ -63,6 +63,7 @@ public class LuceneIndexer {
     increment = increment == 0 ? maxToIndex + 1 : increment;
 
     // start the output
+    System.out.println("\nLucene Indexer:");
     System.out.println("---------------------------------------------------");
 
     // build the index numReps times, then print a final report

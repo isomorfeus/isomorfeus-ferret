@@ -19,7 +19,6 @@ task :lucene_bench do
   puts "\n\n\tLucene:\n\n"
   pwd = Dir.pwd
   Dir.chdir('misc/ferret_vs_lucene')
-  puts "title stored:"
   FileUtils.rm_rf('lucene_index')
   FileUtils.rm_f('LuceneIndexer.class')
   FileUtils.rm_f('LuceneSearch.class')
@@ -28,7 +27,7 @@ task :lucene_bench do
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer.java")
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch.java")
   system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer -reps 6")
-  system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch")
+  system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch -reps 6")
   puts "index size: #{Dir['lucene_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
   Dir.chdir(pwd)
 end
