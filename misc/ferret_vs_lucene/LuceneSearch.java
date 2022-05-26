@@ -105,7 +105,7 @@ class LuceneSearch {
     System.out.println("Truncated mean (" +
                         numKept + " kept, " +
                         numDiscarded + " discarded): " +
-                        truncatedMeanString + " secs"+
+                        truncatedMeanString + " secs, "+
                         String.valueOf((int)(q/truncatedMeanTime)) + " queries/s");
     System.out.println("---------------------------------------------------------------");
   }
