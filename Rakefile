@@ -23,7 +23,7 @@ task :lucene_bench do
   FileUtils.rm_f('LuceneIndexer.class')
   FileUtils.rm_f('LuceneSearch.class')
   sep = Gem.win_platform? ? ';' : ':'
-  lucene_version = '9.1.0'
+  lucene_version = '9.2.0'
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer.java")
   system("javac -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}lucene-queryparser-#{lucene_version}.jar#{sep}. LuceneSearch.java")
   system("java -classpath lucene-analysis-common-#{lucene_version}.jar#{sep}lucene-core-#{lucene_version}.jar#{sep}. LuceneIndexer -reps 6")
