@@ -11,12 +11,28 @@ At the [Isomorfeus Framework Project](https://isomorfeus.com)
 
 ## About this project
 
-Isomorfeus-Ferret is a revived version of the original ferret gem created by Dave Balmain, [https://github.com/dbalmain/ferret](https://github.com/dbalmain/ferret).
+Isomorfeus-Ferret is a revived version of the original ferret gem created by Dave Balmain,
+[https://github.com/dbalmain/ferret](https://github.com/dbalmain/ferret).
 During revival many things havbe been fixed, now all tests pass, no crashes and it
 successfully compiles and runs with rubys >3. Its no longer a goal to have
 a c library available, but instead the usage is meant as ruby gem with a c extension only.
 
 It works on *nixes, *nuxes, *BSDs and also works on Windows and RaspberryPi.
+
+## Improvements and Changes in Version 0.14
+
+### Breaking
+
+- The API for LazyDocs has changed, they are read only now. LazyDoc#to_h may be used to create a hash, that may be changed and reindexed as doc.
+
+### Performance
+
+- LazyDoc is now truly lazy, fields are automatically retrieved. LazyDoc#load is no longer required, but may be used to preload all fields.
+- Index#each is now multiple times faster, depending on use case.
+
+### Other
+
+- The Index class now includes Enumerable
 
 ## Improvements and Changes in Version 0.13
 
@@ -99,37 +115,42 @@ Ensure your locale is set to C.UTF-8, because the internal c tests don't know ho
 
 A recent Java JDK must be installed to compile and run lucene benchmarks.
 
-Results, Ferret 0.13.7 vs. Lucene 9.1.0, WhitespaceAnalyzer,
-Linux Ubuntu 20.04, FreeBSD 13.0 and Windows 10 on old Intel Core i5 from 2015,
+Results, Ferret 0.14.0 vs. Lucene 9.1.0, WhitespaceAnalyzer,
+Linux Ubuntu 20.04, FreeBSD 13.1 and Windows 10 on old Intel Core i5 from 2015,
 LinuxPi on RaspberryPi 400:
 
 | OS      | Task       | Ferret          | Lucene*        |
 |---------|------------|-----------------|----------------|
-| Linux   | Indexing   |     4905 docs/s |    4785 docs/s |
-| FreeBSD | Indexing   |     4516 docs/s |       -        |
-| Windows | Indexing   |     2361 docs/s |    2395 docs/s |
-| LinuxPi | Indexing   |     1161 docs/s |     707 docs/s |
-| Linux   | Searching  | 25664 queries/s | 4708 queries/s |
-| FreeBSD | Searching  | 25073 queries/s |    -           |
-| Windows | Searching  |  3646 queries/s |  935 queries/s |
-| LinuxPi | Searching  |  5768 queries/s |  680 queries/s |
+| Linux   | Indexing   |     5125 docs/s |    4671 docs/s |
+| FreeBSD | Indexing   |     4537 docs/s |    3831 docs/s |
+| Windows | Indexing   |     2488 docs/s |    2588 docs/s |
+| LinuxPi | Indexing   |     1200 docs/s |     551 docs/s |
+| Linux   | Searching  | 26610 queries/s | 7165 queries/s |
+| FreeBSD | Searching  | 24167 queries/s | 4288 queries/s |
+| Windows | Searching  |  3901 queries/s | 1033 queries/s |
+| LinuxPi | Searching  |  6194 queries/s |  769 queries/s |
 |         | Index Size |           28 MB |          35 MB |
 
-*Lucene 9.1.0 on JVM 11.0.14.1 (Ubuntu)
+* JVM Versions:
+OpenJDK Runtime Environment (build 18-ea+36-Ubuntu-1) (Linux)
+OpenJDK Runtime Environment (build 17.0.3+7-Raspbian-1deb11u1rpt1) (LinuxPi)
+OpenJDK Runtime Environment Temurin-18.0.1+10 (build 18.0.1+10) (Windows)
+OpenJDK Runtime Environment (build 17.0.2+8-1) (FreeBSD)
 
 ### Storing Fields with Compression, Indexing and Retrieval
+
 - clone repo
 - bundle install
 - rake ferret_compression_benchmark
 
-Results on Linux, 0.13.7, on old Intel Core i5 from 2015:
+Results on Linux, 0.14.0, on old Intel Core i5 from 2015:
 
-| Compression | Index & Store | Retrieve      | Index size |
-|-------------|---------------|---------------|------------|
-| none        |   4866 docs/s | 153853 docs/s |      43 MB |
-| brotli      |   3539 docs/s |  58315 docs/s |      36 MB |
-| bzip2       |   2624 docs/s |  15382 docs/s |      38 MB |
-| lz4         |   4639 docs/s | 127100 docs/s |      41 MB |
+| Compression | Index & Store | Retrieve Title | Index size |
+|-------------|---------------|----------------|------------|
+| none        |   4862 docs/s |  278827 docs/s |      43 MB |
+| brotli      |   3559 docs/s |  178170 docs/s |      36 MB |
+| bzip2       |   2628 docs/s |   81877 docs/s |      38 MB |
+| lz4         |   4648 docs/s |  232236 docs/s |      41 MB |
 
 ## Future
 
