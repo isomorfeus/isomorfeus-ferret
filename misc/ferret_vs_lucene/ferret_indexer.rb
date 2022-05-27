@@ -56,8 +56,6 @@ def build_index_harvard(file_list, max_to_index, increment)
 
         docs_so_far += 1
 
-        print '.' if (docs_so_far % 10000) == 0
-
         break if (docs_so_far >= max_to_index)
 
         if (docs_so_far % increment) == 0

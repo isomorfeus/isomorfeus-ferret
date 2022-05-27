@@ -126,6 +126,29 @@ task :ferret_compression_bench => :compile do
   Dir.chdir(pwd)
 end
 
+task :ferret_milli_bench => :compile do
+  puts "\n\n\tFerret milli:\n\n"
+  pwd = Dir.pwd
+  Dir.chdir('misc/ferret_vs_milli')
+
+  FileUtils.rm_rf('ferret_movies_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 -a w -d movies')
+  # system('bundle exec ruby ferret_search.rb -r 6')
+  puts "Index size: #{Dir['ferret_movies_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb\n"
+
+  FileUtils.rm_rf('ferret_songs_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 -a w -d songs')
+  # system('bundle exec ruby ferret_search.rb -r 6')
+  puts "Index size: #{Dir['ferret_songs_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb\n"
+
+  FileUtils.rm_rf('ferret_wiki_index')
+  system('bundle exec ruby ferret_indexer.rb -r 6 -a w -d wiki')
+  # system('bundle exec ruby ferret_search.rb -r 6')
+  puts "Index size: #{Dir['ferret_wiki_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
+
+  Dir.chdir(pwd)
+end
+
 task :parser do
   pwd = Dir.pwd
   Dir.chdir('parser')
