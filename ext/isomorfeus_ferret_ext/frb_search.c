@@ -3789,10 +3789,6 @@ VALUE frb_get_q(FrtQuery *q) {
  *
  ****************************************************************************/
 
-/* rdochack
-cTopDocs = rb_define_class_under(mSearch, "TopDocs", rb_cObject);
-*/
-
 /*
  *  Document-class: Ferret::Search::Hit
  *
@@ -3806,9 +3802,6 @@ cTopDocs = rb_define_class_under(mSearch, "TopDocs", rb_cObject);
  */
 static void Init_Hit(void) {
     const char *hit_class = "Hit";
-    /* rdochack
-    cHit = rb_define_class_under(mSearch, "Hit", rb_cObject);
-    */
     cHit = rb_struct_define(hit_class, "doc", "score", NULL);
     rb_set_class_path(cHit, mSearch, hit_class);
     rb_const_set(mSearch, rb_intern(hit_class), cHit);
@@ -3836,9 +3829,6 @@ static void Init_Hit(void) {
  */
 static void Init_TopDocs(void) {
     const char *td_class = "TopDocs";
-    /* rdochack
-    cTopDocs = rb_define_class_under(mSearch, "TopDocs", rb_cObject);
-    */
     cTopDocs = rb_struct_define(td_class,
                                 "total_hits",
                                 "hits",

@@ -8,7 +8,7 @@ index = Index::Index.new(:path => File.expand_path('ferret_index'))
 @reps = 1
 
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: ferret_reader.rb [options]"
+  opts.banner = "Usage: ferret_search.rb [options]"
 
   opts.separator ""
   opts.separator "Specific options:"
