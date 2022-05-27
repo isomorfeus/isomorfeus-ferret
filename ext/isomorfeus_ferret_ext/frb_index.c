@@ -150,6 +150,7 @@ static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressi
         *term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
     } else if (v == Qnil) {
         /* leave as default */
+        if (*index == FRT_INDEX_NO) *term_vector = FRT_TERM_VECTOR_NO;
     } else {
         rb_raise(rb_eArgError, ":%s isn't a valid argument for :term_vector. Please choose from [:no, :yes, "
                  ":with_positions, :with_offsets, :with_positions_offsets]", rb_id2name(SYM2ID(v)));
