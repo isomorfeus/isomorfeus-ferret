@@ -79,4 +79,16 @@ class LazyDocTest < Test::Unit::TestCase
     assert_equal(3, ld.length)
     assert(ld.member?(:xxx))
   end
+
+  def test_lazy_doc_after_write
+    index = Isomorfeus::Ferret::I.new(:default_input_field => :xxx)
+    hd1 = {:xxx => "two", :field2 => "three", :field3 => "four"}
+    hd2 = {:xxx => "one", :field2 => "six", :field3 => "aaa"}
+    index << hd1
+    ld1 = index[0]
+    index << hd2 # will close the reader, open the writer
+    assert_equal("two", ld1[:xxx]) # depends on reader
+    ld2 = index[1]
+    assert_equal("one", ld2[:xxx])
+  end
 end
