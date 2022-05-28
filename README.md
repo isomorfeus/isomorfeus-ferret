@@ -69,7 +69,7 @@ Compression semantics have changed, now Brotli, BZip2 and LZ4 compression codecs
 - LZ4: fast compression, fast decrompression, low compression ratio
 
 To see performance and compression ratios `rake ferret_compression_bench` can be run from the cloned repo.
-It uses data and code within the misc/ferret_vs_lucene directory.
+It uses data and code within the misc/ferret_vs_others directory.
 
 To compress a stored field the :compression option can be used with one of: :no, :brotli, :bz2 or :lz4.
 Example:
@@ -96,7 +96,7 @@ https://github.com/isomorfeus/isomorfeus-ferret/blob/master/lib/isomorfeus/ferre
 The query language and parser are documented here:
 https://github.com/isomorfeus/isomorfeus-ferret/blob/master/ext/isomorfeus_ferret_ext/frb_qparser.c
 
-Examples can be found in the 'test' directory or in 'misc/ferret_vs_lucene'.
+Examples can be found in the 'test' directory or in 'misc/ferret_vs_others'.
 
 ## Running Specs
 
@@ -111,24 +111,24 @@ Ensure your locale is set to C.UTF-8, because the internal c tests don't know ho
 ### Indexing and Searching
 - clone repo
 - bundle install
-- rake ferret_vs_lucene
+- rake ferret_vs_others
 
 A recent Java JDK must be installed to compile and run lucene benchmarks.
 
-Results, Ferret 0.14.0 vs. Lucene 9.1.0, WhitespaceAnalyzer,
-Linux Ubuntu 20.04, FreeBSD 13.1 and Windows 10 on old Intel Core i5 from 2015,
+Results, Ferret 0.14.0 vs. Lucene 9.2.0, WhitespaceAnalyzer,
+Linux Ubuntu 22.04, FreeBSD 13.1 and Windows 10 on old Intel Core i5 from 2015,
 LinuxPi on RaspberryPi 400:
 
 | OS      | Task       | Ferret          | Lucene*        |
 |---------|------------|-----------------|----------------|
-| Linux   | Indexing   |     5125 docs/s |    4671 docs/s |
+| Linux   | Indexing   |     5125 docs/s |    4959 docs/s |
 | FreeBSD | Indexing   |     4537 docs/s |    3831 docs/s |
 | Windows | Indexing   |     2488 docs/s |    2588 docs/s |
-| LinuxPi | Indexing   |     1200 docs/s |     551 docs/s |
+| LinuxPi | Indexing   |     1200 docs/s |     755 docs/s |
 | Linux   | Searching  | 26610 queries/s | 7165 queries/s |
 | FreeBSD | Searching  | 24167 queries/s | 4288 queries/s |
 | Windows | Searching  |  3901 queries/s | 1033 queries/s |
-| LinuxPi | Searching  |  6194 queries/s |  769 queries/s |
+| LinuxPi | Searching  |  6194 queries/s |  785 queries/s |
 |         | Index Size |           28 MB |          35 MB |
 
 * JVM Versions:

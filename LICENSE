@@ -143,7 +143,7 @@ The following licenses apply to files, which are distributed within the repo
 but not distributed with the gem and not used at runtime:
 
 
-For the Reuter-21578 files in the misc/ferret_vs_lucene directory (corpus, etc.),
+For the Reuter-21578 files in the misc/ferret_vs_others directory (corpus, etc.),
 used for research for developing search engine technology:
 
    The copyright for the text of newswire articles and Reuters
@@ -156,7 +156,7 @@ Distribution 1.0", and inform your readers of the current location of
 the data set (see "Availability & Questions").
 
 
-Apache Lucene jars in  the misc/ferret_vs_lucene directory:
+Apache Lucene jars in  the misc/ferret_vs_others directory:
 
 
                                  Apache License

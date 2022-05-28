@@ -10,7 +10,7 @@ require 'rake/testtask'
 
 Rake::ExtensionTask.new :isomorfeus_ferret_ext
 
-task :ferret_vs_lucene do
+task :ferret_vs_others do
   Rake::Task[:ferret_bench].invoke
   Rake::Task[:lucene_bench].invoke
 end
@@ -18,7 +18,7 @@ end
 task :lucene_bench do
   puts "\n\n\tLucene:\n"
   pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_lucene')
+  Dir.chdir('misc/ferret_vs_others')
   FileUtils.rm_rf('lucene_index')
   FileUtils.rm_f('LuceneIndexer.class')
   FileUtils.rm_f('LuceneSearch.class')
@@ -35,7 +35,7 @@ end
 task :ferret_bench => :compile do
   puts "\n\n\tFerret:\n\n"
   pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_lucene')
+  Dir.chdir('misc/ferret_vs_others')
   FileUtils.rm_rf('ferret_index')
 
   system('bundle exec ruby ferret_indexer.rb -r 6 -a w')
@@ -48,7 +48,7 @@ end
 task :ferret_analyzer_bench => :compile do
   puts "\n\n\tFerret Analyzer:\n\n"
   pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_lucene')
+  Dir.chdir('misc/ferret_vs_others')
 
   FileUtils.rm_rf('ferret_index')
   system('bundle exec ruby ferret_indexer.rb -r 6 -a l')
@@ -73,7 +73,7 @@ end
 task :ferret_read_bench => :compile do
   puts "\n\n\tFerret Read:\n\n"
   pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_lucene')
+  Dir.chdir('misc/ferret_vs_others')
 
   puts "\nTitle and content stored without indexing:"
   FileUtils.rm_rf('ferret_index')
@@ -86,7 +86,7 @@ end
 task :ferret_compression_bench => :compile do
   puts "\n\n\tFerret Compression:\n\n"
   pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_lucene')
+  Dir.chdir('misc/ferret_vs_others')
 
   puts "\nTitle and content stored without indexing:"
   FileUtils.rm_rf('ferret_index')
@@ -122,29 +122,6 @@ task :ferret_compression_bench => :compile do
   system('bundle exec ruby ferret_search.rb -r 6')
   system('bundle exec ruby ferret_reader.rb -r 6')
   puts "Index size: #{Dir['ferret_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
-
-  Dir.chdir(pwd)
-end
-
-task :ferret_milli_bench => :compile do
-  puts "\n\n\tFerret milli:\n\n"
-  pwd = Dir.pwd
-  Dir.chdir('misc/ferret_vs_milli')
-
-  FileUtils.rm_rf('ferret_movies_index')
-  system('bundle exec ruby ferret_indexer.rb -r 10 -a w -d movies')
-  #system('bundle exec ruby ferret_search.rb -r 6')
-  puts "Index size: #{Dir['ferret_movies_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb\n"
-
-  FileUtils.rm_rf('ferret_songs_index')
-  system('bundle exec ruby ferret_indexer.rb -r 10 -a w -d songs')
-  system('bundle exec ruby ferret_search_songs.rb -r 10')
-  puts "Index size: #{Dir['ferret_songs_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb\n"
-
-  FileUtils.rm_rf('ferret_wiki_index')
-  system('bundle exec ruby ferret_indexer.rb -r 10 -a w -d wiki')
-  # system('bundle exec ruby ferret_search.rb -r 6')
-  puts "Index size: #{Dir['ferret_wiki_index/*'].select { |f| File.file?(f) }.sum { |f| File.size(f) } / 1_048_576}Mb"
 
   Dir.chdir(pwd)
 end
