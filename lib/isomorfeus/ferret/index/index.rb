@@ -384,14 +384,11 @@ module Isomorfeus
         #     puts "hit document number #{doc} with a score of #{score}"
         #   end
         #
-        def search_each(query, options = {}) # :yield: doc, score
+        def search_each(query, options = {}, &block) # :yield: doc, score
           @dir.synchronize do
             ensure_searcher_open()
             query = do_process_query(query)
-
-            @searcher.search_each(query, options) do |doc, score|
-              yield doc, score
-            end
+            @searcher.search_each(query, options, &block)
           end
         end
 
