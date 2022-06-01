@@ -2,7 +2,7 @@
 #include "isomorfeus_ferret.h"
 
 static VALUE cQueryParser;
-VALUE cQueryParseException;
+static VALUE cQueryParseException;
 
 extern VALUE sym_analyzer;
 static VALUE sym_wild_card_downcase;
