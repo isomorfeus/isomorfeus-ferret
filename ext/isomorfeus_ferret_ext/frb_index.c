@@ -15,11 +15,12 @@ VALUE cTermDocEnum;
 VALUE cIndexWriter;
 VALUE cIndexReader;
 
-static VALUE sym_analyzer;
+VALUE sym_analyzer;
+VALUE sym_boost;
+
 static VALUE sym_close_dir;
 static VALUE sym_create;
 static VALUE sym_create_if_missing;
-static VALUE sym_boost;
 static VALUE sym_chunk_size;
 static VALUE sym_max_buffer_memory;
 static VALUE sym_index_interval;
@@ -29,11 +30,9 @@ static VALUE sym_max_buffered_docs;
 static VALUE sym_max_merge_docs;
 static VALUE sym_max_field_length;
 static VALUE sym_use_compound_file;
-
 static VALUE sym_field_infos;
 
 static ID fsym_content;
-
 static ID id_term;
 static ID id_fld_num_map;
 static ID id_field_num;
@@ -41,11 +40,13 @@ static ID id_boost;
 
 extern VALUE sym_each;
 extern rb_encoding *utf8_encoding;
-extern void frb_set_term(VALUE rterm, FrtTerm *t);
+extern void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern VALUE frb_get_field_info(FrtFieldInfo *fi);
 extern VALUE frb_get_lazy_doc(FrtLazyDoc *lazy_doc);
+extern void frb_set_term(VALUE rterm, FrtTerm *t);
+
 extern void Init_FieldInfo(void);
 extern void Init_LazyDoc(void);
 

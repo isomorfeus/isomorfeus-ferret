@@ -844,4 +844,16 @@ class IndexTest < Test::Unit::TestCase
     index.query_delete('find:match')
     assert_equal(0, index.size)
   end
+
+  def test_field_info_to_h
+    field_infos = FieldInfos.new(term_vector: :no)
+    field_infos.add_field(:id, index: :untokenized)
+    field_infos.add_field(:table, index: :no)
+    field_infos.add_field(:column, store: :no, index: :yes, term_vector: :with_positions, boost: 2.0)
+    field_infos.add_field(:row, store: :yes, compression: :brotli)
+    assert_equal({index: :untokenized, store: :yes, compression: :no, term_vector: :no, boost: 1.0}, field_infos[:id].to_h)
+    assert_equal({index: :no, store: :yes, compression: :no, term_vector: :no, boost: 1.0}, field_infos[:table].to_h)
+    assert_equal({index: :yes, store: :no, compression: :no, term_vector: :with_positions, boost: 2.0}, field_infos[:column].to_h)
+    assert_equal({index: :yes, store: :yes, compression: :brotli, term_vector: :no, boost: 1.0}, field_infos[:row].to_h)
+  end
 end

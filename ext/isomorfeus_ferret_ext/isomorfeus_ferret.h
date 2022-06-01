@@ -41,12 +41,12 @@ extern VALUE cLockError;
 extern VALUE cTerm;
 
 /* Ferret Inits */
-extern void Init_Utils();
-extern void Init_Analysis();
-extern void Init_Store();
-extern void Init_Index();
-extern void Init_Search();
-extern void Init_QueryParser();
+extern void Init_Utils(void);
+extern void Init_Analysis(void);
+extern void Init_Store(void);
+extern void Init_Index(void);
+extern void Init_Search(void);
+extern void Init_QueryParser(void);
 
 extern void frb_raise(int excode, const char *msg);
 extern void frb_create_dir(VALUE rpath);

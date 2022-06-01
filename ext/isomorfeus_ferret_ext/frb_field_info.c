@@ -19,11 +19,7 @@ static VALUE sym_with_positions_offsets;
 
 extern VALUE sym_boost;
 
-static void frb_fi_free(void *p) {
-    frt_fi_deref((FrtFieldInfo *)p);
-}
-
-static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
+void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
     VALUE v;
     Check_Type(roptions, T_HASH);
     v = rb_hash_aref(roptions, sym_boost);
@@ -102,6 +98,10 @@ static void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressi
     }
 }
 
+static void frb_fi_free(void *p) {
+    frt_fi_deref((FrtFieldInfo *)p);
+}
+
 static size_t frb_fi_size(const void *p) {
     return sizeof(FrtFieldInfo);
     (void)p;
@@ -121,7 +121,7 @@ const rb_data_type_t frb_field_info_t = {
     .flags = RUBY_TYPED_FREE_IMMEDIATELY
 };
 
-static VALUE frb_get_field_info(FrtFieldInfo *fi) {
+VALUE frb_get_field_info(FrtFieldInfo *fi) {
     if (fi) {
         if (fi->rfi == 0 || fi->rfi == Qnil) {
             fi->rfi = TypedData_Wrap_Struct(cFieldInfo, &frb_field_info_t, fi);
@@ -314,6 +314,61 @@ static VALUE frb_fi_to_s(VALUE self) {
 }
 
 /*
+ *  call-seq:
+ *     fi.to_h -> Hssh
+ *
+ *  Return a Hash representation of the FieldInfo object.
+ */
+static VALUE frb_fi_to_h(VALUE self) {
+    FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
+    VALUE hash = rb_hash_new();
+    VALUE val;
+    bool o;
+
+    // :index
+    if (!fi_is_indexed(fi)) val = sym_no;
+    else {
+      bool t = fi_is_tokenized(fi);
+      o = fi_omit_norms(fi);
+      if (!t && o) val = sym_untokenized_omit_norms;
+      else if (t && o) val = sym_omit_norms;
+      else if (!t && !o) val = sym_untokenized;
+      else val = sym_yes;
+    }
+    rb_hash_aset(hash, sym_index, val);
+
+    // :store
+    rb_hash_aset(hash, sym_store, fi_is_stored(fi) ? sym_yes : sym_no);
+
+    // :compress
+    if (!fi_is_compressed(fi)) val = sym_no;
+    else {
+      if (fi_is_compressed_brotli(fi)) val = sym_brotli;
+      else if (fi_is_compressed_bz2(fi)) val = sym_bz2;
+      else if (fi_is_compressed_lz4(fi)) val = sym_lz4;
+      else val = sym_yes;
+    }
+    rb_hash_aset(hash, sym_compression, val);
+
+    // :term_vector
+    if (!fi_store_term_vector(fi)) val = sym_no;
+    else {
+      bool p = fi_store_positions(fi);
+      o = fi_store_offsets(fi);
+      if (p && o) val = sym_with_positions_offsets;
+      else if (o) val = sym_with_offsets;
+      else if (p) val = sym_with_positions;
+      else val = sym_yes;
+    }
+    rb_hash_aset(hash, sym_term_vector, val);
+
+    // :boost
+    rb_hash_aset(hash, sym_boost, rb_float_new((double)fi->boost));
+
+    return hash;
+}
+
+/*
  *  Document-class: Ferret::Index::FieldInfo
  *
  *  == Summary
@@ -385,7 +440,7 @@ static VALUE frb_fi_to_s(VALUE self) {
  *                  |                         | searchable.
  *                  |                         |
  *                  | :yes (default)          | Make this field searchable and
- *                  |                         | tokenized its contents.
+ *                  |                         | tokenize its contents.
  *                  |                         |
  *                  | :untokenized            | Make this field searchable but
  *                  |                         | do not tokenize its contents.
@@ -442,7 +497,7 @@ static VALUE frb_fi_to_s(VALUE self) {
  *    fi = FieldInfo.new(:image, :store => :yes, :compression => :brotli, :index => :no,
  *                       :term_vector => :no)
  */
-static void Init_FieldInfo(void) {
+void Init_FieldInfo(void) {
     sym_store = ID2SYM(rb_intern("store"));
     sym_index = ID2SYM(rb_intern("index"));
     sym_term_vector = ID2SYM(rb_intern("term_vector"));
@@ -480,4 +535,5 @@ static void Init_FieldInfo(void) {
     rb_define_method(cFieldInfo, "has_norms?",  frb_fi_has_norms, 0);
     rb_define_method(cFieldInfo, "boost",       frb_fi_boost, 0);
     rb_define_method(cFieldInfo, "to_s",        frb_fi_to_s, 0);
+    rb_define_method(cFieldInfo, "to_h",        frb_fi_to_h, 0);
 }
