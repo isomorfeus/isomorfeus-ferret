@@ -2548,7 +2548,7 @@ static void Init_TVTerm(void) {
  *  == Example
  *
  *    tv = index_reader.term_vector(doc_id, :content)
- *    tv_term = tv.find {|tvt| tvt.term = "fox"}
+ *    tv_term = tv.find {|tvt| tvt.term == "fox"}
  *
  *    # get the term frequency
  *    term_freq = tv_term.positions.size

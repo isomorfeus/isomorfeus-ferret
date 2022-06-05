@@ -842,7 +842,7 @@ static void sis_find_segments_file(FrtStore *store, FindSegmentsFile *fsf, void 
     volatile frt_i64 last_gen = -1;
     volatile frt_i64 gen = 0;
 
-    /* Loop until we succeed in calling doBody() without hitting an
+    /* Loop until we succeed in calling run() without hitting an
      * IOException. An IOException most likely means a commit was in process
      * and has finished, in the time it took us to load the now-old infos
      * files (and segments files). It's also possible it's a true error
@@ -5047,6 +5047,7 @@ FrtPosting *frt_p_new(FrtMemoryPool *mp, int doc_num, int pos)
 FrtPostingList *frt_pl_new(FrtMemoryPool *mp, const char *term,
                            int term_len, FrtPosting *p)
 {
+    // TODO account for term_len as measured in the original text vs utf8 term_len of term
     FrtPostingList *pl = FRT_MP_ALLOC(mp, FrtPostingList);
     pl->term = (char *)frt_mp_memdup(mp, term, term_len + 1);
     pl->term_len = term_len;
