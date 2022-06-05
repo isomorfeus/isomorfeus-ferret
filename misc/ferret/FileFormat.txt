@@ -1,32 +1,32 @@
-Segments ->
+segments ->
+  UInt64 gen0
+  UInt64 gen1
+
+segments_(gen) ->
   UInt32 Format         # hard coded number depending in Ferret version
-  UInt32 Version        # incremented with every index change. Used to detect latest index
-  UInt32 NameCounter    # used to get the name of the next segment. Names are _<base 32 integer>
-  UInt32 SegCount       # number of segments
+  UInt64 Version        # incremented with every index change. Used to detect latest index
+  UInt64 NameCounter    # used to get the name of the next segment. Names are _<base 32 integer>
+  # SegmentInfos
+  VInt32 SegCount     # number of segments
   {
     String SegName
-    UInt32 SegSize      # number of documents in this segment
+    VInt32 DocCount    # number of documents in this segment
+    VInt32 DelGen
+    VInt32 NormGensSize
+    {
+      VUInt32 NormGens
+    } * NormGensSize
+    Byte UseCompoundFile
   } * SegCount
-
-Compound(.cfs) ->
-  VInt FileCount
-  {
-    UInt64 DataOffset
-    String FileName
-  } * FileCount
-  {
-    Chars FileData
-  } * FileCount
-
-Fields ->
-  Int StoreDefault
-  Int IndexDefault
-  Int TermVectorDefault
-  Int FieldCount
+  # FieldInfos
+  VInt32 StoreVal      # default store value
+  VInt32 IndexVal      # default index value
+  VInt32 TermVectorVal # default term_vector value TODO use Bits for default values instead
+  VInt32 NumFields
   {
     String FieldName
-    Int    Boost          # CastAsInt
-    Byte   FieldBits
+    UInt32 Boost
+    VInt32 Bits
     <
       0x001 => store fields
       0x002 => compress fields
@@ -40,35 +40,64 @@ Fields ->
       0x200 => bzip2 compression
       0x400 => lz4 compression
     > FieldBits
-  } * FieldCount
+  } * NumFields
 
-FieldIndex(.fdx) ->
+Compound(.cfs) ->
+  VInt FileCount
   {
-    UInt32 FieldValuesPosition
-    UInt32 FieldTermVectorsPosition
+    UInt64 DataOffset
+    String FileName
+  } * FileCount
+  {
+    Chars FileData
+  } * FileCount
+
+FieldIndex(.fdx) ->   # FIELDS_IDX_PTR_SIZE is 12, lookup of docs is doc_num * FIELDS_IDX_PTR_SIZE
+  {
+    UInt64 FieldPosition => to .fdt FieldNum
+    UInt32 TermVectorOffset
   } * SegSize
 
 FieldData(.fdt) ->
   {
-    VInt FieldCount
+    VInt FieldCount # stored field count
     {
       VInt   FieldNum
-      VInt   FieldLen
+      Vint   FieldSize # Array size if field is a array of strings
+      VInt   FieldLen # compressed or uncompressed
       VInt   FieldEncoding
-      VInt   FieldCompressionCodec
+      VInt   FieldCompressionCodec # the actual codec the field has been stored with
     } * FieldCount
     {
       Bytes FieldData
-    } * FieldCount
+    } * FieldCount # TODO store field data somewhere else
+    [{
+      VInt PostingsCount # NumTerms
+      {
+        VInt PostingDeltaStart
+        VInt PostingDeltaLength
+        Bytes PostingTerm
+        VInt PostingFreq
+        [{
+          VInt Pos
+        } * occ] if store_positions
+      } * PostingsCount
+      [
+        VInt OffsetCount # NumPositions
+        {
+          Vll Start
+          Vll End
+        } * OffsetCount] if store_offsets
+    } * FieldCount] if store_term_vector
     VInt TVCount
     {
       VInt   FieldNum
-      VInt   FieldLen
-    } * FieldCount
-    {
-      Bytes FieldData
-    } * FieldCount
+      VInt   FieldLen # TermVectorSize
+    }
   } * SegSize
+
+Norms(.s|.f) ->
+  Bytes Norms
 
 TermInfoFile(.tis) ->
   UInt32 IndexInterval
@@ -83,33 +112,57 @@ TermInfoFile(.tis) ->
     VLong  SkipDelta
   } * TermCount
 
-TermInfoIndex(.tii) ->
-  UInt32 IndexInterval
-  UInt32 SkipInterval
+(.tix) ->
   {
-    TermInfo {
-      VInt   PrefixLength
-      String Suffix
-      VInt   FieldNum
-      VInt   DocFreq
-      VLong  FreqDelta
-      VLong  ProxDelta
-      VLong  SkipDelta
-    }
-    IndexDelta
-  } * IndexTermCount
+    {
+      VInt SharedPrefixLength / Start
+      VInt DeltaLength / Length
+      Bytes DeltaChars / Term
+      VInt DocFreq
+      VOffT FreqPtr
+      VOffT ProxPtr
+      [VOffT TisPos]
+    } * PostingsCount
+  } * FieldCount
+
+(.tfx) ->
+  UInt32 FieldCount
+  VInt   IndexInterval / Tix
+  Vint   SkipInterval / Tis
+  {
+    VInt  FieldNum
+    VOffT TixPos
+    VOffT TisPos
+    VInt  TixCount
+    VInt  TisSize
+  } * FieldCount
 
 FreqFile(.frq) ->
   {
     TermFreqs {
       TermFreq {
-        VInt DocDelta
+        VInt DocDelta / DocCode ?
         VInt Freq?
       }
     } * DocFreq
     SkipData {
-      VInt DocSkip
-      VInt FreqSkip
-      VInt ProxSkip
+      VInt DocSkip / SkipDoc
+      VInt FreqSkip / FreqPos
+      VInt ProxSkip / ProxPos
     } * DocFreq/SkipInterval
   } * TermCount
+
+(.prx) ->
+  {
+    {
+      {
+        VInt Pos
+      } * OccCount
+    } * PostingsCount
+  } * FieldCOunt
+
+(.del) -> # Keeps Bitvector of deleted docs
+  VInt BVSize
+  {
+    UInt32 Bits
+  } * BVSize
