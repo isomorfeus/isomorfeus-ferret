@@ -261,7 +261,7 @@ void frt_register_for_cleanup(void *p, frt_free_ft free_func) {
 void frt_init(int argc, const char *const argv[]) {
     atexit(&frt_hash_finalize);
 
-    utf8_encoding = rb_enc_find("UTF-8");
+    utf8_encoding = rb_utf8_encoding();
     utf8_mbmaxlen = rb_enc_mbmaxlen(utf8_encoding);
     char *p = "'";
     cp_apostrophe = rb_enc_mbc_to_codepoint(p, p + 1, utf8_encoding);
