@@ -5450,15 +5450,14 @@ FrtHash *frt_dw_invert_field(FrtDocWriter *dw, FrtFieldInverter *fld_inv, FrtDoc
         for (i = 0; i < df_size; i++) {
             int len = df->lengths[i];
             char *data_ptr = df->data[i];
+            if (len >= FRT_MAX_WORD_SIZE) {
+                char *head_last = rb_enc_left_char_head(data_ptr, data_ptr + FRT_MAX_WORD_SIZE - 1, data_ptr + len, df->encodings[i]);
+                len = head_last - data_ptr;
+            }
             if (df->encodings[i] == utf8_encoding) {
-                if (len >= FRT_MAX_WORD_SIZE) {
-                    len = FRT_MAX_WORD_SIZE - 1;  // TODO: this may invalidate mbc's
-                    data_ptr = (char *)memcpy(buf, df->data[i], len);
-                    buf[len] = '\0';
-                }
+                data_ptr = (char *)memcpy(buf, df->data[i], len);
+                buf[len] = '\0';
             } else if (df->encodings[i] != utf8_encoding) {
-                if (len >= FRT_MAX_WORD_SIZE)
-                    len = FRT_MAX_WORD_SIZE - 1;
                 const unsigned char *sp = (unsigned char *)df->data[i];
                 unsigned char *dp = (unsigned char *)&buf;
                 rb_econv_t *ec = rb_econv_open(rb_enc_name(df->encodings[i]), "UTF-8", RUBY_ECONV_INVALID_REPLACE);

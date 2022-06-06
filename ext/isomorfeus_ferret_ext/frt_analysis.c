@@ -66,7 +66,8 @@ static inline int get_cp(char *start, char *end, int *cp_len, rb_encoding *enc) 
 
 FrtToken *frt_tk_set(FrtToken *tk, char *text, int tlen, frt_off_t start, frt_off_t end, int pos_inc, rb_encoding *encoding) {
     if (tlen >= FRT_MAX_WORD_SIZE) {
-        tlen = FRT_MAX_WORD_SIZE - 1; // TODO: this may invalidate mbc's
+        char *head_last = rb_enc_left_char_head(text, text + FRT_MAX_WORD_SIZE - 1, text + tlen, encoding);
+        tlen = head_last - text;
     }
 
     if (encoding == utf8_encoding) {
@@ -1031,9 +1032,9 @@ static FrtToken *stemf_next(FrtTokenStream *ts) {
     stemmed = sb_stemmer_stem(stemmer, (sb_symbol *)tk->text, tk->len);
     len = sb_stemmer_length(stemmer);
     if (len >= FRT_MAX_WORD_SIZE) {
-        len = FRT_MAX_WORD_SIZE - 1;
+        char *head_last = rb_enc_left_char_head(tk->text, tk->text + FRT_MAX_WORD_SIZE - 1, tk->text + len, utf8_encoding);
+        len = head_last - tk->text;
     }
-
     memcpy(tk->text, stemmed, len);
     tk->text[len] = '\0';
     tk->len = len;
