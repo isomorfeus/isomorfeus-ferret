@@ -13,7 +13,7 @@
 
 #define FRT_MAX_WORD_SIZE 255
 #define FRT_MAX_FILE_PATH 1024
-#define FRT_BUFFER_SIZE 16384
+#define FRT_BUFFER_SIZE 4096
 
 typedef enum {
     FRT_COMPRESSION_NONE = 0,
