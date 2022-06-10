@@ -2711,7 +2711,7 @@ void frt_tir_close(FrtTermInfosReader *tir) {
  *
  ****************************************************************************/
 
-static FrtTermWriter *tw_new(FrtStore *store, char *file_name) {
+static FrtTermWriter *frt_tw_new(FrtStore *store, char *file_name) {
     FrtTermWriter *tw = FRT_ALLOC_AND_ZERO(FrtTermWriter);
     tw->os = store->new_output(store, file_name);
     tw->last_term = FRT_EMPTY_STRING;
@@ -2736,9 +2736,9 @@ FrtTermInfosWriter *frt_tiw_open(FrtStore *store, const char *segment, int index
     tiw->last_index_ptr = 0;
 
     strcpy(file_name + segment_len, ".tix");
-    tiw->tix_writer = tw_new(store, file_name);
+    tiw->tix_writer = frt_tw_new(store, file_name);
     strcpy(file_name + segment_len, ".tis");
-    tiw->tis_writer = tw_new(store, file_name);
+    tiw->tis_writer = frt_tw_new(store, file_name);
     strcpy(file_name + segment_len, ".tfx");
     tiw->tfx_out = store->new_output(store, file_name);
     frt_os_write_u32(tiw->tfx_out, 0); /* make space for field_count */
