@@ -10,19 +10,19 @@ segments_(gen) ->
   VInt32 SegCount     # number of segments
   {
     String SegName
-    VInt32 DocCount    # number of documents in this segment
-    VInt32 DelGen
-    VInt32 NormGensSize
+    VInt   DocCount    # number of documents in this segment
+    VInt   DelGen
+    VInt   NormGensSize
     {
-      VUInt32 NormGens
+      VInt NormGens
     } * NormGensSize
     Byte UseCompoundFile
   } * SegCount
   # FieldInfos
-  VInt32 StoreVal      # default store value
-  VInt32 IndexVal      # default index value
-  VInt32 TermVectorVal # default term_vector value TODO use Bits for default values instead
-  VInt32 NumFields
+  VInt StoreVal      # default store value
+  VInt IndexVal      # default index value
+  VInt TermVectorVal # default term_vector value TODO use Bits for default values instead
+  VInt NumFields
   {
     String FieldName
     UInt32 Boost
@@ -76,7 +76,7 @@ FieldData(.fdt) ->
       {
         VInt PostingDeltaStart
         VInt PostingDeltaLength
-        Bytes PostingTerm
+        Bytes PostingTerm # TODO length cuts off utf8 expanded term
         VInt PostingFreq
         [{
           VInt Pos
@@ -96,7 +96,7 @@ FieldData(.fdt) ->
     }
   } * SegSize
 
-Norms(.s|.f) ->
+Norms(.[s|f]#field_num) ->
   Bytes Norms
 
 TermInfoFile(.tis) ->
@@ -115,10 +115,10 @@ TermInfoFile(.tis) ->
 (.tix) ->
   {
     {
-      VInt SharedPrefixLength / Start
-      VInt DeltaLength / Length
+      VInt  SharedPrefixLength / Start
+      VInt  DeltaLength / Length
       Bytes DeltaChars / Term
-      VInt DocFreq
+      VInt  DocFreq
       VOffT FreqPtr
       VOffT ProxPtr
       [VOffT TisPos]
