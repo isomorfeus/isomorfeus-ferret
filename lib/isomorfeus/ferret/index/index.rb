@@ -851,6 +851,7 @@ module Isomorfeus
           end
         end
 
+        # Exports the data of the stored fields as documents to a jsonl-formatted file
         def export_to_jsonl(file_name)
           count = 0
           File.open(file_name, 'wt') do |f|
@@ -863,6 +864,7 @@ module Isomorfeus
           count
         end
 
+        # Imports documents from a jsonl-formatted file
         def import_from_jsonl(file_name)
           count = 0
           File.open(file_name, 'rt') do |f|
