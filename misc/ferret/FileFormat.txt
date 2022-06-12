@@ -7,7 +7,7 @@ segments_(gen) ->
   UInt64 Version        # incremented with every index change. Used to detect latest index
   UInt64 NameCounter    # used to get the name of the next segment. Names are _<base 32 integer>
   # SegmentInfos
-  VInt32 SegCount     # number of segments
+  VInt   SegCount     # number of segments
   {
     String SegName
     VInt   DocCount    # number of documents in this segment
@@ -26,7 +26,7 @@ segments_(gen) ->
   {
     String FieldName
     UInt32 Boost
-    VInt32 Bits
+    VInt   Bits
     <
       0x001 => store fields
       0x002 => compress fields
