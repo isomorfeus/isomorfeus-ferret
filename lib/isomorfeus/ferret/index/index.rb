@@ -851,6 +851,32 @@ module Isomorfeus
           end
         end
 
+        def export_to_jsonl(file_name)
+          count = 0
+          File.open(file_name, 'wt') do |f|
+            each do |doc|
+              json = Oj.dump(doc.to_h, mode: :strict)
+              f.write(json + "\n")
+              count += 1
+            end
+          end
+          count
+        end
+
+        def import_from_jsonl(file_name)
+          count = 0
+          File.open(file_name, 'rt') do |f|
+            f.each_line do |json|
+              unless json.empty?
+                doc = Oj.load(json, mode: :strict)
+                add_document(doc)
+                count += 1
+              end
+            end
+          end
+          count
+        end
+
         protected
           def ensure_writer_open()
             raise "tried to use a closed index" if not @open
