@@ -44,7 +44,7 @@ const FrtConfig frt_default_config = {
 static void ste_reset(FrtTermEnum *te);
 static char *ste_next(FrtTermEnum *te);
 
-#define FORMAT 0
+#define FORMAT 15
 #define SEGMENTS_GEN_FILE_NAME "segments"
 #define MAX_EXT_LEN 10
 #define FRT_COMPRESSION_BUFFER_SIZE 16348
@@ -1047,6 +1047,7 @@ static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReade
 {
     int seg_cnt;
     int i;
+    frt_u32 format = 0;
     volatile bool success = false;
     char seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
     FrtInStream *volatile is = NULL;
@@ -1058,7 +1059,9 @@ static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReade
         sis->store = store;
         FRT_REF(store);
         sis->generation = fsf->generation;
-        sis->format = frt_is_read_u32(is); /* do nothing. it's the first version */
+        format = frt_is_read_u32(is);
+        if (format == FORMAT) sis->format = format;
+        else FRT_RAISE(FRT_EXCEPTION, "Wrong index format, required format '%u', format of given index '%u'", FORMAT, format);
         sis->version = frt_is_read_u64(is);
         sis->counter = frt_is_read_u64(is);
         seg_cnt = frt_is_read_vint(is);
@@ -1073,9 +1076,7 @@ static void frt_sis_read_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReade
         success = true;
     FRT_XFINALLY
         if (is) frt_is_close(is);
-        if (!success) {
-            frt_sis_destroy(sis);
-        }
+        if (!success) frt_sis_destroy(sis);
     FRT_XENDTRY
     fsf->ret.sis = sis;
 }
@@ -1126,16 +1127,17 @@ void frt_sis_write(FrtSegmentInfos *sis, FrtStore *store, FrtDeleter *deleter)
 static void frt_sis_read_ver_i(FrtStore *store, FindSegmentsFile *fsf, FrtIndexReader *ir_)
 {
     FrtInStream *is;
-    frt_u64 version;
+    frt_u32 format = 0;
+    frt_u64 version = 0;
     char seg_file_name[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     segfn_for_generation(seg_file_name, (frt_u64)fsf->generation);
     is = store->open_input(store, seg_file_name);
-    version = 0;
 
     FRT_TRY
-        frt_is_read_u32(is); // format
-        version = frt_is_read_u64(is);
+        format = frt_is_read_u32(is); // format
+        if (format == FORMAT) version = frt_is_read_u64(is);
+        else FRT_RAISE(FRT_EXCEPTION, "Wrong index format, required format '%u', format of given index '%u'", FORMAT, format);
     FRT_XFINALLY
         frt_is_close(is);
     FRT_XENDTRY
@@ -4042,8 +4044,8 @@ void frt_ir_commit(FrtIndexReader *ir)
 
 void frt_ir_close(FrtIndexReader *ir) {
     if (ir->ref_cnt == 0) {
-        fprintf(stderr, "ir ref_cnt to low\n");
-        FRT_RAISE(FRT_STATE_ERROR, "ir ref_cnt to low\n");
+        fprintf(stderr, "Warning: IndexReader ref_cnt to low\n");
+        return;
     }
 
     if (FRT_DEREF(ir) == 0) {
