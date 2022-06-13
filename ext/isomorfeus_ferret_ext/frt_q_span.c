@@ -151,8 +151,8 @@ static FrtMatchVector *spanq_get_matchv_i(FrtQuery *self, FrtMatchVector *mv, Fr
         FrtMatchVector *full_mv = frt_matchv_new();
         FrtHashSet *terms = SpQ(self)->get_terms(self);
         /* FIXME What is going on here? Need to document this! */
-        ir->fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-        frt_fis_add_field(ir->fis, frt_fi_new(tv->field, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+        ir->fis = frt_fis_new(0);
+        frt_fis_add_field(ir->fis, frt_fi_new(tv->field, 0));
         ir->store = (FrtStore *)tv;
         FRT_REF((FrtStore *)tv);
         ir->term_positions = &spanq_ir_term_positions;

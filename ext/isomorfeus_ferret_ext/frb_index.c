@@ -40,7 +40,7 @@ static ID id_boost;
 
 extern VALUE sym_each;
 extern rb_encoding *utf8_encoding;
-extern void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost);
+extern void frb_fi_get_params(VALUE roptions, unsigned int *bits, float *boost);
 extern FrtAnalyzer *frb_get_cwrapped_analyzer(VALUE ranalyzer);
 extern VALUE frb_get_analyzer(FrtAnalyzer *a);
 extern VALUE frb_get_field_info(FrtFieldInfo *fi);
@@ -119,17 +119,12 @@ static VALUE frb_fis_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions;
     FrtFieldInfos *fis;
     TypedData_Get_Struct(self, FrtFieldInfos, &frb_field_infos_t, fis);
-    FrtStoreValue store = FRT_STORE_YES;
-    FrtCompressionType compression = FRT_COMPRESSION_NONE;
-    FrtIndexValue index = FRT_INDEX_YES;
-    FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    unsigned int bits = FRT_FI_DEFAULTS_BM;
     float boost;
 
     rb_scan_args(argc, argv, "01", &roptions);
-    if (argc > 0) {
-        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
-    }
-    fis = frt_fis_init(fis, store, compression, index, term_vector);
+    if (argc > 0) frb_fi_get_params(roptions, &bits, &boost);
+    fis = frt_fis_init(fis, bits);
     fis->rfis = self;
     return self;
 }
@@ -218,18 +213,15 @@ frb_fis_add_field(int argc, VALUE *argv, VALUE self)
 {
     FrtFieldInfos *fis = (FrtFieldInfos *)DATA_PTR(self);
     FrtFieldInfo *fi;
-    FrtStoreValue store_val = fis->store_val;
-    FrtCompressionType compression = fis->compression;
-    FrtIndexValue index = fis->index;
-    FrtTermVectorValue term_vector = fis->term_vector;
+    unsigned int bits = fis->bits;
     float boost = 1.0f;
     VALUE rname, roptions;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
     if (argc > 1) {
-        frb_fi_get_params(roptions, &store_val, &compression, &index, &term_vector, &boost);
+        frb_fi_get_params(roptions, &bits, &boost);
     }
-    fi = frt_fi_new(frb_field(rname), store_val, compression, index, term_vector);
+    fi = frt_fi_new(frb_field(rname), bits);
     fi->boost = boost;
     frt_fis_add_field(fis, fi);
     return self;
@@ -340,7 +332,7 @@ frb_fis_get_tk_fields(VALUE self)
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
-        if (!fi_is_tokenized(fis->fields[i])) continue;
+        if (!bits_is_tokenized(fis->fields[i]->bits)) continue;
         rb_ary_push(rfield_names, ID2SYM(fis->fields[i]->name));
     }
     return rfield_names;
@@ -1082,7 +1074,7 @@ static VALUE frb_iw_init(int argc, VALUE *argv, VALUE self) {
                 TypedData_Get_Struct(rval, FrtFieldInfos, &frb_field_infos_t, fis);
                 frt_index_create(store, fis);
             } else {
-                fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+                fis = frt_fis_new(FRT_FI_DEFAULTS_BM);
                 frt_index_create(store, fis);
                 frt_fis_deref(fis);
             }
@@ -2293,7 +2285,7 @@ frb_ir_tk_fields(VALUE self)
     VALUE rfield_names = rb_ary_new();
     int i;
     for (i = 0; i < fis->size; i++) {
-        if (!fi_is_tokenized(fis->fields[i])) continue;
+        if (!bits_is_tokenized(fis->fields[i]->bits)) continue;
         rb_ary_push(rfield_names, rb_str_new_cstr(rb_id2name(fis->fields[i]->name)));
     }
     return rfield_names;

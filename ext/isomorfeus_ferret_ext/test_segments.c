@@ -16,10 +16,7 @@
 #define Asi_has_vals(si, name, doc_cnt, store)\
     tst_si_eql(__LINE__, tc, si, name, doc_cnt, store)
 static FrtFieldInfos dummy_fis = {
-    FRT_STORE_NO,          /* store */
-    FRT_COMPRESSION_NONE,  /* compression */
-    FRT_INDEX_NO,          /* index */
-    FRT_TERM_VECTOR_NO,    /* term_vector */
+    0,              /* bits */
     0,              /* size */
     0,              /* capa */
     NULL,           /* fields */

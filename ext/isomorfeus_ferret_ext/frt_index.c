@@ -213,78 +213,11 @@ FrtHash *frt_co_hash_create(void) {
  *
  ****************************************************************************/
 
-static void fi_set_store(FrtFieldInfo *fi, FrtStoreValue store) {
-    switch (store) {
-        case FRT_STORE_NO:
-            break;
-        case FRT_STORE_YES:
-            fi->bits |= FRT_FI_IS_STORED_BM;
-            break;
-    }
-}
-
-static void fi_set_compression(FrtFieldInfo *fi, FrtCompressionType compression) {
-    switch (compression) {
-        case FRT_COMPRESSION_NONE:
-            break;
-        case FRT_COMPRESSION_BROTLI:
-            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM;
-            break;
-        case FRT_COMPRESSION_BZ2:
-            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BZ2_BM;
-            break;
-        case FRT_COMPRESSION_LZ4:
-            fi->bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_LZ4_BM;
-            break;
-    }
-}
-
-static void fi_set_index(FrtFieldInfo *fi, FrtIndexValue index) {
-    switch (index) {
-        case FRT_INDEX_NO:
-            break;
-        case FRT_INDEX_YES:
-            fi->bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM;
-            break;
-        case FRT_INDEX_UNTOKENIZED:
-            fi->bits |= FRT_FI_IS_INDEXED_BM;
-            break;
-        case FRT_INDEX_YES_OMIT_NORMS:
-            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM |
-                FRT_FI_IS_TOKENIZED_BM;
-            break;
-        case FRT_INDEX_UNTOKENIZED_OMIT_NORMS:
-            fi->bits |= FRT_FI_OMIT_NORMS_BM | FRT_FI_IS_INDEXED_BM;
-            break;
-    }
-}
-
-static void fi_set_term_vector(FrtFieldInfo *fi, FrtTermVectorValue term_vector) {
-    switch (term_vector) {
-        case FRT_TERM_VECTOR_NO:
-            break;
-        case FRT_TERM_VECTOR_YES:
-            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM;
-            break;
-        case FRT_TERM_VECTOR_WITH_POSITIONS:
-            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM;
-            break;
-        case FRT_TERM_VECTOR_WITH_OFFSETS:
-            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM;
-            break;
-        case FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS:
-            fi->bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM |
-                FRT_FI_STORE_OFFSETS_BM;
-            break;
-    }
-}
-
-static void fi_check_params(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
-    (void)store;
-    if ((index == FRT_INDEX_NO) && (term_vector != FRT_TERM_VECTOR_NO)) {
+static void fi_check_params(unsigned int bits) {
+    if (!bits_is_indexed(bits) && bits_store_term_vector(bits)) {
         FRT_RAISE(FRT_ARG_ERROR, "You can't store the term vectors of an unindexed field.");
     }
-    if ((compression != FRT_COMPRESSION_NONE) && (store == FRT_STORE_NO)) {
+    if (bits_is_compressed(bits) && !bits_is_stored(bits)) {
         FRT_RAISE(FRT_ARG_ERROR, "Field must be stored for compression to be useful.");
     }
 }
@@ -293,25 +226,21 @@ FrtFieldInfo *frt_fi_alloc(void) {
     return FRT_ALLOC(FrtFieldInfo);
 }
 
-FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, unsigned int bits) {
     assert(NULL != name);
-    fi_check_params(store, compression, index, term_vector);
+    fi_check_params(bits);
     fi->name = name;
     fi->boost = 1.0f;
-    fi->bits = 0;
-    fi_set_store(fi, store);
-    fi_set_compression(fi, compression);
-    fi_set_index(fi, index);
-    fi_set_term_vector(fi, term_vector);
+    fi->bits = bits;
     fi->number = 0;
     fi->ref_cnt = 1;
     fi->rfi = Qnil;
     return fi;
 }
 
-FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfo *frt_fi_new(ID name, unsigned int bits) {
     FrtFieldInfo *fi = frt_fi_alloc();
-    return frt_fi_init(fi, name, store, compression, index, term_vector);
+    return frt_fi_init(fi, name, bits);
 }
 
 void frt_fi_deref(FrtFieldInfo *fi) {
@@ -319,12 +248,12 @@ void frt_fi_deref(FrtFieldInfo *fi) {
 }
 
 FrtCompressionType frt_fi_get_compression(FrtFieldInfo *fi) {
-    if (fi_is_compressed(fi)) {
-        if (fi_is_compressed_brotli(fi)) {
+    if (bits_is_compressed(fi->bits)) {
+        if (bits_is_compressed_brotli(fi->bits)) {
             return FRT_COMPRESSION_BROTLI;
-        } else if (fi_is_compressed_bz2(fi)) {
+        } else if (bits_is_compressed_bz2(fi->bits)) {
             return FRT_COMPRESSION_BZ2;
-        } else if (fi_is_compressed_lz4(fi)) {
+        } else if (bits_is_compressed_lz4(fi->bits)) {
             return FRT_COMPRESSION_LZ4;
         } else {
             return FRT_COMPRESSION_BROTLI;
@@ -340,14 +269,14 @@ char *frt_fi_to_s(FrtFieldInfo *fi)
     char *str = FRT_ALLOC_N(char, strlen(fi_name) + 200);
     char *s = str;
     s += sprintf(str, "[\"%s\":(%s%s%s%s%s%s%s%s", fi_name,
-                 fi_is_stored(fi) ? "is_stored, " : "",
-                 fi_is_compressed(fi) ? "is_compressed, " : "",
-                 fi_is_indexed(fi) ? "is_indexed, " : "",
-                 fi_is_tokenized(fi) ? "is_tokenized, " : "",
-                 fi_omit_norms(fi) ? "omit_norms, " : "",
-                 fi_store_term_vector(fi) ? "store_term_vector, " : "",
-                 fi_store_positions(fi) ? "store_positions, " : "",
-                 fi_store_offsets(fi) ? "store_offsets, " : "");
+                 bits_is_stored(fi->bits) ? "is_stored, " : "",
+                 bits_is_compressed(fi->bits) ? "is_compressed, " : "",
+                 bits_is_indexed(fi->bits) ? "is_indexed, " : "",
+                 bits_is_tokenized(fi->bits) ? "is_tokenized, " : "",
+                 bits_omit_norms(fi->bits) ? "omit_norms, " : "",
+                 bits_store_term_vector(fi->bits) ? "store_term_vector, " : "",
+                 bits_store_positions(fi->bits) ? "store_positions, " : "",
+                 bits_store_offsets(fi->bits) ? "store_offsets, " : "");
     s -= 2;
     if (*s != ',') {
         s += 2;
@@ -367,24 +296,21 @@ FrtFieldInfos *frt_fis_alloc(void) {
     return FRT_ALLOC(FrtFieldInfos);
 }
 
-FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store_val, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
-    fi_check_params(store_val, compression, index, term_vector);
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, unsigned int bits) {
+    fi_check_params(bits);
     fis->field_dict = frt_h_new_ptr((frt_free_ft)&frt_fi_deref);
     fis->size = 0;
     fis->capa = FIELD_INFOS_INIT_CAPA;
     fis->fields = FRT_ALLOC_N(FrtFieldInfo *, fis->capa);
-    fis->store_val = store_val;
-    fis->compression = compression;
-    fis->index = index;
-    fis->term_vector = term_vector;
+    fis->bits = bits;
     fis->ref_cnt = 1;
     fis->rfis = Qnil;
     return fis;
 }
 
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector) {
+FrtFieldInfos *frt_fis_new(unsigned int bits) {
     FrtFieldInfos *fis = frt_fis_alloc();
-    return frt_fis_init(fis, store, compression, index, term_vector);
+    return frt_fis_init(fis, bits);
 }
 
 FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi) {
@@ -415,7 +341,7 @@ int frt_fis_get_field_num(FrtFieldInfos *fis, ID name) {
 FrtFieldInfo *frt_fis_get_or_add_field(FrtFieldInfos *fis, ID name) {
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(fis->field_dict, (void *)name);
     if (!fi) {
-        fi = (FrtFieldInfo*)frt_fi_new(name, fis->store_val, fis->compression, fis->index, fis->term_vector);
+        fi = (FrtFieldInfo*)frt_fi_new(name, fis->bits);
         frt_fis_add_field(fis, fi);
     }
     return fi;
@@ -427,14 +353,10 @@ FrtFieldInfos *frt_fis_read(FrtInStream *is)
     char *field_name;
     FRT_TRY
         do {
-            FrtTermVectorValue term_vector_val;
             volatile int i;
             union { frt_u32 i; float f; } tmp;
             FrtFieldInfo *volatile fi;
-            FrtStoreValue store_val = (FrtStoreValue)frt_is_read_vint(is);
-            FrtIndexValue index_val = (FrtIndexValue)frt_is_read_vint(is);
-            term_vector_val = (FrtTermVectorValue)frt_is_read_vint(is);
-            fis = frt_fis_new(store_val, FRT_COMPRESSION_NONE, index_val, term_vector_val); // TODO compression, read from store?
+            fis = frt_fis_new(frt_is_read_vint(is));
             for (i = frt_is_read_vint(is); i > 0; i--) {
                 fi = FRT_ALLOC_AND_ZERO(FrtFieldInfo);
                 FRT_TRY
@@ -464,9 +386,7 @@ void frt_fis_write(FrtFieldInfos *fis, FrtOutStream *os)
     FrtFieldInfo *fi;
     const int fis_size = fis->size;
 
-    frt_os_write_vint(os, fis->store_val);
-    frt_os_write_vint(os, fis->index);
-    frt_os_write_vint(os, fis->term_vector);
+    frt_os_write_vint(os, fis->bits);
     frt_os_write_vint(os, fis->size);
 
     for (i = 0; i < fis_size; i++) {
@@ -536,9 +456,9 @@ char *frt_fis_to_s(FrtFieldInfos *fis)
                   "  index: %s\n"
                   "  term_vector: %s\n"
                   "fields:\n",
-                  store_str[fis->store_val],
-                  index_str[fis->index],
-                  term_vector_str[fis->term_vector]);
+                  store_str[fis->bits & 0x3],
+                  index_str[(fis->bits >> 2) & 0x7],
+                  term_vector_str[(fis->bits >> 5) & 0x7]);
     for (i = 0; i < fis_size; i++) {
         fi = fis->fields[i];
         pos += sprintf(buf + pos,
@@ -568,7 +488,7 @@ static bool fis_has_vectors(FrtFieldInfos *fis)
     const int fis_size = fis->size;
 
     for (i = 0; i < fis_size; i++) {
-        if (fi_store_term_vector(fis->fields[i])) {
+        if (bits_store_term_vector(fis->fields[i]->bits)) {
             return true;
         }
     }
@@ -1673,8 +1593,8 @@ static FrtTermVector *frt_fr_read_term_vector(FrtFieldsReader *fr, int field_num
 
     if (num_terms > 0) {
         int i, j, delta_start, delta_len, total_len, freq;
-        int store_positions = fi_store_positions(fi);
-        int store_offsets = fi_store_offsets(fi);
+        int store_positions = bits_store_positions(fi->bits);
+        int store_offsets = bits_store_offsets(fi->bits);
         frt_uchar buffer[FRT_MAX_WORD_SIZE];
         FrtTVTerm *term;
 
@@ -1977,7 +1897,7 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc) {
 
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
-        if (fi_is_stored(frt_fis_get_or_add_field(fw->fis, df->name))) {
+        if (bits_is_stored(frt_fis_get_or_add_field(fw->fis, df->name)->bits)) {
             stored_cnt++;
         }
     }
@@ -1991,12 +1911,12 @@ void frt_fw_add_doc(FrtFieldsWriter *fw, FrtDocument *doc) {
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
         fi = frt_fis_get_field(fw->fis, df->name);
-        if (fi_is_stored(fi)) {
+        if (bits_is_stored(fi->bits)) {
             const int df_size = df->size;
             frt_os_write_vint(fdt_out, fi->number);
             frt_os_write_vint(fdt_out, df_size);
 
-            if (fi_is_compressed(fi)) {
+            if (bits_is_compressed(fi->bits)) {
                 compression = frt_fi_get_compression(fi);
                 for (j = 0; j < df_size; j++) {
                     const int length = df->lengths[j];
@@ -2050,7 +1970,7 @@ void frt_fw_add_postings(FrtFieldsWriter *fw,
     FrtPosting *posting;
     FrtOccurence *occ;
     FrtFieldInfo *fi = fw->fis->fields[field_num];
-    int store_positions = fi_store_positions(fi);
+    int store_positions = bits_store_positions(fi->bits);
 
     frt_ary_grow(fw->tv_fields);
     frt_ary_last(fw->tv_fields).field_num = field_num;
@@ -2082,7 +2002,7 @@ void frt_fw_add_postings(FrtFieldsWriter *fw,
 
     }
 
-    if (fi_store_offsets(fi)) {
+    if (bits_store_offsets(fi->bits)) {
         /* use delta encoding for offsets */
         frt_i64 last_end = 0;
         frt_os_write_vint(fdt_out, offset_count);  /* write shared prefix length */
@@ -4287,7 +4207,7 @@ static void sr_commit_i(FrtIndexReader *ir)
         FrtFieldInfo *fi;
         for (i = field_cnt - 1; i >= 0; i--) {
             fi = ir->fis->fields[i];
-            if (fi_is_indexed(fi)) {
+            if (bits_is_indexed(fi->bits)) {
                 Norm *norm = (Norm *)frt_h_get_int(SR(ir)->norms, fi->number);
                 if (norm && norm->is_dirty) {
                     norm_rewrite(norm, ir->store, ir->deleter, SR(ir)->si,
@@ -4417,7 +4337,7 @@ static FrtTermVector *sr_term_vector(FrtIndexReader *ir, int doc_num, ID field) 
     FrtFieldInfo *fi = (FrtFieldInfo *)frt_h_get(ir->fis->field_dict, (void *)field);
     FrtFieldsReader *fr;
 
-    if (!fi || !fi_store_term_vector(fi) || !SR(ir)->fr || !(fr = sr_fr(SR(ir)))) {
+    if (!fi || !bits_store_term_vector(fi->bits) || !SR(ir)->fr || !(fr = sr_fr(SR(ir)))) {
         return NULL;
     }
 
@@ -4905,7 +4825,7 @@ FrtIndexReader *frt_mr_open(FrtIndexReader *ir, FrtIndexReader **sub_readers, co
     ir = (FrtIndexReader *)frt_mr_init((FrtMultiReader *)ir, sub_readers, r_cnt);
     FrtMultiReader *mr = MR(ir);
     /* defaults don't matter, this is just for reading fields, not adding */
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(0);
     int i, j;
     bool need_field_map = false;
 
@@ -5084,10 +5004,10 @@ int frt_pl_cmp(const FrtPostingList **pl1, const FrtPostingList **pl2)
 static FrtFieldInverter *fld_inv_new(FrtDocWriter *dw, FrtFieldInfo *fi)
 {
     FrtFieldInverter *fld_inv = FRT_MP_ALLOC(dw->mp, FrtFieldInverter);
-    fld_inv->is_tokenized = fi_is_tokenized(fi);
-    fld_inv->store_term_vector = fi_store_term_vector(fi);
-    fld_inv->store_offsets = fi_store_offsets(fi);
-    if ((fld_inv->has_norms = fi_has_norms(fi)) == true) {
+    fld_inv->is_tokenized = bits_is_tokenized(fi->bits);
+    fld_inv->store_term_vector = bits_store_term_vector(fi->bits);
+    fld_inv->store_offsets = bits_store_offsets(fi->bits);
+    if ((fld_inv->has_norms = bits_has_norms(fi->bits)) == true) {
         fld_inv->norms = FRT_MP_ALLOC_AND_ZERO_N(dw->mp, frt_uchar,
                                              dw->max_buffered_docs);
     }
@@ -5237,11 +5157,11 @@ static void dw_flush(FrtDocWriter *dw)
 
     for (i = 0; i < fields_count; i++) {
         fi = fis->fields[i];
-        if (!fi_is_indexed(fi) || NULL ==
+        if (!bits_is_indexed(fi->bits) || NULL ==
             (fld_inv = (FrtFieldInverter*)frt_h_get_int(dw->fields, fi->number))) {
             continue;
         }
-        if (!fi_omit_norms(fi)) {
+        if (!bits_omit_norms(fi->bits)) {
             dw_write_norms(dw, fld_inv);
         }
 
@@ -5501,7 +5421,7 @@ void frt_dw_add_doc(FrtDocWriter *dw, FrtDocument *doc) {
     for (i = 0; i < doc_size; i++) {
         df = doc->fields[i];
         fi = frt_fis_get_field(dw->fis, df->name);
-        if (!fi_is_indexed(fi)) {
+        if (!bits_is_indexed(fi->bits)) {
             continue;
         }
         fld_inv = frt_dw_get_fld_inv(dw, fi);
@@ -5943,7 +5863,7 @@ static void sm_merge_norms(SegmentMerger *sm)
     const int seg_cnt = sm->seg_cnt;
     for (i = sm->fis->size - 1; i >= 0; i--) {
         fi = sm->fis->fields[i];
-        if (fi_has_norms(fi))  {
+        if (bits_has_norms(fi->bits))  {
             si = sm->si;
             frt_si_advance_norm_gen(si, i);
             si_norm_file_name(si, file_name, i);
@@ -6044,7 +5964,7 @@ static void iw_create_compound_file(FrtStore *store, FrtFieldInfos *fis, FrtSegm
 
     /* Field norm file_names */
     for (i = fis->size - 1; i >= 0; i--) {
-        if (fi_has_norms(fis->fields[i]) && si_norm_file_name(si, file_name, i)) {
+        if (bits_has_norms(fis->fields[i]->bits) && si_norm_file_name(si, file_name, i)) {
             frt_cw_add_file(cw, file_name);
         }
     }
@@ -6512,7 +6432,7 @@ static void iw_cp_norms(FrtIndexWriter *iw, FrtSegmentReader *sr,
     char file_name_out[FRT_SEGMENT_NAME_MAX_LENGTH];
 
     for (i = 0; i < field_cnt; i++) {
-        if (fi_has_norms(fis->fields[i])
+        if (bits_has_norms(fis->fields[i]->bits)
             && si_norm_file_name(sr->si, file_name_in, i)) {
             FrtStore *store = (sr->si->use_compound_file
                             && sr->si->norm_gens[i] == 0) ? sr->cfs_store
@@ -6569,8 +6489,7 @@ static void iw_add_segment(FrtIndexWriter *iw, FrtSegmentReader *sr)
         FrtFieldInfo *fi = sub_fis->fields[j];
         FrtFieldInfo *new_fi = frt_fis_get_field(fis, fi->name);
         if (NULL == new_fi) {
-            new_fi = frt_fi_new(fi->name, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-            new_fi->bits = fi->bits;
+            new_fi = frt_fi_new(fi->name, fi->bits);
             frt_fis_add_field(fis, new_fi);
         }
         new_fi->bits |= fi->bits;

@@ -19,57 +19,62 @@ static VALUE sym_with_positions_offsets;
 
 extern VALUE sym_boost;
 
-void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType *compression, FrtIndexValue *index, FrtTermVectorValue *term_vector, float *boost) {
+void frb_fi_get_params(VALUE roptions, unsigned int *bits, float *boost) {
     VALUE v;
     Check_Type(roptions, T_HASH);
     v = rb_hash_aref(roptions, sym_boost);
-    if (Qnil != v) {
-        *boost = (float)NUM2DBL(v);
-    } else {
-        *boost = 1.0f;
-    }
+    if (Qnil != v) *boost = (float)NUM2DBL(v);
+    else *boost = 1.0f;
+
     v = rb_hash_aref(roptions, sym_store);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *store = FRT_STORE_NO;
+        *bits &= ~FRT_FI_IS_STORED_BM;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
-        *store = FRT_STORE_YES;
+        *bits |= FRT_FI_IS_STORED_BM;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
-        rb_raise(rb_eArgError, ":%s isn't a valid argument for :store. Please choose from [:yes, :no]",
-                 rb_id2name(SYM2ID(v)));
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :store. Please choose from [:yes, :no]", rb_id2name(SYM2ID(v)));
     }
 
     v = rb_hash_aref(roptions, sym_compression);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *compression = FRT_COMPRESSION_NONE;
+        *bits &= ~FRT_FI_IS_COMPRESSED_BM;
+        *bits &= ~FRT_FI_COMPRESSION_BROTLI_BM;
+        *bits &= ~FRT_FI_COMPRESSION_BZ2_BM;
+        *bits &= ~FRT_FI_COMPRESSION_LZ4_BM;
     } else if (v == sym_yes || v == sym_true || v == Qtrue || v == sym_brotli) {
-        *compression = FRT_COMPRESSION_BROTLI;
+        *bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM;
     } else if (v == sym_bz2) {
-        *compression = FRT_COMPRESSION_BZ2;
+        *bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BZ2_BM;
     } else if (v == sym_lz4) {
-        *compression = FRT_COMPRESSION_LZ4;
+        *bits |= FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_LZ4_BM;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
-        rb_raise(rb_eArgError, ":%s isn't a valid argument for :compression. Please choose from [:yes, :no, :brotli, :bz2, :lz4]",
-                 rb_id2name(SYM2ID(v)));
+        rb_raise(rb_eArgError, ":%s isn't a valid argument for :compression. Please choose from [:yes, :no, :brotli, :bz2, :lz4]", rb_id2name(SYM2ID(v)));
     }
 
     v = rb_hash_aref(roptions, sym_index);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *index = FRT_INDEX_NO;
+        *bits &= ~FRT_FI_IS_INDEXED_BM;
+        *bits &= ~FRT_FI_IS_TOKENIZED_BM;
+        *bits &= ~FRT_FI_OMIT_NORMS_BM;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
-        *index = FRT_INDEX_YES;
+        *bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM;
+        *bits &= ~FRT_FI_OMIT_NORMS_BM;
     } else if (v == sym_untokenized) {
-        *index = FRT_INDEX_UNTOKENIZED;
+        *bits |= FRT_FI_IS_INDEXED_BM;
+        *bits &= ~FRT_FI_IS_TOKENIZED_BM;
+        *bits &= ~FRT_FI_OMIT_NORMS_BM;
     } else if (v == sym_omit_norms) {
-        *index = FRT_INDEX_YES_OMIT_NORMS;
+        *bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_OMIT_NORMS_BM;
     } else if (v == sym_untokenized_omit_norms) {
-        *index = FRT_INDEX_UNTOKENIZED_OMIT_NORMS;
+        *bits |= FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM;
+        *bits &= ~FRT_FI_IS_TOKENIZED_BM;
     } else if (v == Qnil) {
         /* leave as default */
     } else {
@@ -80,18 +85,28 @@ void frb_fi_get_params(VALUE roptions, FrtStoreValue *store, FrtCompressionType 
     v = rb_hash_aref(roptions, sym_term_vector);
     if (Qnil != v) Check_Type(v, T_SYMBOL);
     if (v == sym_no || v == sym_false || v == Qfalse) {
-        *term_vector = FRT_TERM_VECTOR_NO;
+        *bits &= ~FRT_FI_STORE_TERM_VECTOR_BM;
+        *bits &= ~FRT_FI_STORE_POSITIONS_BM;
+        *bits &= ~FRT_FI_STORE_OFFSETS_BM;
     } else if (v == sym_yes || v == sym_true || v == Qtrue) {
-        *term_vector = FRT_TERM_VECTOR_YES;
+        *bits |= FRT_FI_STORE_TERM_VECTOR_BM;
+        *bits &= ~FRT_FI_STORE_POSITIONS_BM;
+        *bits &= ~FRT_FI_STORE_OFFSETS_BM;
     } else if (v == sym_with_positions) {
-        *term_vector = FRT_TERM_VECTOR_WITH_POSITIONS;
+        *bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM;
+        *bits &= ~FRT_FI_STORE_OFFSETS_BM;
     } else if (v == sym_with_offsets) {
-        *term_vector = FRT_TERM_VECTOR_WITH_OFFSETS;
+        *bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM;
+        *bits &= ~FRT_FI_STORE_POSITIONS_BM;
     } else if (v == sym_with_positions_offsets) {
-        *term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+        *bits |= FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM;
     } else if (v == Qnil) {
         /* leave as default */
-        if (*index == FRT_INDEX_NO) *term_vector = FRT_TERM_VECTOR_NO;
+        if ((*bits & FRT_FI_IS_INDEXED_BM) == 0) {
+            *bits &= ~FRT_FI_STORE_TERM_VECTOR_BM;
+            *bits &= ~FRT_FI_STORE_POSITIONS_BM;
+            *bits &= ~FRT_FI_STORE_OFFSETS_BM;
+        }
     } else {
         rb_raise(rb_eArgError, ":%s isn't a valid argument for :term_vector. Please choose from [:no, :yes, "
                  ":with_positions, :with_offsets, :with_positions_offsets]", rb_id2name(SYM2ID(v)));
@@ -150,17 +165,12 @@ static VALUE frb_fi_init(int argc, VALUE *argv, VALUE self) {
     VALUE roptions, rname;
     FrtFieldInfo *fi;
     TypedData_Get_Struct(self, FrtFieldInfo, &frb_field_info_t, fi);
-    FrtStoreValue store = FRT_STORE_YES;
-    FrtCompressionType compression = FRT_COMPRESSION_NONE;
-    FrtIndexValue index = FRT_INDEX_YES;
-    FrtTermVectorValue term_vector = FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS;
+    unsigned int bits = FRT_FI_DEFAULTS_BM;
     float boost = 1.0f;
 
     rb_scan_args(argc, argv, "11", &rname, &roptions);
-    if (argc > 1) {
-        frb_fi_get_params(roptions, &store, &compression, &index, &term_vector, &boost);
-    }
-    fi = frt_fi_init(fi, frb_field(rname), store, compression, index, term_vector);
+    if (argc > 1) frb_fi_get_params(roptions, &bits, &boost);
+    fi = frt_fi_init(fi, frb_field(rname), bits);
     fi->boost = boost;
     fi->rfi = self;
     return self;
@@ -185,7 +195,7 @@ static VALUE frb_fi_name(VALUE self) {
  */
 static VALUE frb_fi_is_stored(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_is_stored(fi) ? Qtrue : Qfalse;
+    return bits_is_stored(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -196,7 +206,7 @@ static VALUE frb_fi_is_stored(VALUE self) {
  */
 static VALUE frb_fi_is_compressed(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_is_compressed(fi) ? Qtrue : Qfalse;
+    return bits_is_compressed(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -207,7 +217,7 @@ static VALUE frb_fi_is_compressed(VALUE self) {
  */
 static VALUE frb_fi_is_indexed(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_is_indexed(fi) ? Qtrue : Qfalse;
+    return bits_is_indexed(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -223,7 +233,7 @@ static VALUE frb_fi_is_indexed(VALUE self) {
  */
 static VALUE frb_fi_is_tokenized(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_is_tokenized(fi) ? Qtrue : Qfalse;
+    return bits_is_tokenized(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -239,7 +249,7 @@ static VALUE frb_fi_is_tokenized(VALUE self) {
  */
 static VALUE frb_fi_omit_norms(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_omit_norms(fi) ? Qtrue : Qfalse;
+    return bits_omit_norms(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -250,7 +260,7 @@ static VALUE frb_fi_omit_norms(VALUE self) {
  */
 static VALUE frb_fi_store_term_vector(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_store_term_vector(fi) ? Qtrue : Qfalse;
+    return bits_store_term_vector(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -261,7 +271,7 @@ static VALUE frb_fi_store_term_vector(VALUE self) {
  */
 static VALUE frb_fi_store_positions(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_store_positions(fi) ? Qtrue : Qfalse;
+    return bits_store_positions(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -272,7 +282,7 @@ static VALUE frb_fi_store_positions(VALUE self) {
  */
 static VALUE frb_fi_store_offsets(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_store_offsets(fi) ? Qtrue : Qfalse;
+    return bits_store_offsets(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -285,7 +295,7 @@ static VALUE frb_fi_store_offsets(VALUE self) {
  */
 static VALUE frb_fi_has_norms(VALUE self) {
     FrtFieldInfo *fi = (FrtFieldInfo *)DATA_PTR(self);
-    return fi_has_norms(fi) ? Qtrue : Qfalse;
+    return bits_has_norms(fi->bits) ? Qtrue : Qfalse;
 }
 
 /*
@@ -326,10 +336,10 @@ static VALUE frb_fi_to_h(VALUE self) {
     bool o;
 
     // :index
-    if (!fi_is_indexed(fi)) val = sym_no;
+    if (!bits_is_indexed(fi->bits)) val = sym_no;
     else {
-      bool t = fi_is_tokenized(fi);
-      o = fi_omit_norms(fi);
+      bool t = bits_is_tokenized(fi->bits);
+      o = bits_omit_norms(fi->bits);
       if (!t && o) val = sym_untokenized_omit_norms;
       else if (t && o) val = sym_omit_norms;
       else if (!t && !o) val = sym_untokenized;
@@ -338,23 +348,23 @@ static VALUE frb_fi_to_h(VALUE self) {
     rb_hash_aset(hash, sym_index, val);
 
     // :store
-    rb_hash_aset(hash, sym_store, fi_is_stored(fi) ? sym_yes : sym_no);
+    rb_hash_aset(hash, sym_store, bits_is_stored(fi->bits) ? sym_yes : sym_no);
 
     // :compress
-    if (!fi_is_compressed(fi)) val = sym_no;
+    if (!bits_is_compressed(fi->bits)) val = sym_no;
     else {
-      if (fi_is_compressed_brotli(fi)) val = sym_brotli;
-      else if (fi_is_compressed_bz2(fi)) val = sym_bz2;
-      else if (fi_is_compressed_lz4(fi)) val = sym_lz4;
+      if (bits_is_compressed_brotli(fi->bits)) val = sym_brotli;
+      else if (bits_is_compressed_bz2(fi->bits)) val = sym_bz2;
+      else if (bits_is_compressed_lz4(fi->bits)) val = sym_lz4;
       else val = sym_yes;
     }
     rb_hash_aset(hash, sym_compression, val);
 
     // :term_vector
-    if (!fi_store_term_vector(fi)) val = sym_no;
+    if (!bits_store_term_vector(fi->bits)) val = sym_no;
     else {
-      bool p = fi_store_positions(fi);
-      o = fi_store_offsets(fi);
+      bool p = bits_store_positions(fi->bits);
+      o = bits_store_offsets(fi->bits);
       if (p && o) val = sym_with_positions_offsets;
       else if (o) val = sym_with_offsets;
       else if (p) val = sym_with_positions;

@@ -62,27 +62,7 @@ extern FrtHash *frt_co_hash_create();
  *
  ****************************************************************************/
 
-typedef enum {
-    FRT_STORE_NO = 0,
-    FRT_STORE_YES = 1,
-} FrtStoreValue;
-
-typedef enum {
-    FRT_INDEX_NO = 0,
-    FRT_INDEX_UNTOKENIZED = 1,
-    FRT_INDEX_YES = 3,
-    FRT_INDEX_UNTOKENIZED_OMIT_NORMS = 5,
-    FRT_INDEX_YES_OMIT_NORMS = 7
-} FrtIndexValue;
-
-typedef enum {
-    FRT_TERM_VECTOR_NO = 0,
-    FRT_TERM_VECTOR_YES = 1,
-    FRT_TERM_VECTOR_WITH_POSITIONS = 3,
-    FRT_TERM_VECTOR_WITH_OFFSETS = 5,
-    FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS = 7
-} FrtTermVectorValue;
-
+#define FRT_FI_DEFAULTS_BM  FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM
 #define FRT_FI_IS_STORED_BM          0x001
 #define FRT_FI_IS_COMPRESSED_BM      0x002
 #define FRT_FI_IS_INDEXED_BM         0x004
@@ -105,24 +85,24 @@ typedef struct FrtFieldInfo {
 } FrtFieldInfo;
 
 extern FrtFieldInfo *frt_fi_alloc();
-extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
-extern FrtFieldInfo *frt_fi_new(ID name, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
+extern FrtFieldInfo *frt_fi_init(FrtFieldInfo *fi, ID name, unsigned int bits);
+extern FrtFieldInfo *frt_fi_new(ID name, unsigned int bits);
 extern char *frt_fi_to_s(FrtFieldInfo *fi);
 extern void frt_fi_deref(FrtFieldInfo *fi);
 
-#define fi_is_stored(fi)            (((fi)->bits & FRT_FI_IS_STORED_BM) != 0)
-#define fi_is_compressed(fi)        (((fi)->bits & FRT_FI_IS_COMPRESSED_BM) != 0)
-#define fi_is_compressed_brotli(fi) (((fi)->bits & FRT_FI_COMPRESSION_BROTLI_BM) != 0)
-#define fi_is_compressed_bz2(fi)    (((fi)->bits & FRT_FI_COMPRESSION_BZ2_BM) != 0)
-#define fi_is_compressed_lz4(fi)    (((fi)->bits & FRT_FI_COMPRESSION_LZ4_BM) != 0)
-#define fi_is_indexed(fi)           (((fi)->bits & FRT_FI_IS_INDEXED_BM) != 0)
-#define fi_is_tokenized(fi)         (((fi)->bits & FRT_FI_IS_TOKENIZED_BM) != 0)
-#define fi_omit_norms(fi)           (((fi)->bits & FRT_FI_OMIT_NORMS_BM) != 0)
-#define fi_store_term_vector(fi)    (((fi)->bits & FRT_FI_STORE_TERM_VECTOR_BM) != 0)
-#define fi_store_positions(fi)      (((fi)->bits & FRT_FI_STORE_POSITIONS_BM) != 0)
-#define fi_store_offsets(fi)        (((fi)->bits & FRT_FI_STORE_OFFSETS_BM) != 0)
-#define fi_has_norms(fi)\
-    (((fi)->bits & (FRT_FI_OMIT_NORMS_BM|FRT_FI_IS_INDEXED_BM)) == FRT_FI_IS_INDEXED_BM)
+#define bits_is_stored(bits)            ((bits & FRT_FI_IS_STORED_BM) != 0)
+#define bits_is_compressed(bits)        ((bits & FRT_FI_IS_COMPRESSED_BM) != 0)
+#define bits_is_compressed_brotli(bits) ((bits & FRT_FI_COMPRESSION_BROTLI_BM) != 0)
+#define bits_is_compressed_bz2(bits)    ((bits & FRT_FI_COMPRESSION_BZ2_BM) != 0)
+#define bits_is_compressed_lz4(bits)    ((bits & FRT_FI_COMPRESSION_LZ4_BM) != 0)
+#define bits_is_indexed(bits)           ((bits & FRT_FI_IS_INDEXED_BM) != 0)
+#define bits_is_tokenized(bits)         ((bits & FRT_FI_IS_TOKENIZED_BM) != 0)
+#define bits_omit_norms(bits)           ((bits & FRT_FI_OMIT_NORMS_BM) != 0)
+#define bits_store_term_vector(bits)    ((bits & FRT_FI_STORE_TERM_VECTOR_BM) != 0)
+#define bits_store_positions(bits)      ((bits & FRT_FI_STORE_POSITIONS_BM) != 0)
+#define bits_store_offsets(bits)        ((bits & FRT_FI_STORE_OFFSETS_BM) != 0)
+#define bits_has_norms(bits)\
+    ((bits & (FRT_FI_OMIT_NORMS_BM|FRT_FI_IS_INDEXED_BM)) == FRT_FI_IS_INDEXED_BM)
 
 /****************************************************************************
  *
@@ -133,21 +113,18 @@ extern void frt_fi_deref(FrtFieldInfo *fi);
 #define FIELD_INFOS_INIT_CAPA 4
 /* carry changes over to dummy_fis in test/test_segments.c */
 typedef struct FrtFieldInfos {
-    FrtStoreValue      store_val;
-    FrtCompressionType compression;
-    FrtIndexValue      index;
-    FrtTermVectorValue term_vector;
-    int                size;
-    int                capa;
-    FrtFieldInfo       **fields;
-    FrtHash            *field_dict;
+    unsigned int bits;
+    int          size;
+    int          capa;
+    FrtFieldInfo **fields;
+    FrtHash      *field_dict;
     _Atomic unsigned int ref_cnt;
-    VALUE              rfis;
+    VALUE        rfis;
 } FrtFieldInfos;
 
 FrtFieldInfos *frt_fis_alloc();
-FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
-FrtFieldInfos *frt_fis_new(FrtStoreValue store, FrtCompressionType compression, FrtIndexValue index, FrtTermVectorValue term_vector);
+FrtFieldInfos *frt_fis_init(FrtFieldInfos *fis, unsigned int bits);
+FrtFieldInfos *frt_fis_new(unsigned int bits);
 extern FrtFieldInfo *frt_fis_add_field(FrtFieldInfos *fis, FrtFieldInfo *fi);
 extern FrtFieldInfo *frt_fis_get_field(FrtFieldInfos *fis, ID name);
 extern int frt_fis_get_field_num(FrtFieldInfos *fis, ID name);

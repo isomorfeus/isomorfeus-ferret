@@ -7,10 +7,10 @@ segments_(gen) ->
   UInt64 Version        # incremented with every index change. Used to detect latest index
   UInt64 NameCounter    # used to get the name of the next segment. Names are _<base 32 integer>
   # SegmentInfos
-  VInt   SegCount     # number of segments
+  VInt   SegCount       # number of segments
   {
     String SegName
-    VInt   DocCount    # number of documents in this segment
+    VInt   DocCount     # number of documents in this segment
     VInt   DelGen
     VInt   NormGensSize
     {
@@ -19,9 +19,7 @@ segments_(gen) ->
     Byte UseCompoundFile
   } * SegCount
   # FieldInfos
-  VInt StoreVal      # default store value
-  VInt IndexVal      # default index value
-  VInt TermVectorVal # default term_vector value TODO use Bits for default values instead
+  VInt Bits             # as below
   VInt NumFields
   {
     String FieldName

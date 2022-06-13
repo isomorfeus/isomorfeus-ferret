@@ -205,8 +205,8 @@ static void prepare_search_index(FrtStore *store)
     int i;
     FrtIndexWriter *iw;
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    FrtFieldInfo *fi = frt_fi_new(rb_intern("empty-field"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    FrtFieldInfo *fi = frt_fi_new(rb_intern("empty-field"), 0);
     frt_fis_add_field(fis, fi);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
@@ -1701,8 +1701,8 @@ static void prepare_multi_search_index(FrtStore *store, struct Data data[],
 {
     int i;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    FrtFieldInfo *fi = frt_fi_new(rb_intern("empty-field"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    FrtFieldInfo *fi = frt_fi_new(rb_intern("empty-field"), 0);
     frt_fis_add_field(fis, fi);
     frt_index_create(store, fis);
     frt_fis_deref(fis);

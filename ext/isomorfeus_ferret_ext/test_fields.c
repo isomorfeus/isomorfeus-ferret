@@ -25,14 +25,14 @@ void field_prop_test(TestCase *tc,
                      bool store_offsets) {
     tst_ptr_equal(line_num, tc, (void *)name, (void *)fi->name);
     tst_flt_equal(line_num, tc, boost, fi->boost);
-    tst_int_equal(line_num, tc, is_stored,          fi_is_stored(fi));
-    tst_int_equal(line_num, tc, is_compressed,      fi_is_compressed(fi));
-    tst_int_equal(line_num, tc, is_indexed,         fi_is_indexed(fi));
-    tst_int_equal(line_num, tc, is_tokenized,       fi_is_tokenized(fi));
-    tst_int_equal(line_num, tc, omit_norms,         fi_omit_norms(fi));
-    tst_int_equal(line_num, tc, store_term_vector,  fi_store_term_vector(fi));
-    tst_int_equal(line_num, tc, store_positions,    fi_store_positions(fi));
-    tst_int_equal(line_num, tc, store_offsets,      fi_store_offsets(fi));
+    tst_int_equal(line_num, tc, is_stored,          bits_is_stored(fi->bits));
+    tst_int_equal(line_num, tc, is_compressed,      bits_is_compressed(fi->bits));
+    tst_int_equal(line_num, tc, is_indexed,         bits_is_indexed(fi->bits));
+    tst_int_equal(line_num, tc, is_tokenized,       bits_is_tokenized(fi->bits));
+    tst_int_equal(line_num, tc, omit_norms,         bits_omit_norms(fi->bits));
+    tst_int_equal(line_num, tc, store_term_vector,  bits_store_term_vector(fi->bits));
+    tst_int_equal(line_num, tc, store_positions,    bits_store_positions(fi->bits));
+    tst_int_equal(line_num, tc, store_offsets,      bits_store_offsets(fi->bits));
 }
 
 /****************************************************************************
@@ -45,19 +45,19 @@ static void test_fi_new(TestCase *tc, void *data)
 {
     FrtFieldInfo *fi;
     (void)data; /* suppress unused argument warning */
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    fi = frt_fi_new(rb_intern("name"), 0);
     do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
     frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    fi = frt_fi_new(rb_intern("name"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
     do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
     frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
+    fi = frt_fi_new(rb_intern("name"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM);
     do_field_prop_test(tc, fi, rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
     frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
+    fi = frt_fi_new(rb_intern("name"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM);
     do_field_prop_test(tc, fi, rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
     frt_fi_deref(fi);
-    fi = frt_fi_new(rb_intern("name"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    fi = frt_fi_new(rb_intern("name"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
     fi->boost = 1000.0;
     do_field_prop_test(tc, fi, rb_intern("name"), 1000.0, F, F, T, F, T, T, T, T);
     frt_fi_deref(fi);
@@ -76,14 +76,14 @@ static void test_fis_basic(TestCase *tc, void *data)
     volatile bool arg_error = false;
     (void)data; /* suppress unused argument warning */
 
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
+    fis = frt_fis_new(0);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), 0));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM));
 
-    fi = frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    fi = frt_fi_new(rb_intern("FFTFTTTT"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
     FRT_TRY
         Apnull(frt_fis_add_field(fis, fi));
     case FRT_ARG_ERROR:
@@ -131,7 +131,7 @@ static void test_fis_with_default(TestCase *tc, void *data)
     FrtFieldInfos *fis;
     (void)data; /* suppress unused argument warning */
 
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO);
+    fis = frt_fis_new(0);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, F, F, F, F, F, F);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("dave")), rb_intern("dave"), 1.0, F, F, F, F, F, F, F, F);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("wert")), rb_intern("wert"), 1.0, F, F, F, F, F, F, F, F);
@@ -141,16 +141,16 @@ static void test_fis_with_default(TestCase *tc, void *data)
     Apnull(frt_fis_get_field(fis, rb_intern("random")));
     frt_fis_deref(fis);
 
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, F, T, T, F, T, F, F);
     frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS);
+    fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, T, T, T, F, F, T, T, F);
     frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS);
+    fis = frt_fis_new(0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, T, T, T, F, T);
     frt_fis_deref(fis);
-    fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    fis = frt_fis_new(0 | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
     do_field_prop_test(tc, frt_fis_get_or_add_field(fis, rb_intern("name")), rb_intern("name"), 1.0, F, F, T, F, T, T, T, T);
     frt_fis_deref(fis);
 }
@@ -164,12 +164,12 @@ static void test_fis_rw(TestCase *tc, void *data)
     FrtOutStream *os;
     (void)data; /* suppress unused argument warning */
 
-    fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES_OMIT_NORMS, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED_OMIT_NORMS, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
+    fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFFFFFFF"), 0));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TFTTFTFF"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("TTTFFTTF"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTTTTFT"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("FFTFTTTT"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_OMIT_NORMS_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM));
     fis->fields[1]->boost = 2.0;
     fis->fields[2]->boost = 3.0;
     fis->fields[3]->boost = 4.0;
@@ -190,9 +190,9 @@ static void test_fis_rw(TestCase *tc, void *data)
     is = store->open_input(store, "fields");
     fis = frt_fis_read(is);
     frt_is_close(is);
-    Aiequal(FRT_STORE_YES, fis->store_val);
-    Aiequal(FRT_INDEX_UNTOKENIZED_OMIT_NORMS, fis->index);
-    Aiequal(FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS, fis->term_vector);
+    Aiequal(true, bits_is_stored(fis->bits));
+    Aiequal(true, bits_is_indexed(fis->bits) && bits_omit_norms(fis->bits));
+    Aiequal(true, bits_store_term_vector(fis->bits) && bits_store_positions(fis->bits) && bits_store_offsets(fis->bits));
 
     do_field_prop_test(tc, fis->fields[0], rb_intern("FFFFFFFF"), 1.0, F, F, F, F, F, F, F, F);
     do_field_prop_test(tc, fis->fields[1], rb_intern("TFTTFTFF"), 2.0, T, F, T, T, F, T, F, F);
@@ -307,11 +307,11 @@ static FrtDocument *prepare_doc(void) {
 }
 
 static FrtFieldInfos *prepare_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("ignored"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("unstored"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored_array"), FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("ignored"), 0));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("unstored"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("stored_array"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM));
     return fis;
 }
 

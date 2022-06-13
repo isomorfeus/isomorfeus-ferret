@@ -33,7 +33,7 @@ static void test_fuzziness(TestCase *tc, void *data)
     FrtSearcher *sea;
     FrtTopDocs *top_docs;
     FrtQuery *q;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
@@ -121,7 +121,7 @@ static void test_fuzziness_long(TestCase *tc, void *data)
     FrtIndexReader *ir;
     FrtTopDocs *top_docs;
     FrtQuery *q;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 

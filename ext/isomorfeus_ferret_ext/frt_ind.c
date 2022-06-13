@@ -54,7 +54,7 @@ FrtIndex *frt_index_new(FrtStore *store, FrtAnalyzer *analyzer, FrtHashSet *def_
     }
 
     if (create) {
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(FRT_FI_DEFAULTS_BM);
         frt_index_create(self->store, fis);
         frt_fis_deref(fis);
     }

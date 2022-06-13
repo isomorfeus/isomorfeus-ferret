@@ -158,8 +158,8 @@ TestSuite *ts_threading(TestSuite *suite)
     FrtStore *store = frt_open_fs_store("./test/testdir/store");
     FrtIndex *index;
     FrtHashSet *def_fields = frt_hs_new_ptr(NULL);
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(id, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    frt_fis_add_field(fis, frt_fi_new(id, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 

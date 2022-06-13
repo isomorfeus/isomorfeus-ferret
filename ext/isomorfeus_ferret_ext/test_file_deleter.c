@@ -19,7 +19,7 @@ const FrtConfig lucene_config = {
 
 
 static FrtFieldInfos *prep_fis(void) {
-    return frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
+    return frt_fis_new(0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM);
 }
 
 static void create_index(FrtStore *store)

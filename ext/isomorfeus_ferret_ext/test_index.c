@@ -8,11 +8,11 @@
 static ID body, title, text, author, year, changing_field, compressed_field_brotli, compressed_field_bzip2, compressed_field_lz4, tag;
 
 static FrtFieldInfos *prep_all_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv un-t"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_YES));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets un-t"), FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv un-t"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("tv+offsets un-t"), 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
     return fis;
 
 }
@@ -27,8 +27,8 @@ static void destroy_docs(FrtDocument **docs, int len)
 }
 
 static FrtFieldInfos *prep_book_fis(void) {
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("year"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_NO, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("year"), 0 | FRT_FI_IS_STORED_BM));
     return fis;
 
 }
@@ -737,7 +737,7 @@ static void test_segment_tde_deleted_docs(TestCase *tc, void *data)
 static void test_index_create(TestCase *tc, void *data)
 {
     FrtStore *store = (FrtStore *)data;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
     (void)tc;
 
     store->clear_all(store);
@@ -1191,8 +1191,8 @@ void test_iw_add_empty_tv(TestCase *tc, void *data)
     FrtDocument *doc;
     rb_encoding *enc = rb_enc_find("ASCII-8BIT");
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_YES);
-    frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM);
+    frt_fis_add_field(fis, frt_fi_new(rb_intern("no_tv"), 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
 
@@ -1348,7 +1348,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
     rte->stores = FRT_ALLOC_N(FrtStore *, store_cnt);
     for (i = 0; i < store_cnt; i++) {
         FrtStore *store = rte->stores[i] = frt_open_ram_store(NULL);
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
         int start_doc = i * doc_cnt;
         int end_doc = (i + 1) * doc_cnt;
         if (end_doc > IR_TEST_DOC_CNT) {
@@ -1370,19 +1370,19 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
                 fis = iw->fis;
                 if (NULL == frt_fis_get_field(fis, df->name)) {
                     if (author == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS));
+                        frt_fis_add_field(fis, frt_fi_new(author, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM));
                     } else if (title == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
+                        frt_fis_add_field(fis, frt_fi_new(title, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
                     } else if (year == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(year, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM));
                     } else if (text == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(text, 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
                     } else if (compressed_field_brotli == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
                     } else if (compressed_field_bzip2 == df->name) {
-                        frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZ2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                        frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BZ2_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
                     } else if (compressed_field_lz4 == df->name) {
-                       frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+                       frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_LZ4_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
                     }
                 }
             }
@@ -1398,7 +1398,7 @@ static ReaderTestEnvironment *reader_test_env_new(int type)
     if (type == add_indexes_reader_type) {
         /* Prepare store for Add Indexes test */
         FrtStore *store = frt_open_ram_store(NULL);
-        FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+        FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
         FrtIndexReader **readers = FRT_ALLOC_N(FrtIndexReader *, rte->store_cnt);
         int i;
         for (i = 0; i < rte->store_cnt; i++) {
@@ -1432,14 +1432,14 @@ static void write_ir_test_docs(FrtStore *store)
     FrtIndexWriter *iw;
     FrtDocument **docs = prep_ir_test_docs();
 
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
-    frt_fis_add_field(fis, frt_fi_new(author, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS));
-    frt_fis_add_field(fis, frt_fi_new(title, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_WITH_OFFSETS));
-    frt_fis_add_field(fis, frt_fi_new(year, FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_UNTOKENIZED, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(text, FRT_STORE_NO, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, FRT_STORE_YES, FRT_COMPRESSION_BROTLI, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, FRT_STORE_YES, FRT_COMPRESSION_BZ2, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
-    frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, FRT_STORE_YES, FRT_COMPRESSION_LZ4, FRT_INDEX_YES, FRT_TERM_VECTOR_NO));
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
+    frt_fis_add_field(fis, frt_fi_new(author, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM));
+    frt_fis_add_field(fis, frt_fi_new(title, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_OFFSETS_BM));
+    frt_fis_add_field(fis, frt_fi_new(year, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM));
+    frt_fis_add_field(fis, frt_fi_new(text, 0 | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_brotli, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BROTLI_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_bzip2, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_BZ2_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
+    frt_fis_add_field(fis, frt_fi_new(compressed_field_lz4, 0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_COMPRESSED_BM | FRT_FI_COMPRESSION_LZ4_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM));
     frt_index_create(store, fis);
     frt_fis_deref(fis);
     config.max_buffered_docs = 5;
@@ -2135,7 +2135,7 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     FrtDocument *doc = frt_doc_new();
     FrtDocField *df;
     FrtIndexWriter *iw;
-    FrtFieldInfos *fis = frt_fis_new(FRT_STORE_YES, FRT_COMPRESSION_NONE, FRT_INDEX_YES, FRT_TERM_VECTOR_WITH_POSITIONS_OFFSETS);
+    FrtFieldInfos *fis = frt_fis_new(0 | FRT_FI_IS_STORED_BM | FRT_FI_IS_INDEXED_BM | FRT_FI_IS_TOKENIZED_BM | FRT_FI_STORE_TERM_VECTOR_BM | FRT_FI_STORE_POSITIONS_BM | FRT_FI_STORE_OFFSETS_BM);
     const char *body_text = "this is the body FrtDocument Field";
     const char *title_text = "this is the title FrtDocument Field";
     const char *author_text = "this is the author FrtDocument Field";
@@ -2158,14 +2158,14 @@ static void test_ir_multivalue_fields(TestCase *tc, void *data)
     frt_iw_add_doc(iw, doc);
 
     fi = frt_fis_get_field(iw->fis, tag);
-    Aiequal(true, fi_is_stored(fi));
-    Aiequal(false, fi_is_compressed(fi));
-    Aiequal(true, fi_is_indexed(fi));
-    Aiequal(true, fi_is_tokenized(fi));
-    Aiequal(true, fi_has_norms(fi));
-    Aiequal(true, fi_store_term_vector(fi));
-    Aiequal(true, fi_store_offsets(fi));
-    Aiequal(true, fi_store_positions(fi));
+    Aiequal(true, bits_is_stored(fi->bits));
+    Aiequal(false, bits_is_compressed(fi->bits));
+    Aiequal(true, bits_is_indexed(fi->bits));
+    Aiequal(true, bits_is_tokenized(fi->bits));
+    Aiequal(true, bits_has_norms(fi->bits));
+    Aiequal(true, bits_store_term_vector(fi->bits));
+    Aiequal(true, bits_store_offsets(fi->bits));
+    Aiequal(true, bits_store_positions(fi->bits));
 
     frt_doc_destroy(doc);
     frt_iw_close(iw);
